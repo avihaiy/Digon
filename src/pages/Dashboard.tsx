@@ -1,0 +1,322 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from 'react-router-dom';
+import {
+  Users,
+  BookOpen,
+  CreditCard,
+  Receipt,
+  Calendar,
+  TrendingUp,
+  AlertCircle,
+  ArrowLeft,
+} from 'lucide-react';
+import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, ALIYA_STATUS } from '@/lib/hebrew-utils';
+
+export default function Dashboard() {
+  const nextShabbat = getNextShabbat();
+  const parasha = getCurrentParasha();
+
+  // Fetch stats
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const [membersRes, aliyotRes, paymentsRes, receiptsRes] = await Promise.all([
+        supabase.from('members').select('id', { count: 'exact' }).eq('active', true),
+        supabase.from('aliyot').select('id, status, price'),
+        supabase.from('payments').select('id, amount, status').eq('status', 'confirmed'),
+        supabase.from('receipts').select('id, total_amount'),
+      ]);
+
+      const pendingAliyot = aliyotRes.data?.filter(a => a.status === 'pending') || [];
+      const totalPayments = paymentsRes.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+      return {
+        totalMembers: membersRes.count || 0,
+        totalAliyot: aliyotRes.data?.length || 0,
+        pendingAliyot: pendingAliyot.length,
+        totalPayments,
+        totalReceipts: receiptsRes.data?.length || 0,
+      };
+    },
+  });
+
+  // Fetch upcoming Shabbat aliyot
+  const { data: upcomingAliyot, isLoading: aliyotLoading } = useQuery({
+    queryKey: ['upcoming-aliyot', nextShabbat.toISOString().split('T')[0]],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('aliyot')
+        .select(`
+          *,
+          member:members(full_name)
+        `)
+        .eq('shabbat_date', nextShabbat.toISOString().split('T')[0])
+        .order('created_at');
+      return data || [];
+    },
+  });
+
+  // Fetch recent payments
+  const { data: recentPayments, isLoading: paymentsLoading } = useQuery({
+    queryKey: ['recent-payments'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          member:members(full_name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+  });
+
+  const quickActions = [
+    { label: 'מסך יום שישי', icon: Calendar, href: '/friday', variant: 'primary' as const },
+    { label: 'הוסף חבר', icon: Users, href: '/members?action=add', variant: 'secondary' as const },
+    { label: 'הוסף עלייה', icon: BookOpen, href: '/aliyot?action=add', variant: 'secondary' as const },
+    { label: 'קבל תשלום', icon: CreditCard, href: '/payments?action=add', variant: 'secondary' as const },
+  ];
+
+  return (
+    <div className="space-y-6 animate-fade-up">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">לוח בקרה</h1>
+          <p className="text-muted-foreground">
+            שבת פרשת {parasha} • {formatDate(nextShabbat)}
+          </p>
+        </div>
+        <Link to="/friday">
+          <Button className="btn-gold gap-2">
+            <Calendar className="w-4 h-4" />
+            מסך יום שישי
+            <ArrowLeft className="w-4 h-4 flip-icon" />
+          </Button>
+        </Link>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="חברים פעילים"
+          value={stats?.totalMembers || 0}
+          icon={Users}
+          loading={statsLoading}
+        />
+        <StatsCard
+          title="עליות השבוע"
+          value={stats?.totalAliyot || 0}
+          icon={BookOpen}
+          loading={statsLoading}
+          alert={stats?.pendingAliyot}
+        />
+        <StatsCard
+          title="סה״כ הכנסות"
+          value={formatCurrency(stats?.totalPayments || 0)}
+          icon={TrendingUp}
+          loading={statsLoading}
+          isAmount
+        />
+        <StatsCard
+          title="קבלות הונפקו"
+          value={stats?.totalReceipts || 0}
+          icon={Receipt}
+          loading={statsLoading}
+        />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {quickActions.map((action) => (
+          <Link key={action.href} to={action.href}>
+            <div className="quick-action group">
+              <div className={`w-12 h-12 rounded-xl mb-3 flex items-center justify-center ${
+                action.variant === 'primary' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors'
+              }`}>
+                <action.icon className="w-6 h-6" />
+              </div>
+              <p className="font-medium">{action.label}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Upcoming Shabbat Aliyot */}
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <CardTitle className="text-lg font-semibold">עליות לשבת הקרובה</CardTitle>
+            <Link to="/aliyot">
+              <Button variant="ghost" size="sm">
+                הצג הכל
+                <ArrowLeft className="w-4 h-4 mr-1 flip-icon" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {aliyotLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : upcomingAliyot?.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>אין עליות מתוכננות לשבת הקרובה</p>
+                <Link to="/aliyot?action=add">
+                  <Button variant="outline" className="mt-4">
+                    הוסף עלייה
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {upcomingAliyot?.slice(0, 5).map((aliya: any) => (
+                  <div
+                    key={aliya.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 table-row-hover"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="font-medium">
+                        {aliya.aliya_type}
+                      </Badge>
+                      <span className="font-medium">
+                        {aliya.member?.full_name || 'לא משויך'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground">
+                        {formatCurrency(Number(aliya.price))}
+                      </span>
+                      <Badge
+                        className={
+                          aliya.status === 'paid'
+                            ? 'status-paid'
+                            : aliya.status === 'waived'
+                            ? 'status-waived'
+                            : 'status-pending'
+                        }
+                      >
+                        {ALIYA_STATUS[aliya.status as keyof typeof ALIYA_STATUS]}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Payments */}
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <CardTitle className="text-lg font-semibold">תשלומים אחרונים</CardTitle>
+            <Link to="/payments">
+              <Button variant="ghost" size="sm">
+                הצג הכל
+                <ArrowLeft className="w-4 h-4 mr-1 flip-icon" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {paymentsLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : recentPayments?.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>אין תשלומים אחרונים</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentPayments?.map((payment: any) => (
+                  <div
+                    key={payment.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 table-row-hover"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        payment.method === 'bit' ? 'bg-purple-100 text-purple-600' : 'bg-green-100 text-green-600'
+                      }`}>
+                        <CreditCard className="w-4 h-4" />
+                      </div>
+                      <span className="font-medium">
+                        {payment.member?.full_name}
+                      </span>
+                    </div>
+                    <span className="font-bold hebrew-number">
+                      {formatCurrency(Number(payment.amount))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Stats Card Component
+function StatsCard({
+  title,
+  value,
+  icon: Icon,
+  loading,
+  alert,
+  isAmount,
+}: {
+  title: string;
+  value: number | string;
+  icon: React.ElementType;
+  loading: boolean;
+  alert?: number;
+  isAmount?: boolean;
+}) {
+  return (
+    <Card className="glass-card relative overflow-hidden">
+      <CardContent className="p-4">
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        ) : (
+          <>
+            <div className="flex items-start justify-between mb-2">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10`}>
+                <Icon className="w-5 h-5 text-primary" />
+              </div>
+              {alert !== undefined && alert > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  <AlertCircle className="w-3 h-3 ml-1" />
+                  {alert} ממתינים
+                </Badge>
+              )}
+            </div>
+            <p className={`text-2xl font-bold ${isAmount ? 'hebrew-number' : ''}`}>
+              {value}
+            </p>
+            <p className="text-sm text-muted-foreground">{title}</p>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
