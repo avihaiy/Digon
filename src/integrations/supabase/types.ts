@@ -94,6 +94,90 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["transaction_type"]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: Database["public"]["Enums"]["transaction_type"]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+        }
+        Relationships: []
+      }
+      budget_transactions: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          payment_id: string | null
+          reference: string | null
+          transaction_date: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          payment_id?: string | null
+          reference?: string | null
+          transaction_date?: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          payment_id?: string | null
+          reference?: string | null
+          transaction_date?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           active: boolean | null
@@ -322,6 +406,7 @@ export type Database = {
       app_role: "admin" | "gabai" | "viewer"
       payment_method: "bit" | "cash"
       payment_status: "pending" | "confirmed"
+      transaction_type: "income" | "expense"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -465,6 +550,7 @@ export const Constants = {
       app_role: ["admin", "gabai", "viewer"],
       payment_method: ["bit", "cash"],
       payment_status: ["pending", "confirmed"],
+      transaction_type: ["income", "expense"],
     },
   },
 } as const

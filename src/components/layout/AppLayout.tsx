@@ -24,6 +24,7 @@ import {
   Menu,
   X,
   Home,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -39,6 +40,7 @@ const navItems = [
   { href: '/aliyot', icon: BookOpen, label: 'עליות' },
   { href: '/payments', icon: CreditCard, label: 'תשלומים' },
   { href: '/receipts', icon: Receipt, label: 'קבלות' },
+  { href: '/budget', icon: Wallet, label: 'תקציב' },
   { href: '/reports', icon: BarChart3, label: 'דוחות' },
 ];
 
