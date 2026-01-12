@@ -14,6 +14,7 @@ import Payments from "@/pages/Payments";
 import Receipts from "@/pages/Receipts";
 import Reports from "@/pages/Reports";
 import UserManagement from "@/pages/UserManagement";
+import Budget from "@/pages/Budget";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const AppRoutes = () => (
     <Route path="/receipts" element={<ProtectedRoute><Receipts /></ProtectedRoute>} />
     <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
     <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+    <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

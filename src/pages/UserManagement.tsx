@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -27,13 +28,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Shield, Search, UserCog, Users, Crown, Eye } from 'lucide-react';
+import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key } from 'lucide-react';
 import { USER_ROLES } from '@/lib/hebrew-utils';
 import type { Database } from '@/integrations/supabase/types';
+import { z } from 'zod';
 
 type AppRole = Database['public']['Enums']['app_role'];
+
+const newUserSchema = z.object({
+  email: z.string().email('כתובת אימייל לא תקינה'),
+  password: z.string().min(6, 'הסיסמה חייבת להכיל לפחות 6 תווים'),
+  fullName: z.string().min(2, 'שם מלא חייב להכיל לפחות 2 תווים'),
+  role: z.enum(['admin', 'gabai', 'viewer']),
+});
 
 interface UserWithRole {
   user_id: string;
@@ -49,12 +59,19 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [selectedRole, setSelectedRole] = useState<AppRole | ''>('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    role: 'viewer' as AppRole,
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Fetch users with their roles
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users-with-roles'],
     queryFn: async () => {
-      // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, full_name')
@@ -62,31 +79,71 @@ export default function UserManagement() {
 
       if (profilesError) throw profilesError;
 
-      // Get all roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
       if (rolesError) throw rolesError;
 
-      // Create a map of roles
       const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
 
-      // Combine the data - we'll use user_id as email placeholder since we can't access auth.users
       return profiles?.map(p => ({
         user_id: p.user_id,
         full_name: p.full_name,
-        email: p.full_name || p.user_id.slice(0, 8), // Use full_name or partial user_id
+        email: p.full_name || p.user_id.slice(0, 8),
         role: roleMap.get(p.user_id) || null,
       })) as UserWithRole[];
     },
     enabled: isAdmin,
   });
 
+  // Create new user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (data: typeof newUserForm) => {
+      // Sign up the new user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { full_name: data.fullName },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+      if (!authData.user) throw new Error('לא ניתן ליצור משתמש');
+
+      // Wait a moment for the profile to be created by the trigger
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Assign the role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: authData.user.id, role: data.role });
+
+      if (roleError) throw roleError;
+
+      return authData.user;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      toast.success('המשתמש נוצר בהצלחה! נשלח אימייל לאימות');
+      setCreateDialogOpen(false);
+      setNewUserForm({ email: '', password: '', fullName: '', role: 'viewer' });
+      setFormErrors({});
+    },
+    onError: (error: Error) => {
+      if (error.message.includes('already registered')) {
+        toast.error('כתובת האימייל כבר קיימת במערכת');
+      } else {
+        toast.error('שגיאה ביצירת המשתמש: ' + error.message);
+      }
+    },
+  });
+
   // Assign or update role mutation
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      // Check if user already has a role
       const { data: existing } = await supabase
         .from('user_roles')
         .select('id')
@@ -94,14 +151,12 @@ export default function UserManagement() {
         .maybeSingle();
 
       if (existing) {
-        // Update existing role
         const { error } = await supabase
           .from('user_roles')
           .update({ role })
           .eq('user_id', userId);
         if (error) throw error;
       } else {
-        // Insert new role
         const { error } = await supabase
           .from('user_roles')
           .insert({ user_id: userId, role });
@@ -157,6 +212,22 @@ export default function UserManagement() {
     });
   };
 
+  const handleCreateUser = () => {
+    setFormErrors({});
+    const result = newUserSchema.safeParse(newUserForm);
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach(err => {
+        if (err.path[0]) {
+          errors[err.path[0].toString()] = err.message;
+        }
+      });
+      setFormErrors(errors);
+      return;
+    }
+    createUserMutation.mutate(newUserForm);
+  };
+
   const getRoleIcon = (role: AppRole | null) => {
     switch (role) {
       case 'admin':
@@ -210,6 +281,10 @@ export default function UserManagement() {
           </h1>
           <p className="text-muted-foreground mt-1">הקצאת תפקידים והרשאות למשתמשים</p>
         </div>
+        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+          <UserPlus className="w-4 h-4" />
+          הוסף משתמש חדש
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -413,6 +488,115 @@ export default function UserManagement() {
               disabled={!selectedRole || assignRoleMutation.isPending}
             >
               {assignRoleMutation.isPending ? 'שומר...' : 'שמור תפקיד'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create User Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              הוספת משתמש חדש
+            </DialogTitle>
+            <DialogDescription>
+              צור חשבון חדש למשתמש במערכת
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">שם מלא *</Label>
+              <Input
+                id="fullName"
+                placeholder="ישראל ישראלי"
+                value={newUserForm.fullName}
+                onChange={(e) => setNewUserForm({ ...newUserForm, fullName: e.target.value })}
+              />
+              {formErrors.fullName && (
+                <p className="text-sm text-destructive">{formErrors.fullName}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">אימייל *</Label>
+              <div className="relative">
+                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="user@example.com"
+                  className="pr-9"
+                  value={newUserForm.email}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                />
+              </div>
+              {formErrors.email && (
+                <p className="text-sm text-destructive">{formErrors.email}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">סיסמה זמנית *</Label>
+              <div className="relative">
+                <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="לפחות 6 תווים"
+                  className="pr-9"
+                  value={newUserForm.password}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                />
+              </div>
+              {formErrors.password && (
+                <p className="text-sm text-destructive">{formErrors.password}</p>
+              )}
+              <p className="text-xs text-muted-foreground">המשתמש יוכל לשנות את הסיסמה לאחר הכניסה הראשונה</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>תפקיד *</Label>
+              <Select
+                value={newUserForm.role}
+                onValueChange={(value) => setNewUserForm({ ...newUserForm, role: value as AppRole })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4" />
+                      מנהל
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="gabai">
+                    <div className="flex items-center gap-2">
+                      <UserCog className="w-4 h-4" />
+                      גבאי
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="viewer">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4" />
+                      צופה
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              ביטול
+            </Button>
+            <Button
+              onClick={handleCreateUser}
+              disabled={createUserMutation.isPending}
+            >
+              {createUserMutation.isPending ? 'יוצר משתמש...' : 'צור משתמש'}
             </Button>
           </DialogFooter>
         </DialogContent>
