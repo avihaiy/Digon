@@ -42,8 +42,12 @@ const navItems = [
   { href: '/reports', icon: BarChart3, label: 'דוחות' },
 ];
 
+const adminNavItems = [
+  { href: '/users', icon: Settings, label: 'ניהול משתמשים' },
+];
+
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { user, userRole, signOut } = useAuth();
+  const { user, userRole, signOut, isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -102,6 +106,29 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </Link>
               );
             })}
+            
+            {/* Admin Navigation */}
+            {isAdmin && (
+              <>
+                <div className="my-3 border-t border-sidebar-border pt-3">
+                  <p className="text-xs text-sidebar-foreground/50 mb-2 px-3">ניהול מערכת</p>
+                </div>
+                {adminNavItems.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={cn('nav-item', isActive && 'active')}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
           </nav>
 
           {/* User section */}
