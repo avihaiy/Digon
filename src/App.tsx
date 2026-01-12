@@ -13,6 +13,7 @@ import Aliyot from "@/pages/Aliyot";
 import Payments from "@/pages/Payments";
 import Receipts from "@/pages/Receipts";
 import Reports from "@/pages/Reports";
+import UserManagement from "@/pages/UserManagement";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const AppRoutes = () => (
     <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
     <Route path="/receipts" element={<ProtectedRoute><Receipts /></ProtectedRoute>} />
     <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+    <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
