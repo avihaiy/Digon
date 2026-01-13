@@ -37,6 +37,7 @@ import { he } from 'date-fns/locale';
 import {
   formatCurrency,
   getNextShabbat,
+  getParashaForDate,
   ALIYA_TYPES,
   ALIYA_STATUS,
   PARASHA_LIST,
@@ -48,12 +49,15 @@ export default function Aliyot() {
   const [selectedDate, setSelectedDate] = useState<Date>(getNextShabbat());
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  // Auto-calculate parasha based on selected date
+  const autoParasha = getParashaForDate(selectedDate);
+
   // Form state
   const [formData, setFormData] = useState({
     aliya_type: '',
     member_id: '',
     price: '',
-    parasha: PARASHA_LIST[0],
+    parasha: autoParasha,
   });
 
   // Fetch aliyot for selected date
@@ -150,8 +154,16 @@ export default function Aliyot() {
       aliya_type: '',
       member_id: '',
       price: '',
-      parasha: PARASHA_LIST[0],
+      parasha: autoParasha,
     });
+  };
+
+  // Update parasha when date changes
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date);
+    const newParasha = getParashaForDate(date);
+    setFormData((prev) => ({ ...prev, parasha: newParasha }));
+    setCalendarOpen(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -211,8 +223,7 @@ export default function Aliyot() {
                     selected={selectedDate}
                     onSelect={(date) => {
                       if (date) {
-                        setSelectedDate(date);
-                        setCalendarOpen(false);
+                        handleDateChange(date);
                       }
                     }}
                     disabled={(date) => date.getDay() !== 6}
@@ -221,6 +232,9 @@ export default function Aliyot() {
                 </PopoverContent>
               </Popover>
             </div>
+            <Badge variant="default" className="text-base px-4 py-1 bg-primary">
+              פרשת {autoParasha}
+            </Badge>
             <Badge variant="secondary" className="text-base px-4 py-1">
               {aliyot?.length || 0} עליות משויכות
             </Badge>
@@ -337,22 +351,13 @@ export default function Aliyot() {
             </div>
 
             <div className="space-y-2">
-              <Label>פרשה</Label>
-              <Select
-                value={formData.parasha}
-                onValueChange={(value) => setFormData({ ...formData, parasha: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PARASHA_LIST.map((parasha) => (
-                    <SelectItem key={parasha} value={parasha}>
-                      {parasha}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>פרשה (אוטומטי לפי תאריך)</Label>
+              <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted text-muted-foreground">
+                {autoParasha}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                הפרשה מחושבת אוטומטית לפי התאריך הנבחר
+              </p>
             </div>
 
             <div className="space-y-2">
