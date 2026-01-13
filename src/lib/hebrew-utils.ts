@@ -1,5 +1,7 @@
 // Hebrew date and parasha utilities
+import { HDate, Sedra, ParshaEvent } from '@hebcal/core';
 
+// Parasha list for reference and display
 export const PARASHA_LIST = [
   'בראשית', 'נח', 'לך לך', 'וירא', 'חיי שרה', 'תולדות', 'ויצא', 'וישלח', 'וישב', 'מקץ',
   'ויגש', 'ויחי', 'שמות', 'וארא', 'בא', 'בשלח', 'יתרו', 'משפטים', 'תרומה', 'תצוה',
@@ -8,6 +10,72 @@ export const PARASHA_LIST = [
   'פינחס', 'מטות', 'מסעי', 'דברים', 'ואתחנן', 'עקב', 'ראה', 'שופטים', 'כי תצא', 'כי תבוא',
   'ניצבים', 'וילך', 'האזינו', 'וזאת הברכה'
 ];
+
+// Mapping from hebcal English parasha names to Hebrew
+const PARASHA_MAPPING: Record<string, string> = {
+  'Bereshit': 'בראשית',
+  'Noach': 'נח',
+  'Lech-Lecha': 'לך לך',
+  'Vayera': 'וירא',
+  'Chayei Sara': 'חיי שרה',
+  'Toldot': 'תולדות',
+  'Vayetzei': 'ויצא',
+  'Vayishlach': 'וישלח',
+  'Vayeshev': 'וישב',
+  'Miketz': 'מקץ',
+  'Vayigash': 'ויגש',
+  'Vayechi': 'ויחי',
+  'Shemot': 'שמות',
+  'Vaera': 'וארא',
+  'Bo': 'בא',
+  'Beshalach': 'בשלח',
+  'Yitro': 'יתרו',
+  'Mishpatim': 'משפטים',
+  'Terumah': 'תרומה',
+  'Tetzaveh': 'תצוה',
+  'Ki Tisa': 'כי תשא',
+  'Vayakhel': 'ויקהל',
+  'Pekudei': 'פקודי',
+  'Vayikra': 'ויקרא',
+  'Tzav': 'צו',
+  'Shmini': 'שמיני',
+  'Tazria': 'תזריע',
+  'Metzora': 'מצורע',
+  'Achrei Mot': 'אחרי מות',
+  'Kedoshim': 'קדושים',
+  'Emor': 'אמור',
+  'Behar': 'בהר',
+  'Bechukotai': 'בחוקותי',
+  'Bamidbar': 'במדבר',
+  'Nasso': 'נשא',
+  "Beha'alotcha": 'בהעלותך',
+  'Sh\'lach': 'שלח',
+  'Korach': 'קרח',
+  'Chukat': 'חקת',
+  'Balak': 'בלק',
+  'Pinchas': 'פינחס',
+  'Matot': 'מטות',
+  'Masei': 'מסעי',
+  'Devarim': 'דברים',
+  'Vaetchanan': 'ואתחנן',
+  'Eikev': 'עקב',
+  'Re\'eh': 'ראה',
+  'Shoftim': 'שופטים',
+  'Ki Teitzei': 'כי תצא',
+  'Ki Tavo': 'כי תבוא',
+  'Nitzavim': 'ניצבים',
+  'Vayeilech': 'וילך',
+  'Ha\'azinu': 'האזינו',
+  'Vezot Haberakhah': 'וזאת הברכה',
+  // Combined parshiyot
+  'Vayakhel-Pekudei': 'ויקהל-פקודי',
+  'Tazria-Metzora': 'תזריע-מצורע',
+  'Achrei Mot-Kedoshim': 'אחרי מות-קדושים',
+  'Behar-Bechukotai': 'בהר-בחוקותי',
+  'Chukat-Balak': 'חקת-בלק',
+  'Matot-Masei': 'מטות-מסעי',
+  'Nitzavim-Vayeilech': 'ניצבים-וילך',
+};
 
 export const ALIYA_TYPES = {
   kohen: 'כהן',
@@ -53,17 +121,10 @@ const hebrewMonths = [
 // Hebrew days of week
 const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
-// Simple Gregorian to Hebrew date converter (approximate)
+// Convert Gregorian date to Hebrew date using hebcal
 export function getHebrewDate(date: Date): string {
-  const day = date.getDate();
-  const month = date.getMonth();
-  const year = date.getFullYear();
-  
-  // This is a simplified approximation
-  const hebrewYear = year + 3760;
-  const hebrewMonth = hebrewMonths[(month + 6) % 12];
-  
-  return `${day} ${hebrewMonth} ${hebrewYear}`;
+  const hdate = new HDate(date);
+  return hdate.renderGematriya();
 }
 
 export function getHebrewDayOfWeek(date: Date): string {
@@ -77,6 +138,37 @@ export function getNextShabbat(from: Date = new Date()): Date {
   const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
   result.setDate(result.getDate() + daysUntilSaturday);
   return result;
+}
+
+// Get parasha for a specific date (returns the parasha for that week's Shabbat)
+export function getParashaForDate(date: Date): string {
+  // Get the Shabbat for this week
+  const shabbat = getNextShabbat(date);
+  const hdate = new HDate(shabbat);
+  
+  // Create Sedra object for Israel (false = diaspora, true = Israel)
+  const sedra = new Sedra(hdate.getFullYear(), true);
+  const parsha = sedra.lookup(hdate);
+  
+  if (parsha.chag) {
+    // It's a holiday, return the holiday name or fallback
+    return 'חג';
+  }
+  
+  // Get the parasha name(s) and convert to Hebrew
+  const parshaNames = parsha.parsha;
+  if (parshaNames.length === 0) {
+    return 'חג';
+  }
+  
+  // Handle combined parshiyot
+  const englishName = parshaNames.join('-');
+  return PARASHA_MAPPING[englishName] || englishName;
+}
+
+// Get current week's parasha (for current Shabbat)
+export function getCurrentParasha(): string {
+  return getParashaForDate(new Date());
 }
 
 // Format currency in Shekels
@@ -107,12 +199,6 @@ export function formatShortDate(date: Date | string): string {
     month: '2-digit',
     year: 'numeric',
   }).format(d);
-}
-
-// Get current parasha (simplified - in real app would use hebcal API)
-export function getCurrentParasha(): string {
-  const weekOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
-  return PARASHA_LIST[weekOfYear % PARASHA_LIST.length];
 }
 
 // Generate Bit payment link (placeholder - would use actual Bit deep link)
