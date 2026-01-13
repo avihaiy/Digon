@@ -39,7 +39,7 @@ export default function Receipts() {
   });
 
   const handlePrint = (receipt: any) => {
-    // Create printable receipt
+    // Create printable receipt optimized for 80mm thermal printer
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -47,90 +47,207 @@ export default function Receipts() {
       <!DOCTYPE html>
       <html dir="rtl" lang="he">
       <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=80mm, initial-scale=1.0">
         <title>קבלה מספר ${receipt.receipt_number}</title>
         <style>
-          body {
-            font-family: 'Heebo', Arial, sans-serif;
-            padding: 40px;
-            max-width: 600px;
-            margin: 0 auto;
+          /* Reset and base styles for thermal printing */
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
           }
+          
+          /* Page settings for 80mm thermal printer */
+          @page {
+            size: 80mm auto;
+            margin: 0;
+          }
+          
+          @media print {
+            html, body {
+              width: 80mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            .no-print {
+              display: none !important;
+            }
+          }
+          
+          html {
+            direction: rtl;
+          }
+          
+          body {
+            font-family: 'Heebo', 'Arial', sans-serif;
+            width: 80mm;
+            max-width: 80mm;
+            margin: 0 auto;
+            padding: 3mm;
+            font-size: 12px;
+            line-height: 1.4;
+            background: white;
+            color: #000;
+          }
+          
+          .receipt-container {
+            width: 100%;
+          }
+          
           .header {
             text-align: center;
-            border-bottom: 2px solid #722F37;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 3mm;
+            margin-bottom: 3mm;
           }
+          
           .logo {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
-            color: #722F37;
           }
+          
           .receipt-number {
-            font-size: 18px;
-            margin-top: 10px;
+            font-size: 14px;
+            margin-top: 2mm;
+            font-weight: bold;
           }
+          
+          .date {
+            font-size: 11px;
+            margin-top: 1mm;
+            color: #333;
+          }
+          
+          .divider {
+            border-top: 1px dashed #000;
+            margin: 3mm 0;
+          }
+          
           .details {
-            margin: 20px 0;
+            margin: 3mm 0;
           }
+          
           .row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            padding: 1.5mm 0;
+            font-size: 11px;
           }
-          .total {
-            font-size: 24px;
-            font-weight: bold;
+          
+          .row .label {
+            font-weight: 500;
+          }
+          
+          .row .value {
+            text-align: left;
+          }
+          
+          .total-section {
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            margin: 3mm 0;
+            padding: 3mm 0;
             text-align: center;
-            margin: 30px 0;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 10px;
           }
+          
+          .total-label {
+            font-size: 12px;
+            margin-bottom: 1mm;
+          }
+          
+          .total-amount {
+            font-size: 20px;
+            font-weight: bold;
+          }
+          
           .footer {
             text-align: center;
-            margin-top: 40px;
-            color: #666;
+            margin-top: 4mm;
+            padding-top: 3mm;
+            border-top: 1px dashed #000;
+          }
+          
+          .footer p {
+            font-size: 10px;
+            margin: 1mm 0;
+          }
+          
+          .thank-you {
             font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 2mm;
+          }
+          
+          /* Print button - only visible on screen */
+          .print-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 4mm 0;
+            background: #722F37;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+          }
+          
+          .print-btn:hover {
+            background: #5a252c;
+          }
+          
+          @media print {
+            .print-btn {
+              display: none !important;
+            }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="logo">בית הכנסת</div>
-          <div class="receipt-number">קבלה מספר: ${receipt.receipt_number}</div>
-        </div>
-        <div class="details">
-          <div class="row">
-            <span>תאריך:</span>
-            <span>${formatDate(receipt.created_at)}</span>
+        <div class="receipt-container">
+          <div class="header">
+            <div class="logo">בית הכנסת</div>
+            <div class="receipt-number">קבלה מספר: ${receipt.receipt_number}</div>
+            <div class="date">${formatDate(receipt.created_at)}</div>
           </div>
-          <div class="row">
-            <span>התקבל מאת:</span>
-            <span>${receipt.member?.full_name}</span>
+          
+          <div class="details">
+            <div class="row">
+              <span class="label">התקבל מאת:</span>
+              <span class="value">${receipt.member?.full_name || '-'}</span>
+            </div>
+            <div class="row">
+              <span class="label">עבור:</span>
+              <span class="value">${receipt.description || 'תרומה'}</span>
+            </div>
+            <div class="row">
+              <span class="label">אמצעי תשלום:</span>
+              <span class="value">${receipt.payment?.method === 'bit' ? 'ביט' : 'מזומן'}</span>
+            </div>
           </div>
-          <div class="row">
-            <span>עבור:</span>
-            <span>${receipt.description || 'תרומה'}</span>
+          
+          <div class="total-section">
+            <div class="total-label">סה״כ שולם</div>
+            <div class="total-amount">₪${Number(receipt.total_amount).toLocaleString()}</div>
           </div>
-          <div class="row">
-            <span>אמצעי תשלום:</span>
-            <span>${receipt.payment?.method === 'bit' ? 'ביט' : 'מזומן'}</span>
+          
+          <button class="print-btn no-print" onclick="window.print()">🖨️ הדפס קבלה</button>
+          
+          <div class="footer">
+            <p class="thank-you">תודה על תרומתכם!</p>
+            <p>מערכת ניהול גבאות</p>
           </div>
-        </div>
-        <div class="total">
-          סה"כ: ₪${Number(receipt.total_amount).toLocaleString()}
-        </div>
-        <div class="footer">
-          <p>תודה על תרומתכם!</p>
-          <p>מערכת ניהול גבאות</p>
         </div>
       </body>
       </html>
     `);
     printWindow.document.close();
-    printWindow.print();
   };
 
   const handleWhatsApp = (receipt: any) => {
