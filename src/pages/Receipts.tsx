@@ -10,15 +10,17 @@ import {
   Receipt,
   Search,
   Printer,
-  Download,
+  Eye,
   MessageCircle,
   Mail,
 } from 'lucide-react';
 import { formatCurrency, formatShortDate, formatDate } from '@/lib/hebrew-utils';
 import { toast } from 'sonner';
+import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 
 export default function Receipts() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
 
   // Fetch receipts
   const { data: receipts, isLoading } = useQuery({
@@ -363,8 +365,16 @@ export default function Receipts() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => setPreviewReceipt(receipt)}
+                        title="תצוגה מקדימה"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => handlePrint(receipt)}
-                        title="הדפסה"
+                        title="הדפסה ישירה"
                       >
                         <Printer className="w-4 h-4" />
                       </Button>
@@ -393,6 +403,14 @@ export default function Receipts() {
           )}
         </CardContent>
       </Card>
+
+      {/* Receipt Preview Modal */}
+      <ReceiptPreviewDialog
+        receipt={previewReceipt}
+        open={!!previewReceipt}
+        onOpenChange={(open) => !open && setPreviewReceipt(null)}
+        onPrint={handlePrint}
+      />
     </div>
   );
 }
