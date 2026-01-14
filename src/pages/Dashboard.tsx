@@ -15,7 +15,7 @@ import {
   AlertCircle,
   ArrowLeft,
 } from 'lucide-react';
-import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, ALIYA_STATUS } from '@/lib/hebrew-utils';
+import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate, ALIYA_STATUS } from '@/lib/hebrew-utils';
 
 export default function Dashboard() {
   const nextShabbat = getNextShabbat();
@@ -91,7 +91,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">לוח בקרה</h1>
           <p className="text-muted-foreground">
-            שבת פרשת {parasha} • {formatDate(nextShabbat)}
+            שבת פרשת {parasha} • {formatDate(nextShabbat)} • {getHebrewDate(nextShabbat)}
           </p>
         </div>
         <Link to="/friday">

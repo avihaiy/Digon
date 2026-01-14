@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, X } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/hebrew-utils';
+import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
 
 interface ReceiptPreviewDialogProps {
   receipt: any;
@@ -47,7 +47,7 @@ export function ReceiptPreviewDialog({
                 קבלה מספר: {receipt.receipt_number}
               </div>
               <div className="text-xs text-gray-600 mt-1">
-                {formatDate(receipt.created_at)}
+                {formatDate(receipt.created_at)} • {getHebrewDate(new Date(receipt.created_at))}
               </div>
             </div>
 
