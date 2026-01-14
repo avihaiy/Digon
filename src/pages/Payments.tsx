@@ -36,6 +36,7 @@ import { toast } from 'sonner';
 import {
   formatCurrency,
   formatShortDate,
+  getHebrewDate,
   PAYMENT_METHOD,
   PAYMENT_STATUS,
   getCurrentParasha,
@@ -246,8 +247,8 @@ export default function Payments() {
                     </div>
                     <div>
                       <p className="font-medium">{payment.member?.full_name}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{formatShortDate(payment.created_at)}</span>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                        <span>{formatShortDate(payment.created_at)} ({getHebrewDate(new Date(payment.created_at))})</span>
                         <span>•</span>
                         <span>{PAYMENT_METHOD[payment.method as keyof typeof PAYMENT_METHOD]}</span>
                         {payment.reference && (

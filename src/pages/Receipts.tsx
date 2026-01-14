@@ -14,7 +14,7 @@ import {
   MessageCircle,
   Mail,
 } from 'lucide-react';
-import { formatCurrency, formatShortDate, formatDate } from '@/lib/hebrew-utils';
+import { formatCurrency, formatShortDate, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 
@@ -345,8 +345,8 @@ export default function Receipts() {
                         </Badge>
                         <span className="font-medium">{receipt.member?.full_name}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <span>{formatShortDate(receipt.created_at)}</span>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1 flex-wrap">
+                        <span>{formatShortDate(receipt.created_at)} ({getHebrewDate(new Date(receipt.created_at))})</span>
                         {receipt.description && (
                           <>
                             <span>•</span>

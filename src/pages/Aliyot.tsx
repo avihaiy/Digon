@@ -38,6 +38,7 @@ import {
   formatCurrency,
   getNextShabbat,
   getParashaForDate,
+  getHebrewDate,
   ALIYA_TYPES,
   ALIYA_STATUS,
   PARASHA_LIST,
@@ -214,7 +215,7 @@ export default function Aliyot() {
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="gap-2">
                     <CalendarIcon className="w-4 h-4" />
-                    {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })}
+                    {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })} • {getHebrewDate(selectedDate)}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
