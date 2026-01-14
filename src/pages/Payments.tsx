@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,10 @@ import {
   CheckCircle2,
   Clock,
   QrCode,
+  Filter,
+  TrendingUp,
+  AlertCircle,
+  Receipt,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -42,12 +47,16 @@ import {
   getCurrentParasha,
 } from '@/lib/hebrew-utils';
 
+type FilterType = 'all' | 'pending' | 'confirmed' | 'bit' | 'cash' | 'this_month';
+
 export default function Payments() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'bit' | 'cash'>('cash');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
 
   // Form state
   const [formData, setFormData] = useState({
@@ -59,9 +68,9 @@ export default function Payments() {
 
   // Fetch payments
   const { data: payments, isLoading } = useQuery({
-    queryKey: ['payments', searchQuery],
+    queryKey: ['payments'],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('payments')
         .select(`
           *,
@@ -70,7 +79,6 @@ export default function Payments() {
         `)
         .order('created_at', { ascending: false });
 
-      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -94,7 +102,6 @@ export default function Payments() {
   // Create payment
   const createPayment = useMutation({
     mutationFn: async () => {
-      // Create payment
       const { data: payment, error: paymentError } = await supabase
         .from('payments')
         .insert({
@@ -111,7 +118,6 @@ export default function Payments() {
 
       if (paymentError) throw paymentError;
 
-      // Create receipt
       const { error: receiptError } = await supabase.from('receipts').insert({
         member_id: formData.member_id,
         payment_id: payment.id,
@@ -133,7 +139,7 @@ export default function Payments() {
     },
   });
 
-  // Confirm pending payment
+  // Confirm single payment
   const confirmPayment = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -145,6 +151,25 @@ export default function Payments() {
     onSuccess: () => {
       toast.success('התשלום אושר');
       queryClient.invalidateQueries({ queryKey: ['payments'] });
+    },
+  });
+
+  // Bulk confirm payments
+  const bulkConfirmPayments = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('payments')
+        .update({ status: 'confirmed' })
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`${selectedPayments.size} תשלומים אושרו בהצלחה`);
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      setSelectedPayments(new Set());
+    },
+    onError: (error) => {
+      toast.error('שגיאה באישור התשלומים', { description: error.message });
     },
   });
 
@@ -171,46 +196,236 @@ export default function Payments() {
     createPayment.mutate();
   };
 
-  // Filter payments by search
-  const filteredPayments = payments?.filter((p: any) =>
-    p.member?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const togglePaymentSelection = (paymentId: string) => {
+    const newSelected = new Set(selectedPayments);
+    if (newSelected.has(paymentId)) {
+      newSelected.delete(paymentId);
+    } else {
+      newSelected.add(paymentId);
+    }
+    setSelectedPayments(newSelected);
+  };
 
-  // Summary stats
+  const selectAllPending = () => {
+    const pendingIds = payments?.filter(p => p.status === 'pending').map(p => p.id) || [];
+    setSelectedPayments(new Set(pendingIds));
+  };
+
+  const handleBulkConfirm = () => {
+    const pendingSelected = Array.from(selectedPayments).filter(id => 
+      payments?.find(p => p.id === id && p.status === 'pending')
+    );
+    if (pendingSelected.length === 0) {
+      toast.error('אין תשלומים ממתינים שנבחרו');
+      return;
+    }
+    bulkConfirmPayments.mutate(pendingSelected);
+  };
+
+  // Filter payments
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  const filteredPayments = payments?.filter((p: any) => {
+    // Search filter
+    if (searchQuery && !p.member?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    
+    // Quick filters
+    switch (activeFilter) {
+      case 'pending':
+        return p.status === 'pending';
+      case 'confirmed':
+        return p.status === 'confirmed';
+      case 'bit':
+        return p.method === 'bit';
+      case 'cash':
+        return p.method === 'cash';
+      case 'this_month':
+        return new Date(p.created_at) >= startOfMonth;
+      default:
+        return true;
+    }
+  });
+
+  // Stats
   const totalConfirmed = payments?.filter((p: any) => p.status === 'confirmed')
     .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
   const pendingCount = payments?.filter((p: any) => p.status === 'pending').length || 0;
+  const pendingAmount = payments?.filter((p: any) => p.status === 'pending')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+  const thisMonthAmount = payments?.filter((p: any) => new Date(p.created_at) >= startOfMonth && p.status === 'confirmed')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+  const bitTotal = payments?.filter((p: any) => p.method === 'bit' && p.status === 'confirmed')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+  const cashTotal = payments?.filter((p: any) => p.method === 'cash' && p.status === 'confirmed')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+
+  const quickFilters: { key: FilterType; label: string; count?: number }[] = [
+    { key: 'all', label: 'הכל' },
+    { key: 'pending', label: 'ממתינים', count: pendingCount },
+    { key: 'confirmed', label: 'אושרו' },
+    { key: 'this_month', label: 'החודש' },
+    { key: 'bit', label: 'ביט' },
+    { key: 'cash', label: 'מזומן' },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-up">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <CreditCard className="w-6 h-6" />
-            ניהול תשלומים
-          </h1>
-          <p className="text-muted-foreground">
-            סה״כ הכנסות: {formatCurrency(totalConfirmed)}
-            {pendingCount > 0 && ` • ${pendingCount} ממתינים לאישור`}
-          </p>
+      {/* Header with Enhanced Stats */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <CreditCard className="w-6 h-6" />
+              ניהול תשלומים
+            </h1>
+          </div>
+          <Button onClick={() => setDialogOpen(true)} className="btn-primary-gradient gap-2">
+            <Plus className="w-4 h-4" />
+            קבל תשלום
+          </Button>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="btn-primary-gradient gap-2">
-          <Plus className="w-4 h-4" />
-          קבל תשלום
-        </Button>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="glass-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">סה״כ הכנסות</p>
+                  <p className="text-lg font-bold hebrew-number">{formatCurrency(totalConfirmed)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="glass-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Receipt className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">הכנסות החודש</p>
+                  <p className="text-lg font-bold hebrew-number">{formatCurrency(thisMonthAmount)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="glass-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-warning" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">חובות שטרם נגבו</p>
+                  <p className="text-lg font-bold hebrew-number">{formatCurrency(pendingAmount)}</p>
+                  {pendingCount > 0 && (
+                    <p className="text-xs text-muted-foreground">{pendingCount} תשלומים</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="glass-card">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex flex-col gap-1 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-purple-600" />
+                    <span className="text-muted-foreground">ביט:</span>
+                    <span className="font-bold hebrew-number">{formatCurrency(bitTotal)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Banknote className="w-4 h-4 text-green-600" />
+                    <span className="text-muted-foreground">מזומן:</span>
+                    <span className="font-bold hebrew-number">{formatCurrency(cashTotal)}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="חיפוש לפי שם חבר..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pr-10"
-        />
+      {/* Search and Quick Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="חיפוש לפי שם חבר..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-10"
+          />
+        </div>
+        
+        {/* Quick Filters */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          {quickFilters.map((filter) => (
+            <Button
+              key={filter.key}
+              variant={activeFilter === filter.key ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveFilter(filter.key)}
+              className="gap-1"
+            >
+              {filter.label}
+              {filter.count !== undefined && filter.count > 0 && (
+                <Badge variant="secondary" className="mr-1 h-5 px-1.5 text-xs">
+                  {filter.count}
+                </Badge>
+              )}
+            </Button>
+          ))}
+        </div>
       </div>
+
+      {/* Bulk Actions */}
+      {selectedPayments.size > 0 && (
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+          <span className="font-medium">{selectedPayments.size} תשלומים נבחרו</span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={handleBulkConfirm}
+              disabled={bulkConfirmPayments.isPending}
+              className="gap-1"
+            >
+              {bulkConfirmPayments.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4" />
+              )}
+              אשר נבחרים
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setSelectedPayments(new Set())}
+            >
+              בטל בחירה
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Select All Pending */}
+      {pendingCount > 0 && selectedPayments.size === 0 && (
+        <Button variant="outline" size="sm" onClick={selectAllPending} className="gap-2">
+          <Checkbox className="w-4 h-4" />
+          בחר את כל הממתינים ({pendingCount})
+        </Button>
+      )}
 
       {/* Payments List */}
       <Card className="glass-card">
@@ -231,9 +446,17 @@ export default function Payments() {
               {filteredPayments?.map((payment: any) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between p-4 table-row-hover"
+                  className="flex items-center gap-4 p-4 table-row-hover"
                 >
-                  <div className="flex items-center gap-4">
+                  {/* Checkbox for pending payments */}
+                  {payment.status === 'pending' && (
+                    <Checkbox
+                      checked={selectedPayments.has(payment.id)}
+                      onCheckedChange={() => togglePaymentSelection(payment.id)}
+                    />
+                  )}
+                  
+                  <div className="flex items-center gap-4 flex-1">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       payment.method === 'bit'
                         ? 'bg-purple-100 text-purple-600'
