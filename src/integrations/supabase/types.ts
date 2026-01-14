@@ -178,6 +178,108 @@ export type Database = {
           },
         ]
       }
+      equipment: {
+        Row: {
+          available_quantity: number
+          category: Database["public"]["Enums"]["equipment_category"]
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          notes: string | null
+          quantity: number
+          status: Database["public"]["Enums"]["equipment_status"]
+          updated_at: string
+        }
+        Insert: {
+          available_quantity?: number
+          category?: Database["public"]["Enums"]["equipment_category"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          quantity?: number
+          status?: Database["public"]["Enums"]["equipment_status"]
+          updated_at?: string
+        }
+        Update: {
+          available_quantity?: number
+          category?: Database["public"]["Enums"]["equipment_category"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          quantity?: number
+          status?: Database["public"]["Enums"]["equipment_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      equipment_loans: {
+        Row: {
+          actual_return_date: string | null
+          created_at: string
+          created_by: string | null
+          equipment_id: string
+          expected_return_date: string | null
+          id: string
+          loan_date: string
+          member_id: string
+          notes: string | null
+          purpose: string | null
+          quantity: number
+          status: Database["public"]["Enums"]["loan_status"]
+          updated_at: string
+        }
+        Insert: {
+          actual_return_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipment_id: string
+          expected_return_date?: string | null
+          id?: string
+          loan_date?: string
+          member_id: string
+          notes?: string | null
+          purpose?: string | null
+          quantity?: number
+          status?: Database["public"]["Enums"]["loan_status"]
+          updated_at?: string
+        }
+        Update: {
+          actual_return_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: string
+          expected_return_date?: string | null
+          id?: string
+          loan_date?: string
+          member_id?: string
+          notes?: string | null
+          purpose?: string | null
+          quantity?: number
+          status?: Database["public"]["Enums"]["loan_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_loans_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_loans_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           active: boolean | null
@@ -404,6 +506,9 @@ export type Database = {
         | "hagbaha"
         | "glila"
       app_role: "admin" | "gabai" | "viewer"
+      equipment_category: "hall" | "furniture" | "books" | "events" | "other"
+      equipment_status: "available" | "loaned" | "maintenance" | "retired"
+      loan_status: "active" | "returned" | "overdue"
       payment_method: "bit" | "cash"
       payment_status: "pending" | "confirmed"
       transaction_type: "income" | "expense"
@@ -548,6 +653,9 @@ export const Constants = {
         "glila",
       ],
       app_role: ["admin", "gabai", "viewer"],
+      equipment_category: ["hall", "furniture", "books", "events", "other"],
+      equipment_status: ["available", "loaned", "maintenance", "retired"],
+      loan_status: ["active", "returned", "overdue"],
       payment_method: ["bit", "cash"],
       payment_status: ["pending", "confirmed"],
       transaction_type: ["income", "expense"],
