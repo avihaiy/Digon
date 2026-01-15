@@ -1,11 +1,35 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Receipt,
   Search,
@@ -13,14 +37,26 @@ import {
   Eye,
   MessageCircle,
   Mail,
+  Edit,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 import { formatCurrency, formatShortDate, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 
 export default function Receipts() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
+  const [editingReceipt, setEditingReceipt] = useState<any>(null);
+  const [deleteReceiptId, setDeleteReceiptId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    member_id: '',
+    total_amount: '',
+    description: '',
+  });
 
   // Fetch receipts
   const { data: receipts, isLoading } = useQuery({
@@ -39,6 +75,85 @@ export default function Receipts() {
       return data || [];
     },
   });
+
+  // Fetch members for dropdown
+  const { data: members } = useQuery({
+    queryKey: ['members-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, full_name')
+        .eq('active', true)
+        .order('full_name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Update receipt
+  const updateReceipt = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('receipts')
+        .update({
+          member_id: editFormData.member_id,
+          total_amount: Number(editFormData.total_amount),
+          description: editFormData.description || null,
+        })
+        .eq('id', editingReceipt.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('הקבלה עודכנה בהצלחה');
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+      handleCloseEditDialog();
+    },
+    onError: (error) => {
+      toast.error('שגיאה בעדכון הקבלה', { description: error.message });
+    },
+  });
+
+  // Delete receipt
+  const deleteReceipt = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('receipts').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('הקבלה נמחקה בהצלחה');
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+      setDeleteReceiptId(null);
+    },
+    onError: (error) => {
+      toast.error('שגיאה במחיקת הקבלה', { description: error.message });
+    },
+  });
+
+  const handleEditReceipt = (receipt: any) => {
+    setEditingReceipt(receipt);
+    setEditFormData({
+      member_id: receipt.member_id,
+      total_amount: String(receipt.total_amount),
+      description: receipt.description || '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+    setEditingReceipt(null);
+    setEditFormData({ member_id: '', total_amount: '', description: '' });
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFormData.member_id || !editFormData.total_amount) {
+      toast.error('יש למלא את כל השדות הנדרשים');
+      return;
+    }
+    updateReceipt.mutate();
+  };
 
   const handlePrint = (receipt: any) => {
     // Create printable receipt optimized for 80mm thermal printer
@@ -357,11 +472,11 @@ export default function Receipts() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     <span className="text-xl font-bold hebrew-number">
                       {formatCurrency(Number(receipt.total_amount))}
                     </span>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1 sm:gap-2 flex-wrap">
                       <Button
                         size="sm"
                         variant="outline"
@@ -395,6 +510,23 @@ export default function Receipts() {
                       >
                         <Mail className="w-4 h-4" />
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditReceipt(receipt)}
+                        title="עריכה"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDeleteReceiptId(receipt.id)}
+                        className="text-destructive hover:text-destructive"
+                        title="מחיקה"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -411,6 +543,101 @@ export default function Receipts() {
         onOpenChange={(open) => !open && setPreviewReceipt(null)}
         onPrint={handlePrint}
       />
+
+      {/* Edit Receipt Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5" />
+              עריכת קבלה #{editingReceipt?.receipt_number}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>שם המשלם *</Label>
+              <Select
+                value={editFormData.member_id}
+                onValueChange={(value) => setEditFormData({ ...editFormData, member_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר חבר" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members?.map((member: any) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>סכום *</Label>
+              <Input
+                type="number"
+                value={editFormData.total_amount}
+                onChange={(e) => setEditFormData({ ...editFormData, total_amount: e.target.value })}
+                placeholder="0"
+                dir="ltr"
+                className="text-left"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>תיאור</Label>
+              <Input
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                placeholder="תיאור הקבלה"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={handleCloseEditDialog} className="flex-1">
+                ביטול
+              </Button>
+              <Button type="submit" className="flex-1 btn-primary-gradient" disabled={updateReceipt.isPending}>
+                {updateReceipt.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    שומר...
+                  </>
+                ) : (
+                  'שמור'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteReceiptId} onOpenChange={(open) => !open && setDeleteReceiptId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת קבלה</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם אתה בטוח שברצונך למחוק קבלה זו? פעולה זו לא ניתן לבטלה.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteReceiptId && deleteReceipt.mutate(deleteReceiptId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteReceipt.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'מחק'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
