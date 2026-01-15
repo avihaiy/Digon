@@ -23,6 +23,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   CreditCard,
   Plus,
   Search,
@@ -36,6 +46,8 @@ import {
   TrendingUp,
   AlertCircle,
   Receipt,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -57,6 +69,8 @@ export default function Payments() {
   const [paymentMethod, setPaymentMethod] = useState<'bit' | 'cash'>('cash');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
+  const [editingPayment, setEditingPayment] = useState<any>(null);
+  const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -99,43 +113,92 @@ export default function Payments() {
     },
   });
 
-  // Create payment
-  const createPayment = useMutation({
+  // Create/Update payment
+  const savePayment = useMutation({
     mutationFn: async () => {
-      const { data: payment, error: paymentError } = await supabase
-        .from('payments')
-        .insert({
+      if (editingPayment) {
+        // Update existing payment
+        const { error } = await supabase
+          .from('payments')
+          .update({
+            member_id: formData.member_id,
+            amount: Number(formData.amount),
+            method: paymentMethod,
+            reference: paymentMethod === 'bit' ? formData.reference : null,
+            notes: formData.notes || null,
+          })
+          .eq('id', editingPayment.id);
+        if (error) throw error;
+        
+        // Update related receipt if exists
+        const { error: receiptError } = await supabase
+          .from('receipts')
+          .update({ 
+            member_id: formData.member_id,
+            total_amount: Number(formData.amount) 
+          })
+          .eq('payment_id', editingPayment.id);
+        
+        if (receiptError) console.warn('Could not update receipt:', receiptError);
+        return editingPayment;
+      } else {
+        // Create new payment
+        const { data: payment, error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            member_id: formData.member_id,
+            amount: Number(formData.amount),
+            method: paymentMethod,
+            reference: paymentMethod === 'bit' ? formData.reference : null,
+            received_by: user?.id,
+            status: 'confirmed',
+            notes: formData.notes || null,
+          })
+          .select()
+          .single();
+
+        if (paymentError) throw paymentError;
+
+        const { error: receiptError } = await supabase.from('receipts').insert({
           member_id: formData.member_id,
-          amount: Number(formData.amount),
-          method: paymentMethod,
-          reference: paymentMethod === 'bit' ? formData.reference : null,
-          received_by: user?.id,
-          status: 'confirmed',
-          notes: formData.notes || null,
-        })
-        .select()
-        .single();
+          payment_id: payment.id,
+          total_amount: Number(formData.amount),
+          description: `תשלום - פרשת ${getCurrentParasha()}`,
+        });
 
-      if (paymentError) throw paymentError;
+        if (receiptError) throw receiptError;
 
-      const { error: receiptError } = await supabase.from('receipts').insert({
-        member_id: formData.member_id,
-        payment_id: payment.id,
-        total_amount: Number(formData.amount),
-        description: `תשלום - פרשת ${getCurrentParasha()}`,
-      });
-
-      if (receiptError) throw receiptError;
-
-      return payment;
+        return payment;
+      }
     },
     onSuccess: () => {
-      toast.success('התשלום נקלט והקבלה הונפקה');
+      toast.success(editingPayment ? 'התשלום עודכן בהצלחה' : 'התשלום נקלט והקבלה הונפקה');
       queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
       handleCloseDialog();
     },
     onError: (error) => {
-      toast.error('שגיאה בקליטת התשלום', { description: error.message });
+      toast.error('שגיאה בשמירת התשלום', { description: error.message });
+    },
+  });
+
+  // Delete payment
+  const deletePayment = useMutation({
+    mutationFn: async (id: string) => {
+      // First delete related receipts
+      await supabase.from('receipts').delete().eq('payment_id', id);
+      // Then delete the payment
+      const { error } = await supabase.from('payments').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('התשלום נמחק בהצלחה');
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+      setDeletePaymentId(null);
+    },
+    onError: (error) => {
+      toast.error('שגיאה במחיקת התשלום', { description: error.message });
     },
   });
 
@@ -175,8 +238,21 @@ export default function Payments() {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
+    setEditingPayment(null);
     setFormData({ member_id: '', amount: '', reference: '', notes: '' });
     setPaymentMethod('cash');
+  };
+
+  const handleEditPayment = (payment: any) => {
+    setEditingPayment(payment);
+    setFormData({
+      member_id: payment.member_id,
+      amount: String(payment.amount),
+      reference: payment.reference || '',
+      notes: payment.notes || '',
+    });
+    setPaymentMethod(payment.method);
+    setDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -193,7 +269,7 @@ export default function Payments() {
       toast.error('יש להזין מספר אסמכתא מביט');
       return;
     }
-    createPayment.mutate();
+    savePayment.mutate();
   };
 
   const togglePaymentSelection = (paymentId: string) => {
@@ -483,7 +559,7 @@ export default function Payments() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     <span className="text-lg font-bold hebrew-number">
                       {formatCurrency(Number(payment.amount))}
                     </span>
@@ -506,14 +582,33 @@ export default function Payments() {
                         קבלה #{payment.receipt[0].receipt_number}
                       </Badge>
                     )}
-                    {payment.status === 'pending' && (
+                    <div className="flex gap-1">
+                      {payment.status === 'pending' && (
+                        <Button
+                          size="sm"
+                          onClick={() => confirmPayment.mutate(payment.id)}
+                        >
+                          אשר
+                        </Button>
+                      )}
                       <Button
                         size="sm"
-                        onClick={() => confirmPayment.mutate(payment.id)}
+                        variant="outline"
+                        onClick={() => handleEditPayment(payment)}
+                        title="עריכה"
                       >
-                        אשר
+                        <Edit className="w-4 h-4" />
                       </Button>
-                    )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDeletePaymentId(payment.id)}
+                        className="text-destructive hover:text-destructive"
+                        title="מחיקה"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -528,7 +623,7 @@ export default function Payments() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
-              קבלת תשלום חדש
+              {editingPayment ? 'עריכת תשלום' : 'קבלת תשלום חדש'}
             </DialogTitle>
           </DialogHeader>
 
@@ -627,9 +722,9 @@ export default function Payments() {
               <Button
                 type="submit"
                 className="flex-1 btn-primary-gradient"
-                disabled={createPayment.isPending}
+                disabled={savePayment.isPending}
               >
-                {createPayment.isPending ? (
+                {savePayment.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                     מעבד...
@@ -637,7 +732,7 @@ export default function Payments() {
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4 ml-2" />
-                    קבל תשלום והנפק קבלה
+                    {editingPayment ? 'עדכן תשלום' : 'קבל תשלום והנפק קבלה'}
                   </>
                 )}
               </Button>
@@ -645,6 +740,31 @@ export default function Payments() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletePaymentId} onOpenChange={(open) => !open && setDeletePaymentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת תשלום</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם אתה בטוח שברצונך למחוק תשלום זה? פעולה זו תמחק גם את הקבלה המשויכת ולא ניתן לבטלה.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletePaymentId && deletePayment.mutate(deletePaymentId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletePayment.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'מחק'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
