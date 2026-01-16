@@ -1,5 +1,81 @@
 // Hebrew date and parasha utilities
-import { HDate, Sedra, ParshaEvent } from '@hebcal/core';
+import { HDate, Sedra, Location, Zmanim } from '@hebcal/core';
+
+// Common Israeli city locations
+export const ISRAEL_LOCATIONS: Record<string, { name: string; lat: number; lng: number; tzid: string }> = {
+  jerusalem: { name: 'ירושלים', lat: 31.7683, lng: 35.2137, tzid: 'Asia/Jerusalem' },
+  tel_aviv: { name: 'תל אביב', lat: 32.0853, lng: 34.7818, tzid: 'Asia/Jerusalem' },
+  haifa: { name: 'חיפה', lat: 32.7940, lng: 34.9896, tzid: 'Asia/Jerusalem' },
+  beer_sheva: { name: 'באר שבע', lat: 31.2530, lng: 34.7915, tzid: 'Asia/Jerusalem' },
+  eilat: { name: 'אילת', lat: 29.5577, lng: 34.9519, tzid: 'Asia/Jerusalem' },
+  netanya: { name: 'נתניה', lat: 32.3215, lng: 34.8532, tzid: 'Asia/Jerusalem' },
+  ashdod: { name: 'אשדוד', lat: 31.8044, lng: 34.6553, tzid: 'Asia/Jerusalem' },
+  bnei_brak: { name: 'בני ברק', lat: 32.0873, lng: 34.8338, tzid: 'Asia/Jerusalem' },
+  petah_tikva: { name: 'פתח תקווה', lat: 32.0841, lng: 34.8878, tzid: 'Asia/Jerusalem' },
+  rishon: { name: 'ראשון לציון', lat: 31.9730, lng: 34.7925, tzid: 'Asia/Jerusalem' },
+};
+
+// Get Shabbat times for a location
+export interface ShabbatTimes {
+  candleLighting: Date | null;
+  shabbatStart: Date | null;
+  shabbatEnd: Date | null;
+  havdalah: Date | null;
+}
+
+export function getShabbatTimes(locationKey: string = 'jerusalem', date: Date = new Date()): ShabbatTimes {
+  const loc = ISRAEL_LOCATIONS[locationKey] || ISRAEL_LOCATIONS.jerusalem;
+  const location = new Location(loc.lat, loc.lng, false, loc.tzid, undefined, loc.name);
+  
+  // Find the upcoming Friday
+  const friday = new Date(date);
+  const dayOfWeek = friday.getDay();
+  const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+  if (daysUntilFriday > 0) {
+    friday.setDate(friday.getDate() + daysUntilFriday);
+  }
+  
+  // Find Saturday
+  const saturday = new Date(friday);
+  saturday.setDate(saturday.getDate() + 1);
+  
+  // Calculate zmanim for Friday (candle lighting)
+  const fridayZmanim = new Zmanim(location, friday, false);
+  const sunset = fridayZmanim.sunset();
+  
+  // Candle lighting is typically 18-40 minutes before sunset (18 for most, 40 for Jerusalem)
+  const candleLightingMinutes = locationKey === 'jerusalem' ? 40 : 18;
+  let candleLighting: Date | null = null;
+  if (sunset) {
+    candleLighting = new Date(sunset.getTime() - candleLightingMinutes * 60 * 1000);
+  }
+  
+  // Calculate zmanim for Saturday (havdalah)
+  const saturdayZmanim = new Zmanim(location, saturday, false);
+  const saturdaySunset = saturdayZmanim.sunset();
+  const tzeit = saturdayZmanim.tzeit(); // Three stars
+  
+  let havdalah: Date | null = null;
+  if (tzeit) {
+    havdalah = tzeit;
+  } else if (saturdaySunset) {
+    // Fallback: ~42 minutes after sunset
+    havdalah = new Date(saturdaySunset.getTime() + 42 * 60 * 1000);
+  }
+  
+  return {
+    candleLighting,
+    shabbatStart: sunset,
+    shabbatEnd: saturdaySunset,
+    havdalah,
+  };
+}
+
+// Format time for display (HH:MM)
+export function formatTimeOnly(date: Date | null): string {
+  if (!date) return '--:--';
+  return date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+}
 
 // Parasha list for reference and display
 export const PARASHA_LIST = [

@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { HDate } from '@hebcal/core';
-import { getHebrewDate, getCurrentParasha, getNextShabbat, ALIYA_TYPES, formatCurrency } from '@/lib/hebrew-utils';
-import { Clock, Star, Flame, Sun, Moon, Sunset } from 'lucide-react';
+import { 
+  getHebrewDate, getCurrentParasha, getNextShabbat, ALIYA_TYPES, formatCurrency,
+  getShabbatTimes, formatTimeOnly, ISRAEL_LOCATIONS 
+} from '@/lib/hebrew-utils';
+import { Clock, Star, Flame, Sun, Moon, Sunset, CandlestickChart } from 'lucide-react';
 
 interface PrayerTime {
   id: string;
@@ -31,10 +34,16 @@ interface Announcement {
 
 export default function DisplayGeneral() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedLocation, setSelectedLocation] = useState('jerusalem');
   const today = new Date();
   const isFriday = today.getDay() === 5;
   const isShabbat = today.getDay() === 6;
   const isShabbatMode = isFriday || isShabbat;
+
+  // Calculate Shabbat times
+  const shabbatTimes = useMemo(() => {
+    return getShabbatTimes(selectedLocation, currentTime);
+  }, [selectedLocation, currentTime.toDateString()]);
 
   // Real-time clock
   useEffect(() => {
@@ -156,6 +165,57 @@ export default function DisplayGeneral() {
             <Flame className="w-6 h-6 text-orange-400 animate-pulse" />
           </motion.div>
         )}
+
+        {/* Shabbat Times Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-6 flex items-center justify-center gap-8 px-8 py-4 bg-gradient-to-r from-purple-900/40 via-indigo-900/40 to-purple-900/40 rounded-2xl border border-purple-500/30"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-orange-500/30 flex items-center justify-center">
+              <Flame className="w-6 h-6 text-orange-400" />
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-purple-300">הדלקת נרות</div>
+              <div className="text-2xl font-bold text-orange-300">{formatTimeOnly(shabbatTimes.candleLighting)}</div>
+            </div>
+          </div>
+          
+          <div className="h-12 w-px bg-purple-500/30" />
+          
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-amber-500/30 flex items-center justify-center">
+              <Sunset className="w-6 h-6 text-amber-400" />
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-purple-300">כניסת שבת</div>
+              <div className="text-2xl font-bold text-amber-300">{formatTimeOnly(shabbatTimes.shabbatStart)}</div>
+            </div>
+          </div>
+          
+          <div className="h-12 w-px bg-purple-500/30" />
+          
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-500/30 flex items-center justify-center">
+              <Star className="w-6 h-6 text-blue-400" />
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-purple-300">צאת שבת / הבדלה</div>
+              <div className="text-2xl font-bold text-blue-300">{formatTimeOnly(shabbatTimes.havdalah)}</div>
+            </div>
+          </div>
+          
+          <div className="h-12 w-px bg-purple-500/30" />
+          
+          <div className="text-center">
+            <div className="text-sm text-purple-300">מיקום</div>
+            <div className="text-lg font-medium text-purple-200">
+              {ISRAEL_LOCATIONS[selectedLocation]?.name || 'ירושלים'}
+            </div>
+          </div>
+        </motion.div>
       </motion.header>
 
       {/* Main Grid */}

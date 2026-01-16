@@ -14,17 +14,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { HEBREW_MONTHS, getHebrewDate, formatCurrency, getCurrentParasha } from '@/lib/hebrew-utils';
+import { 
+  HEBREW_MONTHS, getHebrewDate, formatCurrency, getCurrentParasha, 
+  getShabbatTimes, formatTimeOnly, ISRAEL_LOCATIONS 
+} from '@/lib/hebrew-utils';
 import { 
   Clock, Users, DollarSign, Bell, BookOpen, Plus, Edit, Trash2, 
-  Flame, Calendar, Monitor, MessageSquare, Settings 
+  Flame, Calendar, Monitor, MessageSquare, Settings, MapPin, Sunset, Star 
 } from 'lucide-react';
 
 export default function Admin() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
-  
+  const [selectedLocation, setSelectedLocation] = useState('jerusalem');
+  const shabbatTimes = getShabbatTimes(selectedLocation);
   // Dialog states
   const [prayerDialogOpen, setPrayerDialogOpen] = useState(false);
   const [memorialDialogOpen, setMemorialDialogOpen] = useState(false);
@@ -261,7 +265,54 @@ export default function Admin() {
                 <h1 className="text-3xl font-bold text-gray-900">שלום, {user.email}</h1>
                 <p className="text-gray-500 mt-1">{getHebrewDate(new Date())} • פרשת {getCurrentParasha()}</p>
               </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-gray-400" />
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ISRAEL_LOCATIONS).map(([key, loc]) => (
+                      <SelectItem key={key} value={key}>{loc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Shabbat Times Card */}
+            <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-purple-800">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  זמני שבת - {ISRAEL_LOCATIONS[selectedLocation]?.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-white/80 rounded-xl">
+                    <Flame className="w-8 h-8 mx-auto text-orange-500 mb-2" />
+                    <div className="text-sm text-gray-500">הדלקת נרות</div>
+                    <div className="text-2xl font-bold text-orange-600">{formatTimeOnly(shabbatTimes.candleLighting)}</div>
+                  </div>
+                  <div className="text-center p-4 bg-white/80 rounded-xl">
+                    <Sunset className="w-8 h-8 mx-auto text-amber-500 mb-2" />
+                    <div className="text-sm text-gray-500">כניסת שבת</div>
+                    <div className="text-2xl font-bold text-amber-600">{formatTimeOnly(shabbatTimes.shabbatStart)}</div>
+                  </div>
+                  <div className="text-center p-4 bg-white/80 rounded-xl">
+                    <Sunset className="w-8 h-8 mx-auto text-blue-500 mb-2" />
+                    <div className="text-sm text-gray-500">צאת שבת</div>
+                    <div className="text-2xl font-bold text-blue-600">{formatTimeOnly(shabbatTimes.shabbatEnd)}</div>
+                  </div>
+                  <div className="text-center p-4 bg-white/80 rounded-xl">
+                    <Star className="w-8 h-8 mx-auto text-purple-500 mb-2" />
+                    <div className="text-sm text-gray-500">הבדלה</div>
+                    <div className="text-2xl font-bold text-purple-600">{formatTimeOnly(shabbatTimes.havdalah)}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="grid grid-cols-4 gap-6">
               <Card>
