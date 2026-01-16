@@ -113,6 +113,22 @@ export const USER_ROLES = {
 } as const;
 
 // Hebrew months
+export const HEBREW_MONTHS = [
+  { value: 1, label: 'תשרי' },
+  { value: 2, label: 'חשון' },
+  { value: 3, label: 'כסלו' },
+  { value: 4, label: 'טבת' },
+  { value: 5, label: 'שבט' },
+  { value: 6, label: 'אדר' },
+  { value: 7, label: 'אדר ב׳' },
+  { value: 8, label: 'ניסן' },
+  { value: 9, label: 'אייר' },
+  { value: 10, label: 'סיון' },
+  { value: 11, label: 'תמוז' },
+  { value: 12, label: 'אב' },
+  { value: 13, label: 'אלול' },
+];
+
 const hebrewMonths = [
   'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר',
   'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
