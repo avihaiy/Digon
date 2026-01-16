@@ -16,6 +16,9 @@ import Reports from "@/pages/Reports";
 import UserManagement from "@/pages/UserManagement";
 import Budget from "@/pages/Budget";
 import Equipment from "@/pages/Equipment";
+import Admin from "@/pages/Admin";
+import DisplayGeneral from "@/pages/DisplayGeneral";
+import DisplayMemorial from "@/pages/DisplayMemorial";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +72,9 @@ const AppRoutes = () => (
     <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
     <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
     <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+    <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+    <Route path="/display-general" element={<DisplayGeneral />} />
+    <Route path="/display-memorial" element={<DisplayMemorial />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

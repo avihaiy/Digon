@@ -61,6 +61,42 @@ export type Database = {
           },
         ]
       }
+      announcements: {
+        Row: {
+          content: string
+          created_at: string
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          show_on_shabbat: boolean | null
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          show_on_shabbat?: boolean | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          show_on_shabbat?: boolean | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -313,6 +349,59 @@ export type Database = {
         }
         Relationships: []
       }
+      memorial_names: {
+        Row: {
+          created_at: string
+          deceased_name: string
+          family_member_id: string | null
+          father_name: string
+          gregorian_death_date: string | null
+          hebrew_death_day: number
+          hebrew_death_month: number
+          id: string
+          is_active: boolean | null
+          is_male: boolean | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deceased_name: string
+          family_member_id?: string | null
+          father_name: string
+          gregorian_death_date?: string | null
+          hebrew_death_day: number
+          hebrew_death_month: number
+          id?: string
+          is_active?: boolean | null
+          is_male?: boolean | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deceased_name?: string
+          family_member_id?: string | null
+          father_name?: string
+          gregorian_death_date?: string | null
+          hebrew_death_day?: number
+          hebrew_death_month?: number
+          id?: string
+          is_active?: boolean | null
+          is_male?: boolean | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memorial_names_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -393,6 +482,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prayer_times: {
+        Row: {
+          created_at: string
+          day_type: string
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_type?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_type?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          time?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
