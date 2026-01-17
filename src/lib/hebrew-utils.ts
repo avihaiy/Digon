@@ -16,16 +16,56 @@ export const ISRAEL_LOCATIONS: Record<string, { name: string; lat: number; lng: 
   rishon: { name: 'ראשון לציון', lat: 31.9730, lng: 34.7925, tzid: 'Asia/Jerusalem' },
 };
 
+// Daily halachic times interface
+export interface DailyZmanim {
+  alotHashachar: Date | null;  // Dawn
+  sunrise: Date | null;        // Netz HaChama
+  misheyakir: Date | null;     // Earliest time for tallit/tefillin
+  sofZmanShmaMGA: Date | null; // Latest Shema (Magen Avraham)
+  sofZmanShmaGRA: Date | null; // Latest Shema (Gra)
+  sofZmanTfillaMGA: Date | null; // Latest Prayer (MA)
+  sofZmanTfillaGRA: Date | null; // Latest Prayer (GRA)
+  chatzot: Date | null;        // Midday
+  minchaGedola: Date | null;   // Earliest Mincha
+  minchaKetana: Date | null;   // Small Mincha
+  plagHaMincha: Date | null;   // Plag HaMincha
+  sunset: Date | null;         // Shkia
+  tzeit: Date | null;          // Three stars
+}
+
+export function getDailyZmanim(locationKey: string = 'akko', date: Date = new Date()): DailyZmanim {
+  const loc = ISRAEL_LOCATIONS[locationKey] || ISRAEL_LOCATIONS.akko;
+  const location = new Location(loc.lat, loc.lng, false, loc.tzid, undefined, loc.name);
+  const zmanim = new Zmanim(location, date, false);
+  
+  return {
+    alotHashachar: zmanim.alotHaShachar(),
+    sunrise: zmanim.sunrise(),
+    misheyakir: zmanim.misheyakir(),
+    sofZmanShmaMGA: zmanim.sofZmanShmaMGA(),
+    sofZmanShmaGRA: zmanim.sofZmanShma(),
+    sofZmanTfillaMGA: zmanim.sofZmanTfillaMGA(),
+    sofZmanTfillaGRA: zmanim.sofZmanTfilla(),
+    chatzot: zmanim.chatzot(),
+    minchaGedola: zmanim.minchaGedola(),
+    minchaKetana: zmanim.minchaKetana(),
+    plagHaMincha: zmanim.plagHaMincha(),
+    sunset: zmanim.sunset(),
+    tzeit: zmanim.tzeit(),
+  };
+}
+
 // Get Shabbat times for a location
 export interface ShabbatTimes {
   candleLighting: Date | null;
   shabbatStart: Date | null;
   shabbatEnd: Date | null;
   havdalah: Date | null;
+  havdalahRT: Date | null; // Rabbeinu Tam
 }
 
-export function getShabbatTimes(locationKey: string = 'jerusalem', date: Date = new Date()): ShabbatTimes {
-  const loc = ISRAEL_LOCATIONS[locationKey] || ISRAEL_LOCATIONS.jerusalem;
+export function getShabbatTimes(locationKey: string = 'akko', date: Date = new Date()): ShabbatTimes {
+  const loc = ISRAEL_LOCATIONS[locationKey] || ISRAEL_LOCATIONS.akko;
   const location = new Location(loc.lat, loc.lng, false, loc.tzid, undefined, loc.name);
   
   // Find the upcoming Friday
@@ -57,6 +97,7 @@ export function getShabbatTimes(locationKey: string = 'jerusalem', date: Date = 
   const tzeit = saturdayZmanim.tzeit(); // Three stars
   
   let havdalah: Date | null = null;
+  let havdalahRT: Date | null = null;
   if (tzeit) {
     havdalah = tzeit;
   } else if (saturdaySunset) {
@@ -64,11 +105,17 @@ export function getShabbatTimes(locationKey: string = 'jerusalem', date: Date = 
     havdalah = new Date(saturdaySunset.getTime() + 42 * 60 * 1000);
   }
   
+  // Rabbeinu Tam - 72 minutes after sunset
+  if (saturdaySunset) {
+    havdalahRT = new Date(saturdaySunset.getTime() + 72 * 60 * 1000);
+  }
+  
   return {
     candleLighting,
     shabbatStart: sunset,
     shabbatEnd: saturdaySunset,
     havdalah,
+    havdalahRT,
   };
 }
 
