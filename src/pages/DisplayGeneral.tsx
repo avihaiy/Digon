@@ -34,11 +34,30 @@ interface Announcement {
 
 export default function DisplayGeneral() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedLocation, setSelectedLocation] = useState('jerusalem');
+  const [selectedLocation, setSelectedLocation] = useState('akko');
   const today = new Date();
   const isFriday = today.getDay() === 5;
   const isShabbat = today.getDay() === 6;
   const isShabbatMode = isFriday || isShabbat;
+
+  // Load location from app_settings
+  const { data: locationSetting } = useQuery({
+    queryKey: ['app-settings-location'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'display_location')
+        .single();
+      return data?.value || 'akko';
+    },
+  });
+
+  useEffect(() => {
+    if (locationSetting) {
+      setSelectedLocation(locationSetting);
+    }
+  }, [locationSetting]);
 
   // Calculate Shabbat times
   const shabbatTimes = useMemo(() => {

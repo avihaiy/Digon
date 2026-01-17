@@ -3,6 +3,7 @@ import { HDate, Sedra, Location, Zmanim } from '@hebcal/core';
 
 // Common Israeli city locations
 export const ISRAEL_LOCATIONS: Record<string, { name: string; lat: number; lng: number; tzid: string }> = {
+  akko: { name: 'עכו', lat: 32.9278, lng: 35.0826, tzid: 'Asia/Jerusalem' },
   jerusalem: { name: 'ירושלים', lat: 31.7683, lng: 35.2137, tzid: 'Asia/Jerusalem' },
   tel_aviv: { name: 'תל אביב', lat: 32.0853, lng: 34.7818, tzid: 'Asia/Jerusalem' },
   haifa: { name: 'חיפה', lat: 32.7940, lng: 34.9896, tzid: 'Asia/Jerusalem' },
