@@ -6,11 +6,14 @@ import { HDate } from '@hebcal/core';
 import { 
   getHebrewDate, getCurrentParasha, 
   getShabbatTimes, getDailyZmanim, formatTimeOnly, 
-  ISRAEL_LOCATIONS, HEBREW_MONTHS, isShabbat, isFriday
+  ISRAEL_LOCATIONS, isShabbat, isFriday
 } from '@/lib/hebrew-utils';
+import { getSpecialTimesData } from '@/lib/holiday-utils';
 import { TimeDisplay, PrayerRow, ZmanRow } from '@/components/display/TimeDisplay';
 import { MemorialSection } from '@/components/display/MemorialSection';
 import { BirkatHashanimSection } from '@/components/display/BirkatHashanimSection';
+import { AnnouncementsSection } from '@/components/display/AnnouncementsSection';
+import { HolidaySection } from '@/components/display/HolidaySection';
 
 interface PrayerTime {
   id: string;
@@ -85,6 +88,11 @@ export default function DisplayGeneral() {
 
   const dailyZmanim = useMemo(() => {
     return getDailyZmanim(selectedLocation, currentTime);
+  }, [selectedLocation, currentTime.toDateString()]);
+
+  // Get holiday/special times data
+  const specialTimesData = useMemo(() => {
+    return getSpecialTimesData(selectedLocation, currentTime);
   }, [selectedLocation, currentTime.toDateString()]);
 
   // Real-time clock
@@ -313,28 +321,8 @@ export default function DisplayGeneral() {
             {/* Memorial Display */}
             <MemorialSection names={todayYahrzeits} />
 
-            {/* Announcements */}
-            <div className="bg-white/90 rounded-xl p-5 border-2 border-amber-600 shadow-lg flex-1">
-              <h2 className="text-2xl font-bold text-center text-amber-800 mb-4 bg-amber-100 py-2 rounded-lg border border-amber-300">
-                הודעות
-              </h2>
-              <div className="space-y-3">
-                {displayAnnouncements.length > 0 ? (
-                  displayAnnouncements.slice(0, 5).map((ann: Announcement) => (
-                    <motion.div 
-                      key={ann.id} 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-lg text-slate-700 py-2 px-3 border-b border-dotted border-amber-300 last:border-0 bg-amber-50/50 rounded-lg"
-                    >
-                      {ann.content}
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-4">אין הודעות</div>
-                )}
-              </div>
-            </div>
+            {/* Announcements with auto-scroll */}
+            <AnnouncementsSection announcements={displayAnnouncements} />
           </div>
 
           {/* Right Column - Daily Times & Birkat Hashanim */}
@@ -361,6 +349,9 @@ export default function DisplayGeneral() {
                 <ZmanRow name="צאת הכוכבים" time={formatTimeOnly(dailyZmanim.tzeit)} compact />
               </div>
             </div>
+
+            {/* Holiday Section - only shows when relevant */}
+            <HolidaySection data={specialTimesData} />
 
             {/* Birkat Hashanim */}
             <BirkatHashanimSection date={currentTime} />

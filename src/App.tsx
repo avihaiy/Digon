@@ -17,6 +17,7 @@ import UserManagement from "@/pages/UserManagement";
 import Budget from "@/pages/Budget";
 import Equipment from "@/pages/Equipment";
 import Admin from "@/pages/Admin";
+import AdminMobile from "@/pages/AdminMobile";
 import DisplayGeneral from "@/pages/DisplayGeneral";
 import DisplayMemorial from "@/pages/DisplayMemorial";
 import NotFound from "@/pages/NotFound";
@@ -73,6 +74,7 @@ const AppRoutes = () => (
     <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
     <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
     <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+    <Route path="/admin-mobile" element={<AdminMobile />} />
     <Route path="/display-general" element={<DisplayGeneral />} />
     <Route path="/display-memorial" element={<DisplayMemorial />} />
     <Route path="*" element={<NotFound />} />
