@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -22,6 +21,7 @@ import {
   Clock, Users, DollarSign, Bell, BookOpen, Plus, Edit, Trash2, 
   Flame, Calendar, Monitor, MessageSquare, Settings, MapPin, Sunset, Star 
 } from 'lucide-react';
+import { SettingsTab } from '@/components/admin/SettingsTab';
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -257,6 +257,7 @@ export default function Admin() {
             { id: 'prayers', label: 'זמני תפילות', icon: Clock },
             { id: 'memorial', label: 'לוח אזכרות', icon: Flame },
             { id: 'announcements', label: 'הודעות', icon: MessageSquare },
+            { id: 'settings', label: 'הגדרות תצוגה', icon: Settings },
           ].map(item => (
             <button
               key={item.id}
@@ -497,15 +498,17 @@ export default function Admin() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>סוג יום</Label>
+                      <Label>סוג</Label>
                       <Select value={prayerForm.day_type} onValueChange={v => setPrayerForm({...prayerForm, day_type: v})}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="weekday">יום חול</SelectItem>
-                          <SelectItem value="shabbat">שבת</SelectItem>
-                          <SelectItem value="holiday">חג</SelectItem>
+                          <SelectItem value="weekday">תפילה - יום חול</SelectItem>
+                          <SelectItem value="shabbat">תפילה - שבת</SelectItem>
+                          <SelectItem value="holiday">תפילה - חג</SelectItem>
+                          <SelectItem value="torah_class">שיעור תורה - יום חול</SelectItem>
+                          <SelectItem value="shabbat_torah_class">שיעור תורה - שבת</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -544,7 +547,13 @@ export default function Admin() {
                       <TableCell className="font-medium">{prayer.name}</TableCell>
                       <TableCell>{prayer.time.slice(0, 5)}</TableCell>
                       <TableCell>
-                        {prayer.day_type === 'weekday' ? 'יום חול' : prayer.day_type === 'shabbat' ? 'שבת' : 'חג'}
+                        {{
+                          weekday: 'תפילה - יום חול',
+                          shabbat: 'תפילה - שבת',
+                          holiday: 'תפילה - חג',
+                          torah_class: 'שיעור - יום חול',
+                          shabbat_torah_class: 'שיעור - שבת',
+                        }[prayer.day_type as string] || prayer.day_type}
                       </TableCell>
                       <TableCell>{prayer.is_active ? '✓' : '✗'}</TableCell>
                       <TableCell>
@@ -817,6 +826,14 @@ export default function Admin() {
               </Table>
             </Card>
           </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <SettingsTab 
+            selectedLocation={selectedLocation} 
+            onLocationChange={handleLocationChange}
+          />
         )}
       </main>
     </div>

@@ -1,12 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { HDate } from '@hebcal/core';
 import { 
-  getHebrewDate, getCurrentParasha, getNextShabbat, ALIYA_TYPES, formatCurrency,
-  getShabbatTimes, getDailyZmanim, formatTimeOnly, ISRAEL_LOCATIONS, HEBREW_MONTHS
+  getHebrewDate, getCurrentParasha, 
+  getShabbatTimes, getDailyZmanim, formatTimeOnly, 
+  ISRAEL_LOCATIONS, HEBREW_MONTHS, isShabbat, isFriday
 } from '@/lib/hebrew-utils';
+import { TimeDisplay, PrayerRow, ZmanRow } from '@/components/display/TimeDisplay';
+import { MemorialSection } from '@/components/display/MemorialSection';
+import { BirkatHashanimSection } from '@/components/display/BirkatHashanimSection';
 
 interface PrayerTime {
   id: string;
@@ -14,12 +18,14 @@ interface PrayerTime {
   time: string;
   day_type: string;
   is_active: boolean;
+  notes: string | null;
 }
 
 interface Announcement {
   id: string;
   content: string;
   priority: number;
+  show_on_shabbat: boolean;
 }
 
 interface MemorialName {
@@ -34,10 +40,11 @@ interface MemorialName {
 export default function DisplayGeneral() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedLocation, setSelectedLocation] = useState('akko');
+  
   const today = new Date();
-  const isFriday = today.getDay() === 5;
-  const isShabbat = today.getDay() === 6;
-  const isShabbatMode = isFriday || isShabbat;
+  const isShabbatDay = isShabbat(today);
+  const isFridayDay = isFriday(today);
+  const isShabbatMode = isShabbatDay || isFridayDay;
 
   // Load location from app_settings
   const { data: locationSetting } = useQuery({
@@ -49,6 +56,19 @@ export default function DisplayGeneral() {
         .eq('key', 'display_location')
         .single();
       return data?.value || 'akko';
+    },
+  });
+
+  // Load synagogue name
+  const { data: synagogueName } = useQuery({
+    queryKey: ['app-settings-synagogue-name'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'synagogue_name')
+        .single();
+      return data?.value || 'בית הכנסת';
     },
   });
 
@@ -136,260 +156,221 @@ export default function DisplayGeneral() {
     };
   }, []);
 
+  // Filter prayer times by day type
   const weekdayPrayers = prayerTimes.filter((p: PrayerTime) => p.day_type === 'weekday');
   const shabbatPrayers = prayerTimes.filter((p: PrayerTime) => p.day_type === 'shabbat');
+  const torahClasses = prayerTimes.filter((p: PrayerTime) => p.day_type === 'torah_class');
+  const shabbatTorahClasses = prayerTimes.filter((p: PrayerTime) => p.day_type === 'shabbat_torah_class');
+
+  // Filter announcements for Shabbat
+  const displayAnnouncements = isShabbatMode 
+    ? announcements.filter((a: Announcement) => a.show_on_shabbat)
+    : announcements;
 
   const hebrewDayName = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][currentTime.getDay()];
 
+  // Format time for display
+  const formatPrayerTime = (time: string) => {
+    return time.slice(0, 5);
+  };
+
   return (
-    <div className="min-h-screen bg-[#d4c8a8] p-3 overflow-hidden" dir="rtl">
-      {/* Decorative Frame */}
-      <div className="h-full bg-[#c5b896] rounded-lg border-4 border-[#8b7355] shadow-2xl overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 overflow-hidden" dir="rtl">
+      {/* Main Container with Decorative Border */}
+      <div className="h-full bg-gradient-to-b from-amber-100/80 to-orange-100/60 rounded-2xl border-4 border-amber-700 shadow-2xl overflow-hidden">
         
         {/* Header */}
-        <header className="bg-gradient-to-r from-[#2d5016] via-[#3d6b1e] to-[#2d5016] py-3 px-6 flex items-center justify-between">
+        <header className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-800 py-4 px-8 flex items-center justify-between">
           {/* Star of David Left */}
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#1a1a2e] to-[#16213e] flex items-center justify-center border-2 border-amber-600 shadow-lg">
-            <div className="text-amber-400 text-3xl">✡</div>
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center border-2 border-amber-500 shadow-lg">
+            <span className="text-amber-400 text-4xl">✡</span>
           </div>
           
           {/* Synagogue Name */}
-          <h1 className="text-4xl font-bold text-amber-100 tracking-wider" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-            בית הכנסת
-          </h1>
+          <motion.h1 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl font-bold text-amber-100 tracking-wide"
+            style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.4)' }}
+          >
+            {synagogueName}
+          </motion.h1>
           
           {/* Star of David Right */}
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#1a1a2e] to-[#16213e] flex items-center justify-center border-2 border-amber-600 shadow-lg">
-            <div className="text-amber-400 text-3xl">✡</div>
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center border-2 border-amber-500 shadow-lg">
+            <span className="text-amber-400 text-4xl">✡</span>
           </div>
         </header>
 
         {/* Date Bar */}
-        <div className="bg-[#e8dfc4] py-2 px-6 flex items-center justify-between border-b-2 border-[#8b7355]">
-          <div className="text-xl font-bold text-[#8b2500]">
-            יום {hebrewDayName} {getHebrewDate(currentTime)}
+        <div className="bg-amber-100 py-3 px-8 flex items-center justify-between border-b-2 border-amber-600">
+          <div className="text-xl font-bold text-amber-900">
+            יום {hebrewDayName} | {getHebrewDate(currentTime)}
           </div>
-          <div className="text-4xl font-bold text-[#2d3748] bg-[#f5f0e1] px-6 py-1 rounded-lg border-2 border-[#8b7355]">
+          <div 
+            dir="ltr" 
+            className="text-4xl font-bold text-slate-800 bg-white/80 px-8 py-2 rounded-xl border-2 border-amber-500 shadow-md tabular-nums"
+          >
             {currentTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </div>
-          <div className="text-xl font-bold text-[#8b2500]">
-            פרשת השבוע {getCurrentParasha()}
+          <div className="text-xl font-bold text-amber-900">
+            פרשת {getCurrentParasha()}
           </div>
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-3 gap-3 p-3 h-[calc(100vh-180px)]">
+        <div className="grid grid-cols-3 gap-4 p-4 h-[calc(100vh-200px)]">
           
           {/* Left Column - Prayer Times */}
-          <div className="space-y-3">
-            {/* Weekday Prayers */}
-            <div className="bg-[#f5f0e1] rounded-xl p-4 border-2 border-[#8b7355] shadow-lg">
-              <h2 className="text-2xl font-bold text-center text-[#8b2500] mb-2 border-b-2 border-dashed border-[#8b7355] pb-2">
+          <div className="space-y-4">
+            {/* Current Day Prayer Times */}
+            <div className="bg-white/90 rounded-xl p-5 border-2 border-amber-600 shadow-lg">
+              <h2 className="text-2xl font-bold text-center text-amber-800 mb-3 border-b-2 border-dashed border-amber-400 pb-3">
                 זמני תפילה
               </h2>
-              <h3 className="text-xl font-bold text-center text-[#c41e3a] mb-3">יום חול</h3>
-              <div className="space-y-3">
-                {weekdayPrayers.length > 0 ? weekdayPrayers.map((prayer: PrayerTime) => (
-                  <div key={prayer.id} className="flex justify-between items-center text-xl">
-                    <span className="font-bold text-[#2d3748]">{prayer.time.slice(0, 5).split(':').reverse().join(' : ')}</span>
-                    <span className="font-semibold text-[#1a365d]">{prayer.name}</span>
+              
+              {/* Weekday or Shabbat based on current day */}
+              <h3 className={`text-xl font-bold text-center mb-4 py-2 rounded-lg ${
+                isShabbatMode 
+                  ? 'bg-purple-100 text-purple-800' 
+                  : 'bg-blue-100 text-blue-800'
+              }`}>
+                {isShabbatMode ? 'שבת' : 'יום חול'}
+              </h3>
+              
+              <div className="space-y-1">
+                {(isShabbatMode ? shabbatPrayers : weekdayPrayers).length > 0 ? (
+                  (isShabbatMode ? shabbatPrayers : weekdayPrayers).map((prayer: PrayerTime) => (
+                    <PrayerRow 
+                      key={prayer.id} 
+                      name={prayer.name} 
+                      time={formatPrayerTime(prayer.time)}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    לא הוגדרו זמני תפילה
                   </div>
-                )) : (
-                  <>
-                    <div className="flex justify-between items-center text-xl">
-                      <span className="font-bold text-[#2d3748]">00 : 07</span>
-                      <span className="font-semibold text-[#1a365d]">שחרית</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xl">
-                      <span className="font-bold text-[#2d3748]">00 : 13</span>
-                      <span className="font-semibold text-[#1a365d]">מנחה</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xl">
-                      <span className="font-bold text-[#2d3748]">00 : 19</span>
-                      <span className="font-semibold text-[#1a365d]">ערבית</span>
-                    </div>
-                  </>
                 )}
               </div>
+
+              {/* Torah Classes */}
+              {((isShabbatMode ? shabbatTorahClasses : torahClasses).length > 0) && (
+                <div className="mt-4 pt-4 border-t-2 border-dashed border-amber-300">
+                  <h4 className="text-lg font-bold text-center text-emerald-700 mb-3 bg-emerald-50 py-1 rounded-lg">
+                    שיעורי תורה
+                  </h4>
+                  {(isShabbatMode ? shabbatTorahClasses : torahClasses).map((cls: PrayerTime) => (
+                    <div key={cls.id} className="mb-2">
+                      <PrayerRow 
+                        name={cls.name} 
+                        time={formatPrayerTime(cls.time)}
+                      />
+                      {cls.notes && (
+                        <div className="text-sm text-gray-600 text-center mt-1">
+                          {cls.notes}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Shabbat Times */}
-            <div className="bg-[#fdf6e3] rounded-xl p-4 border-2 border-[#8b7355] shadow-lg">
-              <h3 className="text-xl font-bold text-center text-[#1a365d] mb-3 bg-[#d4a574] py-1 rounded-lg">
-                שבת ויום טוב
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-5 border-2 border-purple-300 shadow-lg">
+              <h3 className="text-xl font-bold text-center text-purple-800 mb-4 bg-purple-100 py-2 rounded-lg">
+                זמני שבת
               </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-xl">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(shabbatTimes.candleLighting).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">כניסת השבת</span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center py-2">
+                  <TimeDisplay 
+                    time={formatTimeOnly(shabbatTimes.candleLighting)} 
+                    className="text-xl text-orange-600"
+                  />
+                  <span className="font-semibold text-lg">🕯️ הדלקת נרות</span>
                 </div>
-                <div className="flex justify-between items-center text-xl">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(shabbatTimes.havdalah).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">צאת השבת</span>
+                <div className="flex justify-between items-center py-2">
+                  <TimeDisplay 
+                    time={formatTimeOnly(shabbatTimes.havdalah)} 
+                    className="text-xl text-blue-600"
+                  />
+                  <span className="font-semibold text-lg">צאת השבת</span>
                 </div>
-                <div className="flex justify-between items-center text-xl">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(shabbatTimes.havdalahRT).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">צאת השבת ר״ת</span>
+                <div className="flex justify-between items-center py-2">
+                  <TimeDisplay 
+                    time={formatTimeOnly(shabbatTimes.havdalahRT)} 
+                    className="text-xl text-purple-600"
+                  />
+                  <span className="font-semibold text-lg">צאת השבת ר״ת</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Center Column - Memorial & Announcements */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Memorial Display */}
-            <div className="bg-gradient-to-b from-[#1a1a2e] to-[#0d0d1a] rounded-xl p-4 border-2 border-[#4a4a6a] shadow-xl min-h-[250px]">
-              <h2 className="text-2xl font-bold text-center text-amber-300 mb-4 border-b border-amber-600 pb-2">
-                לעילוי נשמת
-              </h2>
-              
-              {todayYahrzeits.length > 0 ? (
-                <AnimatePresence mode="wait">
-                  {todayYahrzeits.map((yahrzeit: MemorialName, index: number) => (
-                    <motion.div
-                      key={yahrzeit.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-center text-white mb-4"
-                    >
-                      <div className="text-2xl font-bold text-amber-200 mb-2">
-                        {yahrzeit.deceased_name}
-                      </div>
-                      <div className="text-lg text-gray-300">
-                        {yahrzeit.is_male ? 'בן' : 'בת'} {yahrzeit.father_name}
-                      </div>
-                      <div className="text-sm text-gray-400 mt-1">
-                        נלב״ע {yahrzeit.hebrew_death_day}׳ {HEBREW_MONTHS.find(m => m.value === yahrzeit.hebrew_death_month)?.label}
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              ) : (
-                <div className="text-center text-gray-400 py-4">
-                  אין יארצייט היום
-                </div>
-              )}
-              
-              {/* Candles */}
-              <div className="flex justify-center gap-8 mt-4">
-                <motion.div
-                  animate={{ 
-                    opacity: [0.7, 1, 0.7],
-                    scale: [1, 1.05, 1]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="text-4xl"
-                >
-                  🕯️
-                </motion.div>
-                <motion.div
-                  animate={{ 
-                    opacity: [0.7, 1, 0.7],
-                    scale: [1, 1.05, 1]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                  className="text-4xl"
-                >
-                  🕯️
-                </motion.div>
-              </div>
-              
-              <div className="text-center text-amber-400 mt-3 text-lg">
-                ת.נ.צ.ב.ה
-              </div>
-            </div>
+            <MemorialSection names={todayYahrzeits} />
 
             {/* Announcements */}
-            <div className="bg-[#f5f0e1] rounded-xl p-4 border-2 border-[#8b7355] shadow-lg flex-1">
-              <h2 className="text-2xl font-bold text-center text-[#8b2500] mb-3 bg-[#e8dfc4] py-1 rounded-lg border border-[#8b7355]">
+            <div className="bg-white/90 rounded-xl p-5 border-2 border-amber-600 shadow-lg flex-1">
+              <h2 className="text-2xl font-bold text-center text-amber-800 mb-4 bg-amber-100 py-2 rounded-lg border border-amber-300">
                 הודעות
               </h2>
-              <div className="space-y-2 text-lg text-center">
-                {announcements.length > 0 ? announcements.slice(0, 4).map((ann: Announcement) => (
-                  <div key={ann.id} className="text-[#1a365d] py-1 border-b border-dotted border-[#8b7355] last:border-0">
-                    {ann.content}
-                  </div>
-                )) : (
-                  <div className="text-gray-500">אין הודעות</div>
+              <div className="space-y-3">
+                {displayAnnouncements.length > 0 ? (
+                  displayAnnouncements.slice(0, 5).map((ann: Announcement) => (
+                    <motion.div 
+                      key={ann.id} 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-lg text-slate-700 py-2 px-3 border-b border-dotted border-amber-300 last:border-0 bg-amber-50/50 rounded-lg"
+                    >
+                      {ann.content}
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4">אין הודעות</div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right Column - Daily Times */}
-          <div className="space-y-3">
+          {/* Right Column - Daily Times & Birkat Hashanim */}
+          <div className="space-y-4">
             {/* Daily Zmanim */}
-            <div className="bg-[#f5f0e1] rounded-xl p-4 border-2 border-[#8b7355] shadow-lg">
-              <h2 className="text-2xl font-bold text-center text-[#8b2500] mb-3 border-b-2 border-dashed border-[#8b7355] pb-2">
+            <div className="bg-white/90 rounded-xl p-5 border-2 border-amber-600 shadow-lg">
+              <h2 className="text-2xl font-bold text-center text-amber-800 mb-4 border-b-2 border-dashed border-amber-400 pb-3">
                 זמני היום
               </h2>
-              <div className="space-y-2 text-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.sunrise).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">נץ החמה</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.sunset).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">שקיעה</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.alotHashachar).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">עלות השחר</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.misheyakir).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">טלית ותפילין</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.sofZmanShmaMGA).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">קריאת שמע למג״א</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.sofZmanShmaGRA).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">קריאת שמע לגר״א</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.sofZmanTfillaGRA).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">זמן תפילה לגר״א</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.chatzot).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">חצות היום</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.minchaGedola).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">מנחה גדולה</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.plagHaMincha).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">פלג המנחה</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">{formatTimeOnly(dailyZmanim.tzeit).split(':').join(' : ')}</span>
-                  <span className="font-semibold text-[#1a365d]">צאת הכוכבים</span>
-                </div>
+              <div className="space-y-1 text-base">
+                <ZmanRow name="עלות השחר" time={formatTimeOnly(dailyZmanim.alotHashachar)} compact />
+                <ZmanRow name="נץ החמה" time={formatTimeOnly(dailyZmanim.sunrise)} compact />
+                <ZmanRow name="טלית ותפילין" time={formatTimeOnly(dailyZmanim.misheyakir)} compact />
+                <div className="border-t border-amber-200 my-2" />
+                <ZmanRow name="סוף זמן ק״ש מג״א" time={formatTimeOnly(dailyZmanim.sofZmanShmaMGA)} compact />
+                <ZmanRow name="סוף זמן ק״ש גר״א" time={formatTimeOnly(dailyZmanim.sofZmanShmaGRA)} compact />
+                <ZmanRow name="סוף זמן תפילה גר״א" time={formatTimeOnly(dailyZmanim.sofZmanTfillaGRA)} compact />
+                <div className="border-t border-amber-200 my-2" />
+                <ZmanRow name="חצות היום" time={formatTimeOnly(dailyZmanim.chatzot)} compact />
+                <ZmanRow name="מנחה גדולה" time={formatTimeOnly(dailyZmanim.minchaGedola)} compact />
+                <ZmanRow name="פלג המנחה" time={formatTimeOnly(dailyZmanim.plagHaMincha)} compact />
+                <div className="border-t border-amber-200 my-2" />
+                <ZmanRow name="שקיעה" time={formatTimeOnly(dailyZmanim.sunset)} compact />
+                <ZmanRow name="צאת הכוכבים" time={formatTimeOnly(dailyZmanim.tzeit)} compact />
               </div>
             </div>
 
             {/* Birkat Hashanim */}
-            <div className="bg-[#fdf6e3] rounded-xl p-4 border-2 border-[#8b7355] shadow-lg">
-              <h3 className="text-xl font-bold text-center text-[#c41e3a] mb-3 bg-[#ffe4b5] py-1 rounded-lg">
-                ברכת השנים
-              </h3>
-              <div className="space-y-2 text-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-[#2d3748]">ברך עלינו</span>
-                  <span className="font-semibold text-[#1a365d]">משיב הרוח</span>
-                </div>
-              </div>
-            </div>
+            <BirkatHashanimSection date={currentTime} />
           </div>
         </div>
 
         {/* Footer */}
-        <footer className="bg-[#e8dfc4] py-2 px-6 text-center border-t-2 border-[#8b7355]">
-          <div className="text-lg text-[#5d4e37]">
-            {ISRAEL_LOCATIONS[selectedLocation]?.name || 'עכו'}
+        <footer className="bg-amber-100 py-2 px-8 text-center border-t-2 border-amber-600">
+          <div className="text-lg text-amber-800 font-medium">
+            📍 {ISRAEL_LOCATIONS[selectedLocation]?.name || 'עכו'}
           </div>
         </footer>
       </div>
