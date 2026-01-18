@@ -258,6 +258,49 @@ const hebrewMonths = [
   'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
 ];
 
+// Birkat Hashanim calculation
+// In Israel: "Tal Umatar" is said from 7 Cheshvan
+// "Vetein Bracha" is said the rest of the year
+export function getBirkatHashanim(date: Date = new Date()): { text: string; isTalUmatar: boolean } {
+  const hdate = new HDate(date);
+  const hebrewMonth = hdate.getMonth(); // 1 = Tishrei, 2 = Cheshvan, etc.
+  const hebrewDay = hdate.getDate();
+  
+  // In Israel: Tal Umatar starts on 7 Cheshvan (month 2, day 7)
+  // and continues until Pesach (15 Nisan, month 8)
+  const isAfter7Cheshvan = hebrewMonth > 2 || (hebrewMonth === 2 && hebrewDay >= 7);
+  const isBeforePesach = hebrewMonth < 8 || (hebrewMonth === 8 && hebrewDay < 15);
+  
+  // Tal Umatar period: from 7 Cheshvan to 14 Nisan
+  // This covers months 2-7 (Cheshvan to Adar II) plus beginning of Nisan
+  const isTalUmatar = (hebrewMonth >= 2 && hebrewMonth <= 7) 
+    ? (hebrewMonth === 2 ? hebrewDay >= 7 : true)
+    : (hebrewMonth === 8 && hebrewDay < 15);
+  
+  // Simpler logic: 7 Cheshvan to 14 Nisan
+  const isTalUmatarPeriod = (() => {
+    if (hebrewMonth === 2) return hebrewDay >= 7; // From 7 Cheshvan
+    if (hebrewMonth > 2 && hebrewMonth < 8) return true; // Kislev through Adar
+    if (hebrewMonth === 8) return hebrewDay < 15; // Until 14 Nisan
+    return false; // Nisan 15+ through Tishrei
+  })();
+  
+  return {
+    text: isTalUmatarPeriod ? 'ותן טל ומטר לברכה' : 'ותן ברכה',
+    isTalUmatar: isTalUmatarPeriod,
+  };
+}
+
+// Check if today is Shabbat
+export function isShabbat(date: Date = new Date()): boolean {
+  return date.getDay() === 6;
+}
+
+// Check if today is Friday
+export function isFriday(date: Date = new Date()): boolean {
+  return date.getDay() === 5;
+}
+
 // Hebrew days of week
 const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
