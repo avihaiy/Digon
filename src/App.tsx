@@ -16,6 +16,8 @@ import Reports from "@/pages/Reports";
 import UserManagement from "@/pages/UserManagement";
 import Budget from "@/pages/Budget";
 import Equipment from "@/pages/Equipment";
+import Expenses from "@/pages/Expenses";
+import ExpenseReports from "@/pages/ExpenseReports";
 import Admin from "@/pages/Admin";
 import AdminMobile from "@/pages/AdminMobile";
 import DisplayGeneral from "@/pages/DisplayGeneral";
@@ -73,6 +75,8 @@ const AppRoutes = () => (
     <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
     <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
     <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+    <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+    <Route path="/expense-reports" element={<ProtectedRoute><ExpenseReports /></ProtectedRoute>} />
     <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
     <Route path="/admin-mobile" element={<AdminMobile />} />
     <Route path="/display-general" element={<DisplayGeneral />} />
