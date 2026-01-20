@@ -10,10 +10,12 @@ import {
   BookOpen,
   CreditCard,
   Receipt,
-  Calendar,
   TrendingUp,
+  TrendingDown,
   AlertCircle,
   ArrowLeft,
+  Wallet,
+  PieChart,
 } from 'lucide-react';
 import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate, ALIYA_STATUS } from '@/lib/hebrew-utils';
 
@@ -21,19 +23,44 @@ export default function Dashboard() {
   const nextShabbat = getNextShabbat();
   const parasha = getCurrentParasha();
 
-  // Fetch stats
+  // Fetch stats including income and expenses
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const [membersRes, aliyotRes, paymentsRes, receiptsRes] = await Promise.all([
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      const [membersRes, aliyotRes, paymentsRes, receiptsRes, expensesRes, budgetExpensesRes] = await Promise.all([
         supabase.from('members').select('id', { count: 'exact' }).eq('active', true),
         supabase.from('aliyot').select('id, status, price'),
-        supabase.from('payments').select('id, amount, status').eq('status', 'confirmed'),
+        supabase.from('payments').select('id, amount, status, created_at').eq('status', 'confirmed'),
         supabase.from('receipts').select('id, total_amount'),
+        supabase.from('expenses').select('amount, expense_date'),
+        supabase.from('budget_transactions').select('amount, transaction_date, type'),
       ]);
 
       const pendingAliyot = aliyotRes.data?.filter(a => a.status === 'pending') || [];
       const totalPayments = paymentsRes.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+      
+      // This month calculations
+      const thisMonthPayments = paymentsRes.data?.filter(p => new Date(p.created_at) >= startOfMonth)
+        .reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+      const thisMonthBudgetIncome = budgetExpensesRes.data?.filter(b => b.type === 'income' && new Date(b.transaction_date) >= startOfMonth)
+        .reduce((sum, b) => sum + Number(b.amount), 0) || 0;
+      const thisMonthIncome = thisMonthPayments + thisMonthBudgetIncome;
+      
+      // Total expenses
+      const totalExpensesModule = expensesRes.data?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+      const totalExpensesBudget = budgetExpensesRes.data?.filter(b => b.type === 'expense')
+        .reduce((sum, b) => sum + Number(b.amount), 0) || 0;
+      const totalExpenses = totalExpensesModule + totalExpensesBudget;
+      
+      // This month expenses
+      const thisMonthExpensesModule = expensesRes.data?.filter(e => new Date(e.expense_date) >= startOfMonth)
+        .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+      const thisMonthExpensesBudget = budgetExpensesRes.data?.filter(b => b.type === 'expense' && new Date(b.transaction_date) >= startOfMonth)
+        .reduce((sum, b) => sum + Number(b.amount), 0) || 0;
+      const thisMonthExpenses = thisMonthExpensesModule + thisMonthExpensesBudget;
 
       return {
         totalMembers: membersRes.count || 0,
@@ -41,6 +68,10 @@ export default function Dashboard() {
         pendingAliyot: pendingAliyot.length,
         totalPayments,
         totalReceipts: receiptsRes.data?.length || 0,
+        thisMonthIncome,
+        thisMonthExpenses,
+        totalExpenses,
+        balance: totalPayments - totalExpenses,
       };
     },
   });
@@ -78,10 +109,10 @@ export default function Dashboard() {
   });
 
   const quickActions = [
-    { label: 'מסך יום שישי', icon: Calendar, href: '/friday', variant: 'primary' as const },
     { label: 'הוסף חבר', icon: Users, href: '/members?action=add', variant: 'secondary' as const },
     { label: 'הוסף עלייה', icon: BookOpen, href: '/aliyot?action=add', variant: 'secondary' as const },
     { label: 'קבל תשלום', icon: CreditCard, href: '/payments?action=add', variant: 'secondary' as const },
+    { label: 'דו"ח כספי', icon: PieChart, href: '/expense-reports', variant: 'primary' as const },
   ];
 
   return (
@@ -94,17 +125,94 @@ export default function Dashboard() {
             שבת פרשת {parasha} • {formatDate(nextShabbat)} • {getHebrewDate(nextShabbat)}
           </p>
         </div>
-        <Link to="/friday">
+        <Link to="/expense-reports">
           <Button className="btn-gold gap-2">
-            <Calendar className="w-4 h-4" />
-            מסך יום שישי
+            <PieChart className="w-4 h-4" />
+            דו"ח הכנסות/הוצאות
             <ArrowLeft className="w-4 h-4 flip-icon" />
           </Button>
         </Link>
       </div>
 
-      {/* Stats Grid */}
+      {/* Financial Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="glass-card border-emerald-500/20">
+          <CardContent className="p-4">
+            {statsLoading ? (
+              <Skeleton className="h-20 w-full" />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">הכנסות החודש</p>
+                  <p className="text-xl font-bold text-emerald-600">{formatCurrency(stats?.thisMonthIncome || 0)}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card border-red-500/20">
+          <CardContent className="p-4">
+            {statsLoading ? (
+              <Skeleton className="h-20 w-full" />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+                  <TrendingDown className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">הוצאות החודש</p>
+                  <p className="text-xl font-bold text-red-600">{formatCurrency(stats?.thisMonthExpenses || 0)}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className={`glass-card ${(stats?.balance || 0) >= 0 ? 'border-blue-500/20' : 'border-orange-500/20'}`}>
+          <CardContent className="p-4">
+            {statsLoading ? (
+              <Skeleton className="h-20 w-full" />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${(stats?.balance || 0) >= 0 ? 'bg-blue-500/10' : 'bg-orange-500/10'}`}>
+                  <Wallet className={`w-6 h-6 ${(stats?.balance || 0) >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">יתרה כוללת</p>
+                  <p className={`text-xl font-bold ${(stats?.balance || 0) >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                    {formatCurrency(stats?.balance || 0)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardContent className="p-4">
+            {statsLoading ? (
+              <Skeleton className="h-20 w-full" />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Receipt className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">קבלות הונפקו</p>
+                  <p className="text-xl font-bold">{stats?.totalReceipts || 0}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatsCard
           title="חברים פעילים"
           value={stats?.totalMembers || 0}
@@ -124,12 +232,6 @@ export default function Dashboard() {
           icon={TrendingUp}
           loading={statsLoading}
           isAmount
-        />
-        <StatsCard
-          title="קבלות הונפקו"
-          value={stats?.totalReceipts || 0}
-          icon={Receipt}
-          loading={statsLoading}
         />
       </div>
 
