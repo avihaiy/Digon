@@ -57,6 +57,7 @@ import {
   PAYMENT_METHOD,
   PAYMENT_STATUS,
   getCurrentParasha,
+  PARASHA_LIST,
 } from '@/lib/hebrew-utils';
 
 type FilterType = 'all' | 'pending' | 'confirmed' | 'bit' | 'cash' | 'this_month';
@@ -78,6 +79,7 @@ export default function Payments() {
     amount: '',
     reference: '',
     notes: '',
+    parasha: getCurrentParasha(),
   });
 
   // Fetch payments
@@ -163,7 +165,7 @@ export default function Payments() {
           member_id: formData.member_id,
           payment_id: payment.id,
           total_amount: Number(formData.amount),
-          description: `תשלום - פרשת ${getCurrentParasha()}`,
+          description: `תשלום - פרשת ${formData.parasha}`,
         });
 
         if (receiptError) throw receiptError;
@@ -239,7 +241,7 @@ export default function Payments() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingPayment(null);
-    setFormData({ member_id: '', amount: '', reference: '', notes: '' });
+    setFormData({ member_id: '', amount: '', reference: '', notes: '', parasha: getCurrentParasha() });
     setPaymentMethod('cash');
   };
 
@@ -250,6 +252,7 @@ export default function Payments() {
       amount: String(payment.amount),
       reference: payment.reference || '',
       notes: payment.notes || '',
+      parasha: getCurrentParasha(),
     });
     setPaymentMethod(payment.method);
     setDialogOpen(true);
@@ -657,6 +660,26 @@ export default function Payments() {
                 dir="ltr"
                 className="text-left text-xl font-bold"
               />
+            </div>
+
+            {/* Parasha Selection */}
+            <div className="space-y-2">
+              <Label>פרשה לקבלה</Label>
+              <Select
+                value={formData.parasha}
+                onValueChange={(value) => setFormData({ ...formData, parasha: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר פרשה" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {PARASHA_LIST.map((parasha) => (
+                    <SelectItem key={parasha} value={parasha}>
+                      {parasha}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Payment Method */}
