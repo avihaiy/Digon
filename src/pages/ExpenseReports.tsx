@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -279,9 +278,8 @@ export default function ExpenseReports() {
   };
 
   return (
-    <AppLayout>
-      <div className="container mx-auto p-4 md:p-6 space-y-6" dir="rtl">
-        {/* Header */}
+    <div className="container mx-auto p-4 md:p-6 space-y-6" dir="rtl">
+      {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">דו"ח הכנסות והוצאות</h1>
@@ -542,6 +540,5 @@ export default function ExpenseReports() {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
   );
 }
