@@ -38,7 +38,6 @@ interface AppLayoutProps {
 
 const navItems = [
   { href: '/', icon: Home, label: 'לוח בקרה' },
-  { href: '/friday', icon: Calendar, label: 'מסך יום שישי' },
   { href: '/members', icon: Users, label: 'חברים' },
   { href: '/aliyot', icon: BookOpen, label: 'עליות' },
   { href: '/payments', icon: CreditCard, label: 'תשלומים' },
