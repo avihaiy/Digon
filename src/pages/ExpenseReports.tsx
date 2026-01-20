@@ -70,6 +70,21 @@ export default function ExpenseReports() {
     },
   });
 
+  // Fetch expenses from budget_transactions
+  const { data: budgetExpenses = [], isLoading: budgetExpensesLoading } = useQuery({
+    queryKey: ['report-budget-expenses', startDate, endDate],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budget_transactions')
+        .select('amount, transaction_date, description, budget_categories(name)')
+        .eq('type', 'expense')
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch expenses
   const { data: expenses = [], isLoading: expensesLoading } = useQuery({
     queryKey: ['report-expenses', startDate, endDate],
@@ -102,18 +117,20 @@ export default function ExpenseReports() {
     },
   });
 
-  const isLoading = paymentsLoading || budgetLoading || expensesLoading;
+  const isLoading = paymentsLoading || budgetLoading || budgetExpensesLoading || expensesLoading;
 
   // Calculate totals
   const totals = useMemo(() => {
     const paymentIncome = payments.reduce((sum, p) => sum + Number(p.amount), 0);
     const otherIncome = budgetIncome.reduce((sum, b) => sum + Number(b.amount), 0);
     const totalIncome = paymentIncome + otherIncome;
-    const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const expensesFromModule = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const expensesFromBudget = budgetExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalExpenses = expensesFromModule + expensesFromBudget;
     const balance = totalIncome - totalExpenses;
     
-    return { paymentIncome, otherIncome, totalIncome, totalExpenses, balance };
-  }, [payments, budgetIncome, expenses]);
+    return { paymentIncome, otherIncome, totalIncome, totalExpenses, expensesFromModule, expensesFromBudget, balance };
+  }, [payments, budgetIncome, expenses, budgetExpenses]);
 
   // Monthly data for chart
   const monthlyData = useMemo(() => {
@@ -145,7 +162,7 @@ export default function ExpenseReports() {
       months[monthKey].income += Number(b.amount);
     });
 
-    // Process expenses
+    // Process expenses from expenses module
     expenses.forEach(e => {
       const monthKey = format(parseISO(e.expense_date), 'yyyy-MM');
       if (!months[monthKey]) {
@@ -158,24 +175,44 @@ export default function ExpenseReports() {
       months[monthKey].expenses += Number(e.amount);
     });
 
+    // Process expenses from budget_transactions
+    budgetExpenses.forEach(e => {
+      const monthKey = format(parseISO(e.transaction_date), 'yyyy-MM');
+      if (!months[monthKey]) {
+        months[monthKey] = { 
+          month: format(parseISO(e.transaction_date), 'MMM yyyy', { locale: he }), 
+          income: 0, 
+          expenses: 0 
+        };
+      }
+      months[monthKey].expenses += Number(e.amount);
+    });
+
     return Object.entries(months)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, data]) => data);
-  }, [payments, budgetIncome, expenses]);
+  }, [payments, budgetIncome, expenses, budgetExpenses]);
 
   // Category breakdown for pie chart
   const categoryData = useMemo(() => {
     const catTotals: { [key: string]: number } = {};
     
+    // From expenses module
     expenses.forEach(e => {
       const catName = e.expense_categories?.name || 'לא מסווג';
+      catTotals[catName] = (catTotals[catName] || 0) + Number(e.amount);
+    });
+
+    // From budget_transactions
+    budgetExpenses.forEach(e => {
+      const catName = e.budget_categories?.name || 'תקציב - לא מסווג';
       catTotals[catName] = (catTotals[catName] || 0) + Number(e.amount);
     });
 
     return Object.entries(catTotals)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [expenses]);
+  }, [expenses, budgetExpenses]);
 
   // Export to Excel (CSV)
   const handleExportExcel = () => {
@@ -359,7 +396,7 @@ export default function ExpenseReports() {
                   {formatCurrency(totals.totalExpenses)}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {expenses.length} הוצאות
+                  מודול: {formatCurrency(totals.expensesFromModule)} | תקציב: {formatCurrency(totals.expensesFromBudget)}
                 </p>
               </CardContent>
             </Card>
