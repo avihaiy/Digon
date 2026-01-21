@@ -31,6 +31,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import {
   Receipt,
   Search,
   Printer,
@@ -40,14 +46,23 @@ import {
   Edit,
   Trash2,
   Loader2,
+  CalendarIcon,
+  Filter,
+  X,
 } from 'lucide-react';
 import { formatCurrency, formatShortDate, formatDate, getHebrewDate, PARASHA_LIST } from '@/lib/hebrew-utils';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 
 export default function Receipts() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterParasha, setFilterParasha] = useState<string>('');
+  const [filterDateFrom, setFilterDateFrom] = useState<Date | undefined>();
+  const [filterDateTo, setFilterDateTo] = useState<Date | undefined>();
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const [editingReceipt, setEditingReceipt] = useState<any>(null);
   const [deleteReceiptId, setDeleteReceiptId] = useState<string | null>(null);
@@ -408,13 +423,35 @@ export default function Receipts() {
   };
 
   // Filter receipts
-  const filteredReceipts = receipts?.filter((r: any) =>
-    r.member?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    String(r.receipt_number).includes(searchQuery)
-  );
+  const filteredReceipts = receipts?.filter((r: any) => {
+    // Text search
+    const matchesSearch = searchQuery === '' || 
+      r.member?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(r.receipt_number).includes(searchQuery);
+    
+    // Parasha filter
+    const matchesParasha = filterParasha === '' || 
+      r.description?.includes(filterParasha);
+    
+    // Date range filter
+    const receiptDate = new Date(r.created_at);
+    const matchesDateFrom = !filterDateFrom || receiptDate >= filterDateFrom;
+    const matchesDateTo = !filterDateTo || receiptDate <= new Date(filterDateTo.getTime() + 24 * 60 * 60 * 1000);
+    
+    return matchesSearch && matchesParasha && matchesDateFrom && matchesDateTo;
+  });
+
+  const clearFilters = () => {
+    setFilterParasha('');
+    setFilterDateFrom(undefined);
+    setFilterDateTo(undefined);
+    setSearchQuery('');
+  };
+
+  const hasActiveFilters = filterParasha || filterDateFrom || filterDateTo;
 
   // Summary
-  const totalAmount = receipts?.reduce((sum: number, r: any) => sum + Number(r.total_amount), 0) || 0;
+  const totalAmount = filteredReceipts?.reduce((sum: number, r: any) => sum + Number(r.total_amount), 0) || 0;
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -431,15 +468,101 @@ export default function Receipts() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="חיפוש לפי שם או מספר קבלה..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pr-10"
-        />
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Search */}
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="חיפוש לפי שם או מספר קבלה..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-10"
+            />
+          </div>
+
+          {/* Parasha Filter */}
+          <Select value={filterParasha} onValueChange={setFilterParasha}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="סנן לפי פרשה" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              <SelectItem value="">כל הפרשיות</SelectItem>
+              {PARASHA_LIST.map((parasha) => (
+                <SelectItem key={parasha} value={parasha}>
+                  {parasha}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Date From */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[140px] justify-start text-right font-normal",
+                  !filterDateFrom && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="ml-2 h-4 w-4" />
+                {filterDateFrom ? format(filterDateFrom, "dd/MM/yy") : "מתאריך"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={filterDateFrom}
+                onSelect={setFilterDateFrom}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Date To */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[140px] justify-start text-right font-normal",
+                  !filterDateTo && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="ml-2 h-4 w-4" />
+                {filterDateTo ? format(filterDateTo, "dd/MM/yy") : "עד תאריך"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={filterDateTo}
+                onSelect={setFilterDateTo}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+              <X className="w-4 h-4" />
+              נקה סינון
+            </Button>
+          )}
+        </div>
+
+        {/* Active Filters Summary */}
+        {hasActiveFilters && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Filter className="w-4 h-4" />
+            <span>מציג {filteredReceipts?.length || 0} מתוך {receipts?.length || 0} קבלות</span>
+          </div>
+        )}
       </div>
 
       {/* Receipts List */}
