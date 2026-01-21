@@ -18,6 +18,8 @@ import {
   PieChart,
 } from 'lucide-react';
 import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate, ALIYA_STATUS } from '@/lib/hebrew-utils';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 
 export default function Dashboard() {
   const nextShabbat = getNextShabbat();
@@ -75,6 +77,31 @@ export default function Dashboard() {
       };
     },
   });
+
+  // Prepare chart data for income vs expenses
+  const chartData = [
+    {
+      name: 'הכנסות',
+      value: stats?.thisMonthIncome || 0,
+      fill: 'hsl(var(--chart-2))',
+    },
+    {
+      name: 'הוצאות',
+      value: stats?.thisMonthExpenses || 0,
+      fill: 'hsl(var(--chart-1))',
+    },
+  ];
+
+  const chartConfig = {
+    הכנסות: {
+      label: 'הכנסות',
+      color: 'hsl(var(--chart-2))',
+    },
+    הוצאות: {
+      label: 'הוצאות',
+      color: 'hsl(var(--chart-1))',
+    },
+  };
 
   // Fetch upcoming Shabbat aliyot
   const { data: upcomingAliyot, isLoading: aliyotLoading } = useQuery({
@@ -210,6 +237,40 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Income vs Expenses Mini Chart */}
+      <Card className="glass-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">הכנסות מול הוצאות החודש</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {statsLoading ? (
+            <Skeleton className="h-32 w-full" />
+          ) : (
+            <ChartContainer config={chartConfig} className="h-32 w-full">
+              <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 20 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" width={60} axisLine={false} tickLine={false} />
+                <ChartTooltip
+                  content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />}
+                />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          )}
+          <div className="flex justify-between mt-2 text-sm">
+            <span className="text-muted-foreground">
+              יתרה: <span className={`font-bold ${(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                {formatCurrency((stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0))}
+              </span>
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
