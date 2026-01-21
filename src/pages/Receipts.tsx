@@ -41,7 +41,7 @@ import {
   Trash2,
   Loader2,
 } from 'lucide-react';
-import { formatCurrency, formatShortDate, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
+import { formatCurrency, formatShortDate, formatDate, getHebrewDate, PARASHA_LIST } from '@/lib/hebrew-utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 
@@ -56,6 +56,7 @@ export default function Receipts() {
     member_id: '',
     total_amount: '',
     description: '',
+    parasha: '',
   });
 
   // Fetch receipts
@@ -94,12 +95,21 @@ export default function Receipts() {
   // Update receipt
   const updateReceipt = useMutation({
     mutationFn: async () => {
+      // Build description with parasha if selected
+      let description = editFormData.description;
+      if (editFormData.parasha && !description?.includes('פרשת')) {
+        description = `פרשת ${editFormData.parasha}${description ? ' - ' + description : ''}`;
+      } else if (editFormData.parasha && description?.includes('פרשת')) {
+        // Replace existing parasha
+        description = description.replace(/פרשת\s+\S+/, `פרשת ${editFormData.parasha}`);
+      }
+      
       const { error } = await supabase
         .from('receipts')
         .update({
           member_id: editFormData.member_id,
           total_amount: Number(editFormData.total_amount),
-          description: editFormData.description || null,
+          description: description || null,
         })
         .eq('id', editingReceipt.id);
       if (error) throw error;
@@ -132,10 +142,14 @@ export default function Receipts() {
 
   const handleEditReceipt = (receipt: any) => {
     setEditingReceipt(receipt);
+    // Extract parasha from description if it contains format "פרשת X"
+    const parashaMatch = receipt.description?.match(/פרשת\s+(.+)/);
+    const parasha = parashaMatch ? parashaMatch[1] : '';
     setEditFormData({
       member_id: receipt.member_id,
       total_amount: String(receipt.total_amount),
       description: receipt.description || '',
+      parasha: parasha,
     });
     setEditDialogOpen(true);
   };
@@ -143,7 +157,7 @@ export default function Receipts() {
   const handleCloseEditDialog = () => {
     setEditDialogOpen(false);
     setEditingReceipt(null);
-    setEditFormData({ member_id: '', total_amount: '', description: '' });
+    setEditFormData({ member_id: '', total_amount: '', description: '', parasha: '' });
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
@@ -584,6 +598,25 @@ export default function Receipts() {
                 dir="ltr"
                 className="text-left"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>פרשה</Label>
+              <Select
+                value={editFormData.parasha}
+                onValueChange={(value) => setEditFormData({ ...editFormData, parasha: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר פרשה" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {PARASHA_LIST.map((parasha) => (
+                    <SelectItem key={parasha} value={parasha}>
+                      {parasha}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
