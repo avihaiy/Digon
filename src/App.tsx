@@ -22,6 +22,7 @@ import Admin from "@/pages/Admin";
 import AdminMobile from "@/pages/AdminMobile";
 import DisplayGeneral from "@/pages/DisplayGeneral";
 import DisplayMemorial from "@/pages/DisplayMemorial";
+import DisplayFinance from "@/pages/DisplayFinance";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,7 @@ const AppRoutes = () => (
     <Route path="/admin-mobile" element={<AdminMobile />} />
     <Route path="/display-general" element={<DisplayGeneral />} />
     <Route path="/display-memorial" element={<DisplayMemorial />} />
+    <Route path="/display-finance" element={<DisplayFinance />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

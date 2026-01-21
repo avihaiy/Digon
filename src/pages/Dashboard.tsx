@@ -16,8 +16,12 @@ import {
   ArrowLeft,
   Wallet,
   PieChart,
+  Monitor,
 } from 'lucide-react';
 import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate, ALIYA_STATUS } from '@/lib/hebrew-utils';
+import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function Dashboard() {
   const nextShabbat = getNextShabbat();
@@ -76,6 +80,51 @@ export default function Dashboard() {
     },
   });
 
+  // Fetch monthly history for chart
+  const { data: monthlyHistory, isLoading: historyLoading } = useQuery({
+    queryKey: ['monthly-history'],
+    queryFn: async () => {
+      const now = new Date();
+      const [paymentsRes, expensesRes, budgetRes] = await Promise.all([
+        supabase.from('payments').select('amount, created_at').eq('status', 'confirmed'),
+        supabase.from('expenses').select('amount, expense_date'),
+        supabase.from('budget_transactions').select('amount, transaction_date, type'),
+      ]);
+
+      const monthlyData = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthStart = startOfMonth(subMonths(now, i));
+        const monthEnd = endOfMonth(subMonths(now, i));
+        
+        const monthIncome = (paymentsRes.data?.filter(p => {
+          const d = new Date(p.created_at);
+          return d >= monthStart && d <= monthEnd;
+        }).reduce((sum, p) => sum + Number(p.amount), 0) || 0) +
+        (budgetRes.data?.filter(b => b.type === 'income' && (() => {
+          const d = new Date(b.transaction_date);
+          return d >= monthStart && d <= monthEnd;
+        })()).reduce((sum, b) => sum + Number(b.amount), 0) || 0);
+        
+        const monthExpenses = (expensesRes.data?.filter(e => {
+          const d = new Date(e.expense_date);
+          return d >= monthStart && d <= monthEnd;
+        }).reduce((sum, e) => sum + Number(e.amount), 0) || 0) +
+        (budgetRes.data?.filter(b => b.type === 'expense' && (() => {
+          const d = new Date(b.transaction_date);
+          return d >= monthStart && d <= monthEnd;
+        })()).reduce((sum, b) => sum + Number(b.amount), 0) || 0);
+
+        monthlyData.push({
+          month: format(monthStart, 'MMM', { locale: he }),
+          הכנסות: monthIncome,
+          הוצאות: monthExpenses,
+        });
+      }
+
+      return monthlyData;
+    },
+  });
+
   // Fetch upcoming Shabbat aliyot
   const { data: upcomingAliyot, isLoading: aliyotLoading } = useQuery({
     queryKey: ['upcoming-aliyot', nextShabbat.toISOString().split('T')[0]],
@@ -125,13 +174,21 @@ export default function Dashboard() {
             שבת פרשת {parasha} • {formatDate(nextShabbat)} • {getHebrewDate(nextShabbat)}
           </p>
         </div>
-        <Link to="/expense-reports">
-          <Button className="btn-gold gap-2">
-            <PieChart className="w-4 h-4" />
-            דו"ח הכנסות/הוצאות
-            <ArrowLeft className="w-4 h-4 flip-icon" />
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/display-finance" target="_blank">
+            <Button variant="outline" className="gap-2">
+              <Monitor className="w-4 h-4" />
+              מסך תצוגה
+            </Button>
+          </Link>
+          <Link to="/expense-reports">
+            <Button className="btn-gold gap-2">
+              <PieChart className="w-4 h-4" />
+              דו"ח הכנסות/הוצאות
+              <ArrowLeft className="w-4 h-4 flip-icon" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Financial Overview */}
@@ -267,6 +324,37 @@ export default function Dashboard() {
                 </span>
               </div>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Monthly History Chart */}
+      <Card className="glass-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">היסטוריית הכנסות והוצאות (6 חודשים)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {historyLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={monthlyHistory}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <Tooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                  contentStyle={{
+                    background: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="הכנסות" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="הוצאות" fill="#ef4444" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </CardContent>
       </Card>
