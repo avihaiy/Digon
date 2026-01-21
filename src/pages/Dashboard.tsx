@@ -18,8 +18,6 @@ import {
   PieChart,
 } from 'lucide-react';
 import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate, ALIYA_STATUS } from '@/lib/hebrew-utils';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 
 export default function Dashboard() {
   const nextShabbat = getNextShabbat();
@@ -77,31 +75,6 @@ export default function Dashboard() {
       };
     },
   });
-
-  // Prepare chart data for income vs expenses
-  const chartData = [
-    {
-      name: 'הכנסות',
-      value: stats?.thisMonthIncome || 0,
-      fill: 'hsl(var(--chart-2))',
-    },
-    {
-      name: 'הוצאות',
-      value: stats?.thisMonthExpenses || 0,
-      fill: 'hsl(var(--chart-1))',
-    },
-  ];
-
-  const chartConfig = {
-    הכנסות: {
-      label: 'הכנסות',
-      color: 'hsl(var(--chart-2))',
-    },
-    הוצאות: {
-      label: 'הוצאות',
-      color: 'hsl(var(--chart-1))',
-    },
-  };
 
   // Fetch upcoming Shabbat aliyot
   const { data: upcomingAliyot, isLoading: aliyotLoading } = useQuery({
@@ -245,30 +218,56 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           {statsLoading ? (
-            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-40 w-full" />
           ) : (
-            <ChartContainer config={chartConfig} className="h-32 w-full">
-              <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 20 }}>
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" width={60} axisLine={false} tickLine={false} />
-                <ChartTooltip
-                  content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />}
-                />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ChartContainer>
+            <div className="space-y-4">
+              {/* Income Bar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+                    <span className="font-medium">הכנסות</span>
+                  </div>
+                  <span className="font-bold text-emerald-600">{formatCurrency(stats?.thisMonthIncome || 0)}</span>
+                </div>
+                <div className="h-6 bg-secondary rounded-md overflow-hidden">
+                  <div 
+                    className="h-full bg-emerald-500 rounded-md transition-all duration-500"
+                    style={{ 
+                      width: `${Math.min(100, ((stats?.thisMonthIncome || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}%` 
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Expenses Bar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm bg-red-500" />
+                    <span className="font-medium">הוצאות</span>
+                  </div>
+                  <span className="font-bold text-red-600">{formatCurrency(stats?.thisMonthExpenses || 0)}</span>
+                </div>
+                <div className="h-6 bg-secondary rounded-md overflow-hidden">
+                  <div 
+                    className="h-full bg-red-500 rounded-md transition-all duration-500"
+                    style={{ 
+                      width: `${Math.min(100, ((stats?.thisMonthExpenses || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}%` 
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Balance Summary */}
+              <div className="pt-2 border-t flex justify-between items-center">
+                <span className="text-muted-foreground">יתרה החודש:</span>
+                <span className={`text-lg font-bold ${(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {formatCurrency((stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0))}
+                </span>
+              </div>
+            </div>
           )}
-          <div className="flex justify-between mt-2 text-sm">
-            <span className="text-muted-foreground">
-              יתרה: <span className={`font-bold ${(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {formatCurrency((stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0))}
-              </span>
-            </span>
-          </div>
         </CardContent>
       </Card>
 
