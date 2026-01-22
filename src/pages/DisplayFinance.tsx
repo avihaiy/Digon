@@ -1,41 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, TrendingDown, Wallet, Calendar } from 'lucide-react';
-import { formatCurrency, getHebrewDate, getCurrentParasha } from '@/lib/hebrew-utils';
+import { TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { formatCurrency, getHebrewDate, getHebrewDayOfWeek } from '@/lib/hebrew-utils';
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 
 export default function DisplayFinance() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState(new Date());
 
-  // Update time every minute
+  // Update clock every second
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000);
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch financial data
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['display-finance-stats'],
+  // Fetch financial data with auto-refresh every 5 minutes
+  const { data: stats, isLoading, dataUpdatedAt } = useQuery({
+    queryKey: ['display-finance-tv-stats'],
     queryFn: async () => {
       const now = new Date();
       const startOfCurrentMonth = startOfMonth(now);
       
-      // Fetch all data
       const [paymentsRes, expensesRes, budgetRes] = await Promise.all([
         supabase.from('payments').select('amount, created_at').eq('status', 'confirmed'),
         supabase.from('expenses').select('amount, expense_date'),
         supabase.from('budget_transactions').select('amount, transaction_date, type'),
       ]);
 
-      // Calculate monthly data for the last 6 months
+      // Calculate monthly data for the last 4 months
       const monthlyData = [];
-      for (let i = 5; i >= 0; i--) {
+      for (let i = 3; i >= 0; i--) {
         const monthStart = startOfMonth(subMonths(now, i));
         const monthEnd = endOfMonth(subMonths(now, i));
         
@@ -58,7 +56,9 @@ export default function DisplayFinance() {
         })()).reduce((sum, b) => sum + Number(b.amount), 0) || 0);
 
         monthlyData.push({
-          month: format(monthStart, 'MMMM yyyy', { locale: he }),
+          month: format(monthStart, 'MMMM', { locale: he }),
+          year: format(monthStart, 'yyyy'),
+          isCurrent: i === 0,
           income: monthIncome,
           expenses: monthExpenses,
           balance: monthIncome - monthExpenses,
@@ -76,148 +76,182 @@ export default function DisplayFinance() {
         (budgetRes.data?.filter(b => b.type === 'expense' && new Date(b.transaction_date) >= startOfCurrentMonth)
         .reduce((sum, b) => sum + Number(b.amount), 0) || 0);
 
-      // Total balance
-      const totalIncome = paymentsRes.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-      const totalBudgetIncome = budgetRes.data?.filter(b => b.type === 'income').reduce((sum, b) => sum + Number(b.amount), 0) || 0;
-      const totalExpenses = (expensesRes.data?.reduce((sum, e) => sum + Number(e.amount), 0) || 0) +
-        (budgetRes.data?.filter(b => b.type === 'expense').reduce((sum, b) => sum + Number(b.amount), 0) || 0);
-
       return {
         thisMonthIncome,
         thisMonthExpenses,
         thisMonthBalance: thisMonthIncome - thisMonthExpenses,
-        totalBalance: totalIncome + totalBudgetIncome - totalExpenses,
         monthlyData,
       };
     },
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
   });
 
-  const parasha = getCurrentParasha();
+  // Update lastUpdated when data changes
+  useEffect(() => {
+    if (dataUpdatedAt) {
+      setLastUpdated(new Date(dataUpdatedAt));
+    }
+  }, [dataUpdatedAt]);
+
   const hebrewDate = getHebrewDate(currentTime);
+  const dayOfWeek = getHebrewDayOfWeek(currentTime);
+  const balance = stats?.thisMonthBalance || 0;
+
+  // Status text and color based on balance
+  const getStatusInfo = () => {
+    if (balance > 0) {
+      return { text: 'החודש בעודף', bgColor: 'bg-emerald-600/20', borderColor: 'border-emerald-500' };
+    } else if (balance < 0) {
+      return { text: 'החודש בגירעון', bgColor: 'bg-red-600/20', borderColor: 'border-red-500' };
+    }
+    return { text: 'החודש מאוזן', bgColor: 'bg-blue-600/20', borderColor: 'border-blue-500' };
+  };
+
+  const statusInfo = getStatusInfo();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden select-none">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2">בית הכנסת - מצב כספי</h1>
-        <p className="text-xl text-slate-300">
-          פרשת {parasha} • {hebrewDate}
-        </p>
-        <p className="text-lg text-slate-400 mt-1">
-          {format(currentTime, 'EEEE, d בMMMM yyyy', { locale: he })}
-        </p>
-      </div>
-
-      {/* Current Month Stats */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <Card className="bg-emerald-900/30 border-emerald-500/30">
-          <CardContent className="p-6 text-center">
-            {isLoading ? (
-              <Skeleton className="h-24 w-full bg-emerald-800/30" />
-            ) : (
-              <>
-                <TrendingUp className="w-12 h-12 mx-auto mb-4 text-emerald-400" />
-                <p className="text-slate-300 mb-2">הכנסות החודש</p>
-                <p className="text-4xl font-bold text-emerald-400">
-                  {formatCurrency(stats?.thisMonthIncome || 0)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-red-900/30 border-red-500/30">
-          <CardContent className="p-6 text-center">
-            {isLoading ? (
-              <Skeleton className="h-24 w-full bg-red-800/30" />
-            ) : (
-              <>
-                <TrendingDown className="w-12 h-12 mx-auto mb-4 text-red-400" />
-                <p className="text-slate-300 mb-2">הוצאות החודש</p>
-                <p className="text-4xl font-bold text-red-400">
-                  {formatCurrency(stats?.thisMonthExpenses || 0)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className={`${(stats?.thisMonthBalance || 0) >= 0 ? 'bg-blue-900/30 border-blue-500/30' : 'bg-orange-900/30 border-orange-500/30'}`}>
-          <CardContent className="p-6 text-center">
-            {isLoading ? (
-              <Skeleton className="h-24 w-full bg-blue-800/30" />
-            ) : (
-              <>
-                <Wallet className="w-12 h-12 mx-auto mb-4 text-blue-400" />
-                <p className="text-slate-300 mb-2">יתרה החודש</p>
-                <p className={`text-4xl font-bold ${(stats?.thisMonthBalance || 0) >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
-                  {formatCurrency(stats?.thisMonthBalance || 0)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Total Balance */}
-      <Card className="bg-slate-800/50 border-slate-600/30 mb-8">
-        <CardContent className="p-6 text-center">
-          {isLoading ? (
-            <Skeleton className="h-16 w-full bg-slate-700/30" />
-          ) : (
-            <>
-              <p className="text-xl text-slate-300 mb-2">יתרה כוללת</p>
-              <p className={`text-5xl font-bold ${(stats?.totalBalance || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {formatCurrency(stats?.totalBalance || 0)}
+      <header className="px-12 py-8 border-b border-slate-700/50">
+        <div className="flex items-center justify-between">
+          {/* Title and Date */}
+          <div>
+            <h1 className="text-5xl font-bold tracking-tight mb-3">
+              בית הכנסת – מצב כספי
+            </h1>
+            <div className="text-2xl text-slate-300 space-y-1">
+              <p>{hebrewDate}</p>
+              <p className="text-slate-400">
+                יום {dayOfWeek} • {format(currentTime, 'd בMMMM yyyy', { locale: he })}
               </p>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </div>
+          </div>
+          
+          {/* Clock and Last Updated */}
+          <div className="text-left">
+            <div className="text-7xl font-bold font-mono tabular-nums tracking-tight">
+              {format(currentTime, 'HH:mm')}
+            </div>
+            <p className="text-lg text-slate-500 mt-2">
+              עודכן לאחרונה: {format(lastUpdated, 'HH:mm')}
+            </p>
+          </div>
+        </div>
+      </header>
 
-      {/* Monthly History */}
-      <Card className="bg-slate-800/50 border-slate-600/30">
-        <CardContent className="p-6">
-          <h2 className="text-2xl font-bold text-center mb-6 flex items-center justify-center gap-2">
-            <Calendar className="w-6 h-6" />
+      {/* Main Content */}
+      <main className="px-12 py-10 flex flex-col gap-10">
+        
+        {/* Big Numbers - 3 Cards */}
+        <div className="grid grid-cols-3 gap-8">
+          {/* Income Card */}
+          <div className="bg-emerald-950/40 border-2 border-emerald-500/40 rounded-3xl p-10 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <TrendingUp className="w-12 h-12 text-emerald-400" strokeWidth={2.5} />
+              </div>
+            </div>
+            <p className="text-3xl text-emerald-300/80 mb-4 font-medium">הכנסות החודש</p>
+            {isLoading ? (
+              <div className="h-24 bg-emerald-800/20 rounded-xl animate-pulse" />
+            ) : (
+              <p className="text-7xl font-bold text-emerald-400 tracking-tight">
+                {formatCurrency(stats?.thisMonthIncome || 0)}
+              </p>
+            )}
+          </div>
+
+          {/* Expenses Card */}
+          <div className="bg-red-950/40 border-2 border-red-500/40 rounded-3xl p-10 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center">
+                <TrendingDown className="w-12 h-12 text-red-400" strokeWidth={2.5} />
+              </div>
+            </div>
+            <p className="text-3xl text-red-300/80 mb-4 font-medium">הוצאות החודש</p>
+            {isLoading ? (
+              <div className="h-24 bg-red-800/20 rounded-xl animate-pulse" />
+            ) : (
+              <p className="text-7xl font-bold text-red-400 tracking-tight">
+                {formatCurrency(stats?.thisMonthExpenses || 0)}
+              </p>
+            )}
+          </div>
+
+          {/* Balance Card */}
+          <div className={`${balance >= 0 ? 'bg-blue-950/40 border-blue-500/40' : 'bg-orange-950/40 border-orange-500/40'} border-2 rounded-3xl p-10 text-center`}>
+            <div className="flex justify-center mb-6">
+              <div className={`w-20 h-20 rounded-full ${balance >= 0 ? 'bg-blue-500/20' : 'bg-orange-500/20'} flex items-center justify-center`}>
+                <Wallet className={`w-12 h-12 ${balance >= 0 ? 'text-blue-400' : 'text-orange-400'}`} strokeWidth={2.5} />
+              </div>
+            </div>
+            <p className={`text-3xl ${balance >= 0 ? 'text-blue-300/80' : 'text-orange-300/80'} mb-4 font-medium`}>
+              יתרת החודש
+            </p>
+            {isLoading ? (
+              <div className="h-24 bg-slate-800/20 rounded-xl animate-pulse" />
+            ) : (
+              <p className={`text-7xl font-bold ${balance >= 0 ? 'text-blue-400' : 'text-orange-400'} tracking-tight`}>
+                {formatCurrency(balance)}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Status Bar */}
+        <div className={`${statusInfo.bgColor} border ${statusInfo.borderColor} rounded-2xl py-6 px-10`}>
+          <p className="text-4xl font-bold text-center">
+            {statusInfo.text}
+          </p>
+        </div>
+
+        {/* Monthly History - Last 4 Months */}
+        <div className="bg-slate-800/30 border border-slate-700/50 rounded-3xl p-10">
+          <h2 className="text-3xl font-bold text-center mb-8 text-slate-200">
             היסטוריה חודשית
           </h2>
           
           {isLoading ? (
-            <Skeleton className="h-64 w-full bg-slate-700/30" />
+            <div className="h-32 bg-slate-700/20 rounded-xl animate-pulse" />
           ) : (
-            <div className="grid grid-cols-6 gap-4">
+            <div className="grid grid-cols-4 gap-6">
               {stats?.monthlyData?.map((month, index) => (
-                <div key={index} className="text-center p-4 rounded-lg bg-slate-700/30">
-                  <p className="text-sm text-slate-400 mb-3">{month.month}</p>
+                <div 
+                  key={index} 
+                  className={`text-center p-6 rounded-2xl transition-all ${
+                    month.isCurrent 
+                      ? 'bg-slate-700/50 border-2 border-slate-500 scale-105' 
+                      : 'bg-slate-800/40 border border-slate-700/30'
+                  }`}
+                >
+                  <p className={`text-2xl font-semibold mb-4 ${month.isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                    {month.month}
+                    {month.isCurrent && <span className="text-sm mr-2 text-slate-400">(נוכחי)</span>}
+                  </p>
                   
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-emerald-400">+</span>
-                      <span className="text-emerald-400">{formatCurrency(month.income)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-red-400">-</span>
-                      <span className="text-red-400">{formatCurrency(month.expenses)}</span>
-                    </div>
-                    <div className="border-t border-slate-600 pt-2">
-                      <span className={`font-bold ${month.balance >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
-                        {formatCurrency(month.balance)}
-                      </span>
-                    </div>
+                  <div className={`text-5xl font-bold ${
+                    month.balance >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    {formatCurrency(month.balance)}
                   </div>
+                  
+                  {/* Small color indicator */}
+                  <div className={`mt-4 h-2 rounded-full mx-auto w-16 ${
+                    month.balance >= 0 ? 'bg-emerald-500' : 'bg-red-500'
+                  }`} />
                 </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </main>
 
-      {/* Footer */}
-      <p className="text-center text-slate-500 mt-8 text-sm">
-        מתעדכן אוטומטית • עדכון אחרון: {format(currentTime, 'HH:mm', { locale: he })}
-      </p>
+      {/* Footer - Static info only */}
+      <footer className="absolute bottom-0 left-0 right-0 px-12 py-4 border-t border-slate-800/50">
+        <p className="text-center text-slate-600 text-lg">
+          מערכת ניהול גבאות • מתעדכן אוטומטית כל 5 דקות
+        </p>
+      </footer>
     </div>
   );
 }
