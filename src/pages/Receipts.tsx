@@ -49,6 +49,8 @@ import {
   CalendarIcon,
   Filter,
   X,
+  FileDown,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { formatCurrency, formatShortDate, formatDate, getHebrewDate, PARASHA_LIST } from '@/lib/hebrew-utils';
 import { format } from 'date-fns';
@@ -453,6 +455,152 @@ export default function Receipts() {
   // Summary
   const totalAmount = filteredReceipts?.reduce((sum: number, r: any) => sum + Number(r.total_amount), 0) || 0;
 
+  // Export to Excel (CSV)
+  const handleExportExcel = () => {
+    if (!filteredReceipts?.length) {
+      toast.error('אין קבלות לייצוא');
+      return;
+    }
+
+    const headers = ['מספר קבלה', 'תאריך', 'שם', 'סכום', 'תיאור', 'אמצעי תשלום'];
+    const rows = filteredReceipts.map((r: any) => [
+      r.receipt_number,
+      formatDate(r.created_at),
+      r.member?.full_name || '-',
+      r.total_amount,
+      r.description || '-',
+      r.payment?.method === 'bit' ? 'ביט' : 'מזומן',
+    ]);
+
+    const csvContent = '\uFEFF' + [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `receipts_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    toast.success('הקובץ יורד בהצלחה');
+  };
+
+  // Export to PDF
+  const handleExportPDF = () => {
+    if (!filteredReceipts?.length) {
+      toast.error('אין קבלות לייצוא');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="he">
+      <head>
+        <meta charset="UTF-8">
+        <title>דו״ח קבלות</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: 'Heebo', Arial, sans-serif;
+            padding: 20px;
+            direction: rtl;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+          }
+          .header h1 { font-size: 24px; margin-bottom: 5px; }
+          .header p { color: #666; font-size: 14px; }
+          .summary {
+            display: flex;
+            justify-content: space-between;
+            background: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: right;
+          }
+          th {
+            background: #722F37;
+            color: white;
+          }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .total-row {
+            font-weight: bold;
+            background: #f0f0f0 !important;
+          }
+          .print-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 12px;
+            background: #722F37;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+          }
+          @media print {
+            .print-btn { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>דו״ח קבלות - בית הכנסת</h1>
+          <p>תאריך הפקה: ${formatDate(new Date().toISOString())}</p>
+          ${filterDateFrom || filterDateTo ? `<p>טווח תאריכים: ${filterDateFrom ? format(filterDateFrom, 'dd/MM/yyyy') : 'התחלה'} - ${filterDateTo ? format(filterDateTo, 'dd/MM/yyyy') : 'עכשיו'}</p>` : ''}
+        </div>
+        <div class="summary">
+          <span>מספר קבלות: ${filteredReceipts.length}</span>
+          <span>סה״כ: ${formatCurrency(totalAmount)}</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>מס׳</th>
+              <th>תאריך</th>
+              <th>שם</th>
+              <th>תיאור</th>
+              <th>אמצעי תשלום</th>
+              <th>סכום</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredReceipts.map((r: any) => `
+              <tr>
+                <td>${r.receipt_number}</td>
+                <td>${formatShortDate(r.created_at)}</td>
+                <td>${r.member?.full_name || '-'}</td>
+                <td>${r.description || '-'}</td>
+                <td>${r.payment?.method === 'bit' ? 'ביט' : 'מזומן'}</td>
+                <td>${formatCurrency(Number(r.total_amount))}</td>
+              </tr>
+            `).join('')}
+            <tr class="total-row">
+              <td colspan="5">סה״כ</td>
+              <td>${formatCurrency(totalAmount)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <button class="print-btn" onclick="window.print()">🖨️ הדפס / שמור PDF</button>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   return (
     <div className="space-y-6 animate-fade-up">
       {/* Header */}
@@ -465,6 +613,16 @@ export default function Receipts() {
           <p className="text-muted-foreground">
             {receipts?.length || 0} קבלות • סה״כ {formatCurrency(totalAmount)}
           </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportExcel} className="gap-2">
+            <FileSpreadsheet className="w-4 h-4" />
+            ייצוא אקסל
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-2">
+            <FileDown className="w-4 h-4" />
+            ייצוא PDF
+          </Button>
         </div>
       </div>
 
