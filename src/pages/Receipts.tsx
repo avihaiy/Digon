@@ -641,12 +641,12 @@ export default function Receipts() {
           </div>
 
           {/* Parasha Filter */}
-          <Select value={filterParasha} onValueChange={setFilterParasha}>
+          <Select value={filterParasha || "__all__"} onValueChange={(v) => setFilterParasha(v === "__all__" ? "" : v)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="סנן לפי פרשה" />
             </SelectTrigger>
-            <SelectContent className="max-h-60">
-              <SelectItem value="">כל הפרשיות</SelectItem>
+            <SelectContent className="max-h-60 bg-background">
+              <SelectItem value="__all__">כל הפרשיות</SelectItem>
               {PARASHA_LIST.map((parasha) => (
                 <SelectItem key={parasha} value={parasha}>
                   {parasha}
