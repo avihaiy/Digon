@@ -15,6 +15,8 @@ import {
   Flame, TrendingUp, TrendingDown, Wallet, Monitor, 
   ChevronLeft, ChevronRight, Pause, Play
 } from 'lucide-react';
+import vitrageLeft from '@/assets/vitrage-left.png';
+import vitrageRight from '@/assets/vitrage-right.png';
 
 type ScreenType = 'general' | 'memorial' | 'finance';
 
@@ -100,6 +102,26 @@ export default function DisplayTV() {
       onMouseMove={handleMouseMove}
       onClick={() => setShowControls(true)}
     >
+      {/* Stained glass vitrage decorations - left side */}
+      <div className="fixed right-0 top-0 h-full w-24 z-30 pointer-events-none">
+        <img 
+          src={vitrageRight} 
+          alt="" 
+          className="h-full w-full object-cover opacity-80"
+          style={{ filter: 'drop-shadow(-4px 0 20px rgba(251, 191, 36, 0.3))' }}
+        />
+      </div>
+      
+      {/* Stained glass vitrage decorations - right side */}
+      <div className="fixed left-0 top-0 h-full w-24 z-30 pointer-events-none">
+        <img 
+          src={vitrageLeft} 
+          alt="" 
+          className="h-full w-full object-cover opacity-80"
+          style={{ filter: 'drop-shadow(4px 0 20px rgba(251, 191, 36, 0.3))' }}
+        />
+      </div>
+
       <AnimatePresence mode="wait">
         {currentScreen === 'general' && (
           <GeneralScreen 
@@ -241,7 +263,7 @@ function GeneralScreen({ currentTime, location }: { currentTime: Date; location:
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.8 }}
-      className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-6"
+      className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-6 px-32"
       dir="rtl"
     >
       {/* Header */}
@@ -389,7 +411,7 @@ function MemorialScreen({ currentTime }: { currentTime: Date }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.8 }}
-      className="min-h-screen relative"
+      className="min-h-screen relative px-32"
       dir="rtl"
       style={{ background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f0f23 100%)' }}
     >
@@ -536,7 +558,7 @@ function FinanceScreen({ currentTime }: { currentTime: Date }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.8 }}
-      className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-10"
+      className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-10 px-32"
       dir="rtl"
     >
       {/* Header */}
