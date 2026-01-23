@@ -32,12 +32,19 @@ const SCREENS: ScreenConfig[] = [
   { id: 'finance', name: 'מצב כספי', duration: 20 },
 ];
 
+const DEFAULT_DURATIONS = {
+  general: 30,
+  memorial: 20,
+  finance: 20,
+};
+
 export default function DisplayTV() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('general');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isPaused, setIsPaused] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('akko');
+  const [screenDurations, setScreenDurations] = useState(DEFAULT_DURATIONS);
 
   // Load location from settings
   const { data: locationSetting } = useQuery({
@@ -52,9 +59,33 @@ export default function DisplayTV() {
     },
   });
 
+  // Load TV durations from settings
+  const { data: tvDurations } = useQuery({
+    queryKey: ['tv-durations'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['tv_duration_general', 'tv_duration_memorial', 'tv_duration_finance']);
+      
+      const result = { ...DEFAULT_DURATIONS };
+      data?.forEach(item => {
+        if (item.key === 'tv_duration_general') result.general = parseInt(item.value) || 30;
+        if (item.key === 'tv_duration_memorial') result.memorial = parseInt(item.value) || 20;
+        if (item.key === 'tv_duration_finance') result.finance = parseInt(item.value) || 20;
+      });
+      return result;
+    },
+    refetchInterval: 60000, // Refetch every minute to pick up changes
+  });
+
   useEffect(() => {
     if (locationSetting) setSelectedLocation(locationSetting);
   }, [locationSetting]);
+
+  useEffect(() => {
+    if (tvDurations) setScreenDurations(tvDurations);
+  }, [tvDurations]);
 
   // Clock update
   useEffect(() => {
@@ -66,17 +97,17 @@ export default function DisplayTV() {
   useEffect(() => {
     if (isPaused) return;
     
-    const currentConfig = SCREENS.find(s => s.id === currentScreen);
-    const duration = (currentConfig?.duration || 20) * 1000;
+    const duration = (screenDurations[currentScreen] || 20) * 1000;
     
     const timer = setTimeout(() => {
-      const currentIndex = SCREENS.findIndex(s => s.id === currentScreen);
-      const nextIndex = (currentIndex + 1) % SCREENS.length;
-      setCurrentScreen(SCREENS[nextIndex].id);
+      const screens: ScreenType[] = ['general', 'memorial', 'finance'];
+      const currentIndex = screens.indexOf(currentScreen);
+      const nextIndex = (currentIndex + 1) % screens.length;
+      setCurrentScreen(screens[nextIndex]);
     }, duration);
     
     return () => clearTimeout(timer);
-  }, [currentScreen, isPaused]);
+  }, [currentScreen, isPaused, screenDurations]);
 
   // Hide controls after inactivity
   useEffect(() => {
