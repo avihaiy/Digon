@@ -38,6 +38,12 @@ const DEFAULT_DURATIONS = {
   finance: 20,
 };
 
+const DEFAULT_SCREENS_ENABLED = {
+  general: true,
+  memorial: true,
+  finance: true,
+};
+
 export default function DisplayTV() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('general');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -45,6 +51,7 @@ export default function DisplayTV() {
   const [showControls, setShowControls] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('akko');
   const [screenDurations, setScreenDurations] = useState(DEFAULT_DURATIONS);
+  const [screensEnabled, setScreensEnabled] = useState(DEFAULT_SCREENS_ENABLED);
 
   // Load location from settings
   const { data: locationSetting } = useQuery({
@@ -76,7 +83,27 @@ export default function DisplayTV() {
       });
       return result;
     },
-    refetchInterval: 60000, // Refetch every minute to pick up changes
+    refetchInterval: 60000,
+  });
+
+  // Load TV screens enabled settings
+  const { data: tvScreensEnabled } = useQuery({
+    queryKey: ['tv-screens-enabled'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['tv_screen_general', 'tv_screen_memorial', 'tv_screen_finance']);
+      
+      const result = { ...DEFAULT_SCREENS_ENABLED };
+      data?.forEach(item => {
+        if (item.key === 'tv_screen_general') result.general = item.value === 'true';
+        if (item.key === 'tv_screen_memorial') result.memorial = item.value === 'true';
+        if (item.key === 'tv_screen_finance') result.finance = item.value === 'true';
+      });
+      return result;
+    },
+    refetchInterval: 60000,
   });
 
   useEffect(() => {
@@ -87,6 +114,22 @@ export default function DisplayTV() {
     if (tvDurations) setScreenDurations(tvDurations);
   }, [tvDurations]);
 
+  useEffect(() => {
+    if (tvScreensEnabled) setScreensEnabled(tvScreensEnabled);
+  }, [tvScreensEnabled]);
+
+  // Get enabled screens list
+  const enabledScreens = (['general', 'memorial', 'finance'] as ScreenType[]).filter(
+    screen => screensEnabled[screen]
+  );
+
+  // Ensure current screen is enabled, otherwise switch to first enabled
+  useEffect(() => {
+    if (enabledScreens.length > 0 && !enabledScreens.includes(currentScreen)) {
+      setCurrentScreen(enabledScreens[0]);
+    }
+  }, [enabledScreens, currentScreen]);
+
   // Clock update
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -95,19 +138,18 @@ export default function DisplayTV() {
 
   // Auto-rotate screens
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || enabledScreens.length <= 1) return;
     
     const duration = (screenDurations[currentScreen] || 20) * 1000;
     
     const timer = setTimeout(() => {
-      const screens: ScreenType[] = ['general', 'memorial', 'finance'];
-      const currentIndex = screens.indexOf(currentScreen);
-      const nextIndex = (currentIndex + 1) % screens.length;
-      setCurrentScreen(screens[nextIndex]);
+      const currentIndex = enabledScreens.indexOf(currentScreen);
+      const nextIndex = (currentIndex + 1) % enabledScreens.length;
+      setCurrentScreen(enabledScreens[nextIndex]);
     }, duration);
     
     return () => clearTimeout(timer);
-  }, [currentScreen, isPaused, screenDurations]);
+  }, [currentScreen, isPaused, screenDurations, enabledScreens]);
 
   // Hide controls after inactivity
   useEffect(() => {
@@ -117,13 +159,14 @@ export default function DisplayTV() {
   }, [showControls]);
 
   const goToScreen = useCallback((direction: 'prev' | 'next') => {
-    const currentIndex = SCREENS.findIndex(s => s.id === currentScreen);
+    if (enabledScreens.length <= 1) return;
+    const currentIndex = enabledScreens.indexOf(currentScreen);
     if (direction === 'next') {
-      setCurrentScreen(SCREENS[(currentIndex + 1) % SCREENS.length].id);
+      setCurrentScreen(enabledScreens[(currentIndex + 1) % enabledScreens.length]);
     } else {
-      setCurrentScreen(SCREENS[(currentIndex - 1 + SCREENS.length) % SCREENS.length].id);
+      setCurrentScreen(enabledScreens[(currentIndex - 1 + enabledScreens.length) % enabledScreens.length]);
     }
-  }, [currentScreen]);
+  }, [currentScreen, enabledScreens]);
 
   const handleMouseMove = () => setShowControls(true);
 
@@ -170,19 +213,25 @@ export default function DisplayTV() {
       </AnimatePresence>
 
       {/* Screen indicator dots */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-50">
-        {SCREENS.map((screen) => (
-          <button
-            key={screen.id}
-            onClick={() => setCurrentScreen(screen.id)}
-            className={`w-4 h-4 rounded-full transition-all ${
-              currentScreen === screen.id 
-                ? 'bg-amber-400 scale-125' 
-                : 'bg-slate-600 hover:bg-slate-500'
-            }`}
-          />
-        ))}
-      </div>
+      {enabledScreens.length > 1 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-50">
+          {enabledScreens.map((screenId) => {
+            const screen = SCREENS.find(s => s.id === screenId);
+            return (
+              <button
+                key={screenId}
+                onClick={() => setCurrentScreen(screenId)}
+                className={`w-4 h-4 rounded-full transition-all ${
+                  currentScreen === screenId 
+                    ? 'bg-amber-400 scale-125' 
+                    : 'bg-slate-600 hover:bg-slate-500'
+                }`}
+                title={screen?.name}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Control overlay */}
       <AnimatePresence>
