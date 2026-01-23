@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
 import { MapPin, Building2, Save, Monitor, Clock } from 'lucide-react';
 
@@ -22,6 +23,11 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     general: 30,
     memorial: 20,
     finance: 20,
+  });
+  const [tvScreensEnabled, setTvScreensEnabled] = useState({
+    general: true,
+    memorial: true,
+    finance: true,
   });
 
   // Load synagogue name
@@ -56,6 +62,25 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     },
   });
 
+  // Load TV screens enabled settings
+  const { data: tvEnabledSettings } = useQuery({
+    queryKey: ['app-settings-tv-screens-enabled'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['tv_screen_general', 'tv_screen_memorial', 'tv_screen_finance']);
+      
+      const result = { general: true, memorial: true, finance: true };
+      data?.forEach(item => {
+        if (item.key === 'tv_screen_general') result.general = item.value === 'true';
+        if (item.key === 'tv_screen_memorial') result.memorial = item.value === 'true';
+        if (item.key === 'tv_screen_finance') result.finance = item.value === 'true';
+      });
+      return result;
+    },
+  });
+
   useEffect(() => {
     if (nameSetting) {
       setSynagogueName(nameSetting);
@@ -67,6 +92,12 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
       setTvDurations(tvSettings);
     }
   }, [tvSettings]);
+
+  useEffect(() => {
+    if (tvEnabledSettings) {
+      setTvScreensEnabled(tvEnabledSettings);
+    }
+  }, [tvEnabledSettings]);
 
   // Save synagogue name
   const saveNameMutation = useMutation({
@@ -106,6 +137,33 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     },
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
+
+  // Save TV screens enabled
+  const saveTvScreensMutation = useMutation({
+    mutationFn: async (screens: typeof tvScreensEnabled) => {
+      const updates = [
+        { key: 'tv_screen_general', value: String(screens.general) },
+        { key: 'tv_screen_memorial', value: String(screens.memorial) },
+        { key: 'tv_screen_finance', value: String(screens.finance) },
+      ];
+      
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('app_settings')
+          .upsert(update, { onConflict: 'key' });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-tv-screens-enabled'] });
+      queryClient.invalidateQueries({ queryKey: ['tv-screens-enabled'] });
+      toast({ title: 'הגדרות המסכים נשמרו בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
+  // Count enabled screens
+  const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
   return (
     <div className="space-y-6">
@@ -173,74 +231,128 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            זמני תצוגת TV
+            הגדרות תצוגת TV
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            הגדר כמה שניות כל מסך יוצג לפני המעבר למסך הבא
-          </p>
-          <div className="grid grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <span className="text-2xl">📺</span>
-                לוח כללי
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="number"
-                  min={5}
-                  max={120}
-                  value={tvDurations.general}
-                  onChange={e => setTvDurations(prev => ({ ...prev, general: parseInt(e.target.value) || 30 }))}
-                  className="w-24"
-                />
-                <span className="text-muted-foreground">שניות</span>
+        <CardContent className="space-y-6">
+          <div>
+            <p className="text-sm text-muted-foreground mb-4">
+              בחר אילו מסכים יוצגו ברוטציה והגדר את משך הזמן לכל מסך
+            </p>
+            <div className="grid grid-cols-3 gap-6">
+              {/* General Screen */}
+              <div className={`p-4 rounded-xl border-2 transition-all ${tvScreensEnabled.general ? 'border-blue-300 bg-blue-50/50' : 'border-slate-200 bg-slate-50/50 opacity-60'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="flex items-center gap-2 text-lg">
+                    <span className="text-2xl">📺</span>
+                    לוח כללי
+                  </Label>
+                  <Switch
+                    checked={tvScreensEnabled.general}
+                    onCheckedChange={(checked) => {
+                      if (!checked && enabledCount <= 1) {
+                        toast({ title: 'חייב להיות לפחות מסך אחד פעיל', variant: 'destructive' });
+                        return;
+                      }
+                      setTvScreensEnabled(prev => ({ ...prev, general: checked }));
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="number"
+                    min={5}
+                    max={120}
+                    value={tvDurations.general}
+                    onChange={e => setTvDurations(prev => ({ ...prev, general: parseInt(e.target.value) || 30 }))}
+                    className="w-20"
+                    disabled={!tvScreensEnabled.general}
+                  />
+                  <span className="text-muted-foreground text-sm">שניות</span>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <span className="text-2xl">🕯️</span>
-                אזכרות
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="number"
-                  min={5}
-                  max={120}
-                  value={tvDurations.memorial}
-                  onChange={e => setTvDurations(prev => ({ ...prev, memorial: parseInt(e.target.value) || 20 }))}
-                  className="w-24"
-                />
-                <span className="text-muted-foreground">שניות</span>
+
+              {/* Memorial Screen */}
+              <div className={`p-4 rounded-xl border-2 transition-all ${tvScreensEnabled.memorial ? 'border-amber-300 bg-amber-50/50' : 'border-slate-200 bg-slate-50/50 opacity-60'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="flex items-center gap-2 text-lg">
+                    <span className="text-2xl">🕯️</span>
+                    אזכרות
+                  </Label>
+                  <Switch
+                    checked={tvScreensEnabled.memorial}
+                    onCheckedChange={(checked) => {
+                      if (!checked && enabledCount <= 1) {
+                        toast({ title: 'חייב להיות לפחות מסך אחד פעיל', variant: 'destructive' });
+                        return;
+                      }
+                      setTvScreensEnabled(prev => ({ ...prev, memorial: checked }));
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="number"
+                    min={5}
+                    max={120}
+                    value={tvDurations.memorial}
+                    onChange={e => setTvDurations(prev => ({ ...prev, memorial: parseInt(e.target.value) || 20 }))}
+                    className="w-20"
+                    disabled={!tvScreensEnabled.memorial}
+                  />
+                  <span className="text-muted-foreground text-sm">שניות</span>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <span className="text-2xl">💰</span>
-                מצב כספי
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="number"
-                  min={5}
-                  max={120}
-                  value={tvDurations.finance}
-                  onChange={e => setTvDurations(prev => ({ ...prev, finance: parseInt(e.target.value) || 20 }))}
-                  className="w-24"
-                />
-                <span className="text-muted-foreground">שניות</span>
+
+              {/* Finance Screen */}
+              <div className={`p-4 rounded-xl border-2 transition-all ${tvScreensEnabled.finance ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50 opacity-60'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="flex items-center gap-2 text-lg">
+                    <span className="text-2xl">💰</span>
+                    מצב כספי
+                  </Label>
+                  <Switch
+                    checked={tvScreensEnabled.finance}
+                    onCheckedChange={(checked) => {
+                      if (!checked && enabledCount <= 1) {
+                        toast({ title: 'חייב להיות לפחות מסך אחד פעיל', variant: 'destructive' });
+                        return;
+                      }
+                      setTvScreensEnabled(prev => ({ ...prev, finance: checked }));
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="number"
+                    min={5}
+                    max={120}
+                    value={tvDurations.finance}
+                    onChange={e => setTvDurations(prev => ({ ...prev, finance: parseInt(e.target.value) || 20 }))}
+                    className="w-20"
+                    disabled={!tvScreensEnabled.finance}
+                  />
+                  <span className="text-muted-foreground text-sm">שניות</span>
+                </div>
               </div>
             </div>
           </div>
-          <Button 
-            onClick={() => saveTvDurationsMutation.mutate(tvDurations)}
-            disabled={saveTvDurationsMutation.isPending}
-            className="mt-4"
-          >
-            <Save className="w-4 h-4 ml-2" />
-            שמור זמנים
-          </Button>
+          
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => {
+                saveTvDurationsMutation.mutate(tvDurations);
+                saveTvScreensMutation.mutate(tvScreensEnabled);
+              }}
+              disabled={saveTvDurationsMutation.isPending || saveTvScreensMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור הגדרות
+            </Button>
+            <p className="text-sm text-muted-foreground self-center">
+              {enabledCount} מסכים פעילים
+            </p>
+          </div>
         </CardContent>
       </Card>
 
