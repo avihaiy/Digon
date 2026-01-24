@@ -627,23 +627,24 @@ export default function Receipts() {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-3 items-center">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="חיפוש לפי שם או מספר קבלה..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
-            />
-          </div>
+      <div className="flex flex-col gap-3">
+        {/* Search - Full width on mobile */}
+        <div className="relative w-full">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="חיפוש לפי שם או מספר קבלה..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-10"
+          />
+        </div>
 
+        {/* Filters row - Scrollable on mobile */}
+        <div className="flex gap-2 items-center overflow-x-auto pb-2 -mb-2">
           {/* Parasha Filter */}
           <Select value={filterParasha || "__all__"} onValueChange={(v) => setFilterParasha(v === "__all__" ? "" : v)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="סנן לפי פרשה" />
+            <SelectTrigger className="w-[140px] sm:w-[180px] shrink-0">
+              <SelectValue placeholder="פרשה" />
             </SelectTrigger>
             <SelectContent className="max-h-60 bg-background">
               <SelectItem value="__all__">כל הפרשיות</SelectItem>
@@ -660,12 +661,13 @@ export default function Receipts() {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
+                size="sm"
                 className={cn(
-                  "w-[140px] justify-start text-right font-normal",
+                  "w-[110px] sm:w-[140px] shrink-0 justify-start text-right font-normal",
                   !filterDateFrom && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="ml-2 h-4 w-4" />
+                <CalendarIcon className="ml-1 sm:ml-2 h-4 w-4" />
                 {filterDateFrom ? format(filterDateFrom, "dd/MM/yy") : "מתאריך"}
               </Button>
             </PopoverTrigger>
@@ -685,12 +687,13 @@ export default function Receipts() {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
+                size="sm"
                 className={cn(
-                  "w-[140px] justify-start text-right font-normal",
+                  "w-[110px] sm:w-[140px] shrink-0 justify-start text-right font-normal",
                   !filterDateTo && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="ml-2 h-4 w-4" />
+                <CalendarIcon className="ml-1 sm:ml-2 h-4 w-4" />
                 {filterDateTo ? format(filterDateTo, "dd/MM/yy") : "עד תאריך"}
               </Button>
             </PopoverTrigger>
@@ -707,9 +710,9 @@ export default function Receipts() {
 
           {/* Clear Filters */}
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 shrink-0">
               <X className="w-4 h-4" />
-              נקה סינון
+              <span className="hidden sm:inline">נקה</span>
             </Button>
           )}
         </div>
@@ -742,87 +745,91 @@ export default function Receipts() {
               {filteredReceipts?.map((receipt: any) => (
                 <div
                   key={receipt.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 table-row-hover"
+                  className="flex flex-col p-4 gap-3 table-row-hover"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Receipt className="w-6 h-6 text-primary" />
+                  {/* Top row: Receipt info */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Receipt className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="font-mono">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className="font-mono text-xs">
                           #{receipt.receipt_number}
                         </Badge>
-                        <span className="font-medium">{receipt.member?.full_name}</span>
+                        <span className="font-medium truncate">{receipt.member?.full_name}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1 flex-wrap">
-                        <span>{formatShortDate(receipt.created_at)} ({getHebrewDate(new Date(receipt.created_at))})</span>
+                      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mt-1 flex-wrap">
+                        <span>{formatShortDate(receipt.created_at)}</span>
                         {receipt.description && (
                           <>
-                            <span>•</span>
-                            <span>{receipt.description}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="hidden sm:inline truncate max-w-[150px]">{receipt.description}</span>
                           </>
                         )}
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <span className="text-xl font-bold hebrew-number">
+                    <span className="text-lg sm:text-xl font-bold hebrew-number shrink-0">
                       {formatCurrency(Number(receipt.total_amount))}
                     </span>
-                    <div className="flex gap-1 sm:gap-2 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setPreviewReceipt(receipt)}
-                        title="תצוגה מקדימה"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handlePrint(receipt)}
-                        title="הדפסה ישירה"
-                      >
-                        <Printer className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleWhatsApp(receipt)}
-                        title="שלח בוואטסאפ"
-                        className="text-green-600 hover:text-green-700"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEmail(receipt)}
-                        title="שלח באימייל"
-                      >
-                        <Mail className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditReceipt(receipt)}
-                        title="עריכה"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setDeleteReceiptId(receipt.id)}
-                        className="text-destructive hover:text-destructive"
-                        title="מחיקה"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                  </div>
+
+                  {/* Bottom row: Actions */}
+                  <div className="flex items-center justify-end gap-1 sm:gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setPreviewReceipt(receipt)}
+                      title="תצוגה מקדימה"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handlePrint(receipt)}
+                      title="הדפסה ישירה"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleWhatsApp(receipt)}
+                      title="שלח בוואטסאפ"
+                      className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEmail(receipt)}
+                      title="שלח באימייל"
+                      className="h-8 w-8 p-0 hidden sm:flex"
+                    >
+                      <Mail className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditReceipt(receipt)}
+                      title="עריכה"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setDeleteReceiptId(receipt.id)}
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      title="מחיקה"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
