@@ -525,18 +525,20 @@ export default function Payments() {
               {filteredPayments?.map((payment: any) => (
                 <div
                   key={payment.id}
-                  className="flex items-center gap-4 p-4 table-row-hover"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 table-row-hover"
                 >
-                  {/* Checkbox for pending payments */}
-                  {payment.status === 'pending' && (
-                    <Checkbox
-                      checked={selectedPayments.has(payment.id)}
-                      onCheckedChange={() => togglePaymentSelection(payment.id)}
-                    />
-                  )}
-                  
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  {/* Top row on mobile: checkbox + member info */}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {/* Checkbox for pending payments */}
+                    {payment.status === 'pending' && (
+                      <Checkbox
+                        checked={selectedPayments.has(payment.id)}
+                        onCheckedChange={() => togglePaymentSelection(payment.id)}
+                        className="shrink-0"
+                      />
+                    )}
+                    
+                    <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
                       payment.method === 'bit'
                         ? 'bg-purple-100 text-purple-600'
                         : 'bg-green-100 text-green-600'
@@ -547,51 +549,59 @@ export default function Payments() {
                         <Banknote className="w-5 h-5" />
                       )}
                     </div>
-                    <div>
-                      <p className="font-medium">{payment.member?.full_name}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                        <span>{formatShortDate(payment.created_at)} ({getHebrewDate(new Date(payment.created_at))})</span>
-                        <span>•</span>
-                        <span>{PAYMENT_METHOD[payment.method as keyof typeof PAYMENT_METHOD]}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{payment.member?.full_name}</p>
+                      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
+                        <span>{formatShortDate(payment.created_at)}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="hidden sm:inline">{PAYMENT_METHOD[payment.method as keyof typeof PAYMENT_METHOD]}</span>
                         {payment.reference && (
                           <>
-                            <span>•</span>
-                            <span>אסמכתא: {payment.reference}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="hidden sm:inline">אסמכתא: {payment.reference}</span>
                           </>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <span className="text-lg font-bold hebrew-number">
-                      {formatCurrency(Number(payment.amount))}
-                    </span>
-                    <Badge
-                      className={
-                        payment.status === 'confirmed'
-                          ? 'status-paid'
-                          : 'status-pending'
-                      }
-                    >
-                      {payment.status === 'confirmed' ? (
-                        <CheckCircle2 className="w-3 h-3 ml-1" />
-                      ) : (
-                        <Clock className="w-3 h-3 ml-1" />
-                      )}
-                      {PAYMENT_STATUS[payment.status as keyof typeof PAYMENT_STATUS]}
-                    </Badge>
-                    {payment.receipt?.[0]?.receipt_number && (
-                      <Badge variant="outline">
-                        קבלה #{payment.receipt[0].receipt_number}
+                  
+                  {/* Bottom row on mobile: amount + badges + actions */}
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 mr-0 sm:mr-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base sm:text-lg font-bold hebrew-number">
+                        {formatCurrency(Number(payment.amount))}
+                      </span>
+                      <Badge
+                        className={`text-xs ${
+                          payment.status === 'confirmed'
+                            ? 'status-paid'
+                            : 'status-pending'
+                        }`}
+                      >
+                        <span className="hidden sm:inline-flex items-center">
+                          {payment.status === 'confirmed' ? (
+                            <CheckCircle2 className="w-3 h-3 ml-1" />
+                          ) : (
+                            <Clock className="w-3 h-3 ml-1" />
+                          )}
+                        </span>
+                        {PAYMENT_STATUS[payment.status as keyof typeof PAYMENT_STATUS]}
                       </Badge>
-                    )}
+                      {payment.receipt?.[0]?.receipt_number && (
+                        <Badge variant="outline" className="hidden sm:inline-flex text-xs">
+                          קבלה #{payment.receipt[0].receipt_number}
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex gap-1">
                       {payment.status === 'pending' && (
                         <Button
                           size="sm"
                           onClick={() => confirmPayment.mutate(payment.id)}
+                          className="h-8 px-2 sm:px-3"
                         >
-                          אשר
+                          <span className="hidden sm:inline">אשר</span>
+                          <CheckCircle2 className="w-4 h-4 sm:hidden" />
                         </Button>
                       )}
                       <Button
@@ -599,6 +609,7 @@ export default function Payments() {
                         variant="outline"
                         onClick={() => handleEditPayment(payment)}
                         title="עריכה"
+                        className="h-8 w-8 p-0"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -606,7 +617,7 @@ export default function Payments() {
                         size="sm"
                         variant="outline"
                         onClick={() => setDeletePaymentId(payment.id)}
-                        className="text-destructive hover:text-destructive"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                         title="מחיקה"
                       >
                         <Trash2 className="w-4 h-4" />

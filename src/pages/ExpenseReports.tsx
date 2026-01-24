@@ -317,20 +317,22 @@ export default function ExpenseReports() {
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6" dir="rtl">
       {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">דו"ח הכנסות והוצאות</h1>
-            <p className="text-muted-foreground">ניתוח מצב פיננסי</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportExcel}>
-              <FileSpreadsheet className="ml-2 h-4 w-4" />
-              ייצוא Excel
-            </Button>
-            <Button variant="outline" onClick={handleExportPdf}>
-              <FileText className="ml-2 h-4 w-4" />
-              ייצוא PDF
-            </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">דו"ח הכנסות והוצאות</h1>
+              <p className="text-muted-foreground text-sm">ניתוח מצב פיננסי</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleExportExcel} className="gap-1 sm:gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                <span className="hidden sm:inline">ייצוא</span> Excel
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportPdf} className="gap-1 sm:gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">ייצוא</span> PDF
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -543,36 +545,62 @@ export default function ExpenseReports() {
                 אין הוצאות בטווח התאריכים שנבחר
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">תאריך</TableHead>
-                      <TableHead className="text-right">קטגוריה</TableHead>
-                      <TableHead className="text-right">ספק</TableHead>
-                      <TableHead className="text-right">סכום</TableHead>
-                      <TableHead className="text-right">הערות</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {expenses.map(expense => (
-                      <TableRow key={expense.id}>
-                        <TableCell dir="ltr" className="text-right">
-                          {format(parseISO(expense.expense_date), 'dd/MM/yyyy')}
-                        </TableCell>
-                        <TableCell>{expense.expense_categories?.name || '-'}</TableCell>
-                        <TableCell>{expense.supplier || '-'}</TableCell>
-                        <TableCell dir="ltr" className="text-right font-medium text-red-600">
+              <>
+                {/* Mobile view - Cards */}
+                <div className="block sm:hidden divide-y divide-border">
+                  {expenses.map(expense => (
+                    <div key={expense.id} className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{expense.expense_categories?.name || '-'}</p>
+                          <p className="text-sm text-muted-foreground">{expense.supplier || 'ספק לא ידוע'}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(parseISO(expense.expense_date), 'dd/MM/yyyy')}
+                          </p>
+                        </div>
+                        <p className="font-bold text-red-600 shrink-0">
                           {formatCurrency(expense.amount)}
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {expense.notes || '-'}
-                        </TableCell>
+                        </p>
+                      </div>
+                      {expense.notes && (
+                        <p className="text-xs text-muted-foreground mt-2 truncate">{expense.notes}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop view - Table */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">תאריך</TableHead>
+                        <TableHead className="text-right">קטגוריה</TableHead>
+                        <TableHead className="text-right">ספק</TableHead>
+                        <TableHead className="text-right">סכום</TableHead>
+                        <TableHead className="text-right">הערות</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {expenses.map(expense => (
+                        <TableRow key={expense.id}>
+                          <TableCell dir="ltr" className="text-right">
+                            {format(parseISO(expense.expense_date), 'dd/MM/yyyy')}
+                          </TableCell>
+                          <TableCell>{expense.expense_categories?.name || '-'}</TableCell>
+                          <TableCell>{expense.supplier || '-'}</TableCell>
+                          <TableCell dir="ltr" className="text-right font-medium text-red-600">
+                            {formatCurrency(expense.amount)}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {expense.notes || '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

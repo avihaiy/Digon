@@ -272,26 +272,28 @@ export default function Budget() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <Wallet className="w-8 h-8 text-primary" />
-            ניהול תקציב
-          </h1>
-          <p className="text-muted-foreground mt-1">מעקב אחר הכנסות והוצאות</p>
-        </div>
-        {isManager && (
-          <div className="flex gap-2">
-            <Button onClick={() => openAddDialog('income')} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-              <TrendingUp className="w-4 h-4" />
-              הוסף הכנסה
-            </Button>
-            <Button onClick={() => openAddDialog('expense')} variant="destructive" className="gap-2">
-              <TrendingDown className="w-4 h-4" />
-              הוסף הוצאה
-            </Button>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
+              <Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+              ניהול תקציב
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">מעקב אחר הכנסות והוצאות</p>
           </div>
-        )}
+          {isManager && (
+            <div className="flex gap-2">
+              <Button onClick={() => openAddDialog('income')} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 flex-1 sm:flex-none">
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">הוסף</span> הכנסה
+              </Button>
+              <Button onClick={() => openAddDialog('expense')} variant="destructive" size="sm" className="gap-2 flex-1 sm:flex-none">
+                <TrendingDown className="w-4 h-4" />
+                <span className="hidden sm:inline">הוסף</span> הוצאה
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -389,56 +391,103 @@ export default function Budget() {
               לא נמצאו תנועות
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>תאריך</TableHead>
-                    <TableHead>סוג</TableHead>
-                    <TableHead>קטגוריה</TableHead>
-                    <TableHead>תיאור</TableHead>
-                    <TableHead>סכום</TableHead>
-                    {isManager && <TableHead>פעולות</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        {format(new Date(transaction.transaction_date), 'dd/MM/yyyy', { locale: he })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'}>
-                          {transaction.type === 'income' ? 'הכנסה' : 'הוצאה'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{transaction.budget_categories?.name || '-'}</TableCell>
-                      <TableCell className="max-w-xs truncate">{transaction.description || '-'}</TableCell>
-                      <TableCell className={transaction.type === 'income' ? 'text-emerald-500 font-medium' : 'text-destructive font-medium'}>
-                        {transaction.type === 'income' ? '+' : '-'}₪{Number(transaction.amount).toLocaleString()}
-                      </TableCell>
-                      {isManager && (
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => openEditDialog(transaction)}>
-                              <Edit className="w-4 h-4" />
+            <>
+              {/* Mobile view - Cards */}
+              <div className="block sm:hidden space-y-3">
+                {filteredTransactions.map((transaction) => (
+                  <div key={transaction.id} className="p-3 rounded-lg border bg-card">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'} className="text-xs">
+                            {transaction.type === 'income' ? 'הכנסה' : 'הוצאה'}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(transaction.transaction_date), 'dd/MM/yy', { locale: he })}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium truncate">{transaction.budget_categories?.name || '-'}</p>
+                        {transaction.description && (
+                          <p className="text-xs text-muted-foreground truncate">{transaction.description}</p>
+                        )}
+                      </div>
+                      <div className="text-left shrink-0">
+                        <p className={`font-bold ${transaction.type === 'income' ? 'text-emerald-500' : 'text-destructive'}`}>
+                          {transaction.type === 'income' ? '+' : '-'}₪{Number(transaction.amount).toLocaleString()}
+                        </p>
+                        {isManager && (
+                          <div className="flex gap-1 mt-1 justify-end">
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEditDialog(transaction)}>
+                              <Edit className="w-3 h-3" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                               onClick={() => deleteTransactionMutation.mutate(transaction.id)}
-                              className="text-destructive hover:text-destructive"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3 h-3" />
                             </Button>
                           </div>
-                        </TableCell>
-                      )}
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop view - Table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>תאריך</TableHead>
+                      <TableHead>סוג</TableHead>
+                      <TableHead>קטגוריה</TableHead>
+                      <TableHead>תיאור</TableHead>
+                      <TableHead>סכום</TableHead>
+                      {isManager && <TableHead>פעולות</TableHead>}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTransactions.map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell>
+                          {format(new Date(transaction.transaction_date), 'dd/MM/yyyy', { locale: he })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'}>
+                            {transaction.type === 'income' ? 'הכנסה' : 'הוצאה'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{transaction.budget_categories?.name || '-'}</TableCell>
+                        <TableCell className="max-w-xs truncate">{transaction.description || '-'}</TableCell>
+                        <TableCell className={transaction.type === 'income' ? 'text-emerald-500 font-medium' : 'text-destructive font-medium'}>
+                          {transaction.type === 'income' ? '+' : '-'}₪{Number(transaction.amount).toLocaleString()}
+                        </TableCell>
+                        {isManager && (
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => openEditDialog(transaction)}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteTransactionMutation.mutate(transaction.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
