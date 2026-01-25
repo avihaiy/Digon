@@ -213,6 +213,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <main className="flex-1 p-4 lg:p-6">
           {children}
         </main>
+
+        {/* Footer credit */}
+        <footer className="border-t border-border px-4 py-3 text-center">
+          <p className="text-xs text-muted-foreground">
+            המערכת נבנתה ע"י <span className="font-medium text-foreground">Avihai Yosipovich</span>
+          </p>
+        </footer>
       </div>
     </div>
   );
