@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { APP_CONFIG } from '@/config/app';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -217,11 +218,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {/* Footer credit */}
         <footer className="border-t border-border px-4 py-3 text-center">
           <p className="text-xs text-muted-foreground">
-            המערכת נבנתה ע"י <span className="font-medium text-foreground">Avihai Yosipovich</span>
+            המערכת נבנתה ע"י <span className="font-medium text-foreground">{APP_CONFIG.developer.name}</span>
             <span className="mx-2">•</span>
-            <span className="text-muted-foreground/70">גרסה 1.0.0</span>
+            <span className="text-muted-foreground/70">גרסה {APP_CONFIG.version}</span>
             <span className="mx-2">•</span>
-            <span className="text-muted-foreground/70">עודכן: ינואר 2025</span>
+            <span className="text-muted-foreground/70">עודכן: {APP_CONFIG.lastUpdated}</span>
           </p>
         </footer>
       </div>
