@@ -30,8 +30,18 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key } from 'lucide-react';
+import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key, Phone, Pencil, Trash2 } from 'lucide-react';
 import { USER_ROLES } from '@/lib/hebrew-utils';
 import type { Database } from '@/integrations/supabase/types';
 import { z } from 'zod';
@@ -42,13 +52,21 @@ const newUserSchema = z.object({
   email: z.string().email('כתובת אימייל לא תקינה'),
   password: z.string().min(6, 'הסיסמה חייבת להכיל לפחות 6 תווים'),
   fullName: z.string().min(2, 'שם מלא חייב להכיל לפחות 2 תווים'),
+  phone: z.string().optional(),
   role: z.enum(['admin', 'gabai', 'viewer']),
+});
+
+const editUserSchema = z.object({
+  fullName: z.string().min(2, 'שם מלא חייב להכיל לפחות 2 תווים'),
+  phone: z.string().optional(),
+  role: z.enum(['admin', 'gabai', 'viewer']).nullable(),
 });
 
 interface UserWithRole {
   user_id: string;
   full_name: string | null;
-  email: string;
+  email: string | null;
+  phone: string | null;
   role: AppRole | null;
 }
 
@@ -60,13 +78,26 @@ export default function UserManagement() {
   const [selectedRole, setSelectedRole] = useState<AppRole | ''>('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  
   const [newUserForm, setNewUserForm] = useState({
     email: '',
     password: '',
     fullName: '',
+    phone: '',
     role: 'viewer' as AppRole,
   });
+  
+  const [editUserForm, setEditUserForm] = useState({
+    fullName: '',
+    phone: '',
+    role: null as AppRole | null,
+  });
+  
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [editFormErrors, setEditFormErrors] = useState<Record<string, string>>({});
 
   // Fetch users with their roles
   const { data: users = [], isLoading } = useQuery({
@@ -74,7 +105,7 @@ export default function UserManagement() {
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, full_name')
+        .select('user_id, full_name, email, phone')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -90,7 +121,8 @@ export default function UserManagement() {
       return profiles?.map(p => ({
         user_id: p.user_id,
         full_name: p.full_name,
-        email: p.full_name || p.user_id.slice(0, 8),
+        email: p.email,
+        phone: p.phone,
         role: roleMap.get(p.user_id) || null,
       })) as UserWithRole[];
     },
@@ -116,6 +148,17 @@ export default function UserManagement() {
       // Wait a moment for the profile to be created by the trigger
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // Update profile with phone and email
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          phone: data.phone || null,
+          email: data.email,
+        })
+        .eq('user_id', authData.user.id);
+
+      if (profileError) console.error('Profile update error:', profileError);
+
       // Assign the role
       const { error: roleError } = await supabase
         .from('user_roles')
@@ -129,7 +172,7 @@ export default function UserManagement() {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
       toast.success('המשתמש נוצר בהצלחה! נשלח אימייל לאימות');
       setCreateDialogOpen(false);
-      setNewUserForm({ email: '', password: '', fullName: '', role: 'viewer' });
+      setNewUserForm({ email: '', password: '', fullName: '', phone: '', role: 'viewer' });
       setFormErrors({});
     },
     onError: (error: Error) => {
@@ -138,6 +181,82 @@ export default function UserManagement() {
       } else {
         toast.error('שגיאה ביצירת המשתמש: ' + error.message);
       }
+    },
+  });
+
+  // Edit user mutation
+  const editUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: typeof editUserForm }) => {
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: data.fullName,
+          phone: data.phone || null,
+        })
+        .eq('user_id', userId);
+
+      if (profileError) throw profileError;
+
+      // Update role
+      if (data.role) {
+        const { data: existing } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (existing) {
+          const { error } = await supabase
+            .from('user_roles')
+            .update({ role: data.role })
+            .eq('user_id', userId);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('user_roles')
+            .insert({ user_id: userId, role: data.role });
+          if (error) throw error;
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      toast.success('פרטי המשתמש עודכנו בהצלחה');
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+      setEditFormErrors({});
+    },
+    onError: (error: Error) => {
+      toast.error('שגיאה בעדכון המשתמש: ' + error.message);
+    },
+  });
+
+  // Delete user mutation (removes profile and role, auth user remains but cannot access)
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      // Delete user role
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      // Delete profile
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      toast.success('המשתמש נמחק בהצלחה');
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    },
+    onError: (error: Error) => {
+      toast.error('שגיאה במחיקת המשתמש: ' + error.message);
     },
   });
 
@@ -195,13 +314,30 @@ export default function UserManagement() {
 
   const filteredUsers = users.filter(user =>
     (user.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-     user.email?.toLowerCase().includes(search.toLowerCase()))
+     user.email?.toLowerCase().includes(search.toLowerCase()) ||
+     user.phone?.includes(search))
   );
 
   const openRoleDialog = (user: UserWithRole) => {
     setSelectedUser(user);
     setSelectedRole(user.role || '');
     setDialogOpen(true);
+  };
+
+  const openEditDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setEditUserForm({
+      fullName: user.full_name || '',
+      phone: user.phone || '',
+      role: user.role,
+    });
+    setEditFormErrors({});
+    setEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (user: UserWithRole) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
   };
 
   const handleAssignRole = () => {
@@ -226,6 +362,28 @@ export default function UserManagement() {
       return;
     }
     createUserMutation.mutate(newUserForm);
+  };
+
+  const handleEditUser = () => {
+    if (!selectedUser) return;
+    setEditFormErrors({});
+    const result = editUserSchema.safeParse(editUserForm);
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach(err => {
+        if (err.path[0]) {
+          errors[err.path[0].toString()] = err.message;
+        }
+      });
+      setEditFormErrors(errors);
+      return;
+    }
+    editUserMutation.mutate({ userId: selectedUser.user_id, data: editUserForm });
+  };
+
+  const handleDeleteUser = () => {
+    if (!userToDelete) return;
+    deleteUserMutation.mutate(userToDelete.user_id);
   };
 
   const getRoleIcon = (role: AppRole | null) => {
@@ -340,15 +498,15 @@ export default function UserManagement() {
 
       {/* Users Table */}
       <Card className="glass-card">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
             רשימת משתמשים
           </CardTitle>
-          <div className="relative w-64">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="חיפוש משתמש..."
+              placeholder="חיפוש לפי שם, אימייל או טלפון..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pr-9"
@@ -365,70 +523,141 @@ export default function UserManagement() {
               לא נמצאו משתמשים
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>שם</TableHead>
-                    <TableHead>תפקיד נוכחי</TableHead>
-                    <TableHead>פעולות</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.user_id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-sm font-medium text-primary">
-                              {user.full_name?.slice(0, 2) || '??'}
-                            </span>
-                          </div>
-                          <div>
+            <>
+              {/* Desktop Table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>שם</TableHead>
+                      <TableHead>אימייל</TableHead>
+                      <TableHead>טלפון</TableHead>
+                      <TableHead>תפקיד</TableHead>
+                      <TableHead>פעולות</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.user_id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-sm font-medium text-primary">
+                                {user.full_name?.slice(0, 2) || '??'}
+                              </span>
+                            </div>
                             <p className="font-medium">{user.full_name || 'משתמש'}</p>
-                            <p className="text-sm text-muted-foreground">{user.user_id.slice(0, 8)}...</p>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {user.role ? (
-                          <Badge variant={getRoleBadgeVariant(user.role)} className="gap-1">
-                            {getRoleIcon(user.role)}
-                            {USER_ROLES[user.role]}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
-                            ללא תפקיד
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openRoleDialog(user)}
-                          >
-                            <UserCog className="w-4 h-4 ml-1" />
-                            שנה תפקיד
-                          </Button>
-                          {user.role && (
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground" dir="ltr">
+                            {user.email || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground" dir="ltr">
+                            {user.phone || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {user.role ? (
+                            <Badge variant={getRoleBadgeVariant(user.role)} className="gap-1">
+                              {getRoleIcon(user.role)}
+                              {USER_ROLES[user.role]}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              ללא תפקיד
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEditDialog(user)}
+                            >
+                              <Pencil className="w-4 h-4 ml-1" />
+                              עריכה
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => removeRoleMutation.mutate(user.user_id)}
+                              onClick={() => openDeleteDialog(user)}
                               className="text-destructive hover:text-destructive"
                             >
-                              הסר תפקיד
+                              <Trash2 className="w-4 h-4" />
                             </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="block sm:hidden space-y-3">
+                {filteredUsers.map((user) => (
+                  <Card key={user.user_id} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-medium text-primary">
+                            {user.full_name?.slice(0, 2) || '??'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium">{user.full_name || 'משתמש'}</p>
+                          {user.role ? (
+                            <Badge variant={getRoleBadgeVariant(user.role)} className="gap-1 mt-1">
+                              {getRoleIcon(user.role)}
+                              {USER_ROLES[user.role]}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground mt-1">
+                              ללא תפקיד
+                            </Badge>
                           )}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openEditDialog(user)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openDeleteDialog(user)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1 text-sm">
+                      {user.email && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Mail className="w-4 h-4" />
+                          <span dir="ltr">{user.email}</span>
+                        </div>
+                      )}
+                      {user.phone && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Phone className="w-4 h-4" />
+                          <span dir="ltr">{user.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -528,6 +757,7 @@ export default function UserManagement() {
                   type="email"
                   placeholder="user@example.com"
                   className="pr-9"
+                  dir="ltr"
                   value={newUserForm.email}
                   onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
                 />
@@ -535,6 +765,22 @@ export default function UserManagement() {
               {formErrors.email && (
                 <p className="text-sm text-destructive">{formErrors.email}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">טלפון</Label>
+              <div className="relative">
+                <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="050-1234567"
+                  className="pr-9"
+                  dir="ltr"
+                  value={newUserForm.phone}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -601,6 +847,116 @@ export default function UserManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5" />
+              עריכת משתמש
+            </DialogTitle>
+            <DialogDescription>
+              עדכן את פרטי המשתמש
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="editFullName">שם מלא *</Label>
+              <Input
+                id="editFullName"
+                placeholder="ישראל ישראלי"
+                value={editUserForm.fullName}
+                onChange={(e) => setEditUserForm({ ...editUserForm, fullName: e.target.value })}
+              />
+              {editFormErrors.fullName && (
+                <p className="text-sm text-destructive">{editFormErrors.fullName}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editPhone">טלפון</Label>
+              <div className="relative">
+                <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="editPhone"
+                  type="tel"
+                  placeholder="050-1234567"
+                  className="pr-9"
+                  dir="ltr"
+                  value={editUserForm.phone}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>תפקיד</Label>
+              <Select
+                value={editUserForm.role || ''}
+                onValueChange={(value) => setEditUserForm({ ...editUserForm, role: value as AppRole })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר תפקיד" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4" />
+                      מנהל
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="gabai">
+                    <div className="flex items-center gap-2">
+                      <UserCog className="w-4 h-4" />
+                      גבאי
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="viewer">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4" />
+                      צופה
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              ביטול
+            </Button>
+            <Button
+              onClick={handleEditUser}
+              disabled={editUserMutation.isPending}
+            >
+              {editUserMutation.isPending ? 'שומר...' : 'שמור שינויים'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+            <AlertDialogDescription>
+              פעולה זו תמחק את המשתמש "{userToDelete?.full_name}" מהמערכת.
+              לא ניתן לבטל פעולה זו.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteUserMutation.isPending ? 'מוחק...' : 'מחק משתמש'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
