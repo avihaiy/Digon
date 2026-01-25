@@ -220,6 +220,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
             המערכת נבנתה ע"י <span className="font-medium text-foreground">Avihai Yosipovich</span>
             <span className="mx-2">•</span>
             <span className="text-muted-foreground/70">גרסה 1.0.0</span>
+            <span className="mx-2">•</span>
+            <span className="text-muted-foreground/70">עודכן: ינואר 2025</span>
           </p>
         </footer>
       </div>
