@@ -41,7 +41,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key, Phone, Pencil, Trash2 } from 'lucide-react';
+import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key, Phone, Pencil, Trash2, KeyRound } from 'lucide-react';
 import { USER_ROLES } from '@/lib/hebrew-utils';
 import type { Database } from '@/integrations/supabase/types';
 import { z } from 'zod';
@@ -80,7 +80,10 @@ export default function UserManagement() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  const [userToResetPassword, setUserToResetPassword] = useState<UserWithRole | null>(null);
+  const [newPassword, setNewPassword] = useState('');
   
   const [newUserForm, setNewUserForm] = useState({
     email: '',
@@ -312,6 +315,41 @@ export default function UserManagement() {
     },
   });
 
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) throw new Error('לא מחובר');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-user-password`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionData.session.access_token}`,
+          },
+          body: JSON.stringify({ userId, newPassword }),
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'שגיאה באיפוס הסיסמה');
+      }
+      return result;
+    },
+    onSuccess: () => {
+      toast.success('הסיסמה אופסה בהצלחה');
+      setResetPasswordDialogOpen(false);
+      setUserToResetPassword(null);
+      setNewPassword('');
+    },
+    onError: (error: Error) => {
+      toast.error('שגיאה באיפוס הסיסמה: ' + error.message);
+    },
+  });
+
   const filteredUsers = users.filter(user =>
     (user.full_name?.toLowerCase().includes(search.toLowerCase()) ||
      user.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -338,6 +376,20 @@ export default function UserManagement() {
   const openDeleteDialog = (user: UserWithRole) => {
     setUserToDelete(user);
     setDeleteDialogOpen(true);
+  };
+
+  const openResetPasswordDialog = (user: UserWithRole) => {
+    setUserToResetPassword(user);
+    setNewPassword('');
+    setResetPasswordDialogOpen(true);
+  };
+
+  const handleResetPassword = () => {
+    if (!userToResetPassword || newPassword.length < 6) {
+      toast.error('הסיסמה חייבת להכיל לפחות 6 תווים');
+      return;
+    }
+    resetPasswordMutation.mutate({ userId: userToResetPassword.user_id, newPassword });
   };
 
   const handleAssignRole = () => {
@@ -582,6 +634,14 @@ export default function UserManagement() {
                               עריכה
                             </Button>
                             <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openResetPasswordDialog(user)}
+                            >
+                              <KeyRound className="w-4 h-4 ml-1" />
+                              איפוס סיסמה
+                            </Button>
+                            <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => openDeleteDialog(user)}
@@ -629,6 +689,13 @@ export default function UserManagement() {
                           onClick={() => openEditDialog(user)}
                         >
                           <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openResetPasswordDialog(user)}
+                        >
+                          <KeyRound className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -957,6 +1024,49 @@ export default function UserManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5" />
+              איפוס סיסמה
+            </DialogTitle>
+            <DialogDescription>
+              הגדר סיסמה חדשה עבור המשתמש "{userToResetPassword?.full_name}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">סיסמה חדשה *</Label>
+              <div className="relative">
+                <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="לפחות 6 תווים"
+                  className="pr-9"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">המשתמש יוכל להתחבר עם הסיסמה החדשה מיד</p>
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setResetPasswordDialogOpen(false)}>
+              ביטול
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={resetPasswordMutation.isPending || newPassword.length < 6}
+            >
+              {resetPasswordMutation.isPending ? 'מאפס...' : 'אפס סיסמה'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
