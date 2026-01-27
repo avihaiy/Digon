@@ -7,6 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Printer, X } from 'lucide-react';
 import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
+import britShalomLogo from '@/assets/brit-shalom-logo.jpeg';
 
 interface ReceiptPreviewDialogProps {
   receipt: any;
@@ -42,6 +43,11 @@ export function ReceiptPreviewDialog({
           >
             {/* Header with בס"ד */}
             <div className="text-left text-xs font-bold mb-2">בס"ד</div>
+            
+            {/* Logo */}
+            <div className="flex justify-center mb-2">
+              <img src={britShalomLogo} alt="ברית שלום" className="h-12 w-auto" />
+            </div>
             
             {/* Synagogue Name and Address */}
             <div className="text-center mb-3">
