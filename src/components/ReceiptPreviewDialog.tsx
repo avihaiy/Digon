@@ -49,6 +49,11 @@ export function ReceiptPreviewDialog({
               <div className="text-xs text-gray-600 mt-1">רח' קדושי קהיר 16, עכו</div>
             </div>
 
+            {/* Receipt Number */}
+            <div className="text-center mb-3">
+              <div className="text-sm font-bold">קבלה מספר: {receipt.receipt_number}</div>
+            </div>
+
             {/* Dates */}
             <div className="flex justify-center gap-3 text-xs text-gray-700 mb-3">
               <span>{formatDate(receipt.created_at)}</span>

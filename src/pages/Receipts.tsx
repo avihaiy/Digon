@@ -191,6 +191,8 @@ export default function Receipts() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    const hebrewDate = getHebrewDate(new Date(receipt.created_at));
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html dir="rtl" lang="he">
@@ -246,28 +248,41 @@ export default function Receipts() {
             width: 100%;
           }
           
+          .bsd {
+            text-align: left;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 2mm;
+          }
+          
           .header {
             text-align: center;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 3mm;
             margin-bottom: 3mm;
           }
           
-          .logo {
+          .synagogue-name {
             font-size: 16px;
             font-weight: bold;
           }
           
-          .receipt-number {
-            font-size: 14px;
-            margin-top: 2mm;
-            font-weight: bold;
+          .address {
+            font-size: 11px;
+            color: #333;
+            margin-top: 1mm;
           }
           
-          .date {
+          .receipt-number {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 3mm 0;
+          }
+          
+          .dates {
+            text-align: center;
             font-size: 11px;
-            margin-top: 1mm;
             color: #333;
+            margin-bottom: 3mm;
           }
           
           .divider {
@@ -295,11 +310,9 @@ export default function Receipts() {
           }
           
           .total-section {
-            border-top: 2px solid #000;
-            border-bottom: 2px solid #000;
+            text-align: center;
             margin: 3mm 0;
             padding: 3mm 0;
-            text-align: center;
           }
           
           .total-label {
@@ -308,29 +321,10 @@ export default function Receipts() {
           }
           
           .total-amount {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
           }
           
-          .footer {
-            text-align: center;
-            margin-top: 4mm;
-            padding-top: 3mm;
-            border-top: 1px dashed #000;
-          }
-          
-          .footer p {
-            font-size: 10px;
-            margin: 1mm 0;
-          }
-          
-          .thank-you {
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 2mm;
-          }
-          
-          /* Print button - only visible on screen */
           .print-btn {
             display: block;
             width: 100%;
@@ -355,15 +349,42 @@ export default function Receipts() {
               display: none !important;
             }
           }
+          
+          .footer {
+            text-align: center;
+            margin-top: 3mm;
+          }
+          
+          .thank-you {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 2mm;
+          }
+          
+          .footer p {
+            font-size: 11px;
+            margin: 1mm 0;
+          }
+          
+          .footer .contact {
+            color: #333;
+          }
         </style>
       </head>
       <body>
         <div class="receipt-container">
+          <div class="bsd">בס"ד</div>
+          
           <div class="header">
-            <div class="logo">בית הכנסת</div>
-            <div class="receipt-number">קבלה מספר: ${receipt.receipt_number}</div>
-            <div class="date">${formatDate(receipt.created_at)}</div>
+            <div class="synagogue-name">בית כנסת "ברית שלום" עכו</div>
+            <div class="address">רח' קדושי קהיר 16, עכו</div>
           </div>
+          
+          <div class="receipt-number">קבלה מספר: ${receipt.receipt_number}</div>
+          
+          <div class="dates">${formatDate(receipt.created_at)} • ${hebrewDate}</div>
+          
+          <div class="divider"></div>
           
           <div class="details">
             <div class="row">
@@ -380,16 +401,24 @@ export default function Receipts() {
             </div>
           </div>
           
+          <div class="divider"></div>
+          
           <div class="total-section">
             <div class="total-label">סה״כ שולם</div>
             <div class="total-amount">₪${Number(receipt.total_amount).toLocaleString()}</div>
           </div>
           
+          <div class="divider"></div>
+          
           <button class="print-btn no-print" onclick="window.print()">🖨️ הדפס קבלה</button>
+          
+          <div class="divider"></div>
           
           <div class="footer">
             <p class="thank-you">תודה על תרומתכם!</p>
-            <p>מערכת ניהול גבאות</p>
+            <p>בית כנסת "ברית שלום" עכו</p>
+            <p class="contact">רח' קדושי קהיר 16 עכו</p>
+            <p class="contact">טלפון: 050-5768723</p>
           </div>
         </div>
       </body>
