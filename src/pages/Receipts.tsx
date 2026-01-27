@@ -375,6 +375,10 @@ export default function Receipts() {
         <div class="receipt-container">
           <div class="bsd">בס"ד</div>
           
+          <div class="logo" style="text-align: center; margin-bottom: 3mm;">
+            <img src="${window.location.origin}/brit-shalom-logo.jpeg" alt="ברית שלום" style="height: 50px; width: auto;" />
+          </div>
+          
           <div class="header">
             <div class="synagogue-name">בית כנסת "ברית שלום" עכו</div>
             <div class="address">רח' קדושי קהיר 16, עכו</div>
