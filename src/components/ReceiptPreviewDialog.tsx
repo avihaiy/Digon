@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -5,9 +6,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, X } from 'lucide-react';
+import { Printer, X, FileDown, Loader2 } from 'lucide-react';
 import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
 import britShalomLogo from '@/assets/brit-shalom-logo.jpeg';
+import html2pdf from 'html2pdf.js';
+import { toast } from 'sonner';
 
 interface ReceiptPreviewDialogProps {
   receipt: any;
@@ -22,7 +25,42 @@ export function ReceiptPreviewDialog({
   onOpenChange,
   onPrint,
 }: ReceiptPreviewDialogProps) {
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const [isSavingPdf, setIsSavingPdf] = useState(false);
+
   if (!receipt) return null;
+
+  const handleSavePdf = async () => {
+    if (!receiptRef.current) return;
+    
+    setIsSavingPdf(true);
+    try {
+      const element = receiptRef.current;
+      const opt = {
+        margin: 2,
+        filename: `קבלה-${receipt.receipt_number}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          letterRendering: true,
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: [80, 150], 
+          orientation: 'portrait' as const
+        }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+      toast.success('הקבלה נשמרה כ-PDF');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('שגיאה בשמירת הקבלה כ-PDF');
+    } finally {
+      setIsSavingPdf(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,7 +72,8 @@ export function ReceiptPreviewDialog({
         {/* Receipt Preview - styled like thermal receipt */}
         <div className="bg-white mx-4 mb-4 rounded-lg border shadow-inner">
           <div 
-            className="p-4 text-black"
+            ref={receiptRef}
+            className="p-4 text-black bg-white"
             style={{ 
               fontFamily: "'Heebo', Arial, sans-serif",
               fontSize: '12px',
@@ -100,24 +139,6 @@ export function ReceiptPreviewDialog({
             {/* Separator */}
             <div className="border-t border-dashed border-gray-400 my-3" />
 
-            {/* Print Button */}
-            <div className="flex justify-center mb-3">
-              <Button
-                size="sm"
-                onClick={() => {
-                  onPrint(receipt);
-                  onOpenChange(false);
-                }}
-                className="px-6"
-              >
-                <Printer className="w-4 h-4 ml-2" />
-                הדפס קבלה
-              </Button>
-            </div>
-
-            {/* Separator */}
-            <div className="border-t border-dashed border-gray-400 my-3" />
-
             {/* Footer */}
             <div className="text-center">
               <p className="text-sm font-bold mb-2">תודה על תרומתכם!</p>
@@ -128,11 +149,40 @@ export function ReceiptPreviewDialog({
           </div>
         </div>
 
-        {/* Close Button */}
-        <div className="p-4 pt-0 flex justify-center">
+        {/* Action Buttons */}
+        <div className="p-4 pt-0 flex flex-col gap-2">
+          <div className="flex gap-2 justify-center">
+            <Button
+              size="sm"
+              onClick={() => {
+                onPrint(receipt);
+                onOpenChange(false);
+              }}
+              className="px-4"
+            >
+              <Printer className="w-4 h-4 ml-2" />
+              הדפס
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleSavePdf}
+              disabled={isSavingPdf}
+              className="px-4"
+            >
+              {isSavingPdf ? (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              ) : (
+                <FileDown className="w-4 h-4 ml-2" />
+              )}
+              שמור PDF
+            </Button>
+          </div>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => onOpenChange(false)}
+            className="w-full"
           >
             <X className="w-4 h-4 ml-2" />
             סגור
