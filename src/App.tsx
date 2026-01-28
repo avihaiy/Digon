@@ -25,6 +25,7 @@ import DisplayGeneral from "@/pages/DisplayGeneral";
 import DisplayMemorial from "@/pages/DisplayMemorial";
 import DisplayFinance from "@/pages/DisplayFinance";
 import DisplayTV from "@/pages/DisplayTV";
+import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+    <Route path="/install" element={<Install />} />
     <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
     <Route path="/friday" element={<ProtectedRoute><FridayDashboard /></ProtectedRoute>} />
     <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
