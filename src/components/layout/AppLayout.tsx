@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
+import { OfflineIndicator, OfflineBanner } from './OfflineIndicator';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -185,6 +186,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
+        {/* Offline Banner */}
+        <OfflineBanner />
+        
         {/* Top header */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 h-16 flex items-center justify-between">
           <button
@@ -195,6 +199,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </button>
 
           <div className="flex items-center gap-4">
+            {/* Offline Indicator */}
+            <OfflineIndicator />
+            
             {/* Notifications */}
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-5 h-5" />
