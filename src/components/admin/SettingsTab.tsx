@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface SettingsTabProps {
   selectedLocation: string;
@@ -402,6 +403,97 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
           </div>
         </CardContent>
       </Card>
+
+      {/* Backup Management */}
+      <BackupCard />
     </div>
+  );
+}
+
+function BackupCard() {
+  const queryClient = useQueryClient();
+
+  // Get last backup info
+  const { data: lastBackup, isLoading } = useQuery({
+    queryKey: ['last-backup'],
+    queryFn: async () => {
+      const { data } = await supabase.storage
+        .from('backups')
+        .list('', { limit: 1, sortBy: { column: 'created_at', order: 'desc' } });
+      return data?.[0] || null;
+    },
+  });
+
+  // Manual backup mutation
+  const backupMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('daily-backup');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: 'גיבוי בוצע בהצלחה',
+        description: `נשמר: ${data.fileName} (${data.totalRecords} רשומות)`
+      });
+      queryClient.invalidateQueries({ queryKey: ['last-backup'] });
+      queryClient.invalidateQueries({ queryKey: ['backups'] });
+    },
+    onError: () => {
+      toast({ title: 'שגיאה ביצירת גיבוי', variant: 'destructive' });
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Database className="w-5 h-5" />
+          גיבוי נתונים
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-100 text-green-600">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-medium">גיבוי אחרון</div>
+              {isLoading ? (
+                <div className="text-sm text-muted-foreground">טוען...</div>
+              ) : lastBackup ? (
+                <div className="text-sm text-muted-foreground">
+                  {new Date(lastBackup.created_at).toLocaleString('he-IL')}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">לא נמצאו גיבויים</div>
+              )}
+            </div>
+          </div>
+          <Button 
+            onClick={() => backupMutation.mutate()}
+            disabled={backupMutation.isPending}
+          >
+            {backupMutation.isPending ? (
+              <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+            ) : (
+              <HardDrive className="w-4 h-4 ml-2" />
+            )}
+            גיבוי ידני
+          </Button>
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            גיבוי אוטומטי מתבצע כל יום בשעה 03:00. גיבויים נשמרים ל-30 יום.
+          </p>
+          <Link to="/backups">
+            <Button variant="link" className="text-primary">
+              צפה בכל הגיבויים ←
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
