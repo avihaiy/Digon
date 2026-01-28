@@ -30,6 +30,7 @@ import {
   MinusCircle,
   PieChart,
   Database,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -137,6 +138,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 })}
               </>
             )}
+            
+            {/* Install App Link */}
+            <div className="my-3 border-t border-sidebar-border pt-3">
+              <Link
+                to="/install"
+                onClick={() => setSidebarOpen(false)}
+                className={cn('nav-item', location.pathname === '/install' && 'active')}
+              >
+                <Download className="w-5 h-5" />
+                <span>התקן אפליקציה</span>
+              </Link>
+            </div>
           </nav>
 
           {/* User section */}
