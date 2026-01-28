@@ -29,6 +29,7 @@ import {
   Building2,
   MinusCircle,
   PieChart,
+  Database,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -50,6 +51,7 @@ const navItems = [
 
 const adminNavItems = [
   { href: '/users', icon: Settings, label: 'ניהול משתמשים' },
+  { href: '/backups', icon: Database, label: 'גיבויים' },
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
