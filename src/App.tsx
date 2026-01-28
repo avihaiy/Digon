@@ -2,8 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { AnimatePresence } from "framer-motion";
+import { PageTransition } from "@/components/layout/PageTransition";
 import AppLayout from "@/components/layout/AppLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
@@ -27,6 +29,8 @@ import DisplayFinance from "@/pages/DisplayFinance";
 import DisplayTV from "@/pages/DisplayTV";
 import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
+import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
+import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 
 const queryClient = new QueryClient();
 
@@ -66,35 +70,38 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-    <Route path="/install" element={<Install />} />
-    <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/friday" element={<ProtectedRoute><FridayDashboard /></ProtectedRoute>} />
-    <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
-    <Route path="/aliyot" element={<ProtectedRoute><Aliyot /></ProtectedRoute>} />
-    <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-    <Route path="/receipts" element={<ProtectedRoute><Receipts /></ProtectedRoute>} />
-    <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-    <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
-    <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
-    <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
-    <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
-    <Route path="/expense-reports" element={<ProtectedRoute><ExpenseReports /></ProtectedRoute>} />
-    <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-    <Route path="/backups" element={<ProtectedRoute><Backups /></ProtectedRoute>} />
-    <Route path="/admin-mobile" element={<AdminMobile />} />
-    <Route path="/display-general" element={<DisplayGeneral />} />
-    <Route path="/display-memorial" element={<DisplayMemorial />} />
-    <Route path="/display-finance" element={<DisplayFinance />} />
-    <Route path="/display-tv" element={<DisplayTV />} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+const AnimatedRoutes = () => {
+  const location = useLocation();
 
-import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
-import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
+        <Route path="/install" element={<PageTransition><Install /></PageTransition>} />
+        <Route path="/" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
+        <Route path="/friday" element={<ProtectedRoute><PageTransition><FridayDashboard /></PageTransition></ProtectedRoute>} />
+        <Route path="/members" element={<ProtectedRoute><PageTransition><Members /></PageTransition></ProtectedRoute>} />
+        <Route path="/aliyot" element={<ProtectedRoute><PageTransition><Aliyot /></PageTransition></ProtectedRoute>} />
+        <Route path="/payments" element={<ProtectedRoute><PageTransition><Payments /></PageTransition></ProtectedRoute>} />
+        <Route path="/receipts" element={<ProtectedRoute><PageTransition><Receipts /></PageTransition></ProtectedRoute>} />
+        <Route path="/reports" element={<ProtectedRoute><PageTransition><Reports /></PageTransition></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute><PageTransition><UserManagement /></PageTransition></ProtectedRoute>} />
+        <Route path="/budget" element={<ProtectedRoute><PageTransition><Budget /></PageTransition></ProtectedRoute>} />
+        <Route path="/equipment" element={<ProtectedRoute><PageTransition><Equipment /></PageTransition></ProtectedRoute>} />
+        <Route path="/expenses" element={<ProtectedRoute><PageTransition><Expenses /></PageTransition></ProtectedRoute>} />
+        <Route path="/expense-reports" element={<ProtectedRoute><PageTransition><ExpenseReports /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
+        <Route path="/backups" element={<ProtectedRoute><PageTransition><Backups /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin-mobile" element={<PageTransition><AdminMobile /></PageTransition>} />
+        <Route path="/display-general" element={<PageTransition><DisplayGeneral /></PageTransition>} />
+        <Route path="/display-memorial" element={<PageTransition><DisplayMemorial /></PageTransition>} />
+        <Route path="/display-finance" element={<PageTransition><DisplayFinance /></PageTransition>} />
+        <Route path="/display-tv" element={<PageTransition><DisplayTV /></PageTransition>} />
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -105,7 +112,7 @@ const App = () => (
         <PWAUpdatePrompt />
         <BrowserRouter>
           <AuthProvider>
-            <AppRoutes />
+            <AnimatedRoutes />
           </AuthProvider>
         </BrowserRouter>
       </OfflineSyncProvider>
