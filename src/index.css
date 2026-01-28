@@ -265,6 +265,55 @@
     @apply transition-all duration-300 ease-out;
   }
 
+  /* Hover lift effect for cards */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-1 shadow-lg;
+  }
+
+  /* Hover scale effect */
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out;
+  }
+  
+  .hover-scale:hover {
+    @apply scale-105;
+  }
+
+  /* Hover glow effect */
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: 0 0 20px hsl(var(--accent) / 0.3);
+  }
+
+  /* Interactive card */
+  .interactive-card {
+    @apply transition-all duration-300 ease-out cursor-pointer;
+  }
+  
+  .interactive-card:hover {
+    @apply -translate-y-1 shadow-lg border-accent/40;
+  }
+  
+  .interactive-card:active {
+    @apply scale-[0.99] shadow-md;
+  }
+
+  /* Button press effect */
+  .btn-press {
+    @apply transition-all duration-150;
+  }
+  
+  .btn-press:active {
+    @apply scale-95;
+  }
+
   /* Text shadow for headers */
   .text-shadow {
     text-shadow: 0 2px 4px hsl(20 25% 15% / 0.1);
@@ -300,6 +349,25 @@
 
   .pulse-alert {
     animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Bounce animation */
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 0.5s ease-in-out;
+  }
+
+  /* Icon spin on hover */
+  .icon-spin-hover {
+    @apply transition-transform duration-300;
+  }
+  
+  .icon-spin-hover:hover svg {
+    @apply rotate-12;
   }
 }
 
