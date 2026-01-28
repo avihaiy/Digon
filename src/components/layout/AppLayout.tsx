@@ -35,6 +35,7 @@ import {
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
 import { OfflineIndicator, OfflineBanner } from './OfflineIndicator';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -198,9 +199,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             {/* Offline Indicator */}
             <OfflineIndicator />
+            
+            {/* Theme Toggle */}
+            <ThemeToggle />
             
             {/* Notifications */}
             <Button variant="ghost" size="icon" className="relative">
