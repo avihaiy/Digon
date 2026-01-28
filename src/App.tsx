@@ -93,16 +93,20 @@ const AppRoutes = () => (
   </Routes>
 );
 
+import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
+      <OfflineSyncProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      </OfflineSyncProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
