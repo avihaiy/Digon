@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { ThemeProvider } from "@/components/theme-provider";
 import AppLayout from "@/components/layout/AppLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
@@ -105,18 +106,25 @@ const AnimatedRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <OfflineSyncProvider>
-        <Toaster />
-        <Sonner />
-        <PWAUpdatePrompt />
-        <BrowserRouter>
-          <AuthProvider>
-            <AnimatedRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      </OfflineSyncProvider>
-    </TooltipProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <TooltipProvider>
+        <OfflineSyncProvider>
+          <Toaster />
+          <Sonner />
+          <PWAUpdatePrompt />
+          <BrowserRouter>
+            <AuthProvider>
+              <AnimatedRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </OfflineSyncProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

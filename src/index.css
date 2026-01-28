@@ -142,13 +142,23 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background: linear-gradient(180deg, hsl(45 30% 97%), hsl(35 25% 95%));
     min-height: 100vh;
     /* Safe area padding for notched devices */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Light mode gradient background */
+  :root body {
+    background: linear-gradient(180deg, hsl(45 30% 97%), hsl(35 25% 95%));
+  }
+
+  /* Dark mode gradient background */
+  .dark body {
+    background: linear-gradient(180deg, hsl(20 25% 10%), hsl(20 22% 8%));
   }
 
   h1, h2, h3, h4, h5, h6 {
