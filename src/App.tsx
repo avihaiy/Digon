@@ -20,6 +20,7 @@ import Expenses from "@/pages/Expenses";
 import ExpenseReports from "@/pages/ExpenseReports";
 import Admin from "@/pages/Admin";
 import AdminMobile from "@/pages/AdminMobile";
+import Backups from "@/pages/Backups";
 import DisplayGeneral from "@/pages/DisplayGeneral";
 import DisplayMemorial from "@/pages/DisplayMemorial";
 import DisplayFinance from "@/pages/DisplayFinance";
@@ -80,6 +81,7 @@ const AppRoutes = () => (
     <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
     <Route path="/expense-reports" element={<ProtectedRoute><ExpenseReports /></ProtectedRoute>} />
     <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+    <Route path="/backups" element={<ProtectedRoute><Backups /></ProtectedRoute>} />
     <Route path="/admin-mobile" element={<AdminMobile />} />
     <Route path="/display-general" element={<DisplayGeneral />} />
     <Route path="/display-memorial" element={<DisplayMemorial />} />
