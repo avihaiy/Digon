@@ -94,6 +94,7 @@ const AppRoutes = () => (
 );
 
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
+import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -101,6 +102,7 @@ const App = () => (
       <OfflineSyncProvider>
         <Toaster />
         <Sonner />
+        <PWAUpdatePrompt />
         <BrowserRouter>
           <AuthProvider>
             <AppRoutes />
