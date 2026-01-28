@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,7 +15,9 @@ import {
   Clock,
   HardDrive,
   Loader2,
-  Trash2
+  Trash2,
+  RotateCcw,
+  AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -30,6 +32,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface BackupFile {
   name: string;
@@ -46,9 +58,42 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+interface BackupData {
+  timestamp: string;
+  tables: Record<string, unknown[]>;
+  summary: Record<string, { success: boolean; count?: number; error?: string }>;
+}
+
+const TABLES_LABELS: Record<string, string> = {
+  members: 'חברים',
+  aliyot: 'עליות',
+  payments: 'תשלומים',
+  receipts: 'קבלות',
+  expenses: 'הוצאות',
+  expense_categories: 'קטגוריות הוצאות',
+  expense_attachments: 'קבצי הוצאות',
+  budget_transactions: 'תנועות תקציב',
+  budget_categories: 'קטגוריות תקציב',
+  equipment: 'ציוד',
+  equipment_loans: 'השאלות ציוד',
+  memorial_names: 'שמות לאזכרה',
+  announcements: 'הודעות',
+  prayer_times: 'זמני תפילה',
+  app_settings: 'הגדרות מערכת',
+  profiles: 'פרופילים',
+  user_roles: 'תפקידי משתמשים',
+  notifications: 'התראות',
+  audit_logs: 'יומן פעולות',
+};
+
 export default function Backups() {
   const queryClient = useQueryClient();
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
+  const [backupData, setBackupData] = useState<BackupData | null>(null);
+  const [selectedTables, setSelectedTables] = useState<string[]>([]);
+  const [loadingBackup, setLoadingBackup] = useState(false);
 
   // Fetch backup files
   const { data: backups, isLoading, refetch } = useQuery({
@@ -101,6 +146,113 @@ export default function Backups() {
       setDeletingFile(null);
     },
   });
+
+  // Restore mutation
+  const restoreMutation = useMutation({
+    mutationFn: async ({ tables, data }: { tables: string[]; data: BackupData }) => {
+      const results: { table: string; success: boolean; error?: string }[] = [];
+      
+      for (const tableName of tables) {
+        const tableData = data.tables[tableName];
+        if (!tableData || tableData.length === 0) {
+          results.push({ table: tableName, success: true });
+          continue;
+        }
+
+        try {
+          // Delete existing data first
+          const { error: deleteError } = await supabase
+            .from(tableName as never)
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000');
+          
+          if (deleteError) {
+            results.push({ table: tableName, success: false, error: deleteError.message });
+            continue;
+          }
+
+          // Insert backup data
+          const { error: insertError } = await supabase
+            .from(tableName as never)
+            .insert(tableData as never);
+          
+          if (insertError) {
+            results.push({ table: tableName, success: false, error: insertError.message });
+          } else {
+            results.push({ table: tableName, success: true });
+          }
+        } catch (err) {
+          results.push({ table: tableName, success: false, error: String(err) });
+        }
+      }
+      
+      return results;
+    },
+    onSuccess: (results) => {
+      const successful = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success);
+      
+      if (failed.length === 0) {
+        toast({ 
+          title: 'שחזור הושלם בהצלחה',
+          description: `${successful} טבלאות שוחזרו`
+        });
+      } else {
+        toast({ 
+          title: 'שחזור הושלם עם שגיאות',
+          description: `${successful} הצליחו, ${failed.length} נכשלו`,
+          variant: 'destructive'
+        });
+      }
+      
+      setRestoreDialogOpen(false);
+      setSelectedBackup(null);
+      setBackupData(null);
+      setSelectedTables([]);
+      queryClient.invalidateQueries();
+    },
+    onError: () => {
+      toast({ title: 'שגיאה בשחזור', variant: 'destructive' });
+    },
+  });
+
+  // Load backup data for restore
+  const handlePrepareRestore = async (fileName: string) => {
+    setLoadingBackup(true);
+    setSelectedBackup(fileName);
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('backups')
+        .download(fileName);
+      
+      if (error) throw error;
+      
+      const text = await data.text();
+      const parsed: BackupData = JSON.parse(text);
+      
+      setBackupData(parsed);
+      setSelectedTables(Object.keys(parsed.tables).filter(t => parsed.tables[t]?.length > 0));
+      setRestoreDialogOpen(true);
+    } catch {
+      toast({ title: 'שגיאה בטעינת הגיבוי', variant: 'destructive' });
+    } finally {
+      setLoadingBackup(false);
+    }
+  };
+
+  const handleTableToggle = (tableName: string) => {
+    setSelectedTables(prev => 
+      prev.includes(tableName)
+        ? prev.filter(t => t !== tableName)
+        : [...prev, tableName]
+    );
+  };
+
+  const handleRestore = () => {
+    if (!backupData || selectedTables.length === 0) return;
+    restoreMutation.mutate({ tables: selectedTables, data: backupData });
+  };
 
   // Download backup
   const handleDownload = async (fileName: string) => {
@@ -257,6 +409,19 @@ export default function Backups() {
                     <Button 
                       variant="outline" 
                       size="sm"
+                      onClick={() => handlePrepareRestore(backup.name)}
+                      disabled={loadingBackup && selectedBackup === backup.name}
+                    >
+                      {loadingBackup && selectedBackup === backup.name ? (
+                        <Loader2 className="w-4 h-4 ml-1 animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-4 h-4 ml-1" />
+                      )}
+                      שחזר
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={() => handleDownload(backup.name)}
                     >
                       <Download className="w-4 h-4 ml-1" />
@@ -318,6 +483,95 @@ export default function Backups() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Restore Dialog */}
+      <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="w-5 h-5" />
+              שחזור מגיבוי
+            </DialogTitle>
+            <DialogDescription>
+              בחר את הטבלאות שברצונך לשחזר מהגיבוי. שים לב: הנתונים הקיימים יימחקו ויוחלפו בנתונים מהגיבוי.
+            </DialogDescription>
+          </DialogHeader>
+
+          {backupData && (
+            <>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-800">
+                  <strong>אזהרה:</strong> פעולה זו תמחק את הנתונים הקיימים בטבלאות הנבחרות ותחליף אותם בנתונים מהגיבוי. פעולה זו אינה ניתנת לביטול.
+                </div>
+              </div>
+
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-2">
+                  {Object.entries(backupData.tables).map(([tableName, records]) => {
+                    const recordCount = Array.isArray(records) ? records.length : 0;
+                    return (
+                      <div 
+                        key={tableName}
+                        className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            id={tableName}
+                            checked={selectedTables.includes(tableName)}
+                            onCheckedChange={() => handleTableToggle(tableName)}
+                            disabled={recordCount === 0}
+                          />
+                          <label 
+                            htmlFor={tableName}
+                            className={`font-medium cursor-pointer ${recordCount === 0 ? 'text-muted-foreground' : ''}`}
+                          >
+                            {TABLES_LABELS[tableName] || tableName}
+                          </label>
+                        </div>
+                        <Badge variant="secondary">
+                          {recordCount} רשומות
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+
+              <div className="flex gap-2 justify-between text-sm text-muted-foreground">
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-sm"
+                  onClick={() => setSelectedTables(Object.keys(backupData.tables).filter(t => backupData.tables[t]?.length > 0))}
+                >
+                  בחר הכל
+                </Button>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-sm"
+                  onClick={() => setSelectedTables([])}
+                >
+                  נקה בחירה
+                </Button>
+              </div>
+            </>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRestoreDialogOpen(false)}>
+              ביטול
+            </Button>
+            <Button 
+              onClick={handleRestore}
+              disabled={selectedTables.length === 0 || restoreMutation.isPending}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {restoreMutation.isPending && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+              שחזר {selectedTables.length} טבלאות
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
