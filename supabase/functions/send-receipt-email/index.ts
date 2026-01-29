@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, rgb } from "https://esm.sh/pdf-lib@1.17.1";
+// @deno-types="https://esm.sh/@pdf-lib/fontkit@1.1.1/fontkit.d.ts"
 import fontkit from "https://esm.sh/@pdf-lib/fontkit@1.1.1";
 
 const corsHeaders = {
@@ -35,17 +36,19 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   // Fetch Hebrew font from Google Fonts CDN
   let hebrewFont;
   try {
-    const fontUrl = 'https://fonts.gstatic.com/s/heebo/v26/NGSpv5_NC0k9P_v6ZUCbLRAHxK1EiSysd0mm_00.ttf';
+    // Use a reliable CDN URL for Heebo font
+    const fontUrl = 'https://cdn.jsdelivr.net/fontsource/fonts/heebo@latest/hebrew-400-normal.ttf';
+    console.log('Fetching Hebrew font from:', fontUrl);
     const fontResponse = await fetch(fontUrl);
     if (!fontResponse.ok) {
-      throw new Error('Failed to fetch font');
+      throw new Error(`Failed to fetch font: ${fontResponse.status}`);
     }
     const fontBytes = await fontResponse.arrayBuffer();
     hebrewFont = await pdfDoc.embedFont(fontBytes);
+    console.log('Hebrew font loaded successfully');
   } catch (error) {
-    console.error('Failed to load Hebrew font, falling back to Helvetica:', error);
-    const { StandardFonts } = await import("https://esm.sh/pdf-lib@1.17.1");
-    hebrewFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    console.error('Failed to load Hebrew font:', error);
+    throw new Error(`Cannot generate PDF without Hebrew font: ${error}`);
   }
 
   // Create page (80mm x 150mm = ~227 x 425 points)
