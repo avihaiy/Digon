@@ -31,6 +31,7 @@ import {
   PieChart,
   Database,
   Download,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -200,6 +201,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </button>
 
           <div className="flex items-center gap-2">
+            {/* Refresh Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => window.location.reload()}
+              title="רענן עמוד"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </Button>
+            
             {/* Offline Indicator */}
             <OfflineIndicator />
             
@@ -246,9 +257,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <p className="text-xs text-muted-foreground">
             המערכת נבנתה ע"י <span className="font-medium text-foreground">{APP_CONFIG.developer.name}</span>
             <span className="mx-2">•</span>
-            <span className="text-muted-foreground/70">גרסה {APP_CONFIG.version}</span>
+            <span className="text-muted-foreground/70">עדכון גירסה {APP_CONFIG.version}</span>
             <span className="mx-2">•</span>
-            <span className="text-muted-foreground/70">עודכן: {APP_CONFIG.lastUpdated}</span>
+            <span className="text-muted-foreground/70">{APP_CONFIG.lastUpdated}</span>
           </p>
         </footer>
       </div>

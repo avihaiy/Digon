@@ -11,14 +11,16 @@ export function PWAUpdatePrompt() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
+    immediate: true,
     onRegistered(registration) {
       console.log('SW Registered:', registration);
       
-      // Check for updates every 30 seconds
+      // Check for updates every 10 seconds for faster detection
       if (registration) {
+        // Check for updates every 10 seconds
         setInterval(() => {
           registration.update();
-        }, 30 * 1000);
+        }, 10 * 1000);
       }
     },
     onRegisterError(error) {
