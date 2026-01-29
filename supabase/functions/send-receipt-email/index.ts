@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
+import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
+import fontkit from "https://esm.sh/@pdf-lib/fontkit@1.1.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,12 +12,6 @@ interface SendReceiptRequest {
   email?: string;
 }
 
-// Hebrew month names
-const hebrewMonths = [
-  'ניסן', 'אייר', 'סיוון', 'תמוז', 'אב', 'אלול',
-  'תשרי', 'חשוון', 'כסלו', 'טבת', 'שבט', 'אדר'
-];
-
 function formatCurrency(amount: number): string {
   return `₪${amount.toLocaleString('he-IL')}`;
 }
@@ -26,90 +21,150 @@ function formatDate(dateString: string): string {
   return date.toLocaleDateString('he-IL');
 }
 
-function generateReceiptPDF(receipt: any, member: any, payment: any): string {
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: [80, 150]
+// Reverse Hebrew text for PDF (since pdf-lib doesn't handle RTL)
+function reverseHebrewText(text: string): string {
+  return text.split('').reverse().join('');
+}
+
+async function generateReceiptPDF(receipt: any, member: any, payment: any): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
+
+  // Load Hebrew font from Google Fonts
+  const fontUrl = 'https://fonts.gstatic.com/s/heebo/v26/NGSpv5_NC0k9P_v6ZUCbLRAHxK1EiSysd0mm_00.ttf';
+  const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+  const hebrewFont = await pdfDoc.embedFont(fontBytes);
+
+  // Create page (80mm x 150mm = ~227 x 425 points)
+  const page = pdfDoc.addPage([227, 425]);
+  const { width, height } = page.getSize();
+  
+  const fontSize = 10;
+  const smallFontSize = 8;
+  const largeFontSize = 14;
+  const titleFontSize = 12;
+  
+  let y = height - 20;
+  const rightMargin = width - 15;
+  const centerX = width / 2;
+
+  // Helper to draw RTL text (right-aligned)
+  const drawRTL = (text: string, yPos: number, size: number = fontSize) => {
+    const reversed = reverseHebrewText(text);
+    const textWidth = hebrewFont.widthOfTextAtSize(reversed, size);
+    page.drawText(reversed, {
+      x: rightMargin - textWidth,
+      y: yPos,
+      size,
+      font: hebrewFont,
+      color: rgb(0, 0, 0),
+    });
+  };
+
+  // Helper to draw centered RTL text
+  const drawCenteredRTL = (text: string, yPos: number, size: number = fontSize) => {
+    const reversed = reverseHebrewText(text);
+    const textWidth = hebrewFont.widthOfTextAtSize(reversed, size);
+    page.drawText(reversed, {
+      x: centerX - textWidth / 2,
+      y: yPos,
+      size,
+      font: hebrewFont,
+      color: rgb(0, 0, 0),
+    });
+  };
+
+  // בס"ד - top right
+  drawRTL('בס"ד', y, smallFontSize);
+  y -= 20;
+
+  // Synagogue name
+  drawCenteredRTL('בית כנסת "ברית שלום" עכו', y, titleFontSize);
+  y -= 15;
+
+  // Address
+  drawCenteredRTL('רח\' קדושי קהיר 16, עכו', y, smallFontSize);
+  y -= 20;
+
+  // Receipt number
+  const receiptNumText = `קבלה מספר: ${receipt.receipt_number}`;
+  drawCenteredRTL(receiptNumText, y, fontSize);
+  y -= 15;
+
+  // Date
+  drawCenteredRTL(formatDate(receipt.created_at), y, smallFontSize);
+  y -= 15;
+
+  // Separator line
+  page.drawLine({
+    start: { x: 15, y },
+    end: { x: width - 15, y },
+    thickness: 0.5,
+    color: rgb(0.7, 0.7, 0.7),
+  });
+  y -= 15;
+
+  // Details
+  const memberName = member?.full_name || '-';
+  drawRTL(`התקבל מאת: ${memberName}`, y, smallFontSize);
+  y -= 12;
+
+  const description = receipt.description || 'תרומה';
+  drawRTL(`עבור: ${description}`, y, smallFontSize);
+  y -= 12;
+
+  const paymentMethod = payment?.method === 'bit' ? 'ביט' : 'מזומן';
+  drawRTL(`אמצעי תשלום: ${paymentMethod}`, y, smallFontSize);
+  y -= 20;
+
+  // Separator
+  page.drawLine({
+    start: { x: 15, y },
+    end: { x: width - 15, y },
+    thickness: 0.5,
+    color: rgb(0.7, 0.7, 0.7),
+  });
+  y -= 15;
+
+  // Total label
+  drawCenteredRTL('סה"כ שולם', y, smallFontSize);
+  y -= 20;
+
+  // Amount
+  const amountText = formatCurrency(Number(receipt.total_amount));
+  drawCenteredRTL(amountText, y, 18);
+  y -= 25;
+
+  // Separator
+  page.drawLine({
+    start: { x: 15, y },
+    end: { x: width - 15, y },
+    thickness: 0.5,
+    color: rgb(0.7, 0.7, 0.7),
+  });
+  y -= 20;
+
+  // Footer
+  drawCenteredRTL('תודה על תרומתכם!', y, fontSize);
+  y -= 15;
+  drawCenteredRTL('בית כנסת "ברית שלום" עכו', y, smallFontSize);
+  y -= 12;
+  drawCenteredRTL('רח\' קדושי קהיר 16 עכו', y, smallFontSize);
+  y -= 12;
+  
+  // Phone (LTR)
+  const phoneText = '050-5768723 :טלפון';
+  const phoneReversed = reverseHebrewText('טלפון:') + ' 050-5768723';
+  const phoneWidth = hebrewFont.widthOfTextAtSize(phoneReversed, smallFontSize);
+  page.drawText('050-5768723', {
+    x: centerX - 30,
+    y,
+    size: smallFontSize,
+    font: hebrewFont,
+    color: rgb(0, 0, 0),
   });
 
-  // Set font size and RTL support
-  doc.setFontSize(10);
-  
-  const centerX = 40;
-  let y = 10;
-  
-  // Header - בס"ד
-  doc.setFontSize(8);
-  doc.text('בס"ד', 75, y, { align: 'right' });
-  y += 8;
-  
-  // Synagogue name
-  doc.setFontSize(12);
-  doc.text('בית כנסת "ברית שלום" עכו', centerX, y, { align: 'center' });
-  y += 5;
-  
-  doc.setFontSize(8);
-  doc.text('רח\' קדושי קהיר 16, עכו', centerX, y, { align: 'center' });
-  y += 8;
-  
-  // Receipt number
-  doc.setFontSize(10);
-  doc.text(`קבלה מספר: ${receipt.receipt_number}`, centerX, y, { align: 'center' });
-  y += 6;
-  
-  // Date
-  doc.setFontSize(8);
-  const createdAt = new Date(receipt.created_at);
-  doc.text(formatDate(receipt.created_at), centerX, y, { align: 'center' });
-  y += 8;
-  
-  // Separator line
-  doc.setLineWidth(0.1);
-  doc.setLineDashPattern([1, 1], 0);
-  doc.line(5, y, 75, y);
-  y += 6;
-  
-  // Details
-  doc.setFontSize(8);
-  doc.text(`התקבל מאת: ${member?.full_name || '-'}`, 75, y, { align: 'right' });
-  y += 5;
-  doc.text(`עבור: ${receipt.description || 'תרומה'}`, 75, y, { align: 'right' });
-  y += 5;
-  const paymentMethod = payment?.method === 'bit' ? 'ביט' : 'מזומן';
-  doc.text(`אמצעי תשלום: ${paymentMethod}`, 75, y, { align: 'right' });
-  y += 8;
-  
-  // Separator
-  doc.line(5, y, 75, y);
-  y += 8;
-  
-  // Total
-  doc.setFontSize(8);
-  doc.text('סה״כ שולם', centerX, y, { align: 'center' });
-  y += 6;
-  doc.setFontSize(16);
-  doc.text(formatCurrency(Number(receipt.total_amount)), centerX, y, { align: 'center' });
-  y += 10;
-  
-  // Separator
-  doc.setFontSize(8);
-  doc.line(5, y, 75, y);
-  y += 8;
-  
-  // Footer
-  doc.setFontSize(10);
-  doc.text('תודה על תרומתכם!', centerX, y, { align: 'center' });
-  y += 5;
-  doc.setFontSize(8);
-  doc.text('בית כנסת "ברית שלום" עכו', centerX, y, { align: 'center' });
-  y += 4;
-  doc.text('רח\' קדושי קהיר 16 עכו', centerX, y, { align: 'center' });
-  y += 4;
-  doc.text('טלפון: 050-5768723', centerX, y, { align: 'center' });
-  
-  // Return base64 encoded PDF
-  return doc.output('datauristring').split(',')[1];
+  return await pdfDoc.save();
 }
 
 Deno.serve(async (req) => {
@@ -175,7 +230,8 @@ Deno.serve(async (req) => {
     const payment = paymentResult.data;
 
     // Generate PDF
-    const pdfBase64 = generateReceiptPDF(receipt, member, payment);
+    const pdfBytes = await generateReceiptPDF(receipt, member, payment);
+    const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
 
     const paymentMethod = payment?.method === 'cash' ? 'מזומן' : payment?.method === 'bit' ? 'ביט' : '';
     const createdAt = new Date(receipt.created_at);
@@ -261,7 +317,7 @@ Deno.serve(async (req) => {
         `,
         attachments: [
           {
-            filename: `קבלה-${receipt.receipt_number}.pdf`,
+            filename: `receipt-${receipt.receipt_number}.pdf`,
             content: pdfBase64,
           }
         ],
