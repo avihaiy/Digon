@@ -161,14 +161,25 @@ export default function Payments() {
 
         if (paymentError) throw paymentError;
 
-        const { error: receiptError } = await supabase.from('receipts').insert({
+        const { data: receiptData, error: receiptError } = await supabase.from('receipts').insert({
           member_id: formData.member_id,
           payment_id: payment.id,
           total_amount: Number(formData.amount),
           description: `תשלום - פרשת ${formData.parasha}`,
-        });
+        }).select().single();
 
         if (receiptError) throw receiptError;
+
+        // Send receipt via email
+        if (receiptData) {
+          try {
+            await supabase.functions.invoke('send-receipt-email', {
+              body: { receiptId: receiptData.id }
+            });
+          } catch (emailError) {
+            console.warn('Failed to send receipt email:', emailError);
+          }
+        }
 
         return payment;
       }
