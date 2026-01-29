@@ -153,10 +153,10 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   drawCentered('סה"כ שולם', y, smallFontSize);
   y -= 25;
 
-  // Amount - pre-reverse numbers so BiDi shows them correctly
+  // Amount - pure numbers don't need pre-reversal (no BiDi applied)
+  // Use ש"ח text which renders correctly with Hebrew font
   const amount = Number(receipt.total_amount).toLocaleString('he-IL');
-  const reversedAmount = amount.split('').reverse().join('');
-  drawCentered(`${reversedAmount}₪`, y, 20);
+  drawCentered(`${amount} ש"ח`, y, 20);
   y -= 30;
 
   // Separator
