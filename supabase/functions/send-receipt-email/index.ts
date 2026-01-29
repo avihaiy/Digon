@@ -93,13 +93,11 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   });
   y -= 20;
 
-  // Details
-  const memberName = member?.full_name || '-';
-  drawLeft(`From: ${memberName}`, y, smallFontSize);
+  // Details - use member ID reference instead of Hebrew name
+  drawLeft(`Member ID: ${receipt.member_id?.substring(0, 8) || '-'}`, y, smallFontSize);
   y -= 14;
 
-  const description = receipt.description || 'Donation';
-  drawLeft(`For: ${description}`, y, smallFontSize);
+  drawLeft(`For: Donation`, y, smallFontSize);
   y -= 14;
 
   const paymentMethod = payment?.method === 'bit' ? 'Bit' : 'Cash';
