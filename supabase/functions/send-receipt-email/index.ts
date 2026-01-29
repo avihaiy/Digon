@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +8,108 @@ const corsHeaders = {
 
 interface SendReceiptRequest {
   receiptId: string;
-  email?: string; // If not provided, use default from settings
+  email?: string;
+}
+
+// Hebrew month names
+const hebrewMonths = [
+  'ניסן', 'אייר', 'סיוון', 'תמוז', 'אב', 'אלול',
+  'תשרי', 'חשוון', 'כסלו', 'טבת', 'שבט', 'אדר'
+];
+
+function formatCurrency(amount: number): string {
+  return `₪${amount.toLocaleString('he-IL')}`;
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('he-IL');
+}
+
+function generateReceiptPDF(receipt: any, member: any, payment: any): string {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: [80, 150]
+  });
+
+  // Set font size and RTL support
+  doc.setFontSize(10);
+  
+  const centerX = 40;
+  let y = 10;
+  
+  // Header - בס"ד
+  doc.setFontSize(8);
+  doc.text('בס"ד', 75, y, { align: 'right' });
+  y += 8;
+  
+  // Synagogue name
+  doc.setFontSize(12);
+  doc.text('בית כנסת "ברית שלום" עכו', centerX, y, { align: 'center' });
+  y += 5;
+  
+  doc.setFontSize(8);
+  doc.text('רח\' קדושי קהיר 16, עכו', centerX, y, { align: 'center' });
+  y += 8;
+  
+  // Receipt number
+  doc.setFontSize(10);
+  doc.text(`קבלה מספר: ${receipt.receipt_number}`, centerX, y, { align: 'center' });
+  y += 6;
+  
+  // Date
+  doc.setFontSize(8);
+  const createdAt = new Date(receipt.created_at);
+  doc.text(formatDate(receipt.created_at), centerX, y, { align: 'center' });
+  y += 8;
+  
+  // Separator line
+  doc.setLineWidth(0.1);
+  doc.setLineDashPattern([1, 1], 0);
+  doc.line(5, y, 75, y);
+  y += 6;
+  
+  // Details
+  doc.setFontSize(8);
+  doc.text(`התקבל מאת: ${member?.full_name || '-'}`, 75, y, { align: 'right' });
+  y += 5;
+  doc.text(`עבור: ${receipt.description || 'תרומה'}`, 75, y, { align: 'right' });
+  y += 5;
+  const paymentMethod = payment?.method === 'bit' ? 'ביט' : 'מזומן';
+  doc.text(`אמצעי תשלום: ${paymentMethod}`, 75, y, { align: 'right' });
+  y += 8;
+  
+  // Separator
+  doc.line(5, y, 75, y);
+  y += 8;
+  
+  // Total
+  doc.setFontSize(8);
+  doc.text('סה״כ שולם', centerX, y, { align: 'center' });
+  y += 6;
+  doc.setFontSize(16);
+  doc.text(formatCurrency(Number(receipt.total_amount)), centerX, y, { align: 'center' });
+  y += 10;
+  
+  // Separator
+  doc.setFontSize(8);
+  doc.line(5, y, 75, y);
+  y += 8;
+  
+  // Footer
+  doc.setFontSize(10);
+  doc.text('תודה על תרומתכם!', centerX, y, { align: 'center' });
+  y += 5;
+  doc.setFontSize(8);
+  doc.text('בית כנסת "ברית שלום" עכו', centerX, y, { align: 'center' });
+  y += 4;
+  doc.text('רח\' קדושי קהיר 16 עכו', centerX, y, { align: 'center' });
+  y += 4;
+  doc.text('טלפון: 050-5768723', centerX, y, { align: 'center' });
+  
+  // Return base64 encoded PDF
+  return doc.output('datauristring').split(',')[1];
 }
 
 Deno.serve(async (req) => {
@@ -72,12 +174,15 @@ Deno.serve(async (req) => {
     const member = memberResult.data;
     const payment = paymentResult.data;
 
+    // Generate PDF
+    const pdfBase64 = generateReceiptPDF(receipt, member, payment);
+
     const paymentMethod = payment?.method === 'cash' ? 'מזומן' : payment?.method === 'bit' ? 'ביט' : '';
     const createdAt = new Date(receipt.created_at);
     const formattedDate = createdAt.toLocaleDateString('he-IL');
     const formattedTime = createdAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
 
-    // Send email using Resend API
+    // Send email using Resend API with PDF attachment
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -141,6 +246,10 @@ Deno.serve(async (req) => {
                 </table>
               </div>
               
+              <p style="margin-top: 20px; color: #666; text-align: center;">
+                📎 קובץ PDF של הקבלה מצורף למייל זה
+              </p>
+              
               <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
               
               <p style="color: #888; font-size: 12px; text-align: center;">
@@ -150,6 +259,12 @@ Deno.serve(async (req) => {
             </div>
           </div>
         `,
+        attachments: [
+          {
+            filename: `קבלה-${receipt.receipt_number}.pdf`,
+            content: pdfBase64,
+          }
+        ],
       }),
     });
 
@@ -159,12 +274,12 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to send email: ${JSON.stringify(emailResult)}`);
     }
 
-    console.log('Receipt email sent successfully:', emailResult);
+    console.log('Receipt email with PDF sent successfully:', emailResult);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Receipt email sent successfully',
+        message: 'Receipt email with PDF sent successfully',
         receiptNumber: receipt.receipt_number,
         to: targetEmail
       }),
