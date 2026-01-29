@@ -30,15 +30,24 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   // Fetch Hebrew font from Google Fonts CDN
   let hebrewFont;
   try {
-    // Use a reliable CDN URL for Heebo font
-    const fontUrl = 'https://cdn.jsdelivr.net/fontsource/fonts/heebo@latest/hebrew-400-normal.ttf';
-    console.log('Fetching Hebrew font from:', fontUrl);
+    // Use Rubik font which includes Hebrew + Latin + Numbers
+    const fontUrl = 'https://cdn.jsdelivr.net/fontsource/fonts/rubik@latest/hebrew-400-normal.ttf';
+    console.log('Fetching Rubik Hebrew font from:', fontUrl);
     const fontResponse = await fetch(fontUrl);
     if (!fontResponse.ok) {
-      throw new Error(`Failed to fetch font: ${fontResponse.status}`);
+      // Fallback to full Rubik font
+      const fallbackUrl = 'https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFU0U1Z4Y.ttf';
+      console.log('Trying fallback font URL:', fallbackUrl);
+      const fallbackResponse = await fetch(fallbackUrl);
+      if (!fallbackResponse.ok) {
+        throw new Error(`Failed to fetch font: ${fontResponse.status}`);
+      }
+      const fontBytes = await fallbackResponse.arrayBuffer();
+      hebrewFont = await pdfDoc.embedFont(fontBytes);
+    } else {
+      const fontBytes = await fontResponse.arrayBuffer();
+      hebrewFont = await pdfDoc.embedFont(fontBytes);
     }
-    const fontBytes = await fontResponse.arrayBuffer();
-    hebrewFont = await pdfDoc.embedFont(fontBytes);
     console.log('Hebrew font loaded successfully');
   } catch (error) {
     console.error('Failed to load Hebrew font:', error);
