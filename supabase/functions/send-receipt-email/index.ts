@@ -67,6 +67,11 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   const centerX = width / 2;
   const rightMargin = width - 15;
 
+  // Helper to reverse numbers in a string (BiDi will reverse them back)
+  const reverseNumbers = (text: string): string => {
+    return text.replace(/[\d\-\.]+/g, (match) => match.split('').reverse().join(''));
+  };
+
   // Helper to draw centered text
   const drawCentered = (text: string, yPos: number, size: number = fontSize) => {
     const textWidth = hebrewFont.widthOfTextAtSize(text, size);
@@ -148,9 +153,10 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   drawCentered('סה"כ שולם', y, smallFontSize);
   y -= 25;
 
-  // Amount - simple format with ₪ symbol
-  const amountText = `₪${Number(receipt.total_amount).toLocaleString('he-IL')}`;
-  drawCentered(amountText, y, 20);
+  // Amount - pre-reverse numbers so BiDi shows them correctly
+  const amount = Number(receipt.total_amount).toLocaleString('he-IL');
+  const reversedAmount = amount.split('').reverse().join('');
+  drawCentered(`${reversedAmount}₪`, y, 20);
   y -= 30;
 
   // Separator
@@ -167,11 +173,11 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   y -= 15;
   drawCentered('בית הכנסת ברית שלום', y, smallFontSize);
   y -= 12;
-  // Address - simple text, let PDF viewer handle BiDi
-  drawCentered('רח\' קדושי כהיר 16, עכו', y, smallFontSize);
+  // Address - pre-reverse numbers so BiDi shows them correctly
+  drawCentered(reverseNumbers('רח\' קדושי כהיר 16, עכו'), y, smallFontSize);
   y -= 12;
-  // Phone
-  drawCentered('טל: 050-5768723', y, smallFontSize);
+  // Phone - pre-reverse numbers
+  drawCentered(reverseNumbers('טל: 050-5768723'), y, smallFontSize);
 
   return await pdfDoc.save();
 }
