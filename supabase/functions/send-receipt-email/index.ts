@@ -34,14 +34,20 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   // Register fontkit for custom font support
   pdfDoc.registerFontkit(fontkit);
   
-  // Fetch Hebrew font from Google Fonts CDN
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  
+  // Fetch Hebrew font and logo in parallel
   let hebrewFont;
+  let logoImage;
   try {
-    // Fetch Alef Hebrew font from Supabase Storage
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const fontUrl = `${supabaseUrl}/storage/v1/object/public/expense-receipts/fonts/Alef-Regular.ttf`;
-    console.log('Fetching Alef Hebrew font from Storage');
-    const fontResponse = await fetch(fontUrl);
+    const logoUrl = `${supabaseUrl}/storage/v1/object/public/expense-receipts/logo/brit-shalom-logo.jpeg`;
+    
+    console.log('Fetching font and logo from Storage');
+    const [fontResponse, logoResponse] = await Promise.all([
+      fetch(fontUrl),
+      fetch(logoUrl)
+    ]);
     
     if (!fontResponse.ok) {
       throw new Error(`Failed to fetch font: ${fontResponse.status}`);
@@ -50,13 +56,22 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
     const fontBytes = await fontResponse.arrayBuffer();
     hebrewFont = await pdfDoc.embedFont(fontBytes);
     console.log('Alef Hebrew font loaded successfully');
+    
+    // Embed logo if available
+    if (logoResponse.ok) {
+      const logoBytes = await logoResponse.arrayBuffer();
+      logoImage = await pdfDoc.embedJpg(logoBytes);
+      console.log('Logo loaded successfully');
+    } else {
+      console.log('Logo not found, continuing without it');
+    }
   } catch (error) {
-    console.error('Failed to load Hebrew font:', error);
-    throw new Error(`Cannot generate PDF without Hebrew font: ${error}`);
+    console.error('Failed to load resources:', error);
+    throw new Error(`Cannot generate PDF: ${error}`);
   }
 
   // Create page (80mm x 150mm = ~227 x 425 points)
-  const page = pdfDoc.addPage([227, 425]);
+  const page = pdfDoc.addPage([227, 450]);
   const { width, height } = page.getSize();
   
   const fontSize = 10;
@@ -95,6 +110,19 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
       color: rgb(0, 0, 0),
     });
   };
+
+  // Draw logo if available
+  if (logoImage) {
+    const logoWidth = 50;
+    const logoHeight = (logoImage.height / logoImage.width) * logoWidth;
+    page.drawImage(logoImage, {
+      x: centerX - logoWidth / 2,
+      y: y - logoHeight,
+      width: logoWidth,
+      height: logoHeight,
+    });
+    y -= logoHeight + 10;
+  }
 
   // Header
   drawCentered('בס"ד', y, smallFontSize);
