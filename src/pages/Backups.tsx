@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   Database, 
   Download, 
@@ -17,7 +19,9 @@ import {
   Loader2,
   Trash2,
   RotateCcw,
-  AlertTriangle
+  AlertTriangle,
+  Mail,
+  Receipt
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -94,6 +98,10 @@ export default function Backups() {
   const [backupData, setBackupData] = useState<BackupData | null>(null);
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
   const [loadingBackup, setLoadingBackup] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [backupEmail, setBackupEmail] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Fetch backup files
   const { data: backups, isLoading, refetch } = useQuery({
@@ -124,6 +132,34 @@ export default function Backups() {
     },
     onError: () => {
       toast({ title: 'שגיאה ביצירת גיבוי', variant: 'destructive' });
+    },
+  });
+
+  // Email receipts backup mutation
+  const emailBackupMutation = useMutation({
+    mutationFn: async ({ email, startDate, endDate }: { email: string; startDate?: string; endDate?: string }) => {
+      const { data, error } = await supabase.functions.invoke('email-receipts-backup', {
+        body: { email, startDate, endDate }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: 'גיבוי קבלות נשלח למייל',
+        description: `נשלחו ${data.receiptsCount} קבלות בסכום כולל של ₪${data.totalAmount?.toLocaleString('he-IL') || 0}`
+      });
+      setEmailDialogOpen(false);
+      setBackupEmail('');
+      setStartDate('');
+      setEndDate('');
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'שגיאה בשליחת גיבוי למייל', 
+        description: error instanceof Error ? error.message : 'שגיאה לא ידועה',
+        variant: 'destructive' 
+      });
     },
   });
 
@@ -300,6 +336,13 @@ export default function Backups() {
           >
             <RefreshCw className="w-4 h-4 ml-2" />
             רענן
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setEmailDialogOpen(true)}
+          >
+            <Mail className="w-4 h-4 ml-2" />
+            שלח קבלות למייל
           </Button>
           <Button 
             onClick={() => backupMutation.mutate()}
@@ -568,6 +611,78 @@ export default function Backups() {
             >
               {restoreMutation.isPending && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
               שחזר {selectedTables.length} טבלאות
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Receipts Backup Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5" />
+              גיבוי קבלות למייל
+            </DialogTitle>
+            <DialogDescription>
+              שלח קובץ CSV עם כל הקבלות לכתובת מייל. ניתן לסנן לפי תאריכים.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="backup-email">כתובת מייל</Label>
+              <Input
+                id="backup-email"
+                type="email"
+                placeholder="example@gmail.com"
+                value={backupEmail}
+                onChange={(e) => setBackupEmail(e.target.value)}
+                dir="ltr"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start-date">מתאריך (אופציונלי)</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end-date">עד תאריך (אופציונלי)</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              השאר את שדות התאריך ריקים לקבלת כל הקבלות במערכת.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
+              ביטול
+            </Button>
+            <Button 
+              onClick={() => emailBackupMutation.mutate({ 
+                email: backupEmail, 
+                startDate: startDate || undefined, 
+                endDate: endDate || undefined 
+              })}
+              disabled={!backupEmail || emailBackupMutation.isPending}
+            >
+              {emailBackupMutation.isPending && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+              <Mail className="w-4 h-4 ml-2" />
+              שלח למייל
             </Button>
           </DialogFooter>
         </DialogContent>
