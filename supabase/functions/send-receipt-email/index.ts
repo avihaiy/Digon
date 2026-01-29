@@ -1,6 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
-import fontkit from "https://esm.sh/@pdf-lib/fontkit@1.1.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,7 +12,7 @@ interface SendReceiptRequest {
 }
 
 function formatCurrency(amount: number): string {
-  return `₪${amount.toLocaleString('he-IL')}`;
+  return `${amount.toLocaleString('he-IL')} NIS`;
 }
 
 function formatDate(dateString: string): string {
@@ -21,19 +20,12 @@ function formatDate(dateString: string): string {
   return date.toLocaleDateString('he-IL');
 }
 
-// Reverse Hebrew text for PDF (since pdf-lib doesn't handle RTL)
-function reverseHebrewText(text: string): string {
-  return text.split('').reverse().join('');
-}
-
 async function generateReceiptPDF(receipt: any, member: any, payment: any): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
-  pdfDoc.registerFontkit(fontkit);
-
-  // Load Hebrew font from Google Fonts
-  const fontUrl = 'https://fonts.gstatic.com/s/heebo/v26/NGSpv5_NC0k9P_v6ZUCbLRAHxK1EiSysd0mm_00.ttf';
-  const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
-  const hebrewFont = await pdfDoc.embedFont(fontBytes);
+  
+  // Use standard fonts that work in Deno environment
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   // Create page (80mm x 150mm = ~227 x 425 points)
   const page = pdfDoc.addPage([227, 425]);
@@ -41,58 +33,55 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   
   const fontSize = 10;
   const smallFontSize = 8;
-  const largeFontSize = 14;
   const titleFontSize = 12;
   
   let y = height - 20;
-  const rightMargin = width - 15;
+  const leftMargin = 15;
   const centerX = width / 2;
 
-  // Helper to draw RTL text (right-aligned)
-  const drawRTL = (text: string, yPos: number, size: number = fontSize) => {
-    const reversed = reverseHebrewText(text);
-    const textWidth = hebrewFont.widthOfTextAtSize(reversed, size);
-    page.drawText(reversed, {
-      x: rightMargin - textWidth,
-      y: yPos,
-      size,
-      font: hebrewFont,
-      color: rgb(0, 0, 0),
-    });
-  };
-
-  // Helper to draw centered RTL text
-  const drawCenteredRTL = (text: string, yPos: number, size: number = fontSize) => {
-    const reversed = reverseHebrewText(text);
-    const textWidth = hebrewFont.widthOfTextAtSize(reversed, size);
-    page.drawText(reversed, {
+  // Helper to draw centered text
+  const drawCentered = (text: string, yPos: number, size: number = fontSize, useFont = font) => {
+    const textWidth = useFont.widthOfTextAtSize(text, size);
+    page.drawText(text, {
       x: centerX - textWidth / 2,
       y: yPos,
       size,
-      font: hebrewFont,
+      font: useFont,
       color: rgb(0, 0, 0),
     });
   };
 
-  // בס"ד - top right
-  drawRTL('בס"ד', y, smallFontSize);
+  // Helper to draw left-aligned text
+  const drawLeft = (text: string, yPos: number, size: number = fontSize) => {
+    page.drawText(text, {
+      x: leftMargin,
+      y: yPos,
+      size,
+      font,
+      color: rgb(0, 0, 0),
+    });
+  };
+
+  // Header
+  drawCentered("B\"H", y, smallFontSize);
   y -= 20;
 
-  // Synagogue name
-  drawCenteredRTL('בית כנסת "ברית שלום" עכו', y, titleFontSize);
+  drawCentered("Brit Shalom Synagogue", y, titleFontSize, boldFont);
   y -= 15;
 
-  // Address
-  drawCenteredRTL('רח\' קדושי קהיר 16, עכו', y, smallFontSize);
+  drawCentered("Acre, Israel", y, smallFontSize);
+  y -= 25;
+
+  // Receipt title
+  drawCentered("RECEIPT", y, titleFontSize, boldFont);
   y -= 20;
 
   // Receipt number
-  const receiptNumText = `קבלה מספר: ${receipt.receipt_number}`;
-  drawCenteredRTL(receiptNumText, y, fontSize);
+  drawCentered(`#${receipt.receipt_number}`, y, 14, boldFont);
   y -= 15;
 
   // Date
-  drawCenteredRTL(formatDate(receipt.created_at), y, smallFontSize);
+  drawCentered(formatDate(receipt.created_at), y, smallFontSize);
   y -= 15;
 
   // Separator line
@@ -102,37 +91,19 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
     thickness: 0.5,
     color: rgb(0.7, 0.7, 0.7),
   });
-  y -= 15;
+  y -= 20;
 
   // Details
   const memberName = member?.full_name || '-';
-  drawRTL(`התקבל מאת: ${memberName}`, y, smallFontSize);
-  y -= 12;
+  drawLeft(`From: ${memberName}`, y, smallFontSize);
+  y -= 14;
 
-  const description = receipt.description || 'תרומה';
-  drawRTL(`עבור: ${description}`, y, smallFontSize);
-  y -= 12;
+  const description = receipt.description || 'Donation';
+  drawLeft(`For: ${description}`, y, smallFontSize);
+  y -= 14;
 
-  const paymentMethod = payment?.method === 'bit' ? 'ביט' : 'מזומן';
-  drawRTL(`אמצעי תשלום: ${paymentMethod}`, y, smallFontSize);
-  y -= 20;
-
-  // Separator
-  page.drawLine({
-    start: { x: 15, y },
-    end: { x: width - 15, y },
-    thickness: 0.5,
-    color: rgb(0.7, 0.7, 0.7),
-  });
-  y -= 15;
-
-  // Total label
-  drawCenteredRTL('סה"כ שולם', y, smallFontSize);
-  y -= 20;
-
-  // Amount
-  const amountText = formatCurrency(Number(receipt.total_amount));
-  drawCenteredRTL(amountText, y, 18);
+  const paymentMethod = payment?.method === 'bit' ? 'Bit' : 'Cash';
+  drawLeft(`Payment: ${paymentMethod}`, y, smallFontSize);
   y -= 25;
 
   // Separator
@@ -144,25 +115,32 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   });
   y -= 20;
 
-  // Footer
-  drawCenteredRTL('תודה על תרומתכם!', y, fontSize);
-  y -= 15;
-  drawCenteredRTL('בית כנסת "ברית שלום" עכו', y, smallFontSize);
-  y -= 12;
-  drawCenteredRTL('רח\' קדושי קהיר 16 עכו', y, smallFontSize);
-  y -= 12;
-  
-  // Phone (LTR)
-  const phoneText = '050-5768723 :טלפון';
-  const phoneReversed = reverseHebrewText('טלפון:') + ' 050-5768723';
-  const phoneWidth = hebrewFont.widthOfTextAtSize(phoneReversed, smallFontSize);
-  page.drawText('050-5768723', {
-    x: centerX - 30,
-    y,
-    size: smallFontSize,
-    font: hebrewFont,
-    color: rgb(0, 0, 0),
+  // Total label
+  drawCentered("TOTAL PAID", y, smallFontSize);
+  y -= 25;
+
+  // Amount - big and bold
+  const amountText = formatCurrency(Number(receipt.total_amount));
+  drawCentered(amountText, y, 20, boldFont);
+  y -= 30;
+
+  // Separator
+  page.drawLine({
+    start: { x: 15, y },
+    end: { x: width - 15, y },
+    thickness: 0.5,
+    color: rgb(0.7, 0.7, 0.7),
   });
+  y -= 20;
+
+  // Footer
+  drawCentered("Thank you for your donation!", y, fontSize);
+  y -= 15;
+  drawCentered("Brit Shalom Synagogue", y, smallFontSize);
+  y -= 12;
+  drawCentered("16 Kdoshei Kahir St., Acre", y, smallFontSize);
+  y -= 12;
+  drawCentered("Tel: 050-5768723", y, smallFontSize);
 
   return await pdfDoc.save();
 }
@@ -239,6 +217,7 @@ Deno.serve(async (req) => {
     const formattedTime = createdAt.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
 
     // Send email using Resend API with PDF attachment
+    // Email HTML supports Hebrew (browser renders it), PDF uses English (standard fonts)
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -246,7 +225,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'בית הכנסת ברית שלום <onboarding@resend.dev>',
+        from: 'Brit Shalom Synagogue <onboarding@resend.dev>',
         to: [targetEmail],
         subject: `קבלה חדשה #${receipt.receipt_number} - ${member?.full_name || 'לא ידוע'}`,
         html: `
