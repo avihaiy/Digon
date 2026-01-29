@@ -1,56 +1,11 @@
-import { useEffect, useState } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { usePWAUpdate } from '@/hooks/usePWAUpdate';
 
 export function PWAUpdatePrompt() {
-  const [showPrompt, setShowPrompt] = useState(false);
-  
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
-    immediate: true,
-    onRegistered(registration) {
-      console.log('SW Registered:', registration);
-      
-      // Check for updates every 10 seconds for faster detection
-      if (registration) {
-        // Check for updates every 10 seconds
-        setInterval(() => {
-          registration.update();
-        }, 10 * 1000);
-      }
-    },
-    onRegisterError(error) {
-      console.error('SW registration error:', error);
-    },
-    onNeedRefresh() {
-      setShowPrompt(true);
-    },
-    onOfflineReady() {
-      toast.success('האפליקציה מוכנה לעבודה אופליין');
-    },
-  });
+  const { needRefresh, updateServiceWorker, dismissUpdate } = usePWAUpdate();
 
-  useEffect(() => {
-    if (needRefresh) {
-      setShowPrompt(true);
-    }
-  }, [needRefresh]);
-
-  const handleUpdate = async () => {
-    await updateServiceWorker(true);
-    setShowPrompt(false);
-  };
-
-  const handleDismiss = () => {
-    setShowPrompt(false);
-    setNeedRefresh(false);
-  };
-
-  if (!showPrompt) return null;
+  if (!needRefresh) return null;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-in slide-in-from-bottom-4">
@@ -68,7 +23,7 @@ export function PWAUpdatePrompt() {
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={handleUpdate}
+                onClick={updateServiceWorker}
                 className="gap-1.5"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -77,7 +32,7 @@ export function PWAUpdatePrompt() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={handleDismiss}
+                onClick={dismissUpdate}
                 className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
               >
                 אחר כך
@@ -85,7 +40,7 @@ export function PWAUpdatePrompt() {
             </div>
           </div>
           <button
-            onClick={handleDismiss}
+            onClick={dismissUpdate}
             className="flex-shrink-0 p-1 rounded hover:bg-primary-foreground/10 transition-colors"
           >
             <X className="w-4 h-4" />
