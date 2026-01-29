@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
+import { PDFDocument, rgb } from "https://esm.sh/pdf-lib@1.17.1";
+import fontkit from "https://esm.sh/@pdf-lib/fontkit@1.1.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,7 @@ interface SendReceiptRequest {
 }
 
 function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString('he-IL')} NIS`;
+  return `₪${amount.toLocaleString('he-IL')}`;
 }
 
 function formatDate(dateString: string): string {
@@ -20,12 +21,32 @@ function formatDate(dateString: string): string {
   return date.toLocaleDateString('he-IL');
 }
 
+// Reverse Hebrew text for RTL display in PDF
+function reverseHebrew(text: string): string {
+  return text.split('').reverse().join('');
+}
+
 async function generateReceiptPDF(receipt: any, member: any, payment: any): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   
-  // Use standard fonts that work in Deno environment
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  // Register fontkit for custom font support
+  pdfDoc.registerFontkit(fontkit);
+  
+  // Fetch Hebrew font from Google Fonts CDN
+  let hebrewFont;
+  try {
+    const fontUrl = 'https://fonts.gstatic.com/s/heebo/v26/NGSpv5_NC0k9P_v6ZUCbLRAHxK1EiSysd0mm_00.ttf';
+    const fontResponse = await fetch(fontUrl);
+    if (!fontResponse.ok) {
+      throw new Error('Failed to fetch font');
+    }
+    const fontBytes = await fontResponse.arrayBuffer();
+    hebrewFont = await pdfDoc.embedFont(fontBytes);
+  } catch (error) {
+    console.error('Failed to load Hebrew font, falling back to Helvetica:', error);
+    const { StandardFonts } = await import("https://esm.sh/pdf-lib@1.17.1");
+    hebrewFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  }
 
   // Create page (80mm x 150mm = ~227 x 425 points)
   const page = pdfDoc.addPage([227, 425]);
@@ -36,48 +57,50 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   const titleFontSize = 12;
   
   let y = height - 20;
-  const leftMargin = 15;
   const centerX = width / 2;
 
-  // Helper to draw centered text
-  const drawCentered = (text: string, yPos: number, size: number = fontSize, useFont = font) => {
-    const textWidth = useFont.widthOfTextAtSize(text, size);
-    page.drawText(text, {
+  // Helper to draw centered text (with RTL support for Hebrew)
+  const drawCentered = (text: string, yPos: number, size: number = fontSize, isHebrew: boolean = false) => {
+    const displayText = isHebrew ? reverseHebrew(text) : text;
+    const textWidth = hebrewFont.widthOfTextAtSize(displayText, size);
+    page.drawText(displayText, {
       x: centerX - textWidth / 2,
       y: yPos,
       size,
-      font: useFont,
+      font: hebrewFont,
       color: rgb(0, 0, 0),
     });
   };
 
-  // Helper to draw left-aligned text
-  const drawLeft = (text: string, yPos: number, size: number = fontSize) => {
-    page.drawText(text, {
-      x: leftMargin,
+  // Helper to draw right-aligned text (for Hebrew RTL)
+  const drawRight = (text: string, yPos: number, size: number = fontSize) => {
+    const displayText = reverseHebrew(text);
+    const textWidth = hebrewFont.widthOfTextAtSize(displayText, size);
+    page.drawText(displayText, {
+      x: width - 15 - textWidth,
       y: yPos,
       size,
-      font,
+      font: hebrewFont,
       color: rgb(0, 0, 0),
     });
   };
 
   // Header
-  drawCentered("B\"H", y, smallFontSize);
+  drawCentered('בס"ד', y, smallFontSize, true);
   y -= 20;
 
-  drawCentered("Brit Shalom Synagogue", y, titleFontSize, boldFont);
+  drawCentered('בית הכנסת ברית שלום', y, titleFontSize, true);
   y -= 15;
 
-  drawCentered("Acre, Israel", y, smallFontSize);
+  drawCentered('עכו, ישראל', y, smallFontSize, true);
   y -= 25;
 
   // Receipt title
-  drawCentered("RECEIPT", y, titleFontSize, boldFont);
+  drawCentered('קבלה', y, titleFontSize, true);
   y -= 20;
 
   // Receipt number
-  drawCentered(`#${receipt.receipt_number}`, y, 14, boldFont);
+  drawCentered(`#${receipt.receipt_number}`, y, 14);
   y -= 15;
 
   // Date
@@ -93,15 +116,17 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   });
   y -= 20;
 
-  // Details - use member ID reference instead of Hebrew name
-  drawLeft(`Member ID: ${receipt.member_id?.substring(0, 8) || '-'}`, y, smallFontSize);
+  // Details - Hebrew RTL
+  const memberName = member?.full_name || 'אנונימי';
+  drawRight(`מאת: ${memberName}`, y, smallFontSize);
   y -= 14;
 
-  drawLeft(`For: Donation`, y, smallFontSize);
+  const description = receipt.description || 'תרומה';
+  drawRight(`עבור: ${description}`, y, smallFontSize);
   y -= 14;
 
-  const paymentMethod = payment?.method === 'bit' ? 'Bit' : 'Cash';
-  drawLeft(`Payment: ${paymentMethod}`, y, smallFontSize);
+  const paymentMethod = payment?.method === 'bit' ? 'ביט' : 'מזומן';
+  drawRight(`אמצעי תשלום: ${paymentMethod}`, y, smallFontSize);
   y -= 25;
 
   // Separator
@@ -114,12 +139,12 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   y -= 20;
 
   // Total label
-  drawCentered("TOTAL PAID", y, smallFontSize);
+  drawCentered('סה"כ שולם', y, smallFontSize, true);
   y -= 25;
 
   // Amount - big and bold
   const amountText = formatCurrency(Number(receipt.total_amount));
-  drawCentered(amountText, y, 20, boldFont);
+  drawCentered(amountText, y, 20);
   y -= 30;
 
   // Separator
@@ -132,13 +157,13 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   y -= 20;
 
   // Footer
-  drawCentered("Thank you for your donation!", y, fontSize);
+  drawCentered('תודה על תרומתך!', y, fontSize, true);
   y -= 15;
-  drawCentered("Brit Shalom Synagogue", y, smallFontSize);
+  drawCentered('בית הכנסת ברית שלום', y, smallFontSize, true);
   y -= 12;
-  drawCentered("16 Kdoshei Kahir St., Acre", y, smallFontSize);
+  drawCentered('רח\' קדושי כהיר 16, עכו', y, smallFontSize, true);
   y -= 12;
-  drawCentered("Tel: 050-5768723", y, smallFontSize);
+  drawCentered('טל: 050-5768723', y, smallFontSize);
 
   return await pdfDoc.save();
 }
