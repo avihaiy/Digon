@@ -67,9 +67,6 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   const centerX = width / 2;
   const rightMargin = width - 15;
 
-  // Helper to reverse a string (for Hebrew text that needs manual reversal)
-  const reverseString = (str: string) => str.split('').reverse().join('');
-
   // Helper to draw centered text
   const drawCentered = (text: string, yPos: number, size: number = fontSize) => {
     const textWidth = hebrewFont.widthOfTextAtSize(text, size);
@@ -92,24 +89,6 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
       font: hebrewFont,
       color: rgb(0, 0, 0),
     });
-  };
-
-  // Helper to draw multi-segment text centered (handles mixed Hebrew/numbers)
-  // segments: array of {text, reverse} where reverse=true for Hebrew
-  const drawSegmentsCentered = (segments: {text: string, reverse: boolean}[], yPos: number, size: number = fontSize) => {
-    // Calculate total width
-    const processedSegments = segments.map(seg => ({
-      text: seg.reverse ? reverseString(seg.text) : seg.text,
-      width: hebrewFont.widthOfTextAtSize(seg.reverse ? reverseString(seg.text) : seg.text, size)
-    }));
-    const totalWidth = processedSegments.reduce((sum, seg) => sum + seg.width, 0);
-    
-    // Draw from right to left (RTL)
-    let x = centerX + totalWidth / 2;
-    for (const seg of processedSegments) {
-      x -= seg.width;
-      page.drawText(seg.text, { x, y: yPos, size, font: hebrewFont, color: rgb(0, 0, 0) });
-    }
   };
 
   // Header
@@ -169,12 +148,9 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   drawCentered('סה"כ שולם', y, smallFontSize);
   y -= 25;
 
-  // Amount - use segments for proper ₪ positioning
-  const amount = Number(receipt.total_amount).toLocaleString('he-IL');
-  drawSegmentsCentered([
-    { text: '₪', reverse: false },
-    { text: amount, reverse: false }
-  ], y, 20);
+  // Amount - simple format with ₪ symbol
+  const amountText = `₪${Number(receipt.total_amount).toLocaleString('he-IL')}`;
+  drawCentered(amountText, y, 20);
   y -= 30;
 
   // Separator
@@ -191,21 +167,11 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   y -= 15;
   drawCentered('בית הכנסת ברית שלום', y, smallFontSize);
   y -= 12;
-  // Address with mixed Hebrew/numbers - draw as segments
-  drawSegmentsCentered([
-    { text: 'עכו', reverse: true },
-    { text: ' ,', reverse: false },
-    { text: '16', reverse: false },
-    { text: ' ', reverse: false },
-    { text: 'רח\' קדושי כהיר', reverse: true }
-  ], y, smallFontSize);
+  // Address - simple text, let PDF viewer handle BiDi
+  drawCentered('רח\' קדושי כהיר 16, עכו', y, smallFontSize);
   y -= 12;
-  // Phone with mixed Hebrew/numbers
-  drawSegmentsCentered([
-    { text: '050-5768723', reverse: false },
-    { text: ' :', reverse: false },
-    { text: 'טל', reverse: true }
-  ], y, smallFontSize);
+  // Phone
+  drawCentered('טל: 050-5768723', y, smallFontSize);
 
   return await pdfDoc.save();
 }
