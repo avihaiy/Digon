@@ -167,9 +167,10 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   y -= 15;
   drawCentered('בית הכנסת ברית שלום', y, smallFontSize);
   y -= 12;
-  drawCentered('רח\' קדושי כהיר 16, עכו', y, smallFontSize);
+  // Use LRM (Left-to-Right Mark) \u200E to force numbers to display correctly in RTL context
+  drawCentered('רח\' קדושי כהיר \u200E16\u200E, עכו', y, smallFontSize);
   y -= 12;
-  drawCentered('טל: 050-5768723', y, smallFontSize);
+  drawCentered('טל: \u200E050-5768723', y, smallFontSize);
 
   return await pdfDoc.save();
 }
