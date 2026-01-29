@@ -30,24 +30,18 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   // Fetch Hebrew font from Google Fonts CDN
   let hebrewFont;
   try {
-    // Use Open Sans Hebrew which has Hebrew + Latin + Numbers - from jsDelivr CDN
-    const fontUrl = 'https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.0.28/files/open-sans-hebrew-400-normal.woff';
-    console.log('Fetching Open Sans Hebrew font');
-    let fontResponse = await fetch(fontUrl);
+    // Use Alef font - a free Hebrew font with complete character coverage (TTF format)
+    const fontUrl = 'https://raw.githubusercontent.com/nicholasdower/alef/master/font/ttf/Alef-Regular.ttf';
+    console.log('Fetching Alef Hebrew font (TTF)');
+    const fontResponse = await fetch(fontUrl);
     
     if (!fontResponse.ok) {
-      // Fallback: Try Alef font which has Hebrew + Latin
-      const fallbackUrl = 'https://cdn.jsdelivr.net/gh/nicholasdower/alef@master/font/ttf/Alef-Regular.ttf';
-      console.log('Trying Alef font fallback');
-      fontResponse = await fetch(fallbackUrl);
-      if (!fontResponse.ok) {
-        throw new Error(`Failed to fetch any font: ${fontResponse.status}`);
-      }
+      throw new Error(`Failed to fetch font: ${fontResponse.status}`);
     }
     
     const fontBytes = await fontResponse.arrayBuffer();
     hebrewFont = await pdfDoc.embedFont(fontBytes);
-    console.log('Hebrew font loaded successfully');
+    console.log('Alef Hebrew font loaded successfully');
   } catch (error) {
     console.error('Failed to load Hebrew font:', error);
     throw new Error(`Cannot generate PDF without Hebrew font: ${error}`);
