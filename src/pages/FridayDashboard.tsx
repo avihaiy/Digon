@@ -158,10 +158,22 @@ export default function FridayDashboard() {
 
       return { payment, receipt };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success('התשלום נקלט בהצלחה!', {
         description: `קבלה מספר ${data.receipt.receipt_number} הונפקה`,
       });
+      
+      // Send receipt email automatically
+      try {
+        await supabase.functions.invoke('send-receipt-email', {
+          body: { receiptId: data.receipt.id }
+        });
+        toast.success('הקבלה נשלחה למייל');
+      } catch (emailError) {
+        console.error('Failed to send receipt email:', emailError);
+        // Don't show error to user - email is secondary
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['friday-aliyot'] });
       queryClient.invalidateQueries({ queryKey: ['weekly-summary'] });
       setPaymentDialogOpen(false);

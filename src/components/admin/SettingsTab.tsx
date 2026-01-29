@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2 } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface SettingsTabProps {
@@ -20,6 +20,7 @@ interface SettingsTabProps {
 export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabProps) {
   const queryClient = useQueryClient();
   const [synagogueName, setSynagogueName] = useState('בית הכנסת');
+  const [receiptEmail, setReceiptEmail] = useState('');
   const [tvDurations, setTvDurations] = useState({
     general: 30,
     memorial: 20,
@@ -39,8 +40,21 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         .from('app_settings')
         .select('value')
         .eq('key', 'synagogue_name')
-        .single();
+        .maybeSingle();
       return data?.value || 'בית הכנסת';
+    },
+  });
+
+  // Load receipt email
+  const { data: receiptEmailSetting } = useQuery({
+    queryKey: ['app-settings-receipt-email'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'receipt_email')
+        .maybeSingle();
+      return data?.value || '';
     },
   });
 
@@ -89,6 +103,12 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   }, [nameSetting]);
 
   useEffect(() => {
+    if (receiptEmailSetting !== undefined) {
+      setReceiptEmail(receiptEmailSetting);
+    }
+  }, [receiptEmailSetting]);
+
+  useEffect(() => {
     if (tvSettings) {
       setTvDurations(tvSettings);
     }
@@ -111,6 +131,21 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-settings-synagogue-name'] });
       toast({ title: 'שם בית הכנסת נשמר בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
+  // Save receipt email
+  const saveReceiptEmailMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'receipt_email', value: email }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-receipt-email'] });
+      toast({ title: 'כתובת המייל נשמרה בהצלחה' });
     },
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
@@ -198,34 +233,66 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
           </CardContent>
         </Card>
 
-        {/* Location */}
+        {/* Receipt Email */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              מיקום לזמנים
+              <Mail className="w-5 h-5" />
+              מייל לקבלות
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>בחר מיקום לחישוב זמני היום</Label>
-              <Select value={selectedLocation} onValueChange={onLocationChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(ISRAEL_LOCATIONS).map(([key, loc]) => (
-                    <SelectItem key={key} value={key}>{loc.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>כתובת מייל לקבלות אוטומטיות</Label>
+              <Input 
+                type="email"
+                value={receiptEmail}
+                onChange={e => setReceiptEmail(e.target.value)}
+                placeholder="email@example.com"
+                dir="ltr"
+              />
+              <p className="text-xs text-muted-foreground">
+                כל קבלה חדשה תישלח אוטומטית לכתובת זו
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              המיקום משפיע על חישוב זמני היום, הדלקת נרות וצאת השבת
-            </p>
+            <Button 
+              onClick={() => saveReceiptEmailMutation.mutate(receiptEmail)}
+              disabled={saveReceiptEmailMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור מייל
+            </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Location */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            מיקום לזמנים
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>בחר מיקום לחישוב זמני היום</Label>
+            <Select value={selectedLocation} onValueChange={onLocationChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(ISRAEL_LOCATIONS).map(([key, loc]) => (
+                  <SelectItem key={key} value={key}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            המיקום משפיע על חישוב זמני היום, הדלקת נרות וצאת השבת
+          </p>
+        </CardContent>
+      </Card>
 
       {/* TV Screen Durations */}
       <Card>
