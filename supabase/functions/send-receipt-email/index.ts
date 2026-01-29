@@ -21,12 +21,6 @@ function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('he-IL');
 }
-
-// Reverse Hebrew text for RTL display in PDF
-function reverseHebrew(text: string): string {
-  return text.split('').reverse().join('');
-}
-
 async function generateReceiptPDF(receipt: any, member: any, payment: any): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   
@@ -61,12 +55,12 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   
   let y = height - 20;
   const centerX = width / 2;
+  const rightMargin = width - 15;
 
-  // Helper to draw centered text (with RTL support for Hebrew)
-  const drawCentered = (text: string, yPos: number, size: number = fontSize, isHebrew: boolean = false) => {
-    const displayText = isHebrew ? reverseHebrew(text) : text;
-    const textWidth = hebrewFont.widthOfTextAtSize(displayText, size);
-    page.drawText(displayText, {
+  // Helper to draw centered text
+  const drawCentered = (text: string, yPos: number, size: number = fontSize) => {
+    const textWidth = hebrewFont.widthOfTextAtSize(text, size);
+    page.drawText(text, {
       x: centerX - textWidth / 2,
       y: yPos,
       size,
@@ -75,12 +69,11 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
     });
   };
 
-  // Helper to draw right-aligned text (for Hebrew RTL)
+  // Helper to draw right-aligned text (for Hebrew RTL - text starts from right)
   const drawRight = (text: string, yPos: number, size: number = fontSize) => {
-    const displayText = reverseHebrew(text);
-    const textWidth = hebrewFont.widthOfTextAtSize(displayText, size);
-    page.drawText(displayText, {
-      x: width - 15 - textWidth,
+    const textWidth = hebrewFont.widthOfTextAtSize(text, size);
+    page.drawText(text, {
+      x: rightMargin - textWidth,
       y: yPos,
       size,
       font: hebrewFont,
@@ -89,17 +82,17 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   };
 
   // Header
-  drawCentered('בס"ד', y, smallFontSize, true);
+  drawCentered('בס"ד', y, smallFontSize);
   y -= 20;
 
-  drawCentered('בית הכנסת ברית שלום', y, titleFontSize, true);
+  drawCentered('בית הכנסת ברית שלום', y, titleFontSize);
   y -= 15;
 
-  drawCentered('עכו, ישראל', y, smallFontSize, true);
+  drawCentered('עכו, ישראל', y, smallFontSize);
   y -= 25;
 
   // Receipt title
-  drawCentered('קבלה', y, titleFontSize, true);
+  drawCentered('קבלה', y, titleFontSize);
   y -= 20;
 
   // Receipt number
@@ -142,7 +135,7 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   y -= 20;
 
   // Total label
-  drawCentered('סה"כ שולם', y, smallFontSize, true);
+  drawCentered('סה"כ שולם', y, smallFontSize);
   y -= 25;
 
   // Amount - big and bold
@@ -160,11 +153,11 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   y -= 20;
 
   // Footer
-  drawCentered('תודה על תרומתך!', y, fontSize, true);
+  drawCentered('תודה על תרומתך!', y, fontSize);
   y -= 15;
-  drawCentered('בית הכנסת ברית שלום', y, smallFontSize, true);
+  drawCentered('בית הכנסת ברית שלום', y, smallFontSize);
   y -= 12;
-  drawCentered('רח\' קדושי כהיר 16, עכו', y, smallFontSize, true);
+  drawCentered('רח\' קדושי כהיר 16, עכו', y, smallFontSize);
   y -= 12;
   drawCentered('טל: 050-5768723', y, smallFontSize);
 
