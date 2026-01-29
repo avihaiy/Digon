@@ -19,7 +19,44 @@ function formatCurrency(amount: number): string {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('he-IL');
+  // Return date in DD.MM.YYYY format (LTR friendly)
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+// Helper to reorder bidirectional text for PDF rendering
+// PDFs render left-to-right, so we need to handle RTL text specially
+function processBidiText(text: string): string {
+  // For mixed Hebrew/number text, we need to reverse the logical order
+  // but keep numbers in their correct sequence
+  
+  // Split text into segments: Hebrew vs non-Hebrew
+  const segments: {text: string, isHebrew: boolean}[] = [];
+  let currentSegment = '';
+  let isCurrentHebrew = false;
+  
+  for (const char of text) {
+    const isHebrew = /[\u0590-\u05FF]/.test(char);
+    if (currentSegment && isHebrew !== isCurrentHebrew) {
+      segments.push({ text: currentSegment, isHebrew: isCurrentHebrew });
+      currentSegment = '';
+    }
+    currentSegment += char;
+    isCurrentHebrew = isHebrew;
+  }
+  if (currentSegment) {
+    segments.push({ text: currentSegment, isHebrew: isCurrentHebrew });
+  }
+  
+  // Reverse segment order for RTL display
+  segments.reverse();
+  
+  // Reverse Hebrew segments character-by-character, keep numbers as-is
+  return segments.map(seg => 
+    seg.isHebrew ? seg.text.split('').reverse().join('') : seg.text
+  ).join('');
 }
 async function generateReceiptPDF(receipt: any, member: any, payment: any): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
@@ -60,10 +97,11 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   const centerX = width / 2;
   const rightMargin = width - 15;
 
-  // Helper to draw centered text
-  const drawCentered = (text: string, yPos: number, size: number = fontSize) => {
-    const textWidth = hebrewFont.widthOfTextAtSize(text, size);
-    page.drawText(text, {
+  // Helper to draw centered text (with RTL processing)
+  const drawCentered = (text: string, yPos: number, size: number = fontSize, processRtl: boolean = true) => {
+    const displayText = processRtl ? processBidiText(text) : text;
+    const textWidth = hebrewFont.widthOfTextAtSize(displayText, size);
+    page.drawText(displayText, {
       x: centerX - textWidth / 2,
       y: yPos,
       size,
@@ -72,11 +110,24 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
     });
   };
 
-  // Helper to draw right-aligned text (for Hebrew RTL - text starts from right)
+  // Helper to draw right-aligned text (for Hebrew RTL)
   const drawRight = (text: string, yPos: number, size: number = fontSize) => {
+    const displayText = processBidiText(text);
+    const textWidth = hebrewFont.widthOfTextAtSize(displayText, size);
+    page.drawText(displayText, {
+      x: rightMargin - textWidth,
+      y: yPos,
+      size,
+      font: hebrewFont,
+      color: rgb(0, 0, 0),
+    });
+  };
+  
+  // Helper for LTR-only text (numbers, dates)
+  const drawCenteredLtr = (text: string, yPos: number, size: number = fontSize) => {
     const textWidth = hebrewFont.widthOfTextAtSize(text, size);
     page.drawText(text, {
-      x: rightMargin - textWidth,
+      x: centerX - textWidth / 2,
       y: yPos,
       size,
       font: hebrewFont,
@@ -98,12 +149,12 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   drawCentered('קבלה', y, titleFontSize);
   y -= 20;
 
-  // Receipt number
-  drawCentered(`#${receipt.receipt_number}`, y, 14);
+  // Receipt number (LTR - just the number with #)
+  drawCenteredLtr(`#${receipt.receipt_number}`, y, 14);
   y -= 15;
 
-  // Date
-  drawCentered(formatDate(receipt.created_at), y, smallFontSize);
+  // Date (LTR format DD.MM.YYYY)
+  drawCenteredLtr(formatDate(receipt.created_at), y, smallFontSize);
   y -= 15;
 
   // Separator line
@@ -141,9 +192,9 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   drawCentered('סה"כ שולם', y, smallFontSize);
   y -= 25;
 
-  // Amount - big and bold
+  // Amount - big and bold (LTR - just numbers with ₪)
   const amountText = formatCurrency(Number(receipt.total_amount));
-  drawCentered(amountText, y, 20);
+  drawCenteredLtr(amountText, y, 20);
   y -= 30;
 
   // Separator
@@ -162,7 +213,7 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   y -= 12;
   drawCentered('רח\' קדושי כהיר 16, עכו', y, smallFontSize);
   y -= 12;
-  drawCentered('טל: 050-5768723', y, smallFontSize);
+  drawCenteredLtr('050-5768723 :טל', y, smallFontSize);
 
   return await pdfDoc.save();
 }
