@@ -30,9 +30,10 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   // Fetch Hebrew font from Google Fonts CDN
   let hebrewFont;
   try {
-    // Use Alef font - a free Hebrew font with complete character coverage (TTF format)
-    const fontUrl = 'https://raw.githubusercontent.com/nicholasdower/alef/master/font/ttf/Alef-Regular.ttf';
-    console.log('Fetching Alef Hebrew font (TTF)');
+    // Fetch Alef Hebrew font from Supabase Storage
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const fontUrl = `${supabaseUrl}/storage/v1/object/public/expense-receipts/fonts/Alef-Regular.ttf`;
+    console.log('Fetching Alef Hebrew font from Storage');
     const fontResponse = await fetch(fontUrl);
     
     if (!fontResponse.ok) {
