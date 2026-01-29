@@ -37,6 +37,7 @@ import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
 import { OfflineIndicator, OfflineBanner } from './OfflineIndicator';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { usePWAUpdate } from '@/hooks/usePWAUpdate';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -63,6 +64,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { needRefresh, updateServiceWorker } = usePWAUpdate();
 
   const handleSignOut = async () => {
     await signOut();
@@ -201,14 +203,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </button>
 
           <div className="flex items-center gap-2">
-            {/* Refresh Button */}
+            {/* Refresh Button with Update Indicator */}
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => window.location.reload()}
-              title="רענן עמוד"
+              onClick={() => needRefresh ? updateServiceWorker() : window.location.reload()}
+              title={needRefresh ? "עדכון זמין - לחץ לרענון" : "רענן עמוד"}
+              className="relative"
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className={cn("w-5 h-5", needRefresh && "animate-spin")} />
+              {needRefresh && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-pulse" />
+              )}
             </Button>
             
             {/* Offline Indicator */}

@@ -31,6 +31,7 @@ import DisplayTV from "@/pages/DisplayTV";
 import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
+import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 
 const queryClient = new QueryClient();
@@ -114,14 +115,16 @@ const App = () => (
     >
       <TooltipProvider>
         <OfflineSyncProvider>
-          <Toaster />
-          <Sonner />
-          <PWAUpdatePrompt />
+          <PWAUpdateProvider>
+            <Toaster />
+            <Sonner />
+            <PWAUpdatePrompt />
           <BrowserRouter>
             <AuthProvider>
               <AnimatedRoutes />
             </AuthProvider>
           </BrowserRouter>
+          </PWAUpdateProvider>
         </OfflineSyncProvider>
       </TooltipProvider>
     </ThemeProvider>
