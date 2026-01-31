@@ -47,9 +47,26 @@ export default function Login() {
       const { error } = await signIn(email, loginPassword);
 
       if (error) {
-        toast.error('שגיאה בהתחברות', {
-          description: 'אימייל/שם משתמש או סיסמה שגויים',
-        });
+        // Check if account is locked
+        const errorMessage = error.message.toLowerCase();
+        if (errorMessage.includes('locked') || errorMessage.includes('banned') || errorMessage.includes('too many')) {
+          toast.error('החשבון נעול', {
+            description: 'החשבון שלך נעול עקב נסיונות התחברות כושלים. פנה למנהל המערכת לשחרור החשבון.',
+            duration: 8000,
+          });
+        } else if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid')) {
+          toast.error('שגיאה בהתחברות', {
+            description: 'אימייל/שם משתמש או סיסמה שגויים',
+          });
+        } else if (errorMessage.includes('email not confirmed')) {
+          toast.error('האימייל לא אומת', {
+            description: 'יש לאמת את כתובת האימייל לפני ההתחברות',
+          });
+        } else {
+          toast.error('שגיאה בהתחברות', {
+            description: error.message,
+          });
+        }
       } else {
         toast.success('ברוכים הבאים!');
         navigate('/');
