@@ -135,6 +135,40 @@ export const PARASHA_LIST = [
   'ניצבים', 'וילך', 'האזינו', 'וזאת הברכה'
 ];
 
+// Holiday list for payments
+export const HOLIDAY_LIST = [
+  'ראש השנה',
+  'צום גדליה',
+  'יום כיפור',
+  'סוכות',
+  'שמיני עצרת',
+  'שמחת תורה',
+  'חנוכה',
+  'צום עשרה בטבת',
+  'ט"ו בשבט',
+  'תענית אסתר',
+  'פורים',
+  'פסח',
+  'שביעי של פסח',
+  'יום השואה',
+  'יום הזיכרון',
+  'יום העצמאות',
+  'ל"ג בעומר',
+  'יום ירושלים',
+  'שבועות',
+  'צום י"ז בתמוז',
+  'תשעה באב',
+  'ט"ו באב',
+];
+
+// Combined occasion types (Parasha or Holiday)
+export type OccasionType = 'parasha' | 'holiday';
+
+export const OCCASION_TYPES = {
+  parasha: 'פרשה',
+  holiday: 'חג/אירוע',
+} as const;
+
 // Mapping from hebcal English parasha names to Hebrew
 const PARASHA_MAPPING: Record<string, string> = {
   'Bereshit': 'בראשית',

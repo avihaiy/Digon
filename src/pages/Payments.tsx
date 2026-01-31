@@ -58,6 +58,9 @@ import {
   PAYMENT_STATUS,
   getCurrentParasha,
   PARASHA_LIST,
+  HOLIDAY_LIST,
+  OCCASION_TYPES,
+  type OccasionType,
 } from '@/lib/hebrew-utils';
 
 type FilterType = 'all' | 'pending' | 'confirmed' | 'bit' | 'cash' | 'this_month';
@@ -72,14 +75,14 @@ export default function Payments() {
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
   const [editingPayment, setEditingPayment] = useState<any>(null);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
+  const [occasionType, setOccasionType] = useState<OccasionType>('parasha');
 
-  // Form state
   const [formData, setFormData] = useState({
     member_id: '',
     amount: '',
     reference: '',
     notes: '',
-    parasha: getCurrentParasha(),
+    occasion: getCurrentParasha(),
   });
 
   // Fetch payments
@@ -165,7 +168,9 @@ export default function Payments() {
           member_id: formData.member_id,
           payment_id: payment.id,
           total_amount: Number(formData.amount),
-          description: `תשלום - פרשת ${formData.parasha}`,
+          description: occasionType === 'parasha' 
+            ? `תשלום - פרשת ${formData.occasion}` 
+            : `תשלום - ${formData.occasion}`,
         }).select().single();
 
         if (receiptError) throw receiptError;
@@ -252,8 +257,9 @@ export default function Payments() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingPayment(null);
-    setFormData({ member_id: '', amount: '', reference: '', notes: '', parasha: getCurrentParasha() });
+    setFormData({ member_id: '', amount: '', reference: '', notes: '', occasion: getCurrentParasha() });
     setPaymentMethod('cash');
+    setOccasionType('parasha');
   };
 
   const handleEditPayment = (payment: any) => {
@@ -263,9 +269,10 @@ export default function Payments() {
       amount: String(payment.amount),
       reference: payment.reference || '',
       notes: payment.notes || '',
-      parasha: getCurrentParasha(),
+      occasion: getCurrentParasha(),
     });
     setPaymentMethod(payment.method);
+    setOccasionType('parasha');
     setDialogOpen(true);
   };
 
@@ -684,22 +691,64 @@ export default function Payments() {
               />
             </div>
 
-            {/* Parasha Selection */}
+            {/* Occasion Type Selection */}
             <div className="space-y-2">
-              <Label>פרשה לקבלה</Label>
+              <Label>סוג אירוע</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOccasionType('parasha');
+                    setFormData({ ...formData, occasion: getCurrentParasha() });
+                  }}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
+                    occasionType === 'parasha'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  פרשה
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOccasionType('holiday');
+                    setFormData({ ...formData, occasion: HOLIDAY_LIST[0] });
+                  }}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
+                    occasionType === 'holiday'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  חג / אירוע
+                </button>
+              </div>
+            </div>
+
+            {/* Parasha or Holiday Selection */}
+            <div className="space-y-2">
+              <Label>{occasionType === 'parasha' ? 'פרשה לקבלה' : 'חג / אירוע לקבלה'}</Label>
               <Select
-                value={formData.parasha}
-                onValueChange={(value) => setFormData({ ...formData, parasha: value })}
+                value={formData.occasion}
+                onValueChange={(value) => setFormData({ ...formData, occasion: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="בחר פרשה" />
+                  <SelectValue placeholder={occasionType === 'parasha' ? 'בחר פרשה' : 'בחר חג / אירוע'} />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
-                  {PARASHA_LIST.map((parasha) => (
-                    <SelectItem key={parasha} value={parasha}>
-                      {parasha}
-                    </SelectItem>
-                  ))}
+                  {occasionType === 'parasha' 
+                    ? PARASHA_LIST.map((parasha) => (
+                        <SelectItem key={parasha} value={parasha}>
+                          {parasha}
+                        </SelectItem>
+                      ))
+                    : HOLIDAY_LIST.map((holiday) => (
+                        <SelectItem key={holiday} value={holiday}>
+                          {holiday}
+                        </SelectItem>
+                      ))
+                  }
                 </SelectContent>
               </Select>
             </div>
