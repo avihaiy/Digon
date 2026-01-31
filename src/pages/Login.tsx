@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,18 +6,59 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BookOpen, Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+
+const MAX_ATTEMPTS = 5;
+const ATTEMPT_STORAGE_KEY = 'login_attempts';
+const ATTEMPT_TIMESTAMP_KEY = 'login_attempt_timestamp';
+const ATTEMPT_RESET_TIME = 15 * 60 * 1000; // 15 minutes
 
 export default function Login() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
   // Login form state - can be email or username
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+
+  // Load failed attempts from localStorage on mount
+  useEffect(() => {
+    const storedAttempts = localStorage.getItem(ATTEMPT_STORAGE_KEY);
+    const storedTimestamp = localStorage.getItem(ATTEMPT_TIMESTAMP_KEY);
+    
+    if (storedAttempts && storedTimestamp) {
+      const timestamp = parseInt(storedTimestamp, 10);
+      const now = Date.now();
+      
+      // Reset attempts if enough time has passed
+      if (now - timestamp > ATTEMPT_RESET_TIME) {
+        localStorage.removeItem(ATTEMPT_STORAGE_KEY);
+        localStorage.removeItem(ATTEMPT_TIMESTAMP_KEY);
+        setFailedAttempts(0);
+      } else {
+        setFailedAttempts(parseInt(storedAttempts, 10));
+      }
+    }
+  }, []);
+
+  const updateFailedAttempts = (count: number) => {
+    setFailedAttempts(count);
+    localStorage.setItem(ATTEMPT_STORAGE_KEY, count.toString());
+    localStorage.setItem(ATTEMPT_TIMESTAMP_KEY, Date.now().toString());
+  };
+
+  const resetFailedAttempts = () => {
+    setFailedAttempts(0);
+    localStorage.removeItem(ATTEMPT_STORAGE_KEY);
+    localStorage.removeItem(ATTEMPT_TIMESTAMP_KEY);
+  };
+
+  const remainingAttempts = MAX_ATTEMPTS - failedAttempts;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +75,19 @@ export default function Login() {
         });
         
         if (error || !data) {
-          toast.error('שגיאה בהתחברות', {
-            description: 'שם משתמש או סיסמה שגויים',
-          });
+          const newAttempts = failedAttempts + 1;
+          updateFailedAttempts(newAttempts);
+          
+          if (newAttempts >= MAX_ATTEMPTS) {
+            toast.error('החשבון ננעל', {
+              description: 'נסית להתחבר יותר מדי פעמים. נסה שוב בעוד 15 דקות או פנה למנהל.',
+              duration: 8000,
+            });
+          } else {
+            toast.error('שגיאה בהתחברות', {
+              description: `שם משתמש או סיסמה שגויים. נותרו ${MAX_ATTEMPTS - newAttempts} נסיונות.`,
+            });
+          }
           setLoading(false);
           return;
         }
@@ -47,6 +98,9 @@ export default function Login() {
       const { error } = await signIn(email, loginPassword);
 
       if (error) {
+        const newAttempts = failedAttempts + 1;
+        updateFailedAttempts(newAttempts);
+        
         // Check if account is locked
         const errorMessage = error.message.toLowerCase();
         if (errorMessage.includes('locked') || errorMessage.includes('banned') || errorMessage.includes('too many')) {
@@ -54,9 +108,14 @@ export default function Login() {
             description: 'החשבון שלך נעול עקב נסיונות התחברות כושלים. פנה למנהל המערכת לשחרור החשבון.',
             duration: 8000,
           });
+        } else if (newAttempts >= MAX_ATTEMPTS) {
+          toast.error('החשבון עלול להינעל', {
+            description: 'הגעת למספר המקסימלי של נסיונות. המתן 15 דקות או פנה למנהל.',
+            duration: 8000,
+          });
         } else if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid')) {
           toast.error('שגיאה בהתחברות', {
-            description: 'אימייל/שם משתמש או סיסמה שגויים',
+            description: `אימייל/שם משתמש או סיסמה שגויים. נותרו ${MAX_ATTEMPTS - newAttempts} נסיונות.`,
           });
         } else if (errorMessage.includes('email not confirmed')) {
           toast.error('האימייל לא אומת', {
@@ -68,6 +127,7 @@ export default function Login() {
           });
         }
       } else {
+        resetFailedAttempts();
         toast.success('ברוכים הבאים!');
         navigate('/');
       }
@@ -98,6 +158,26 @@ export default function Login() {
           </CardHeader>
 
           <CardContent className="space-y-4">
+            {/* Warning alert when attempts are running low */}
+            {failedAttempts >= 3 && remainingAttempts > 0 && (
+              <Alert variant="destructive" className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  נותרו לך {remainingAttempts} נסיונות התחברות לפני נעילת החשבון
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {/* Locked alert */}
+            {remainingAttempts <= 0 && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  הגעת למספר המקסימלי של נסיונות. המתן 15 דקות או פנה למנהל המערכת.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-identifier">אימייל או שם משתמש</Label>
