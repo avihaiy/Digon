@@ -41,7 +41,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key, Phone, Pencil, Trash2, KeyRound, User } from 'lucide-react';
+import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key, Phone, Pencil, Trash2, KeyRound, User, LockOpen } from 'lucide-react';
 import { USER_ROLES } from '@/lib/hebrew-utils';
 import type { Database } from '@/integrations/supabase/types';
 import { z } from 'zod';
@@ -358,6 +358,38 @@ export default function UserManagement() {
     },
   });
 
+  // Unlock user mutation
+  const unlockUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) throw new Error('לא מחובר');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/unlock-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionData.session.access_token}`,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'שגיאה בשחרור המשתמש');
+      }
+      return result;
+    },
+    onSuccess: () => {
+      toast.success('המשתמש שוחרר בהצלחה');
+    },
+    onError: (error: Error) => {
+      toast.error('שגיאה בשחרור המשתמש: ' + error.message);
+    },
+  });
+
   const filteredUsers = users.filter(user =>
     (user.full_name?.toLowerCase().includes(search.toLowerCase()) ||
      user.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -654,6 +686,15 @@ export default function UserManagement() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => unlockUserMutation.mutate(user.user_id)}
+                              disabled={unlockUserMutation.isPending}
+                              title="שחרור נעילה"
+                            >
+                              <LockOpen className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => openDeleteDialog(user)}
                               className="text-destructive hover:text-destructive"
                             >
@@ -706,6 +747,15 @@ export default function UserManagement() {
                           onClick={() => openResetPasswordDialog(user)}
                         >
                           <KeyRound className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => unlockUserMutation.mutate(user.user_id)}
+                          disabled={unlockUserMutation.isPending}
+                          title="שחרור נעילה"
+                        >
+                          <LockOpen className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
