@@ -203,7 +203,7 @@ async function generateReceiptPDF(receipt: any, member: any, payment: any): Prom
   drawCentered('בית הכנסת ברית שלום', y, smallFontSize);
   y -= 12;
   // Address - pre-reverse numbers so BiDi shows them correctly
-  drawCentered(reverseNumbers('רח\' קדושי כהיר 16, עכו'), y, smallFontSize);
+  drawCentered(reverseNumbers('רח\' קדושי קהיר 16, עכו'), y, smallFontSize);
   y -= 12;
   // Phone - pre-reverse numbers
   drawCentered(reverseNumbers('טל: 050-5768723'), y, smallFontSize);
