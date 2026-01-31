@@ -41,7 +41,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key, Phone, Pencil, Trash2, KeyRound } from 'lucide-react';
+import { Shield, Search, UserCog, Users, Crown, Eye, UserPlus, Mail, Key, Phone, Pencil, Trash2, KeyRound, User } from 'lucide-react';
 import { USER_ROLES } from '@/lib/hebrew-utils';
 import type { Database } from '@/integrations/supabase/types';
 import { z } from 'zod';
@@ -52,12 +52,14 @@ const newUserSchema = z.object({
   email: z.string().email('כתובת אימייל לא תקינה'),
   password: z.string().min(6, 'הסיסמה חייבת להכיל לפחות 6 תווים'),
   fullName: z.string().min(2, 'שם מלא חייב להכיל לפחות 2 תווים'),
+  username: z.string().optional(),
   phone: z.string().optional(),
   role: z.enum(['admin', 'gabai', 'viewer']),
 });
 
 const editUserSchema = z.object({
   fullName: z.string().min(2, 'שם מלא חייב להכיל לפחות 2 תווים'),
+  username: z.string().optional(),
   phone: z.string().optional(),
   role: z.enum(['admin', 'gabai', 'viewer']).nullable(),
 });
@@ -67,6 +69,7 @@ interface UserWithRole {
   full_name: string | null;
   email: string | null;
   phone: string | null;
+  username: string | null;
   role: AppRole | null;
 }
 
@@ -89,12 +92,14 @@ export default function UserManagement() {
     email: '',
     password: '',
     fullName: '',
+    username: '',
     phone: '',
     role: 'viewer' as AppRole,
   });
   
   const [editUserForm, setEditUserForm] = useState({
     fullName: '',
+    username: '',
     phone: '',
     role: null as AppRole | null,
   });
@@ -108,7 +113,7 @@ export default function UserManagement() {
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, email, phone')
+        .select('user_id, full_name, email, phone, username')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -126,6 +131,7 @@ export default function UserManagement() {
         full_name: p.full_name,
         email: p.email,
         phone: p.phone,
+        username: p.username,
         role: roleMap.get(p.user_id) || null,
       })) as UserWithRole[];
     },
@@ -151,12 +157,13 @@ export default function UserManagement() {
       // Wait a moment for the profile to be created by the trigger
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Update profile with phone and email
+      // Update profile with phone, email and username
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
           phone: data.phone || null,
           email: data.email,
+          username: data.username || null,
         })
         .eq('user_id', authData.user.id);
 
@@ -175,7 +182,7 @@ export default function UserManagement() {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
       toast.success('המשתמש נוצר בהצלחה! נשלח אימייל לאימות');
       setCreateDialogOpen(false);
-      setNewUserForm({ email: '', password: '', fullName: '', phone: '', role: 'viewer' });
+      setNewUserForm({ email: '', password: '', fullName: '', username: '', phone: '', role: 'viewer' });
       setFormErrors({});
     },
     onError: (error: Error) => {
@@ -195,6 +202,7 @@ export default function UserManagement() {
         .from('profiles')
         .update({
           full_name: data.fullName,
+          username: data.username || null,
           phone: data.phone || null,
         })
         .eq('user_id', userId);
@@ -353,6 +361,7 @@ export default function UserManagement() {
   const filteredUsers = users.filter(user =>
     (user.full_name?.toLowerCase().includes(search.toLowerCase()) ||
      user.email?.toLowerCase().includes(search.toLowerCase()) ||
+     user.username?.toLowerCase().includes(search.toLowerCase()) ||
      user.phone?.includes(search))
   );
 
@@ -366,6 +375,7 @@ export default function UserManagement() {
     setSelectedUser(user);
     setEditUserForm({
       fullName: user.full_name || '',
+      username: user.username || '',
       phone: user.phone || '',
       role: user.role,
     });
@@ -816,6 +826,22 @@ export default function UserManagement() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="username">שם משתמש</Label>
+              <div className="relative">
+                <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="username"
+                  placeholder="username123"
+                  className="pr-9"
+                  dir="ltr"
+                  value={newUserForm.username}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, username: e.target.value })}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">ניתן להתחבר עם שם משתמש במקום אימייל</p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="email">אימייל *</Label>
               <div className="relative">
                 <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -939,6 +965,22 @@ export default function UserManagement() {
               {editFormErrors.fullName && (
                 <p className="text-sm text-destructive">{editFormErrors.fullName}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editUsername">שם משתמש</Label>
+              <div className="relative">
+                <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="editUsername"
+                  placeholder="username123"
+                  className="pr-9"
+                  dir="ltr"
+                  value={editUserForm.username}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, username: e.target.value })}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">ניתן להתחבר עם שם משתמש במקום אימייל</p>
             </div>
 
             <div className="space-y-2">
