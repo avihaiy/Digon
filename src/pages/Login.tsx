@@ -58,6 +58,24 @@ export default function Login() {
     localStorage.removeItem(ATTEMPT_TIMESTAMP_KEY);
   };
 
+  const notifyAdminAboutLock = async (identifier: string, attemptCount: number) => {
+    try {
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-account-locked`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ identifier, attemptCount }),
+        }
+      );
+      console.log('Admin notified about account lock');
+    } catch (err) {
+      console.error('Failed to notify admin:', err);
+    }
+  };
+
   const remainingAttempts = MAX_ATTEMPTS - failedAttempts;
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -79,6 +97,7 @@ export default function Login() {
           updateFailedAttempts(newAttempts);
           
           if (newAttempts >= MAX_ATTEMPTS) {
+            notifyAdminAboutLock(loginIdentifier, newAttempts);
             toast.error('החשבון ננעל', {
               description: 'נסית להתחבר יותר מדי פעמים. נסה שוב בעוד 15 דקות או פנה למנהל.',
               duration: 8000,
@@ -104,11 +123,13 @@ export default function Login() {
         // Check if account is locked
         const errorMessage = error.message.toLowerCase();
         if (errorMessage.includes('locked') || errorMessage.includes('banned') || errorMessage.includes('too many')) {
+          notifyAdminAboutLock(loginIdentifier, newAttempts);
           toast.error('החשבון נעול', {
             description: 'החשבון שלך נעול עקב נסיונות התחברות כושלים. פנה למנהל המערכת לשחרור החשבון.',
             duration: 8000,
           });
         } else if (newAttempts >= MAX_ATTEMPTS) {
+          notifyAdminAboutLock(loginIdentifier, newAttempts);
           toast.error('החשבון עלול להינעל', {
             description: 'הגעת למספר המקסימלי של נסיונות. המתן 15 דקות או פנה למנהל.',
             duration: 8000,
