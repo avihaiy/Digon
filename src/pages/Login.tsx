@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,23 +15,49 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Login form state
-  const [loginEmail, setLoginEmail] = useState('');
+  // Login form state - can be email or username
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(loginEmail, loginPassword);
+    try {
+      let email = loginIdentifier;
+      
+      // Check if input is not an email (no @ symbol) - treat as username
+      if (!loginIdentifier.includes('@')) {
+        // Look up email by username
+        const { data, error } = await supabase.rpc('get_email_by_username', {
+          _username: loginIdentifier
+        });
+        
+        if (error || !data) {
+          toast.error('שגיאה בהתחברות', {
+            description: 'שם משתמש או סיסמה שגויים',
+          });
+          setLoading(false);
+          return;
+        }
+        
+        email = data;
+      }
 
-    if (error) {
+      const { error } = await signIn(email, loginPassword);
+
+      if (error) {
+        toast.error('שגיאה בהתחברות', {
+          description: 'אימייל/שם משתמש או סיסמה שגויים',
+        });
+      } else {
+        toast.success('ברוכים הבאים!');
+        navigate('/');
+      }
+    } catch (err) {
       toast.error('שגיאה בהתחברות', {
-        description: 'אימייל או סיסמה שגויים',
+        description: 'אירעה שגיאה בלתי צפויה',
       });
-    } else {
-      toast.success('ברוכים הבאים!');
-      navigate('/');
     }
 
     setLoading(false);
@@ -54,15 +81,15 @@ export default function Login() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            <form onSubmit={handleEmailLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-email">אימייל</Label>
+                <Label htmlFor="login-identifier">אימייל או שם משתמש</Label>
                 <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
+                  id="login-identifier"
+                  type="text"
+                  placeholder="אימייל או שם משתמש"
+                  value={loginIdentifier}
+                  onChange={(e) => setLoginIdentifier(e.target.value)}
                   required
                   dir="ltr"
                   className="text-left"
