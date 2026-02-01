@@ -732,14 +732,14 @@ export default function Payments() {
                   קשר לעלייה (אופציונלי)
                 </Label>
                 <Select
-                  value={formData.aliya_id}
-                  onValueChange={handleAliyaSelect}
+                  value={formData.aliya_id || "none"}
+                  onValueChange={(value) => handleAliyaSelect(value === "none" ? "" : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="בחר עלייה לקישור" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
-                    <SelectItem value="">ללא קישור לעלייה</SelectItem>
+                    <SelectItem value="none">ללא קישור לעלייה</SelectItem>
                     {unpaidAliyot.map((aliya: any) => (
                       <SelectItem key={aliya.id} value={aliya.id}>
                         <span className="flex items-center gap-2">
