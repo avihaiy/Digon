@@ -241,7 +241,8 @@ export default function Login() {
 
               <Button
                 type="submit"
-                className="w-full btn-primary-gradient"
+                className="w-full btn-primary-gradient animate-fade-in hover-scale"
+                style={{ animationDelay: '0.3s' }}
                 disabled={loading}
               >
                 {loading ? (
