@@ -6,8 +6,8 @@
 export const APP_CONFIG = {
   name: 'ניהול גבאות',
   description: 'מערכת בית הכנסת',
-  version: '1.0.0',
-  lastUpdated: 'ינואר 2025',
+  version: '1.1.0',
+  lastUpdated: 'פברואר 2026',
   developer: {
     name: 'Avihai Yosipovich',
     // website: 'https://example.com', // Optional: add developer website
