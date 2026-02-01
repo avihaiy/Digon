@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,8 +59,41 @@ export default function NotificationDropdown() {
       return data as Notification[];
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds
   });
+
+  // Subscribe to realtime notifications
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Invalidate and refetch notifications
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          
+          // Show toast for new notifications
+          if (payload.eventType === 'INSERT') {
+            const newNotification = payload.new as Notification;
+            toast.info('התראה חדשה', {
+              description: newNotification.message,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
