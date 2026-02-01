@@ -175,7 +175,7 @@ export default function Login() {
           <p className="text-muted-foreground mt-2 animate-fade-in" style={{ animationDelay: '0.1s' }}>מערכת ניהול גבאות</p>
         </div>
 
-        <Card className="glass-card">
+        <Card className="glass-card animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <CardHeader className="pb-4">
             <CardTitle className="text-center">התחברות למערכת</CardTitle>
           </CardHeader>
