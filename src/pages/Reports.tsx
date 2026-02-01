@@ -13,7 +13,10 @@ import {
   Download,
   FileSpreadsheet,
   Calendar,
+  PieChart as PieChartIcon,
+  ArrowLeft,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { formatCurrency } from '@/lib/hebrew-utils';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -151,10 +154,19 @@ export default function Reports() {
             סקירה כללית של פעילות בית הכנסת
           </p>
         </div>
-        <Button onClick={handleExportExcel} variant="outline" className="gap-2">
-          <FileSpreadsheet className="w-4 h-4" />
-          ייצוא לאקסל
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/expense-reports">
+              <PieChartIcon className="w-4 h-4" />
+              דו״ח הכנסות/הוצאות
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          </Button>
+          <Button onClick={handleExportExcel} variant="outline" className="gap-2">
+            <FileSpreadsheet className="w-4 h-4" />
+            ייצוא לאקסל
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
