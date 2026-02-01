@@ -364,14 +364,14 @@ export default function Aliyot() {
             <div className="space-y-2">
               <Label>חבר (אופציונלי)</Label>
               <Select
-                value={formData.member_id}
-                onValueChange={(value) => setFormData({ ...formData, member_id: value })}
+                value={formData.member_id || "none"}
+                onValueChange={(value) => setFormData({ ...formData, member_id: value === "none" ? "" : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר חבר" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">ללא שיוך</SelectItem>
+                  <SelectItem value="none">ללא שיוך</SelectItem>
                   {members?.map((member: any) => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.full_name}
