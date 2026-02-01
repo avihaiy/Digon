@@ -308,11 +308,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {/* Footer credit */}
         <footer className="border-t border-border px-4 py-3 text-center">
           <p className="text-xs text-muted-foreground">
-            המערכת נבנתה ע"י <span className="font-medium text-foreground">{APP_CONFIG.developer.name}</span>
+            <span className="font-medium text-foreground">ברית שלום</span> - מערכת ניהול גבאות
             <span className="mx-2">•</span>
-            <span className="text-muted-foreground/70">עדכון גירסה {APP_CONFIG.version}</span>
+            נבנתה ע"י <span className="font-medium text-foreground">{APP_CONFIG.developer.name}</span>
             <span className="mx-2">•</span>
-            <span className="text-muted-foreground/70">{APP_CONFIG.lastUpdated}</span>
+            <span className="text-muted-foreground/70">v{APP_CONFIG.version}</span>
           </p>
         </footer>
       </div>
