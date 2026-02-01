@@ -102,7 +102,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <img 
                   src="/pwa-icon.png" 
                   alt="ברית שלום" 
-                  className="w-12 h-12 object-contain"
+                  className="w-12 h-12 object-contain animate-scale-in hover-scale"
                 />
                 <div>
                   <h1 className="text-lg font-bold text-sidebar-foreground">ברית שלום</h1>
