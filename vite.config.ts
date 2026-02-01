@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ["favicon.ico", "brit-shalom-logo.jpeg"],
       manifest: {
         name: "ניהול גבאות - מערכת בית הכנסת",
-        short_name: "ניהול גבאות",
+        short_name: "ברית שלום",
         description: "מערכת ניהול גבאות מקצועית לבית הכנסת",
         theme_color: "#1a1a2e",
         background_color: "#0f0f1a",
@@ -30,17 +30,17 @@ export default defineConfig(({ mode }) => ({
         lang: "he",
         icons: [
           {
-            src: "/pwa-192x192.png",
+            src: "/pwa-icon.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "/pwa-512x512.png",
+            src: "/pwa-icon.png",
             sizes: "512x512",
             type: "image/png",
           },
           {
-            src: "/pwa-512x512.png",
+            src: "/pwa-icon.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable",
