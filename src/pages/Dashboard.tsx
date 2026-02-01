@@ -193,7 +193,7 @@ export default function Dashboard() {
 
       {/* Financial Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="glass-card border-emerald-500/20">
+        <Card className="glass-card border-emerald-500/20 hover-lift animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-4">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
@@ -211,7 +211,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-red-500/20">
+        <Card className="glass-card border-red-500/20 hover-lift animate-fade-in" style={{ animationDelay: '0.15s' }}>
           <CardContent className="p-4">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
@@ -229,7 +229,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className={`glass-card ${(stats?.balance || 0) >= 0 ? 'border-blue-500/20' : 'border-orange-500/20'}`}>
+        <Card className={`glass-card hover-lift animate-fade-in ${(stats?.balance || 0) >= 0 ? 'border-blue-500/20' : 'border-orange-500/20'}`} style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-4">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
@@ -249,7 +249,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
+        <Card className="glass-card hover-lift animate-fade-in" style={{ animationDelay: '0.25s' }}>
           <CardContent className="p-4">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
