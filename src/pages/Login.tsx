@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const MAX_ATTEMPTS = 5;
@@ -166,11 +166,13 @@ export default function Login() {
       <div className="w-full max-w-md animate-fade-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
-            <BookOpen className="w-8 h-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">מערכת ניהול גבאות</h1>
-          <p className="text-muted-foreground mt-2">בית הכנסת</p>
+          <img 
+            src="/pwa-icon.png" 
+            alt="ברית שלום" 
+            className="w-20 h-20 object-contain mx-auto mb-4"
+          />
+          <h1 className="text-2xl font-bold text-foreground">ברית שלום</h1>
+          <p className="text-muted-foreground mt-2">מערכת ניהול גבאות</p>
         </div>
 
         <Card className="glass-card">
