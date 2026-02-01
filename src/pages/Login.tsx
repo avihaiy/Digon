@@ -169,10 +169,10 @@ export default function Login() {
           <img 
             src="/pwa-icon.png" 
             alt="ברית שלום" 
-            className="w-20 h-20 object-contain mx-auto mb-4"
+            className="w-20 h-20 object-contain mx-auto mb-4 animate-scale-in hover-scale"
           />
-          <h1 className="text-2xl font-bold text-foreground">ברית שלום</h1>
-          <p className="text-muted-foreground mt-2">מערכת ניהול גבאות</p>
+          <h1 className="text-2xl font-bold text-foreground animate-fade-in">ברית שלום</h1>
+          <p className="text-muted-foreground mt-2 animate-fade-in" style={{ animationDelay: '0.1s' }}>מערכת ניהול גבאות</p>
         </div>
 
         <Card className="glass-card">
