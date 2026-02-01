@@ -27,11 +27,10 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, startDate, endDate }: EmailBackupRequest = await req.json();
+    const { startDate, endDate }: EmailBackupRequest = await req.json();
 
-    if (!email) {
-      throw new Error('Email address is required');
-    }
+    // Force emails to test account until domain is verified in Resend
+    const email = 'britakko12@gmail.com';
 
     // Fetch receipts with related data
     let query = supabase

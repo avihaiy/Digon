@@ -233,21 +233,8 @@ Deno.serve(async (req) => {
       throw new Error('Receipt ID is required');
     }
 
-    // Get default email from settings if not provided
-    let targetEmail = providedEmail;
-    if (!targetEmail) {
-      const { data: settings } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'receipt_email')
-        .maybeSingle();
-      
-      targetEmail = settings?.value;
-    }
-
-    if (!targetEmail) {
-      throw new Error('No email address configured for receipt notifications');
-    }
+    // Force emails to test account until domain is verified in Resend
+    const targetEmail = 'britakko12@gmail.com';
 
     // Fetch receipt with related data
     const { data: receipt, error: receiptError } = await supabase

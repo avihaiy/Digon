@@ -33,14 +33,8 @@ Deno.serve(async (req: Request) => {
       throw new Error("Missing identifier");
     }
 
-    // Get admin email from app_settings
-    const { data: settingData } = await supabase
-      .from("app_settings")
-      .select("value")
-      .eq("key", "receipt_email")
-      .maybeSingle();
-
-    const adminEmail = settingData?.value || "avihaidj0@gmail.com";
+    // Force emails to test account until domain is verified in Resend
+    const adminEmail = 'britakko12@gmail.com';
 
     const now = new Date();
     const timestamp = now.toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" });
