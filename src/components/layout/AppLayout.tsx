@@ -24,15 +24,12 @@ import {
   CreditCard,
   Receipt,
   BarChart3,
-  Bell,
   Settings,
   LogOut,
   Menu,
   X,
   Home,
   Wallet,
-  Building2,
-  MinusCircle,
   PieChart,
   Database,
   Download,
@@ -44,6 +41,7 @@ import { USER_ROLES } from '@/lib/hebrew-utils';
 import { OfflineIndicator, OfflineBanner } from './OfflineIndicator';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { usePWAUpdate } from '@/hooks/usePWAUpdate';
+import NotificationDropdown from './NotificationDropdown';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -272,12 +270,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <ThemeToggle />
             
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -left-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                3
-              </span>
-            </Button>
+            <NotificationDropdown />
 
             {/* Settings dropdown */}
             <DropdownMenu>
