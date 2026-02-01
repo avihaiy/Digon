@@ -51,7 +51,6 @@ const navItems = [
   { href: '/receipts', icon: Receipt, label: 'קבלות' },
   { href: '/budget', icon: Wallet, label: 'תקציב' },
   { href: '/reports', icon: BarChart3, label: 'דוחות' },
-  { href: '/expense-reports', icon: PieChart, label: 'דו"ח הכנסות/הוצאות' },
 ];
 
 const adminNavItems = [
