@@ -99,12 +99,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <div className="p-6 border-b border-sidebar-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-sidebar-primary-foreground" />
-                </div>
+                <img 
+                  src="/pwa-icon.png" 
+                  alt="ברית שלום" 
+                  className="w-12 h-12 object-contain"
+                />
                 <div>
-                  <h1 className="text-lg font-bold text-sidebar-foreground">ניהול גבאות</h1>
-                  <p className="text-xs text-sidebar-foreground/60">מערכת בית הכנסת</p>
+                  <h1 className="text-lg font-bold text-sidebar-foreground">ברית שלום</h1>
+                  <p className="text-xs text-sidebar-foreground/60">מערכת ניהול גבאות</p>
                 </div>
               </div>
               <button
