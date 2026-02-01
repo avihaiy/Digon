@@ -237,7 +237,11 @@
 
   /* Sidebar nav item */
   .nav-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors;
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200;
+  }
+
+  .nav-item:hover {
+    @apply translate-x-1;
   }
 
   .nav-item.active {
