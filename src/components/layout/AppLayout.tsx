@@ -120,14 +120,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
+            {navItems.map((item, index) => {
               const isActive = location.pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   to={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={cn('nav-item', isActive && 'active')}
+                  className={cn('nav-item animate-fade-in', isActive && 'active')}
+                  style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <item.icon className="w-5 h-5" />
                   <span>{item.label}</span>
