@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette } from 'lucide-react';
+import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X } from 'lucide-react';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -28,6 +28,7 @@ interface ScheduledAnnouncement {
   style: StyleType;
   is_active: boolean;
   priority: number;
+  image_url: string | null;
   created_at: string;
 }
 
@@ -65,6 +66,7 @@ const defaultFormData = {
   end_time: '22:00',
   style: 'traditional_gold' as StyleType,
   priority: 0,
+  image_url: null as string | null,
 };
 
 export default function ManageAds() {
@@ -72,6 +74,10 @@ export default function ManageAds() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(defaultFormData);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch announcements
   const { data: announcements = [], isLoading } = useQuery({
@@ -88,9 +94,44 @@ export default function ManageAds() {
     },
   });
 
+  // Upload image to storage
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `announcements/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('announcement-images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('announcement-images')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
   // Create/Update mutation
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData & { id?: string }) => {
+      setIsUploading(true);
+      
+      // Upload new image if selected
+      let imageUrl = data.image_url;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage(imageFile);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          throw new Error('Failed to upload image');
+        }
+      }
+
       if (data.id) {
         const { error } = await supabase
           .from('scheduled_announcements')
@@ -102,6 +143,7 @@ export default function ManageAds() {
             end_time: data.end_time,
             style: data.style,
             priority: data.priority,
+            image_url: imageUrl,
           })
           .eq('id', data.id);
         if (error) throw error;
@@ -116,6 +158,7 @@ export default function ManageAds() {
             end_time: data.end_time,
             style: data.style,
             priority: data.priority,
+            image_url: imageUrl,
           });
         if (error) throw error;
       }
@@ -125,8 +168,12 @@ export default function ManageAds() {
       toast.success(editingId ? 'המודעה עודכנה בהצלחה' : 'המודעה נוספה בהצלחה');
       handleCloseDialog();
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Save error:', error);
       toast.error('שגיאה בשמירת המודעה');
+    },
+    onSettled: () => {
+      setIsUploading(false);
     },
   });
 
@@ -176,7 +223,10 @@ export default function ManageAds() {
       end_time: announcement.end_time.slice(0, 5),
       style: announcement.style,
       priority: announcement.priority,
+      image_url: announcement.image_url,
     });
+    setImagePreview(announcement.image_url);
+    setImageFile(null);
     setIsDialogOpen(true);
   };
 
@@ -184,6 +234,33 @@ export default function ManageAds() {
     setIsDialogOpen(false);
     setEditingId(null);
     setFormData(defaultFormData);
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('הקובץ גדול מדי. הגודל המקסימלי הוא 5MB');
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setFormData({ ...formData, image_url: null });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -329,6 +406,51 @@ export default function ManageAds() {
                 </div>
               </div>
 
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Image className="w-4 h-4" />
+                  תמונה (אופציונלי)
+                </Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                {imagePreview ? (
+                  <div className="relative">
+                    <img
+                      src={imagePreview}
+                      alt="תצוגה מקדימה"
+                      className="w-full h-32 object-cover rounded-lg border"
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="destructive"
+                      className="absolute top-2 left-2 w-6 h-6"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-24 border-dashed"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">לחץ להעלאת תמונה</span>
+                    </div>
+                  </Button>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="priority">עדיפות (0-100)</Label>
                 <Input
@@ -345,8 +467,8 @@ export default function ManageAds() {
                 <Button type="button" variant="outline" onClick={handleCloseDialog}>
                   ביטול
                 </Button>
-                <Button type="submit" disabled={saveMutation.isPending}>
-                  {saveMutation.isPending ? 'שומר...' : editingId ? 'עדכן' : 'הוסף'}
+                <Button type="submit" disabled={saveMutation.isPending || isUploading}>
+                  {isUploading ? 'מעלה תמונה...' : saveMutation.isPending ? 'שומר...' : editingId ? 'עדכן' : 'הוסף'}
                 </Button>
               </div>
             </form>

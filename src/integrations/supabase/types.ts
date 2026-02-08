@@ -732,6 +732,7 @@ export type Database = {
           day_types: string[]
           end_time: string
           id: string
+          image_url: string | null
           is_active: boolean
           priority: number
           start_time: string
@@ -746,6 +747,7 @@ export type Database = {
           day_types?: string[]
           end_time?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           priority?: number
           start_time?: string
@@ -760,6 +762,7 @@ export type Database = {
           day_types?: string[]
           end_time?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           priority?: number
           start_time?: string
