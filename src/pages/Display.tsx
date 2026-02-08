@@ -10,7 +10,7 @@ interface ScheduledAnnouncement {
   id: string;
   title: string;
   content: string;
-  day_type: DayType;
+  day_types: DayType[];
   start_time: string;
   end_time: string;
   style: StyleType;
@@ -141,7 +141,7 @@ export default function Display() {
   // Filter announcements based on current day and time
   const validAnnouncements = useMemo(() => {
     return announcements.filter((a) => {
-      const matchesDay = a.day_type === dayType;
+      const matchesDay = a.day_types.includes(dayType);
       const matchesTime = isTimeInRange(a.start_time, a.end_time);
       return matchesDay && matchesTime;
     });
