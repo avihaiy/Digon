@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { HDate, HebrewCalendar, Locale } from '@hebcal/core';
+import { HDate } from '@hebcal/core';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Maximize, Lock, Unlock } from 'lucide-react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -47,18 +49,15 @@ function getCurrentDayType(): DayType {
   const now = new Date();
   const day = now.getDay();
   const hour = now.getHours();
-  const isAfterShabbatStart = hour >= 18; // Approximate candle lighting
-  const isBeforeShabbatEnd = hour < 20; // Approximate havdalah
+  const isAfterShabbatStart = hour >= 18;
+  const isBeforeShabbatEnd = hour < 20;
 
-  // Friday after 18:00 or Saturday before 20:00
   if ((day === 5 && isAfterShabbatStart) || (day === 6 && isBeforeShabbatEnd)) {
     return 'shabbat';
   }
-  // Friday before Shabbat
   if (day === 5) {
     return 'friday';
   }
-  // Sunday through Thursday
   return 'weekdays';
 }
 
@@ -85,6 +84,96 @@ export default function Display() {
   const [announcements, setAnnouncements] = useState<ScheduledAnnouncement[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dayType, setDayType] = useState<DayType>(getCurrentDayType());
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // PWA auto-update - refresh automatically when update is available
+  useRegisterSW({
+    immediate: true,
+    onRegistered(registration) {
+      if (registration) {
+        // Check for updates every 30 seconds
+        setInterval(() => {
+          registration.update();
+        }, 30 * 1000);
+      }
+    },
+    onNeedRefresh() {
+      // Auto-refresh when update is available
+      window.location.reload();
+    },
+  });
+
+  // Fullscreen API handlers
+  const enterFullscreen = useCallback(async () => {
+    try {
+      if (containerRef.current) {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      }
+    } catch (err) {
+      console.error('Fullscreen error:', err);
+    }
+  }, []);
+
+  const exitFullscreen = useCallback(async () => {
+    if (!isLocked) {
+      try {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      } catch (err) {
+        console.error('Exit fullscreen error:', err);
+      }
+    }
+  }, [isLocked]);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Prevent exit when locked
+  useEffect(() => {
+    if (isLocked && isFullscreen) {
+      const preventExit = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+      document.addEventListener('keydown', preventExit, true);
+      return () => document.removeEventListener('keydown', preventExit, true);
+    }
+  }, [isLocked, isFullscreen]);
+
+  // Auto-hide controls after 5 seconds of inactivity
+  const resetControlsTimeout = useCallback(() => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isFullscreen) {
+        setShowControls(false);
+      }
+    }, 5000);
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    resetControlsTimeout();
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [resetControlsTimeout]);
 
   // Update clock every second
   useEffect(() => {
@@ -118,7 +207,6 @@ export default function Display() {
 
     fetchAnnouncements();
 
-    // Subscribe to real-time changes
     const channel = supabase
       .channel('scheduled-announcements-display')
       .on(
@@ -182,9 +270,54 @@ export default function Display() {
 
   return (
     <div
+      ref={containerRef}
       className={`fixed inset-0 flex flex-col ${styleConfig.bg} overflow-hidden`}
       dir="rtl"
+      onMouseMove={resetControlsTimeout}
+      onTouchStart={resetControlsTimeout}
     >
+      {/* Fullscreen Controls - Only visible when not in fullscreen or controls are shown */}
+      <AnimatePresence>
+        {(!isFullscreen || showControls) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute top-4 left-4 z-50 flex gap-2"
+          >
+            {!isFullscreen ? (
+              <button
+                onClick={enterFullscreen}
+                className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
+                title="מסך מלא"
+              >
+                <Maximize className="w-6 h-6" />
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsLocked(!isLocked)}
+                  className={`p-3 rounded-full backdrop-blur-sm transition-colors ${
+                    isLocked ? 'bg-red-500/50 hover:bg-red-500/70' : 'bg-black/20 hover:bg-black/30'
+                  } ${styleConfig.text}`}
+                  title={isLocked ? 'בטל נעילה' : 'נעל מסך'}
+                >
+                  {isLocked ? <Lock className="w-6 h-6" /> : <Unlock className="w-6 h-6" />}
+                </button>
+                {!isLocked && (
+                  <button
+                    onClick={exitFullscreen}
+                    className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
+                    title="יציאה ממסך מלא"
+                  >
+                    <Maximize className="w-6 h-6" />
+                  </button>
+                )}
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Header with Clock and Hebrew Date - Always visible */}
       <header className="shrink-0 flex items-center justify-between px-[3vw] py-[2vh] border-b border-black/10 bg-inherit z-10">
         <div className="text-center">
