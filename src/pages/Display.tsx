@@ -211,7 +211,7 @@ export default function Display() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex items-center justify-center p-[4vw]">
+      <main className="flex-1 flex items-center justify-center p-[4vw] overflow-hidden">
         <AnimatePresence mode="wait">
           {validAnnouncements.length === 0 ? (
             <motion.div
@@ -224,28 +224,40 @@ export default function Display() {
               <div className="text-[4vh]">אין הודעות להצגה כרגע</div>
             </motion.div>
           ) : currentAnnouncement ? (
-            <motion.div
-              key={currentAnnouncement.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.8, ease: 'easeInOut' }}
-              className="text-center max-w-[80vw] flex flex-col items-center"
-            >
-              <h1 className={`text-[8vh] font-bold mb-[2vh] leading-tight ${styleConfig.text}`}>
-                {currentAnnouncement.title}
-              </h1>
-              <p className={`text-[4vh] leading-relaxed mb-[4vh] ${styleConfig.accent}`}>
-                {currentAnnouncement.content}
-              </p>
-              {currentAnnouncement.image_url && (
+            currentAnnouncement.image_url ? (
+              // Fullscreen image mode
+              <motion.div
+                key={currentAnnouncement.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8, ease: 'easeInOut' }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
                 <img
                   src={currentAnnouncement.image_url}
-                  alt=""
-                  className="max-h-[40vh] max-w-[60vw] object-contain rounded-2xl shadow-2xl"
+                  alt={currentAnnouncement.title}
+                  className="w-full h-full object-contain"
                 />
-              )}
-            </motion.div>
+              </motion.div>
+            ) : (
+              // Text-only mode
+              <motion.div
+                key={currentAnnouncement.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.8, ease: 'easeInOut' }}
+                className="text-center max-w-[80vw] flex flex-col items-center"
+              >
+                <h1 className={`text-[8vh] font-bold mb-[2vh] leading-tight ${styleConfig.text}`}>
+                  {currentAnnouncement.title}
+                </h1>
+                <p className={`text-[4vh] leading-relaxed ${styleConfig.accent}`}>
+                  {currentAnnouncement.content}
+                </p>
+              </motion.div>
+            )
           ) : null}
         </AnimatePresence>
       </main>
