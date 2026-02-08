@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -21,7 +22,7 @@ interface ScheduledAnnouncement {
   id: string;
   title: string;
   content: string;
-  day_type: DayType;
+  day_types: DayType[];
   start_time: string;
   end_time: string;
   style: StyleType;
@@ -30,9 +31,15 @@ interface ScheduledAnnouncement {
   created_at: string;
 }
 
+const DAY_TYPE_OPTIONS: { value: DayType; label: string }[] = [
+  { value: 'weekdays', label: "ימי חול (א'-ה')" },
+  { value: 'friday', label: 'יום שישי' },
+  { value: 'shabbat', label: 'שבת' },
+];
+
 const DAY_TYPE_LABELS: Record<DayType, string> = {
-  weekdays: "ימי חול (א'-ה')",
-  friday: 'יום שישי',
+  weekdays: "ימי חול",
+  friday: 'שישי',
   shabbat: 'שבת',
 };
 
@@ -53,7 +60,7 @@ const STYLE_PREVIEWS: Record<StyleType, string> = {
 const defaultFormData = {
   title: '',
   content: '',
-  day_type: 'weekdays' as DayType,
+  day_types: ['weekdays'] as DayType[],
   start_time: '08:00',
   end_time: '22:00',
   style: 'traditional_gold' as StyleType,
@@ -90,7 +97,7 @@ export default function ManageAds() {
           .update({
             title: data.title,
             content: data.content,
-            day_type: data.day_type,
+            day_types: data.day_types,
             start_time: data.start_time,
             end_time: data.end_time,
             style: data.style,
@@ -104,7 +111,7 @@ export default function ManageAds() {
           .insert({
             title: data.title,
             content: data.content,
-            day_type: data.day_type,
+            day_types: data.day_types,
             start_time: data.start_time,
             end_time: data.end_time,
             style: data.style,
@@ -164,7 +171,7 @@ export default function ManageAds() {
     setFormData({
       title: announcement.title,
       content: announcement.content,
-      day_type: announcement.day_type,
+      day_types: announcement.day_types,
       start_time: announcement.start_time.slice(0, 5),
       end_time: announcement.end_time.slice(0, 5),
       style: announcement.style,
@@ -233,21 +240,37 @@ export default function ManageAds() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  יום הצגה
+                  ימי הצגה
                 </Label>
-                <Select
-                  value={formData.day_type}
-                  onValueChange={(value: DayType) => setFormData({ ...formData, day_type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(DAY_TYPE_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-1 gap-2 p-3 border rounded-lg">
+                  {DAY_TYPE_OPTIONS.map((option) => (
+                    <div key={option.value} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`day-${option.value}`}
+                        checked={formData.day_types.includes(option.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setFormData({
+                              ...formData,
+                              day_types: [...formData.day_types, option.value],
+                            });
+                          } else {
+                            // Prevent unchecking if it's the last one
+                            if (formData.day_types.length > 1) {
+                              setFormData({
+                                ...formData,
+                                day_types: formData.day_types.filter((d) => d !== option.value),
+                              });
+                            }
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`day-${option.value}`} className="cursor-pointer">
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -363,7 +386,9 @@ export default function ManageAds() {
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline">{DAY_TYPE_LABELS[announcement.day_type]}</Badge>
+                      {announcement.day_types.map((day) => (
+                        <Badge key={day} variant="outline">{DAY_TYPE_LABELS[day]}</Badge>
+                      ))}
                       <Badge variant="secondary">
                         {announcement.start_time.slice(0, 5)} - {announcement.end_time.slice(0, 5)}
                       </Badge>
@@ -407,7 +432,13 @@ export default function ManageAds() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{DAY_TYPE_LABELS[announcement.day_type]}</Badge>
+                          <div className="flex flex-wrap gap-1">
+                            {announcement.day_types.map((day) => (
+                              <Badge key={day} variant="outline" className="text-xs">
+                                {DAY_TYPE_LABELS[day]}
+                              </Badge>
+                            ))}
+                          </div>
                         </TableCell>
                         <TableCell dir="ltr" className="text-right">
                           {announcement.start_time.slice(0, 5)} - {announcement.end_time.slice(0, 5)}

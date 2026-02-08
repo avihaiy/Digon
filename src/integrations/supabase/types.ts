@@ -729,7 +729,7 @@ export type Database = {
           content: string
           created_at: string
           created_by: string | null
-          day_type: Database["public"]["Enums"]["announcement_day_type"]
+          day_types: string[]
           end_time: string
           id: string
           is_active: boolean
@@ -743,7 +743,7 @@ export type Database = {
           content: string
           created_at?: string
           created_by?: string | null
-          day_type?: Database["public"]["Enums"]["announcement_day_type"]
+          day_types?: string[]
           end_time?: string
           id?: string
           is_active?: boolean
@@ -757,7 +757,7 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string | null
-          day_type?: Database["public"]["Enums"]["announcement_day_type"]
+          day_types?: string[]
           end_time?: string
           id?: string
           is_active?: boolean
@@ -815,7 +815,6 @@ export type Database = {
         | "maftir"
         | "hagbaha"
         | "glila"
-      announcement_day_type: "weekdays" | "friday" | "shabbat"
       announcement_style:
         | "traditional_gold"
         | "modern_dark"
@@ -968,7 +967,6 @@ export const Constants = {
         "hagbaha",
         "glila",
       ],
-      announcement_day_type: ["weekdays", "friday", "shabbat"],
       announcement_style: [
         "traditional_gold",
         "modern_dark",
