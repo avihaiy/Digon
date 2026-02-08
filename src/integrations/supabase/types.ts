@@ -724,6 +724,51 @@ export type Database = {
           },
         ]
       }
+      scheduled_announcements: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          day_type: Database["public"]["Enums"]["announcement_day_type"]
+          end_time: string
+          id: string
+          is_active: boolean
+          priority: number
+          start_time: string
+          style: Database["public"]["Enums"]["announcement_style"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          day_type?: Database["public"]["Enums"]["announcement_day_type"]
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          start_time?: string
+          style?: Database["public"]["Enums"]["announcement_style"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          day_type?: Database["public"]["Enums"]["announcement_day_type"]
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          start_time?: string
+          style?: Database["public"]["Enums"]["announcement_style"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -770,6 +815,12 @@ export type Database = {
         | "maftir"
         | "hagbaha"
         | "glila"
+      announcement_day_type: "weekdays" | "friday" | "shabbat"
+      announcement_style:
+        | "traditional_gold"
+        | "modern_dark"
+        | "clean_white"
+        | "royal_blue"
       app_role: "admin" | "gabai" | "viewer"
       equipment_category: "hall" | "furniture" | "books" | "events" | "other"
       equipment_status: "available" | "loaned" | "maintenance" | "retired"
@@ -916,6 +967,13 @@ export const Constants = {
         "maftir",
         "hagbaha",
         "glila",
+      ],
+      announcement_day_type: ["weekdays", "friday", "shabbat"],
+      announcement_style: [
+        "traditional_gold",
+        "modern_dark",
+        "clean_white",
+        "royal_blue",
       ],
       app_role: ["admin", "gabai", "viewer"],
       equipment_category: ["hall", "furniture", "books", "events", "other"],

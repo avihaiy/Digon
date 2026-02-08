@@ -30,6 +30,8 @@ import DisplayFinance from "@/pages/DisplayFinance";
 import DisplayTV from "@/pages/DisplayTV";
 import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
+import ManageAds from "@/pages/ManageAds";
+import Display from "@/pages/Display";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
@@ -94,11 +96,13 @@ const AnimatedRoutes = () => {
         <Route path="/expense-reports" element={<ProtectedRoute><PageTransition><ExpenseReports /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
         <Route path="/backups" element={<ProtectedRoute><PageTransition><Backups /></PageTransition></ProtectedRoute>} />
+        <Route path="/manage-ads" element={<ProtectedRoute><PageTransition><ManageAds /></PageTransition></ProtectedRoute>} />
         <Route path="/admin-mobile" element={<PageTransition><AdminMobile /></PageTransition>} />
         <Route path="/display-general" element={<PageTransition><DisplayGeneral /></PageTransition>} />
         <Route path="/display-memorial" element={<PageTransition><DisplayMemorial /></PageTransition>} />
         <Route path="/display-finance" element={<PageTransition><DisplayFinance /></PageTransition>} />
         <Route path="/display-tv" element={<PageTransition><DisplayTV /></PageTransition>} />
+        <Route path="/display" element={<Display />} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

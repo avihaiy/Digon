@@ -35,6 +35,7 @@ import {
   Download,
   RefreshCw,
   ChevronDown,
+  Megaphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -54,6 +55,7 @@ const navItems = [
   { href: '/payments', icon: CreditCard, label: 'תשלומים' },
   { href: '/receipts', icon: Receipt, label: 'קבלות' },
   { href: '/budget', icon: Wallet, label: 'תקציב' },
+  { href: '/manage-ads', icon: Megaphone, label: 'ניהול מודעות' },
 ];
 
 const reportsSubItems = [
