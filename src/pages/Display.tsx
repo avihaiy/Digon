@@ -185,21 +185,21 @@ export default function Display() {
       className={`fixed inset-0 flex flex-col ${styleConfig.bg} overflow-hidden`}
       dir="rtl"
     >
-      {/* Header with Clock and Hebrew Date */}
-      <header className="flex items-center justify-between px-[4vw] py-[3vh] border-b border-black/10">
+      {/* Header with Clock and Hebrew Date - Always visible */}
+      <header className="shrink-0 flex items-center justify-between px-[3vw] py-[2vh] border-b border-black/10 bg-inherit z-10">
         <div className="text-center">
           <div
-            className={`text-[8vh] font-bold tabular-nums leading-none ${styleConfig.text}`}
+            className={`text-[6vh] md:text-[7vh] font-bold tabular-nums leading-none ${styleConfig.text}`}
             dir="ltr"
           >
             {timeString}
           </div>
         </div>
         <div className="text-center">
-          <div className={`text-[4vh] font-semibold ${styleConfig.text}`}>
+          <div className={`text-[3vh] md:text-[4vh] font-semibold ${styleConfig.text}`}>
             {hebrewDate}
           </div>
-          <div className={`text-[2vh] ${styleConfig.accent}`}>
+          <div className={`text-[1.8vh] md:text-[2vh] ${styleConfig.accent}`}>
             {currentTime.toLocaleDateString('he-IL', {
               weekday: 'long',
               year: 'numeric',
@@ -211,7 +211,7 @@ export default function Display() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex items-center justify-center p-[4vw] overflow-hidden">
+      <main className="flex-1 flex items-center justify-center overflow-hidden relative">
         <AnimatePresence mode="wait">
           {validAnnouncements.length === 0 ? (
             <motion.div
@@ -219,25 +219,25 @@ export default function Display() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`text-center ${styleConfig.accent}`}
+              className={`text-center ${styleConfig.accent} p-[4vw]`}
             >
               <div className="text-[4vh]">אין הודעות להצגה כרגע</div>
             </motion.div>
           ) : currentAnnouncement ? (
             currentAnnouncement.image_url ? (
-              // Fullscreen image mode
+              // Fullscreen image mode - takes remaining space below header
               <motion.div
                 key={currentAnnouncement.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8, ease: 'easeInOut' }}
-                className="absolute inset-0 flex items-center justify-center"
+                className="absolute inset-0 flex items-center justify-center p-[2vh]"
               >
                 <img
                   src={currentAnnouncement.image_url}
                   alt={currentAnnouncement.title}
-                  className="w-full h-full object-contain"
+                  className="max-w-full max-h-full object-contain rounded-lg"
                 />
               </motion.div>
             ) : (
@@ -248,12 +248,12 @@ export default function Display() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.8, ease: 'easeInOut' }}
-                className="text-center max-w-[80vw] flex flex-col items-center"
+                className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
               >
-                <h1 className={`text-[8vh] font-bold mb-[2vh] leading-tight ${styleConfig.text}`}>
+                <h1 className={`text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight ${styleConfig.text}`}>
                   {currentAnnouncement.title}
                 </h1>
-                <p className={`text-[4vh] leading-relaxed ${styleConfig.accent}`}>
+                <p className={`text-[3vh] md:text-[4vh] leading-relaxed ${styleConfig.accent}`}>
                   {currentAnnouncement.content}
                 </p>
               </motion.div>
@@ -264,17 +264,17 @@ export default function Display() {
 
       {/* Footer - Progress indicator */}
       {validAnnouncements.length > 1 && (
-        <footer className="flex items-center justify-center gap-3 py-[2vh]">
+        <footer className="shrink-0 flex items-center justify-center gap-3 py-[1.5vh] bg-inherit z-10">
           {validAnnouncements.map((_, idx) => (
             <div
               key={idx}
-              className={`w-[2vh] h-[2vh] rounded-full transition-all duration-300 ${
+              className={`w-[1.5vh] h-[1.5vh] md:w-[2vh] md:h-[2vh] rounded-full transition-all duration-300 ${
                 idx === currentIndex
                   ? `${styleConfig.text} scale-125`
                   : `${styleConfig.accent} opacity-50`
               }`}
               style={{
-                backgroundColor: idx === currentIndex ? 'currentColor' : 'currentColor',
+                backgroundColor: 'currentColor',
               }}
             />
           ))}
