@@ -230,25 +230,21 @@ export default function Display() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.8, ease: 'easeInOut' }}
-              className={`text-center max-w-[80vw] ${currentAnnouncement.image_url ? 'flex items-center gap-[4vw]' : ''}`}
+              className="text-center max-w-[80vw] flex flex-col items-center"
             >
+              <h1 className={`text-[8vh] font-bold mb-[2vh] leading-tight ${styleConfig.text}`}>
+                {currentAnnouncement.title}
+              </h1>
+              <p className={`text-[4vh] leading-relaxed mb-[4vh] ${styleConfig.accent}`}>
+                {currentAnnouncement.content}
+              </p>
               {currentAnnouncement.image_url && (
-                <div className="shrink-0">
-                  <img
-                    src={currentAnnouncement.image_url}
-                    alt=""
-                    className="w-[25vw] h-[25vw] object-cover rounded-2xl shadow-2xl"
-                  />
-                </div>
+                <img
+                  src={currentAnnouncement.image_url}
+                  alt=""
+                  className="max-h-[40vh] max-w-[60vw] object-contain rounded-2xl shadow-2xl"
+                />
               )}
-              <div className={currentAnnouncement.image_url ? 'text-right' : 'text-center'}>
-                <h1 className={`text-[8vh] font-bold mb-[4vh] leading-tight ${styleConfig.text}`}>
-                  {currentAnnouncement.title}
-                </h1>
-                <p className={`text-[4vh] leading-relaxed ${styleConfig.accent}`}>
-                  {currentAnnouncement.content}
-                </p>
-              </div>
             </motion.div>
           ) : null}
         </AnimatePresence>
