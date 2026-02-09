@@ -283,9 +283,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuItem>
-                  <Settings className="w-4 h-4 ml-2" />
-                  הגדרות
+                <DropdownMenuItem asChild>
+                  <Link to="/admin" className="flex items-center">
+                    <Settings className="w-4 h-4 ml-2" />
+                    הגדרות
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
