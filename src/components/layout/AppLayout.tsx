@@ -64,7 +64,8 @@ const reportsSubItems = [
 ];
 
 const adminNavItems = [
-  { href: '/users', icon: Settings, label: 'ניהול משתמשים' },
+  { href: '/admin', icon: Settings, label: 'הגדרות' },
+  { href: '/users', icon: Users, label: 'ניהול משתמשים' },
   { href: '/backups', icon: Database, label: 'גיבויים' },
 ];
 
