@@ -4,6 +4,7 @@ import { HDate } from '@hebcal/core';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize, Lock, Unlock } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -87,8 +88,14 @@ export default function Display() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pinValue, setPinValue] = useState('');
+  const [pinError, setPinError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Secret unlock code - can be changed
+  const UNLOCK_CODE = '1234';
 
   // PWA auto-update - refresh automatically when update is available
   useRegisterSW({
@@ -129,6 +136,28 @@ export default function Display() {
       }
     }
   }, [isLocked]);
+
+  // Handle unlock attempt
+  const handleUnlockAttempt = useCallback(() => {
+    setShowPinDialog(true);
+    setPinValue('');
+    setPinError(false);
+  }, []);
+
+  // Verify PIN code
+  const handlePinComplete = useCallback((value: string) => {
+    if (value === UNLOCK_CODE) {
+      setIsLocked(false);
+      setShowPinDialog(false);
+      setPinValue('');
+      setPinError(false);
+    } else {
+      setPinError(true);
+      setPinValue('');
+      // Auto-hide error after 2 seconds
+      setTimeout(() => setPinError(false), 2000);
+    }
+  }, [UNLOCK_CODE]);
 
   // Listen for fullscreen changes
   useEffect(() => {
@@ -296,7 +325,7 @@ export default function Display() {
             ) : (
               <>
                 <button
-                  onClick={() => setIsLocked(!isLocked)}
+                  onClick={isLocked ? handleUnlockAttempt : () => setIsLocked(true)}
                   className={`p-3 rounded-full backdrop-blur-sm transition-colors ${
                     isLocked ? 'bg-red-500/50 hover:bg-red-500/70' : 'bg-black/20 hover:bg-black/30'
                   } ${styleConfig.text}`}
@@ -315,6 +344,59 @@ export default function Display() {
                 )}
               </>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* PIN Dialog for unlocking */}
+      <AnimatePresence>
+        {showPinDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowPinDialog(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-8 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              dir="ltr"
+            >
+              <h3 className="text-xl font-bold text-center mb-6 text-slate-900">
+                הזן קוד לביטול נעילה
+              </h3>
+              <div className="flex justify-center mb-4">
+                <InputOTP
+                  maxLength={4}
+                  value={pinValue}
+                  onChange={setPinValue}
+                  onComplete={handlePinComplete}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} className="w-14 h-14 text-2xl" />
+                    <InputOTPSlot index={1} className="w-14 h-14 text-2xl" />
+                    <InputOTPSlot index={2} className="w-14 h-14 text-2xl" />
+                    <InputOTPSlot index={3} className="w-14 h-14 text-2xl" />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              {pinError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-500 text-center font-medium"
+                >
+                  קוד שגוי, נסה שוב
+                </motion.p>
+              )}
+              <p className="text-slate-500 text-center text-sm mt-4">
+                לחץ מחוץ לחלון לביטול
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
