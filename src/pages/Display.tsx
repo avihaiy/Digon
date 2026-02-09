@@ -91,11 +91,47 @@ export default function Display() {
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pinValue, setPinValue] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [unlockCode, setUnlockCode] = useState('1234');
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Secret unlock code - can be changed
-  const UNLOCK_CODE = '1234';
+  // Fetch unlock code from settings
+  useEffect(() => {
+    const fetchUnlockCode = async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'display_lock_code')
+        .maybeSingle();
+      if (data?.value) {
+        setUnlockCode(data.value);
+      }
+    };
+    fetchUnlockCode();
+
+    // Subscribe to changes
+    const channel = supabase
+      .channel('display-lock-code')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'app_settings',
+          filter: 'key=eq.display_lock_code',
+        },
+        (payload: { new: { value?: string } }) => {
+          if (payload.new?.value) {
+            setUnlockCode(payload.new.value);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // PWA auto-update - refresh automatically when update is available
   useRegisterSW({
@@ -146,7 +182,7 @@ export default function Display() {
 
   // Verify PIN code
   const handlePinComplete = useCallback((value: string) => {
-    if (value === UNLOCK_CODE) {
+    if (value === unlockCode) {
       setIsLocked(false);
       setShowPinDialog(false);
       setPinValue('');
@@ -157,7 +193,7 @@ export default function Display() {
       // Auto-hide error after 2 seconds
       setTimeout(() => setPinError(false), 2000);
     }
-  }, [UNLOCK_CODE]);
+  }, [unlockCode]);
 
   // Listen for fullscreen changes
   useEffect(() => {

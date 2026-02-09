@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface SettingsTabProps {
@@ -21,6 +21,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const queryClient = useQueryClient();
   const [synagogueName, setSynagogueName] = useState('בית הכנסת');
   const [receiptEmail, setReceiptEmail] = useState('');
+  const [displayLockCode, setDisplayLockCode] = useState('1234');
   const [tvDurations, setTvDurations] = useState({
     general: 30,
     memorial: 20,
@@ -55,6 +56,19 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         .eq('key', 'receipt_email')
         .maybeSingle();
       return data?.value || '';
+    },
+  });
+
+  // Load display lock code
+  const { data: lockCodeSetting } = useQuery({
+    queryKey: ['app-settings-display-lock-code'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'display_lock_code')
+        .maybeSingle();
+      return data?.value || '1234';
     },
   });
 
@@ -119,6 +133,12 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
       setTvScreensEnabled(tvEnabledSettings);
     }
   }, [tvEnabledSettings]);
+
+  useEffect(() => {
+    if (lockCodeSetting) {
+      setDisplayLockCode(lockCodeSetting);
+    }
+  }, [lockCodeSetting]);
 
   // Save synagogue name
   const saveNameMutation = useMutation({
@@ -198,6 +218,21 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Save display lock code
+  const saveLockCodeMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'display_lock_code', value: code }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-display-lock-code'] });
+      toast({ title: 'קוד הנעילה נשמר בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Count enabled screens
   const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
@@ -205,7 +240,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">הגדרות תצוגה</h2>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-3 gap-6">
         {/* Synagogue Name */}
         <Card>
           <CardHeader>
@@ -261,6 +296,45 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             >
               <Save className="w-4 h-4 ml-2" />
               שמור מייל
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Display Lock Code */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              קוד נעילת תצוגה
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>קוד PIN לביטול נעילת מסך (4 ספרות)</Label>
+              <Input 
+                type="text"
+                maxLength={4}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                value={displayLockCode}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setDisplayLockCode(val);
+                }}
+                placeholder="1234"
+                dir="ltr"
+                className="font-mono text-center text-xl tracking-widest"
+              />
+              <p className="text-xs text-muted-foreground">
+                קוד זה נדרש לביטול נעילת המסך בדף התצוגה
+              </p>
+            </div>
+            <Button 
+              onClick={() => saveLockCodeMutation.mutate(displayLockCode)}
+              disabled={saveLockCodeMutation.isPending || displayLockCode.length !== 4}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור קוד
             </Button>
           </CardContent>
         </Card>
