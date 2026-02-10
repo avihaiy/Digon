@@ -12,17 +12,17 @@
   "lang": "he",
   "icons": [
     {
-      "src": "/pwa-icon.png",
+      "src": "/pwa-display-icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/pwa-icon.png",
+      "src": "/pwa-display-icon.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/pwa-icon.png",
+      "src": "/pwa-display-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
