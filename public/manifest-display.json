@@ -1,9 +1,9 @@
 {
-  "name": "Brit Shalom – Display",
-  "short_name": "Display",
+  "name": "מסך תצוגה",
+  "short_name": "תצוגה",
   "description": "מסך תצוגה לבית הכנסת ברית שלום",
-  "theme_color": "#1a1a2e",
-  "background_color": "#0f0f1a",
+  "theme_color": "#000000",
+  "background_color": "#000000",
   "display": "standalone",
   "orientation": "landscape",
   "scope": "/display",
