@@ -32,6 +32,7 @@ import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
 import ManageAds from "@/pages/ManageAds";
 import Display from "@/pages/Display";
+import SettingsPage from "@/pages/SettingsPage";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
