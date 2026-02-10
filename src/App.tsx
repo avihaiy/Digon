@@ -78,6 +78,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  useManifestSwitcher();
 
   return (
     <AnimatePresence mode="wait">
