@@ -284,7 +284,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
                 <DropdownMenuItem asChild>
-                  <Link to="/admin" className="flex items-center">
+                  <Link to="/settings" className="flex items-center">
                     <Settings className="w-4 h-4 ml-2" />
                     הגדרות
                   </Link>

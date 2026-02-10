@@ -97,6 +97,7 @@ const AnimatedRoutes = () => {
         <Route path="/expense-reports" element={<ProtectedRoute><PageTransition><ExpenseReports /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
         <Route path="/backups" element={<ProtectedRoute><PageTransition><Backups /></PageTransition></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><PageTransition><SettingsPage /></PageTransition></ProtectedRoute>} />
         <Route path="/manage-ads" element={<ProtectedRoute><PageTransition><ManageAds /></PageTransition></ProtectedRoute>} />
         <Route path="/admin-mobile" element={<PageTransition><AdminMobile /></PageTransition>} />
         <Route path="/display-general" element={<PageTransition><DisplayGeneral /></PageTransition>} />
