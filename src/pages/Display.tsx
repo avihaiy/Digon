@@ -95,28 +95,7 @@ export default function Display() {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Swap manifest to display-specific PWA manifest
-  useEffect(() => {
-    const existingManifest = document.querySelector('link[rel="manifest"]');
-    const originalHref = existingManifest?.getAttribute('href') || '';
-    
-    if (existingManifest) {
-      existingManifest.setAttribute('href', '/manifest-display.json');
-    } else {
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = '/manifest-display.json';
-      document.head.appendChild(link);
-    }
-
-    return () => {
-      // Restore original manifest on unmount
-      const manifest = document.querySelector('link[rel="manifest"]');
-      if (manifest && originalHref) {
-        manifest.setAttribute('href', originalHref);
-      }
-    };
-  }, []);
+  // Manifest switching is now handled globally by useManifestSwitcher
 
   // Fetch unlock code from settings
   useEffect(() => {
