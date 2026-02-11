@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, X, FileDown, Loader2 } from 'lucide-react';
-import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
+import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import britShalomLogo from '@/assets/brit-shalom-logo.jpeg';
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
@@ -121,7 +121,7 @@ export function ReceiptPreviewDialog({
               </div>
               <div className="flex justify-between text-xs">
                 <span className="font-medium">אמצעי תשלום:</span>
-                <span>{receipt.payment?.method === 'bit' ? 'ביט' : 'מזומן'}</span>
+                <span>{PAYMENT_METHOD[receipt.payment?.method as keyof typeof PAYMENT_METHOD] || receipt.payment?.method || '-'}</span>
               </div>
             </div>
 

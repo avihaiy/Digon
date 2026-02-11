@@ -304,6 +304,8 @@ export const ALIYA_STATUS = {
 export const PAYMENT_METHOD = {
   bit: 'ביט',
   cash: 'מזומן',
+  check: 'צ׳ק',
+  bank_transfer: 'העברה בנקאית',
 } as const;
 
 export const PAYMENT_STATUS = {
