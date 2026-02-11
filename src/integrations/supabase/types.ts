@@ -827,7 +827,7 @@ export type Database = {
       equipment_category: "hall" | "furniture" | "books" | "events" | "other"
       equipment_status: "available" | "loaned" | "maintenance" | "retired"
       loan_status: "active" | "returned" | "overdue"
-      payment_method: "bit" | "cash"
+      payment_method: "bit" | "cash" | "check" | "bank_transfer"
       payment_status: "pending" | "confirmed"
       transaction_type: "income" | "expense"
     }
@@ -980,7 +980,7 @@ export const Constants = {
       equipment_category: ["hall", "furniture", "books", "events", "other"],
       equipment_status: ["available", "loaned", "maintenance", "retired"],
       loan_status: ["active", "returned", "overdue"],
-      payment_method: ["bit", "cash"],
+      payment_method: ["bit", "cash", "check", "bank_transfer"],
       payment_status: ["pending", "confirmed"],
       transaction_type: ["income", "expense"],
     },

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,8 @@ import {
   Edit,
   Trash2,
   BookOpen,
+  Building2,
+  FileCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -65,14 +68,16 @@ import {
   type OccasionType,
 } from '@/lib/hebrew-utils';
 
-type FilterType = 'all' | 'pending' | 'confirmed' | 'bit' | 'cash' | 'this_month';
+type FilterType = 'all' | 'pending' | 'confirmed' | 'bit' | 'cash' | 'check' | 'bank_transfer' | 'this_month';
 
 export default function Payments() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'bit' | 'cash'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'bit' | 'cash' | 'check' | 'bank_transfer'>('cash');
+  const [receiptPreviewData, setReceiptPreviewData] = useState<any>(null);
+  const [receiptPreviewOpen, setReceiptPreviewOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
   const [editingPayment, setEditingPayment] = useState<any>(null);
@@ -150,7 +155,7 @@ export default function Payments() {
             member_id: formData.member_id,
             amount: Number(formData.amount),
             method: paymentMethod,
-            reference: paymentMethod === 'bit' ? formData.reference : null,
+            reference: (paymentMethod === 'bit' || paymentMethod === 'check' || paymentMethod === 'bank_transfer') ? formData.reference : null,
             notes: formData.notes || null,
           })
           .eq('id', editingPayment.id);
@@ -175,7 +180,7 @@ export default function Payments() {
             member_id: formData.member_id,
             amount: Number(formData.amount),
             method: paymentMethod,
-            reference: paymentMethod === 'bit' ? formData.reference : null,
+            reference: (paymentMethod === 'bit' || paymentMethod === 'check' || paymentMethod === 'bank_transfer') ? formData.reference : null,
             received_by: user?.id,
             status: 'confirmed',
             notes: formData.notes || null,
@@ -230,13 +235,30 @@ export default function Payments() {
         return payment;
       }
     },
-    onSuccess: () => {
+    onSuccess: async (payment) => {
       toast.success(editingPayment ? 'התשלום עודכן בהצלחה' : 'התשלום נקלט והקבלה הונפקה');
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['receipts'] });
       queryClient.invalidateQueries({ queryKey: ['unpaid-aliyot'] });
       queryClient.invalidateQueries({ queryKey: ['aliyot'] });
       handleCloseDialog();
+
+      // Show receipt preview for new payments
+      if (!editingPayment && payment?.id) {
+        try {
+          const { data: receipt } = await supabase
+            .from('receipts')
+            .select('*, member:members(full_name), payment:payments(method)')
+            .eq('payment_id', payment.id)
+            .single();
+          if (receipt) {
+            setReceiptPreviewData(receipt);
+            setReceiptPreviewOpen(true);
+          }
+        } catch (e) {
+          console.warn('Could not load receipt for preview:', e);
+        }
+      }
     },
     onError: (error) => {
       toast.error('שגיאה בשמירת התשלום', { description: error.message });
@@ -354,6 +376,14 @@ export default function Payments() {
       toast.error('יש להזין מספר אסמכתא מביט');
       return;
     }
+    if (paymentMethod === 'check' && !formData.reference) {
+      toast.error('יש להזין מספר צ׳ק');
+      return;
+    }
+    if (paymentMethod === 'bank_transfer' && !formData.reference) {
+      toast.error('יש להזין מספר אסמכתא להעברה');
+      return;
+    }
     savePayment.mutate();
   };
 
@@ -403,6 +433,10 @@ export default function Payments() {
         return p.method === 'bit';
       case 'cash':
         return p.method === 'cash';
+      case 'check':
+        return p.method === 'check';
+      case 'bank_transfer':
+        return p.method === 'bank_transfer';
       case 'this_month':
         return new Date(p.created_at) >= startOfMonth;
       default:
@@ -422,6 +456,10 @@ export default function Payments() {
     .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
   const cashTotal = payments?.filter((p: any) => p.method === 'cash' && p.status === 'confirmed')
     .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+  const checkTotal = payments?.filter((p: any) => p.method === 'check' && p.status === 'confirmed')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
+  const bankTransferTotal = payments?.filter((p: any) => p.method === 'bank_transfer' && p.status === 'confirmed')
+    .reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0;
 
   const quickFilters: { key: FilterType; label: string; count?: number }[] = [
     { key: 'all', label: 'הכל' },
@@ -430,6 +468,8 @@ export default function Payments() {
     { key: 'this_month', label: 'החודש' },
     { key: 'bit', label: 'ביט' },
     { key: 'cash', label: 'מזומן' },
+    { key: 'check', label: 'צ׳ק' },
+    { key: 'bank_transfer', label: 'העברה' },
   ];
 
   return (
@@ -501,15 +541,29 @@ export default function Payments() {
               <div className="flex items-start gap-3">
                 <div className="flex flex-col gap-1 text-sm">
                   <div className="flex items-center gap-2">
-                    <Smartphone className="w-4 h-4 text-purple-600" />
-                    <span className="text-muted-foreground">ביט:</span>
-                    <span className="font-bold hebrew-number">{formatCurrency(bitTotal)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <Banknote className="w-4 h-4 text-green-600" />
                     <span className="text-muted-foreground">מזומן:</span>
                     <span className="font-bold hebrew-number">{formatCurrency(cashTotal)}</span>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-purple-600" />
+                    <span className="text-muted-foreground">ביט:</span>
+                    <span className="font-bold hebrew-number">{formatCurrency(bitTotal)}</span>
+                  </div>
+                  {checkTotal > 0 && (
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="w-4 h-4 text-blue-600" />
+                      <span className="text-muted-foreground">צ׳ק:</span>
+                      <span className="font-bold hebrew-number">{formatCurrency(checkTotal)}</span>
+                    </div>
+                  )}
+                  {bankTransferTotal > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-orange-600" />
+                      <span className="text-muted-foreground">העברה:</span>
+                      <span className="font-bold hebrew-number">{formatCurrency(bankTransferTotal)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -623,10 +677,18 @@ export default function Payments() {
                     <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
                       payment.method === 'bit'
                         ? 'bg-purple-100 text-purple-600'
+                        : payment.method === 'check'
+                        ? 'bg-blue-100 text-blue-600'
+                        : payment.method === 'bank_transfer'
+                        ? 'bg-orange-100 text-orange-600'
                         : 'bg-green-100 text-green-600'
                     }`}>
                       {payment.method === 'bit' ? (
                         <Smartphone className="w-5 h-5" />
+                      ) : payment.method === 'check' ? (
+                        <FileCheck className="w-5 h-5" />
+                      ) : payment.method === 'bank_transfer' ? (
+                        <Building2 className="w-5 h-5" />
                       ) : (
                         <Banknote className="w-5 h-5" />
                       )}
@@ -872,6 +934,18 @@ export default function Payments() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
+                  onClick={() => setPaymentMethod('cash')}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    paymentMethod === 'cash'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <Banknote className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                  <p className="font-medium">מזומן</p>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setPaymentMethod('bit')}
                   className={`p-4 rounded-xl border-2 transition-all ${
                     paymentMethod === 'bit'
@@ -884,15 +958,27 @@ export default function Payments() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod('cash')}
+                  onClick={() => setPaymentMethod('check')}
                   className={`p-4 rounded-xl border-2 transition-all ${
-                    paymentMethod === 'cash'
+                    paymentMethod === 'check'
                       ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <Banknote className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                  <p className="font-medium">מזומן</p>
+                  <FileCheck className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                  <p className="font-medium">צ׳ק</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('bank_transfer')}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    paymentMethod === 'bank_transfer'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <Building2 className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+                  <p className="font-medium">העברה בנקאית</p>
                 </button>
               </div>
             </div>
@@ -919,6 +1005,34 @@ export default function Payments() {
                     className="text-center"
                   />
                 </div>
+              </div>
+            )}
+
+            {/* Check Reference */}
+            {paymentMethod === 'check' && (
+              <div className="space-y-2">
+                <Label>מספר צ׳ק *</Label>
+                <Input
+                  value={formData.reference}
+                  onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                  placeholder="הזן את מספר הצ׳ק"
+                  dir="ltr"
+                  className="text-center"
+                />
+              </div>
+            )}
+
+            {/* Bank Transfer Reference */}
+            {paymentMethod === 'bank_transfer' && (
+              <div className="space-y-2">
+                <Label>מספר אסמכתא להעברה *</Label>
+                <Input
+                  value={formData.reference}
+                  onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                  placeholder="הזן מספר אסמכתא"
+                  dir="ltr"
+                  className="text-center"
+                />
               </div>
             )}
 
@@ -972,6 +1086,29 @@ export default function Payments() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Receipt Preview Dialog */}
+      <ReceiptPreviewDialog
+        receipt={receiptPreviewData}
+        open={receiptPreviewOpen}
+        onOpenChange={setReceiptPreviewOpen}
+        onPrint={(receipt) => {
+          // Trigger print via window.print for the receipt
+          const printContent = document.querySelector('[data-receipt-preview]');
+          if (printContent) {
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+              printWindow.document.write(`
+                <html dir="rtl"><head><title>קבלה ${receipt.receipt_number}</title>
+                <style>body{font-family:Arial,sans-serif;margin:0;padding:20px;}</style>
+                </head><body>${printContent.innerHTML}</body></html>
+              `);
+              printWindow.document.close();
+              printWindow.print();
+            }
+          }
+        }}
+      />
     </div>
   );
 }
