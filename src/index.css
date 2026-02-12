@@ -399,11 +399,52 @@
   @apply bg-border rounded-full hover:bg-muted-foreground/30 transition-colors;
 }
 
-/* Print styles for receipts */
+/* Print styles for thermal receipts - 80×120mm */
+@page {
+  size: 80mm 120mm;
+  margin: 0;
+}
+
 @media print {
-  body {
+  html, body {
+    width: 80mm !important;
+    height: 120mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
     background: white !important;
     direction: rtl;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide everything except the receipt */
+  body > *:not(#thermal-print-container) {
+    display: none !important;
+  }
+
+  #thermal-print-container {
+    display: block !important;
+    position: fixed !important;
+    top: 0;
+    right: 0;
+    width: 80mm !important;
+    height: 120mm !important;
+    margin: 0 !important;
+    padding: 2mm !important;
+    overflow: hidden !important;
+    background: white !important;
+    color: black !important;
+    font-family: 'Heebo', Arial, sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  #thermal-print-container * {
+    font-weight: 700 !important;
+    color: black !important;
+    background: white !important;
   }
 
   .no-print {
