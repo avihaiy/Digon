@@ -101,7 +101,7 @@ export function ReceiptPreviewDialog({
             }}
           >
             {/* Header with בס"ד */}
-            <div style={{ textAlign: 'left', fontSize: '9px', fontWeight: 700, marginBottom: '2mm' }}>בס"ד</div>
+            <div style={{ textAlign: 'center', fontSize: '10px', fontWeight: 900, marginBottom: '2mm' }}>בס"ד</div>
             
             {/* Logo */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1mm' }}>
@@ -110,61 +110,61 @@ export function ReceiptPreviewDialog({
             
             {/* Synagogue Name and Address */}
             <div style={{ textAlign: 'center', marginBottom: '2mm' }}>
-              <div style={{ fontSize: '13px', fontWeight: 800 }}>בית כנסת "ברית שלום" עכו</div>
-              <div style={{ fontSize: '9px', fontWeight: 700 }}>רח' קדושי קהיר 16, עכו</div>
+              <div style={{ fontSize: '14px', fontWeight: 900 }}>בית כנסת "ברית שלום" עכו</div>
+              <div style={{ fontSize: '10px', fontWeight: 800 }}>רח' קדושי קהיר 16, עכו</div>
             </div>
 
             {/* Receipt Number */}
             <div style={{ textAlign: 'center', marginBottom: '1mm' }}>
-              <div style={{ fontSize: '12px', fontWeight: 800 }}>קבלה מספר: {receipt.receipt_number}</div>
+              <div style={{ fontSize: '13px', fontWeight: 900 }}>קבלה מספר: {receipt.receipt_number}</div>
             </div>
 
             {/* Dates */}
-            <div style={{ textAlign: 'center', fontSize: '9px', fontWeight: 700, marginBottom: '2mm' }}>
+            <div style={{ textAlign: 'center', fontSize: '10px', fontWeight: 800, marginBottom: '2mm' }}>
               <span>{formatDate(receipt.created_at)}</span>
               <span> • </span>
               <span>{getHebrewDate(new Date(receipt.created_at))}</span>
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '1px dashed #000', margin: '1.5mm 0' }} />
+            <div style={{ borderTop: '2px dashed #000', margin: '1.5mm 0' }} />
 
             {/* Details */}
             <div style={{ marginBottom: '2mm' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, padding: '0.5mm 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '11px', fontWeight: 800, padding: '0.5mm 0' }}>
                 <span>התקבל מאת:</span>
                 <span>{receipt.member?.full_name || '-'}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, padding: '0.5mm 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '11px', fontWeight: 800, padding: '0.5mm 0' }}>
                 <span>עבור:</span>
                 <span>{receipt.description || 'תרומה'}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, padding: '0.5mm 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '11px', fontWeight: 800, padding: '0.5mm 0' }}>
                 <span>אמצעי תשלום:</span>
                 <span>{PAYMENT_METHOD[receipt.payment?.method as keyof typeof PAYMENT_METHOD] || receipt.payment?.method || '-'}</span>
               </div>
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '1px dashed #000', margin: '1.5mm 0' }} />
+            <div style={{ borderTop: '2px dashed #000', margin: '1.5mm 0' }} />
 
             {/* Total */}
             <div style={{ textAlign: 'center', padding: '2mm 0' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700 }}>סה״כ שולם</div>
-              <div style={{ fontSize: '20px', fontWeight: 800 }}>
+              <div style={{ fontSize: '12px', fontWeight: 900 }}>סה״כ שולם</div>
+              <div style={{ fontSize: '22px', fontWeight: 900 }}>
                 {formatCurrency(Number(receipt.total_amount))}
               </div>
             </div>
 
             {/* Separator */}
-            <div style={{ borderTop: '1px dashed #000', margin: '1.5mm 0' }} />
+            <div style={{ borderTop: '2px dashed #000', margin: '1.5mm 0' }} />
 
             {/* Footer */}
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '11px', fontWeight: 800, marginBottom: '1mm' }}>תודה על תרומתכם!</p>
-              <p style={{ fontSize: '9px', fontWeight: 700 }}>בית כנסת "ברית שלום" עכו</p>
-              <p style={{ fontSize: '9px', fontWeight: 700 }}>רח' קדושי קהיר 16 עכו</p>
-              <p style={{ fontSize: '9px', fontWeight: 700 }}>טלפון: 050-5768723</p>
+              <p style={{ fontSize: '12px', fontWeight: 900, marginBottom: '1mm' }}>תודה על תרומתכם!</p>
+              <p style={{ fontSize: '10px', fontWeight: 800 }}>בית כנסת "ברית שלום" עכו</p>
+              <p style={{ fontSize: '10px', fontWeight: 800 }}>רח' קדושי קהיר 16 עכו</p>
+              <p style={{ fontSize: '10px', fontWeight: 800 }}>טלפון: 050-5768723</p>
             </div>
           </div>
         </div>

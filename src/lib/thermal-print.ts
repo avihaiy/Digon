@@ -58,8 +58,9 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
   }
   
   .bsd {
-    align-self: flex-start;
-    font-size: 9px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 900;
     margin-bottom: 1mm;
   }
   
@@ -69,41 +70,45 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
   }
   
   .synagogue-name {
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 14px;
+    font-weight: 900;
     text-align: center;
   }
   
   .address {
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 800;
     text-align: center;
     margin-bottom: 2mm;
   }
   
   .receipt-number {
-    font-size: 12px;
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 900;
     text-align: center;
     margin-bottom: 1mm;
   }
   
   .dates {
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 800;
     text-align: center;
     margin-bottom: 2mm;
   }
   
   .separator {
     width: 100%;
-    border-top: 1px dashed #000;
+    border-top: 2px dashed #000;
     margin: 1.5mm 0;
   }
   
   .detail-row {
     width: 100%;
     display: flex;
-    justify-content: space-between;
-    font-size: 10px;
+    justify-content: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
     padding: 0.5mm 1mm;
   }
   
@@ -113,12 +118,13 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
   }
   
   .total-label {
-    font-size: 10px;
+    font-size: 12px;
+    font-weight: 900;
   }
   
   .total-amount {
-    font-size: 20px;
-    font-weight: 800;
+    font-size: 22px;
+    font-weight: 900;
   }
   
   .footer {
@@ -127,13 +133,14 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
   }
   
   .footer .thanks {
-    font-size: 11px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 900;
     margin-bottom: 1mm;
   }
   
   .footer .info {
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 800;
   }
 </style>
 </head>
