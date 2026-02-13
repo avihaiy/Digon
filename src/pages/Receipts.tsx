@@ -51,6 +51,7 @@ import {
   X,
   FileDown,
   FileSpreadsheet,
+  Wifi,
 } from 'lucide-react';
 import { formatCurrency, formatShortDate, formatDate, getHebrewDate, PARASHA_LIST } from '@/lib/hebrew-utils';
 import { format } from 'date-fns';
@@ -194,6 +195,17 @@ export default function Receipts() {
     } catch (error) {
       console.error('Print error:', error);
       toast.error('שגיאה בהדפסה');
+    }
+  };
+
+  const handleRemotePrint = async (receipt: any) => {
+    try {
+      const { remotePrintReceipt } = await import('@/lib/remote-print');
+      await remotePrintReceipt(receipt);
+      toast.success('הקבלה נשלחה להדפסה מרחוק');
+    } catch (error: any) {
+      console.error('Remote print error:', error);
+      toast.error('שגיאה בהדפסה מרחוק', { description: error.message });
     }
   };
 
@@ -592,6 +604,15 @@ export default function Receipts() {
                       className="h-8 w-8 p-0"
                     >
                       <Printer className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRemotePrint(receipt)}
+                      title="הדפס קבלה מרחוק"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Wifi className="w-4 h-4" />
                     </Button>
                     <Button
                       size="sm"
