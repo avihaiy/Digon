@@ -6,9 +6,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, X, FileDown, Loader2 } from 'lucide-react';
+import { Printer, X, FileDown, Loader2, Wifi } from 'lucide-react';
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import { silentPrintReceipt } from '@/lib/thermal-print';
+import { remotePrintReceipt } from '@/lib/remote-print';
 import britShalomLogo from '@/assets/brit-shalom-logo.jpeg';
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ export function ReceiptPreviewDialog({
   const receiptRef = useRef<HTMLDivElement>(null);
   const [isSavingPdf, setIsSavingPdf] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isRemotePrinting, setIsRemotePrinting] = useState(false);
 
   if (!receipt) return null;
 
@@ -171,7 +173,7 @@ export function ReceiptPreviewDialog({
 
         {/* Action Buttons */}
         <div className="p-4 pt-0 flex flex-col gap-2">
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center flex-wrap">
             <Button
               size="sm"
               onClick={handlePrint}
@@ -184,6 +186,31 @@ export function ReceiptPreviewDialog({
                 <Printer className="w-4 h-4 ml-2" />
               )}
               הדפס
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                setIsRemotePrinting(true);
+                try {
+                  await remotePrintReceipt(receipt);
+                  toast.success('הקבלה נשלחה להדפסה מרחוק');
+                } catch (error: any) {
+                  console.error('Remote print error:', error);
+                  toast.error('שגיאה בהדפסה מרחוק', { description: error.message });
+                } finally {
+                  setIsRemotePrinting(false);
+                }
+              }}
+              disabled={isRemotePrinting}
+              className="px-4 gap-2"
+            >
+              {isRemotePrinting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Wifi className="w-4 h-4" />
+              )}
+              הדפס קבלה מרחוק
             </Button>
             <Button
               size="sm"
