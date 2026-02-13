@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { silentPrintReceipt } from '@/lib/thermal-print';
+import { remotePrintReceipt } from '@/lib/remote-print';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -253,9 +254,13 @@ export default function Payments() {
             .eq('payment_id', payment.id)
             .single();
           if (receipt) {
-            // Silent auto-print immediately
+            // Silent auto-print immediately (local)
             silentPrintReceipt(receipt).catch(err => 
               console.warn('Auto-print failed:', err)
+            );
+            // Also remote print via PrintNode
+            remotePrintReceipt(receipt).catch(err =>
+              console.warn('Remote auto-print failed:', err)
             );
             // Also store for manual re-print
             setReceiptPreviewData(receipt);
