@@ -286,7 +286,7 @@ export default function ManageAds() {
               הוסף מודעה
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg" dir="rtl">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
             <DialogHeader>
               <DialogTitle>{editingId ? 'עריכת מודעה' : 'הוספת מודעה חדשה'}</DialogTitle>
             </DialogHeader>
@@ -463,11 +463,11 @@ export default function ManageAds() {
                 />
               </div>
 
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={handleCloseDialog}>
+              <div className="flex gap-2 justify-end sticky bottom-0 bg-background pt-2">
+                <Button type="button" variant="outline" onClick={handleCloseDialog} className="min-h-[44px]">
                   ביטול
                 </Button>
-                <Button type="submit" disabled={saveMutation.isPending || isUploading}>
+                <Button type="submit" disabled={saveMutation.isPending || isUploading} className="min-h-[44px]">
                   {isUploading ? 'מעלה תמונה...' : saveMutation.isPending ? 'שומר...' : editingId ? 'עדכן' : 'הוסף'}
                 </Button>
               </div>
@@ -494,7 +494,7 @@ export default function ManageAds() {
               {/* Mobile View */}
               <div className="block sm:hidden divide-y divide-border">
                 {announcements.map((announcement) => (
-                  <div key={announcement.id} className="p-4 space-y-3">
+                  <div key={announcement.id} className="p-4 space-y-3 active:bg-muted/50 transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       {announcement.image_url && (
                         <img 
@@ -504,32 +504,43 @@ export default function ManageAds() {
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold">{announcement.title}</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{announcement.content}</p>
+                        <p className="font-bold text-base">{announcement.title}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-line">{announcement.content}</p>
                       </div>
                       <Switch
                         checked={announcement.is_active}
                         onCheckedChange={(checked) => 
                           toggleActiveMutation.mutate({ id: announcement.id, is_active: checked })
                         }
+                        className="shrink-0"
                       />
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge variant="outline" className={`text-xs ${STYLE_PREVIEWS[announcement.style]}`}>
+                        {STYLE_LABELS[announcement.style]}
+                      </Badge>
                       {announcement.day_types.map((day) => (
-                        <Badge key={day} variant="outline">{DAY_TYPE_LABELS[day]}</Badge>
+                        <Badge key={day} variant="outline" className="text-xs">{DAY_TYPE_LABELS[day]}</Badge>
                       ))}
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="text-xs">
                         {announcement.start_time.slice(0, 5)} - {announcement.end_time.slice(0, 5)}
                       </Badge>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(announcement)}>
-                        <Edit className="w-4 h-4" />
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleEdit(announcement)}
+                        className="flex-1 h-10 text-sm"
+                      >
+                        <Edit className="w-4 h-4 ml-1" />
+                        עריכה
                       </Button>
                       <Button 
                         size="sm" 
                         variant="destructive" 
                         onClick={() => deleteMutation.mutate(announcement.id)}
+                        className="h-10 px-3"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
