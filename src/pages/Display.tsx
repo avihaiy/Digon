@@ -506,7 +506,7 @@ export default function Display() {
                 <h1 className={`text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight ${styleConfig.text}`}>
                   {currentAnnouncement.title}
                 </h1>
-                <p className={`text-[3vh] md:text-[4vh] leading-relaxed ${styleConfig.accent}`}>
+                <p className={`text-[3vh] md:text-[4vh] leading-relaxed ${styleConfig.accent} whitespace-pre-line`}>
                   {currentAnnouncement.content}
                 </p>
               </motion.div>
