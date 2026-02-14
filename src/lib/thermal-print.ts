@@ -147,9 +147,8 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
 <body>
 <div class="receipt">
   <div class="bsd">בס"ד</div>
-  ${logoBase64 ? `<img src="${logoBase64}" class="logo" alt="לוגו">` : ''}
   <div class="synagogue-name">בית כנסת "ברית שלום" עכו</div>
-  <div class="address">רח' קדושי קהיר 16, עכו</div>
+  <div class="address">רח' קדושי קהיר 18, עכו</div>
   <div class="receipt-number">קבלה מספר: ${receipt.receipt_number || ''}</div>
   <div class="dates">${gregDate} • ${hebrewDate}</div>
   <div class="separator"></div>
@@ -165,7 +164,7 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
   <div class="footer">
     <div class="thanks">תודה על תרומתכם!</div>
     <div class="info">בית כנסת "ברית שלום" עכו</div>
-    <div class="info">רח' קדושי קהיר 16 עכו</div>
+    <div class="info">רח' קדושי קהיר 18 עכו</div>
     <div class="info">טלפון: 050-5768723</div>
   </div>
 </div>

@@ -52,7 +52,7 @@ function buildEscPosReceipt(receipt: {
   push([ESC, 0x45, 1]); // Bold back on
 
   // Address
-  pushText('רח\' קדושי קהיר 16, עכו');
+  pushText('רח\' קדושי קהיר 18, עכו');
   push([LF, LF]);
 
   // Receipt number
@@ -115,7 +115,7 @@ function buildEscPosReceipt(receipt: {
   push([LF]);
   pushText('בית כנסת "ברית שלום" עכו');
   push([LF]);
-  pushText('רח\' קדושי קהיר 16 עכו');
+  pushText('רח\' קדושי קהיר 18 עכו');
   push([LF]);
   pushText('טלפון: 050-5768723');
   push([LF, LF, LF]);

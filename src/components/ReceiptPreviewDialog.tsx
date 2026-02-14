@@ -10,7 +10,7 @@ import { Printer, X, FileDown, Loader2, Wifi } from 'lucide-react';
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
-import britShalomLogo from '@/assets/brit-shalom-logo.jpeg';
+
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
 
@@ -105,15 +105,10 @@ export function ReceiptPreviewDialog({
             {/* Header with בס"ד */}
             <div style={{ textAlign: 'center', fontSize: '10px', fontWeight: 900, marginBottom: '2mm' }}>בס"ד</div>
             
-            {/* Logo */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1mm' }}>
-              <img src={britShalomLogo} alt="ברית שלום" style={{ height: '10mm' }} />
-            </div>
-            
             {/* Synagogue Name and Address */}
             <div style={{ textAlign: 'center', marginBottom: '2mm' }}>
               <div style={{ fontSize: '14px', fontWeight: 900 }}>בית כנסת "ברית שלום" עכו</div>
-              <div style={{ fontSize: '10px', fontWeight: 800 }}>רח' קדושי קהיר 16, עכו</div>
+              <div style={{ fontSize: '10px', fontWeight: 800 }}>רח' קדושי קהיר 18, עכו</div>
             </div>
 
             {/* Receipt Number */}
@@ -165,7 +160,7 @@ export function ReceiptPreviewDialog({
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: '12px', fontWeight: 900, marginBottom: '1mm' }}>תודה על תרומתכם!</p>
               <p style={{ fontSize: '10px', fontWeight: 800 }}>בית כנסת "ברית שלום" עכו</p>
-              <p style={{ fontSize: '10px', fontWeight: 800 }}>רח' קדושי קהיר 16 עכו</p>
+              <p style={{ fontSize: '10px', fontWeight: 800 }}>רח' קדושי קהיר 18 עכו</p>
               <p style={{ fontSize: '10px', fontWeight: 800 }}>טלפון: 050-5768723</p>
             </div>
           </div>
