@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useManifestSwitcher } from "@/hooks/useManifestSwitcher";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -32,6 +33,7 @@ import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
 import ManageAds from "@/pages/ManageAds";
 import Display from "@/pages/Display";
+import SettingsPage from "@/pages/SettingsPage";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
@@ -76,6 +78,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  useManifestSwitcher();
 
   return (
     <AnimatePresence mode="wait">
@@ -96,6 +99,7 @@ const AnimatedRoutes = () => {
         <Route path="/expense-reports" element={<ProtectedRoute><PageTransition><ExpenseReports /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
         <Route path="/backups" element={<ProtectedRoute><PageTransition><Backups /></PageTransition></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><PageTransition><SettingsPage /></PageTransition></ProtectedRoute>} />
         <Route path="/manage-ads" element={<ProtectedRoute><PageTransition><ManageAds /></PageTransition></ProtectedRoute>} />
         <Route path="/admin-mobile" element={<PageTransition><AdminMobile /></PageTransition>} />
         <Route path="/display-general" element={<PageTransition><DisplayGeneral /></PageTransition>} />

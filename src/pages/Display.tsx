@@ -95,6 +95,8 @@ export default function Display() {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Manifest switching is now handled globally by useManifestSwitcher
+
   // Fetch unlock code from settings
   useEffect(() => {
     const fetchUnlockCode = async () => {

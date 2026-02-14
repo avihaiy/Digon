@@ -64,7 +64,7 @@ const reportsSubItems = [
 ];
 
 const adminNavItems = [
-  { href: '/admin', icon: Settings, label: 'הגדרות' },
+  { href: '/settings', icon: Settings, label: 'הגדרות' },
   { href: '/users', icon: Users, label: 'ניהול משתמשים' },
   { href: '/backups', icon: Database, label: 'גיבויים' },
 ];
@@ -284,7 +284,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
                 <DropdownMenuItem asChild>
-                  <Link to="/admin" className="flex items-center">
+                  <Link to="/settings" className="flex items-center">
                     <Settings className="w-4 h-4 ml-2" />
                     הגדרות
                   </Link>

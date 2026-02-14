@@ -14,39 +14,9 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "prompt", // Changed to prompt for manual control
+      registerType: "prompt",
       includeAssets: ["favicon.ico", "brit-shalom-logo.jpeg"],
-      manifest: {
-        name: "ניהול גבאות - מערכת בית הכנסת",
-        short_name: "ברית שלום",
-        description: "מערכת ניהול גבאות מקצועית לבית הכנסת",
-        theme_color: "#1a1a2e",
-        background_color: "#0f0f1a",
-        display: "standalone",
-        orientation: "portrait",
-        scope: "/",
-        start_url: "/",
-        dir: "rtl",
-        lang: "he",
-        icons: [
-          {
-            src: "/pwa-icon.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/pwa-icon.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/pwa-icon.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any maskable",
-          },
-        ],
-      },
+      manifest: false,
       workbox: {
         // Skip waiting to activate new SW immediately
         skipWaiting: true,
