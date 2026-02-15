@@ -13,7 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Flame } from 'lucide-react';
+import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X } from 'lucide-react';
+import MemorialManager from '@/components/display/MemorialManager';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -317,19 +318,7 @@ export default function ManageAds() {
         </div>
       </div>
 
-      {/* Memorial Toggle Card */}
-      <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
-        <CardContent className="flex items-center justify-between py-3 px-4">
-          <div className="flex items-center gap-3">
-            <Flame className="w-5 h-5 text-amber-500" />
-            <div>
-              <p className="font-semibold text-sm">הצגת אשכבות על המסך</p>
-              <p className="text-xs text-muted-foreground">יוצג אוטומטית לפי תאריך עברי מתוך רשימת הנפטרים</p>
-            </div>
-          </div>
-          <Switch checked={showMemorial} onCheckedChange={toggleMemorial} />
-        </CardContent>
-      </Card>
+      <MemorialManager showMemorial={showMemorial} onToggleMemorial={toggleMemorial} />
 
       <div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
