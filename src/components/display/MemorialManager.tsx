@@ -44,6 +44,17 @@ const MONTH_LABELS: Record<number, string> = Object.fromEntries(
   HEBREW_MONTHS.map(m => [m.value, m.label])
 );
 
+const HEBREW_DAY_LABELS: Record<number, string> = {
+  1: "א'", 2: "ב'", 3: "ג'", 4: "ד'", 5: "ה'", 6: "ו'", 7: "ז'", 8: "ח'", 9: "ט'", 10: "י'",
+  11: "י\"א", 12: "י\"ב", 13: "י\"ג", 14: "י\"ד", 15: "ט\"ו", 16: "ט\"ז", 17: "י\"ז", 18: "י\"ח", 19: "י\"ט", 20: "כ'",
+  21: "כ\"א", 22: "כ\"ב", 23: "כ\"ג", 24: "כ\"ד", 25: "כ\"ה", 26: "כ\"ו", 27: "כ\"ז", 28: "כ\"ח", 29: "כ\"ט", 30: "ל'",
+};
+
+const HEBREW_DAYS = Array.from({ length: 30 }, (_, i) => ({
+  value: i + 1,
+  label: HEBREW_DAY_LABELS[i + 1],
+}));
+
 const defaultMemorialForm = {
   deceased_name: '',
   father_name: '',
@@ -232,14 +243,21 @@ export default function MemorialManager({ showMemorial, onToggleMemorial }: Memo
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>יום עברי</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={30}
-                    value={form.hebrew_death_day}
-                    onChange={(e) => setForm({ ...form, hebrew_death_day: parseInt(e.target.value) || 1 })}
-                    required
-                  />
+                  <Select
+                    value={String(form.hebrew_death_day)}
+                    onValueChange={(v) => setForm({ ...form, hebrew_death_day: parseInt(v) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HEBREW_DAYS.map((d) => (
+                        <SelectItem key={d.value} value={String(d.value)}>
+                          {d.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>חודש עברי</Label>
@@ -300,7 +318,7 @@ export default function MemorialManager({ showMemorial, onToggleMemorial }: Memo
                   </p>
                   <div className="flex gap-1.5 mt-1">
                     <Badge variant="outline" className="text-xs">
-                      {m.hebrew_death_day} {MONTH_LABELS[m.hebrew_death_month] || ''}
+                      {HEBREW_DAY_LABELS[m.hebrew_death_day] || m.hebrew_death_day} {MONTH_LABELS[m.hebrew_death_month] || ''}
                     </Badge>
                     {m.notes && (
                       <Badge variant="secondary" className="text-xs truncate max-w-[120px]">
