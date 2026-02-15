@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -69,11 +69,44 @@ interface MemorialManagerProps {
   onToggleMemorial: (checked: boolean) => void;
 }
 
+const saveSetting = async (key: string, value: string) => {
+  const { data: existing } = await supabase
+    .from('app_settings')
+    .select('id')
+    .eq('key', key)
+    .maybeSingle();
+  if (existing) {
+    await supabase.from('app_settings').update({ value }).eq('key', key);
+  } else {
+    await supabase.from('app_settings').insert({ key, value });
+  }
+};
+
 export default function MemorialManager({ showMemorial, onToggleMemorial }: MemorialManagerProps) {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(defaultMemorialForm);
+  const [showWeekBefore, setShowWeekBefore] = useState(false);
+
+  // Fetch advance week setting
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'memorial_show_week_before')
+        .maybeSingle();
+      if (data) setShowWeekBefore(data.value === 'true');
+    };
+    fetch();
+  }, []);
+
+  const toggleWeekBefore = async (checked: boolean) => {
+    setShowWeekBefore(checked);
+    await saveSetting('memorial_show_week_before', checked ? 'true' : 'false');
+    toast.success(checked ? 'תצוגת שבוע לפני אזכרה הופעלה' : 'תצוגת שבוע לפני אזכרה כובתה');
+  };
 
   const { data: memorials = [], isLoading } = useQuery({
     queryKey: ['memorial-names-manage'],
@@ -183,9 +216,15 @@ export default function MemorialManager({ showMemorial, onToggleMemorial }: Memo
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">הצג על המסך</span>
-            <Switch checked={showMemorial} onCheckedChange={onToggleMemorial} />
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">הצג על המסך</span>
+              <Switch checked={showMemorial} onCheckedChange={onToggleMemorial} />
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">הצג שבוע לפני</span>
+              <Switch checked={showWeekBefore} onCheckedChange={toggleWeekBefore} />
+            </div>
           </div>
         </div>
 

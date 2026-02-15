@@ -109,6 +109,7 @@ export default function Display() {
   const [unlockCode, setUnlockCode] = useState('1234');
   const [memorialPeople, setMemorialPeople] = useState<MemorialPerson[]>([]);
   const [showMemorial, setShowMemorial] = useState(true);
+  const [showWeekBefore, setShowWeekBefore] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -120,7 +121,7 @@ export default function Display() {
       const { data } = await supabase
         .from('app_settings')
         .select('key, value')
-        .in('key', ['display_lock_code', 'show_memorial_on_display']);
+        .in('key', ['display_lock_code', 'show_memorial_on_display', 'memorial_show_week_before']);
       
       if (data) {
         for (const setting of data) {
@@ -129,6 +130,9 @@ export default function Display() {
           }
           if (setting.key === 'show_memorial_on_display') {
             setShowMemorial(setting.value !== 'false');
+          }
+          if (setting.key === 'memorial_show_week_before') {
+            setShowWeekBefore(setting.value === 'true');
           }
         }
       }
@@ -152,6 +156,9 @@ export default function Display() {
           if (payload.new?.key === 'show_memorial_on_display') {
             setShowMemorial(payload.new.value !== 'false');
           }
+          if (payload.new?.key === 'memorial_show_week_before') {
+            setShowWeekBefore(payload.new.value === 'true');
+          }
         }
       )
       .subscribe();
@@ -161,22 +168,35 @@ export default function Display() {
     };
   }, []);
 
-  // Fetch today's yahrzeits
+  // Fetch yahrzeits (today + optionally 7 days ahead)
   useEffect(() => {
     const fetchYahrzeits = async () => {
-      const hDate = new HDate();
-      const hebrewDay = hDate.getDate();
-      const hebrewMonth = hDate.getMonth();
+      // Build a set of Hebrew day/month pairs to check
+      const hDateToday = new HDate();
+      const datePairs: { day: number; month: number }[] = [];
+      
+      // Always include today
+      datePairs.push({ day: hDateToday.getDate(), month: hDateToday.getMonth() });
+      
+      // If week-before is enabled, add next 7 days
+      if (showWeekBefore) {
+        for (let i = 1; i <= 7; i++) {
+          const futureDate = new HDate(hDateToday.abs() + i);
+          datePairs.push({ day: futureDate.getDate(), month: futureDate.getMonth() });
+        }
+      }
 
+      // Fetch all active memorials and filter client-side
       const { data, error } = await supabase
         .from('memorial_names')
         .select('id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month')
-        .eq('is_active', true)
-        .eq('hebrew_death_day', hebrewDay)
-        .eq('hebrew_death_month', hebrewMonth);
+        .eq('is_active', true);
 
       if (!error && data) {
-        setMemorialPeople(data.map(p => ({
+        const matched = data.filter(p =>
+          datePairs.some(dp => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month)
+        );
+        setMemorialPeople(matched.map(p => ({
           id: p.id,
           deceased_name: p.deceased_name,
           father_name: p.father_name,
@@ -187,10 +207,8 @@ export default function Display() {
     };
 
     fetchYahrzeits();
-    // Re-check every 10 minutes
     const interval = setInterval(fetchYahrzeits, 10 * 60 * 1000);
 
-    // Also subscribe to realtime changes
     const channel = supabase
       .channel('memorial-display')
       .on(
@@ -204,7 +222,7 @@ export default function Display() {
       clearInterval(interval);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [showWeekBefore]);
 
   // PWA auto-update - refresh automatically when update is available
   useRegisterSW({
