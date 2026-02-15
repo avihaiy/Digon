@@ -7,6 +7,7 @@ interface MemorialPerson {
   father_name: string;
   is_male: boolean | null;
   hebrew_date_display: string;
+  days_until: number;
 }
 
 interface MemorialDisplaySlideProps {
@@ -18,7 +19,6 @@ interface MemorialDisplaySlideProps {
 function CandleIcon({ className = '' }: { className?: string }) {
   return (
     <div className={`relative flex flex-col items-center ${className}`}>
-      {/* Flame */}
       <motion.div
         animate={{ 
           scale: [1, 1.15, 1],
@@ -33,16 +33,19 @@ function CandleIcon({ className = '' }: { className?: string }) {
       >
         <Flame className="w-[4vh] h-[4vh] text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
       </motion.div>
-      {/* Candle body */}
       <div className="w-[1.2vh] h-[5vh] bg-gradient-to-b from-amber-100 to-amber-200 rounded-b-sm shadow-inner" />
-      {/* Base */}
       <div className="w-[2.5vh] h-[1vh] bg-gradient-to-b from-slate-400 to-slate-500 rounded-b-md" />
     </div>
   );
 }
 
+function getDaysLabel(days: number): string | null {
+  if (days === 0) return 'היום';
+  if (days === 1) return 'מחר';
+  return `בעוד ${days} ימים`;
+}
+
 export default function MemorialDisplaySlide({ people, textClass, accentClass }: MemorialDisplaySlideProps) {
-  // Determine layout based on number of people
   const gridClass = people.length <= 2 
     ? 'flex flex-col gap-[4vh]' 
     : people.length <= 4 
@@ -69,25 +72,33 @@ export default function MemorialDisplaySlide({ people, textClass, accentClass }:
 
       {/* Names grid */}
       <div className={gridClass}>
-        {people.map((person, index) => (
-          <motion.div
-            key={person.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.2, duration: 0.5 }}
-            className="flex items-center gap-[2vw] justify-center"
-          >
-            <CandleIcon />
-            <div className="text-center min-w-0">
-              <p className={`text-[3vh] md:text-[4vh] font-bold leading-tight ${textClass}`}>
-                {person.deceased_name} {person.is_male !== false ? 'בן' : 'בת'} {person.father_name}
-              </p>
-              <p className={`text-[2vh] md:text-[2.5vh] mt-[0.5vh] ${accentClass}`}>
-                {person.hebrew_date_display}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+        {people.map((person, index) => {
+          const daysLabel = getDaysLabel(person.days_until);
+          return (
+            <motion.div
+              key={person.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.2, duration: 0.5 }}
+              className="flex items-center gap-[2vw] justify-center"
+            >
+              <CandleIcon />
+              <div className="text-center min-w-0">
+                <p className={`text-[3vh] md:text-[4vh] font-bold leading-tight ${textClass}`}>
+                  {person.deceased_name} {person.is_male !== false ? 'בן' : 'בת'} {person.father_name}
+                </p>
+                <p className={`text-[2vh] md:text-[2.5vh] mt-[0.5vh] ${accentClass}`}>
+                  {person.hebrew_date_display}
+                </p>
+                {person.days_until > 0 && daysLabel && (
+                  <p className="text-[1.8vh] md:text-[2vh] mt-[0.3vh] text-amber-400 font-semibold">
+                    {daysLabel}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Footer */}
