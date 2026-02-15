@@ -29,6 +29,7 @@ interface MemorialPerson {
   father_name: string;
   is_male: boolean | null;
   hebrew_date_display: string;
+  days_until: number;
 }
 
 // Hebrew month names for display
@@ -193,16 +194,23 @@ export default function Display() {
         .eq('is_active', true);
 
       if (!error && data) {
+        const todayAbs = hDateToday.abs();
         const matched = data.filter(p =>
           datePairs.some(dp => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month)
         );
-        setMemorialPeople(matched.map(p => ({
-          id: p.id,
-          deceased_name: p.deceased_name,
-          father_name: p.father_name,
-          is_male: p.is_male,
-          hebrew_date_display: `${gematriya(p.hebrew_death_day)} ${HEBREW_MONTH_NAMES[p.hebrew_death_month] || ''}`,
-        })));
+        setMemorialPeople(matched.map(p => {
+          // Calculate days until yahrzeit
+          const matchingPair = datePairs.find(dp => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month);
+          const matchIndex = matchingPair ? datePairs.indexOf(matchingPair) : 0;
+          return {
+            id: p.id,
+            deceased_name: p.deceased_name,
+            father_name: p.father_name,
+            is_male: p.is_male,
+            hebrew_date_display: `${gematriya(p.hebrew_death_day)} ${HEBREW_MONTH_NAMES[p.hebrew_death_month] || ''}`,
+            days_until: matchIndex,
+          };
+        }));
       }
     };
 
