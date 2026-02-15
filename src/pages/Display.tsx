@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { HDate } from '@hebcal/core';
+import { HDate, months, gematriya } from '@hebcal/core';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize, Lock, Unlock } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import MemorialDisplaySlide from '@/components/display/MemorialDisplaySlide';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -21,6 +22,20 @@ interface ScheduledAnnouncement {
   priority: number;
   image_url: string | null;
 }
+
+interface MemorialPerson {
+  id: string;
+  deceased_name: string;
+  father_name: string;
+  is_male: boolean | null;
+  hebrew_date_display: string;
+}
+
+// Hebrew month names for display
+const HEBREW_MONTH_NAMES: Record<number, string> = {
+  1: 'ניסן', 2: 'אייר', 3: 'סיוון', 4: 'תמוז', 5: 'אב', 6: 'אלול',
+  7: 'תשרי', 8: 'חשוון', 9: 'כסלו', 10: 'טבת', 11: 'שבט', 12: 'אדר', 13: 'אדר ב׳',
+};
 
 // Style configurations for each theme
 const STYLE_CONFIGS: Record<StyleType, { bg: string; text: string; accent: string }> = {
@@ -92,45 +107,101 @@ export default function Display() {
   const [pinValue, setPinValue] = useState('');
   const [pinError, setPinError] = useState(false);
   const [unlockCode, setUnlockCode] = useState('1234');
+  const [memorialPeople, setMemorialPeople] = useState<MemorialPerson[]>([]);
+  const [showMemorial, setShowMemorial] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Manifest switching is now handled globally by useManifestSwitcher
 
-  // Fetch unlock code from settings
+  // Fetch unlock code and memorial settings from settings
   useEffect(() => {
-    const fetchUnlockCode = async () => {
+    const fetchSettings = async () => {
       const { data } = await supabase
         .from('app_settings')
-        .select('value')
-        .eq('key', 'display_lock_code')
-        .maybeSingle();
-      if (data?.value) {
-        setUnlockCode(data.value);
+        .select('key, value')
+        .in('key', ['display_lock_code', 'show_memorial_on_display']);
+      
+      if (data) {
+        for (const setting of data) {
+          if (setting.key === 'display_lock_code' && setting.value) {
+            setUnlockCode(setting.value);
+          }
+          if (setting.key === 'show_memorial_on_display') {
+            setShowMemorial(setting.value !== 'false');
+          }
+        }
       }
     };
-    fetchUnlockCode();
+    fetchSettings();
 
-    // Subscribe to changes
+    // Subscribe to settings changes
     const channel = supabase
-      .channel('display-lock-code')
+      .channel('display-settings')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'app_settings',
-          filter: 'key=eq.display_lock_code',
         },
-        (payload: { new: { value?: string } }) => {
-          if (payload.new?.value) {
+        (payload: { new: { key?: string; value?: string } }) => {
+          if (payload.new?.key === 'display_lock_code' && payload.new?.value) {
             setUnlockCode(payload.new.value);
+          }
+          if (payload.new?.key === 'show_memorial_on_display') {
+            setShowMemorial(payload.new.value !== 'false');
           }
         }
       )
       .subscribe();
 
     return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Fetch today's yahrzeits
+  useEffect(() => {
+    const fetchYahrzeits = async () => {
+      const hDate = new HDate();
+      const hebrewDay = hDate.getDate();
+      const hebrewMonth = hDate.getMonth();
+
+      const { data, error } = await supabase
+        .from('memorial_names')
+        .select('id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month')
+        .eq('is_active', true)
+        .eq('hebrew_death_day', hebrewDay)
+        .eq('hebrew_death_month', hebrewMonth);
+
+      if (!error && data) {
+        setMemorialPeople(data.map(p => ({
+          id: p.id,
+          deceased_name: p.deceased_name,
+          father_name: p.father_name,
+          is_male: p.is_male,
+          hebrew_date_display: `${gematriya(p.hebrew_death_day)} ${HEBREW_MONTH_NAMES[p.hebrew_death_month] || ''}`,
+        })));
+      }
+    };
+
+    fetchYahrzeits();
+    // Re-check every 10 minutes
+    const interval = setInterval(fetchYahrzeits, 10 * 60 * 1000);
+
+    // Also subscribe to realtime changes
+    const channel = supabase
+      .channel('memorial-display')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'memorial_names' },
+        () => fetchYahrzeits()
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, []);
@@ -303,28 +374,38 @@ export default function Display() {
     });
   }, [announcements, dayType, currentTime]);
 
+  // Build slides: announcements + memorial (if applicable)
+  const hasMemorial = showMemorial && memorialPeople.length > 0;
+  const totalSlides = validAnnouncements.length + (hasMemorial ? 1 : 0);
+
   // Carousel rotation every 10 seconds
   useEffect(() => {
-    if (validAnnouncements.length <= 1) return;
+    if (totalSlides <= 1) return;
 
     const rotateInterval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % validAnnouncements.length);
+      setCurrentIndex((prev) => (prev + 1) % totalSlides);
     }, 10000);
 
     return () => clearInterval(rotateInterval);
-  }, [validAnnouncements.length]);
+  }, [totalSlides]);
 
-  // Reset index when announcements change
+  // Reset index when slides change
   useEffect(() => {
-    if (currentIndex >= validAnnouncements.length) {
+    if (currentIndex >= totalSlides) {
       setCurrentIndex(0);
     }
-  }, [validAnnouncements.length, currentIndex]);
+  }, [totalSlides, currentIndex]);
 
-  const currentAnnouncement = validAnnouncements[currentIndex];
-  const styleConfig = currentAnnouncement
-    ? STYLE_CONFIGS[currentAnnouncement.style]
-    : STYLE_CONFIGS.traditional_gold;
+  // Determine what's showing: memorial slide is at index 0 when present
+  const isMemorialSlide = hasMemorial && currentIndex === 0;
+  const announcementIndex = hasMemorial ? currentIndex - 1 : currentIndex;
+  const currentAnnouncement = !isMemorialSlide ? validAnnouncements[announcementIndex] : null;
+
+  const styleConfig = isMemorialSlide
+    ? STYLE_CONFIGS.modern_dark
+    : currentAnnouncement
+      ? STYLE_CONFIGS[currentAnnouncement.style]
+      : STYLE_CONFIGS.traditional_gold;
 
   const timeString = currentTime.toLocaleTimeString('he-IL', {
     hour: '2-digit',
@@ -467,7 +548,7 @@ export default function Display() {
       {/* Main Content Area */}
       <main className="flex-1 flex items-center justify-center overflow-hidden relative">
         <AnimatePresence mode="wait">
-          {validAnnouncements.length === 0 ? (
+          {totalSlides === 0 ? (
             <motion.div
               key="no-announcements"
               initial={{ opacity: 0 }}
@@ -477,9 +558,16 @@ export default function Display() {
             >
               <div className="text-[4vh]">אין הודעות להצגה כרגע</div>
             </motion.div>
+          ) : isMemorialSlide ? (
+            <MemorialDisplaySlide
+              key="memorial"
+              people={memorialPeople}
+              textClass={styleConfig.text}
+              accentClass={styleConfig.accent}
+            />
           ) : currentAnnouncement ? (
             currentAnnouncement.image_url ? (
-              // Fullscreen image mode - takes remaining space below header
+              // Fullscreen image mode
               <motion.div
                 key={currentAnnouncement.id}
                 initial={{ opacity: 0 }}
@@ -517,9 +605,9 @@ export default function Display() {
       </main>
 
       {/* Footer - Progress indicator */}
-      {validAnnouncements.length > 1 && (
+      {totalSlides > 1 && (
         <footer className="shrink-0 flex items-center justify-center gap-3 py-[1.5vh] bg-inherit z-10">
-          {validAnnouncements.map((_, idx) => (
+          {Array.from({ length: totalSlides }).map((_, idx) => (
             <div
               key={idx}
               className={`w-[1.5vh] h-[1.5vh] md:w-[2vh] md:h-[2vh] rounded-full transition-all duration-300 ${

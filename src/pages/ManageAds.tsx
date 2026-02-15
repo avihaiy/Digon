@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Flame } from 'lucide-react';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -77,7 +77,44 @@ export default function ManageAds() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showMemorial, setShowMemorial] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch memorial toggle setting
+  useEffect(() => {
+    const fetchSetting = async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'show_memorial_on_display')
+        .maybeSingle();
+      if (data) {
+        setShowMemorial(data.value !== 'false');
+      }
+    };
+    fetchSetting();
+  }, []);
+
+  const toggleMemorial = async (checked: boolean) => {
+    setShowMemorial(checked);
+    const { data: existing } = await supabase
+      .from('app_settings')
+      .select('id')
+      .eq('key', 'show_memorial_on_display')
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from('app_settings')
+        .update({ value: checked ? 'true' : 'false' })
+        .eq('key', 'show_memorial_on_display');
+    } else {
+      await supabase
+        .from('app_settings')
+        .insert({ key: 'show_memorial_on_display', value: checked ? 'true' : 'false' });
+    }
+    toast.success(checked ? 'אשכבות יוצגו על המסך' : 'אשכבות הוסרו מהמסך');
+  };
 
   // Fetch announcements
   const { data: announcements = [], isLoading } = useQuery({
@@ -278,7 +315,23 @@ export default function ManageAds() {
           </h1>
           <p className="text-muted-foreground">נהל מודעות מתוזמנות לתצוגת הטלוויזיה</p>
         </div>
+      </div>
 
+      {/* Memorial Toggle Card */}
+      <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
+        <CardContent className="flex items-center justify-between py-3 px-4">
+          <div className="flex items-center gap-3">
+            <Flame className="w-5 h-5 text-amber-500" />
+            <div>
+              <p className="font-semibold text-sm">הצגת אשכבות על המסך</p>
+              <p className="text-xs text-muted-foreground">יוצג אוטומטית לפי תאריך עברי מתוך רשימת הנפטרים</p>
+            </div>
+          </div>
+          <Switch checked={showMemorial} onCheckedChange={toggleMemorial} />
+        </CardContent>
+      </Card>
+
+      <div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { setEditingId(null); setFormData(defaultFormData); }}>
