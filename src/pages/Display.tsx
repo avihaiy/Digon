@@ -339,6 +339,7 @@ export default function Display() {
     <div
       ref={containerRef}
       className={`fixed inset-0 flex flex-col ${styleConfig.bg} overflow-hidden`}
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       dir="rtl"
       onMouseMove={resetControlsTimeout}
       onTouchStart={resetControlsTimeout}
