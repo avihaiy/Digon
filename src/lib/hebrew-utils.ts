@@ -341,31 +341,64 @@ const hebrewMonths = [
   'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול'
 ];
 
+// Mashiv Haruach / Morid Hatal calculation
+// Mashiv haruach umorid hageshem: from Musaf of Shemini Atzeret (22 Tishrei) until Musaf of 1st day of Pesach (15 Nisan)
+// Morid hatal: rest of the year
+export function getMashivHaruach(date: Date = new Date()): { text: string; isGeshem: boolean } {
+  const hdate = new HDate(date);
+  const month = hdate.getMonth(); // hebcal: 7=Tishrei, 8=Cheshvan... 1=Nisan
+  const day = hdate.getDate();
+  
+  // Geshem period: 22 Tishrei (Shemini Atzeret) to 14 Nisan
+  // Month 7 = Tishrei, 1 = Nisan in hebcal
+  const isGeshem = (() => {
+    if (month === 7) return day >= 22; // From 22 Tishrei
+    if (month >= 8 && month <= 13) return true; // Cheshvan through Adar
+    if (month === 1) return day < 15; // Until 14 Nisan
+    return false;
+  })();
+  
+  return {
+    text: isGeshem ? 'משיב הרוח ומוריד הגשם' : 'מוריד הטל',
+    isGeshem,
+  };
+}
+
+// Check if today is Rosh Chodesh
+export function getRoshChodesh(date: Date = new Date()): string | null {
+  const hdate = new HDate(date);
+  const day = hdate.getDate();
+  
+  const monthNames: Record<number, string> = {
+    1: 'ניסן', 2: 'אייר', 3: 'סיוון', 4: 'תמוז', 5: 'אב', 6: 'אלול',
+    7: 'תשרי', 8: 'חשוון', 9: 'כסלו', 10: 'טבת', 11: 'שבט', 12: 'אדר', 13: 'אדר ב׳',
+  };
+  
+  if (day === 1) {
+    return `ראש חודש ${monthNames[hdate.getMonth()] || ''}`;
+  }
+  if (day === 30) {
+    // Day 30 is also Rosh Chodesh (first day of two-day RC)
+    const nextMonth = new HDate(hdate.abs() + 1);
+    return `ראש חודש ${monthNames[nextMonth.getMonth()] || ''}`;
+  }
+  return null;
+}
+
 // Birkat Hashanim calculation
-// In Israel: "Tal Umatar" is said from 7 Cheshvan
-// "Vetein Bracha" is said the rest of the year
+// In Israel: "Tal Umatar" is said from 7 Cheshvan until Pesach (15 Nisan)
+// hebcal months: NISAN=1, IYYAR=2, SIVAN=3, TAMUZ=4, AV=5, ELUL=6, TISHREI=7, CHESHVAN=8, KISLEV=9, TEVET=10, SHVAT=11, ADAR=12, ADAR_II=13
 export function getBirkatHashanim(date: Date = new Date()): { text: string; isTalUmatar: boolean } {
   const hdate = new HDate(date);
-  const hebrewMonth = hdate.getMonth(); // 1 = Tishrei, 2 = Cheshvan, etc.
-  const hebrewDay = hdate.getDate();
+  const month = hdate.getMonth();
+  const day = hdate.getDate();
   
-  // In Israel: Tal Umatar starts on 7 Cheshvan (month 2, day 7)
-  // and continues until Pesach (15 Nisan, month 8)
-  const isAfter7Cheshvan = hebrewMonth > 2 || (hebrewMonth === 2 && hebrewDay >= 7);
-  const isBeforePesach = hebrewMonth < 8 || (hebrewMonth === 8 && hebrewDay < 15);
-  
-  // Tal Umatar period: from 7 Cheshvan to 14 Nisan
-  // This covers months 2-7 (Cheshvan to Adar II) plus beginning of Nisan
-  const isTalUmatar = (hebrewMonth >= 2 && hebrewMonth <= 7) 
-    ? (hebrewMonth === 2 ? hebrewDay >= 7 : true)
-    : (hebrewMonth === 8 && hebrewDay < 15);
-  
-  // Simpler logic: 7 Cheshvan to 14 Nisan
+  // Tal Umatar: 7 Cheshvan (month 8) to 14 Nisan (month 1)
   const isTalUmatarPeriod = (() => {
-    if (hebrewMonth === 2) return hebrewDay >= 7; // From 7 Cheshvan
-    if (hebrewMonth > 2 && hebrewMonth < 8) return true; // Kislev through Adar
-    if (hebrewMonth === 8) return hebrewDay < 15; // Until 14 Nisan
-    return false; // Nisan 15+ through Tishrei
+    if (month === 8) return day >= 7; // From 7 Cheshvan
+    if (month >= 9 && month <= 13) return true; // Kislev through Adar II
+    if (month === 1) return day < 15; // Until 14 Nisan
+    return false; // Nisan 15+ through Tishrei 
   })();
   
   return {

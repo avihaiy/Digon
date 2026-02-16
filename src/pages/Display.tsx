@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { HDate, months, gematriya } from '@hebcal/core';
+import { HDate, months, gematriya, HebrewCalendar, flags } from '@hebcal/core';
+import { getMashivHaruach, getRoshChodesh, getBirkatHashanim } from '@/lib/hebrew-utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize, Lock, Unlock } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -94,6 +95,46 @@ function isTimeInRange(startTime: string, endTime: string): boolean {
 function getHebrewDate(): string {
   const hDate = new HDate();
   return hDate.renderGematriya(true);
+}
+
+function getTodayHolidayHebrew(): string | null {
+  const HOLIDAY_HEBREW: Record<string, string> = {
+    'Rosh Hashana': 'ראש השנה', 'Yom Kippur': 'יום כיפור', 'Sukkot': 'סוכות',
+    'Shmini Atzeret': 'שמיני עצרת', 'Simchat Torah': 'שמחת תורה', 'Chanukah': 'חנוכה',
+    'Tu BiShvat': 'ט״ו בשבט', 'Purim': 'פורים', 'Pesach': 'פסח',
+    'Shavuot': 'שבועות', "Lag BaOmer": 'ל״ג בעומר',
+    "Yom HaShoah": 'יום השואה', "Yom HaZikaron": 'יום הזיכרון',
+    "Yom HaAtzma'ut": 'יום העצמאות', "Yom Yerushalayim": 'יום ירושלים',
+    "Tish'a B'Av": 'תשעה באב', "Tu B'Av": 'ט״ו באב',
+    "Tzom Gedaliah": 'צום גדליה', "Asara B'Tevet": 'עשרה בטבת',
+    "Ta'anit Esther": 'תענית אסתר', "Tzom Tammuz": 'צום י״ז בתמוז',
+  };
+
+  try {
+    const hdate = new HDate();
+    const events = HebrewCalendar.getHolidaysOnDate(hdate, true);
+    if (!events || events.length === 0) return null;
+
+    for (const ev of events) {
+      const desc = ev.getDesc();
+      const evFlags = ev.getFlags();
+      // Skip Rosh Chodesh and minor observances like Yom Kippur Katan
+      if (evFlags & flags.ROSH_CHODESH) continue;
+      if (desc.includes('Katan')) continue;
+      // Only show major holidays, fasts
+      if (!(evFlags & (flags.CHAG | flags.MAJOR_FAST | flags.MINOR_FAST | flags.LIGHT_CANDLES | flags.CHANUKAH_CANDLES))) continue;
+      
+      const key = desc.split(':')[0].trim();
+      if (HOLIDAY_HEBREW[key]) return HOLIDAY_HEBREW[key];
+      // Check partial matches for multi-day holidays (exact word boundary)
+      for (const [eng, heb] of Object.entries(HOLIDAY_HEBREW)) {
+        if (desc.startsWith(eng) || desc.includes(eng + ':') || desc.includes(eng + ' ')) return heb;
+      }
+    }
+  } catch (e) {
+    console.error('Holiday detection error:', e);
+  }
+  return null;
 }
 
 export default function Display() {
@@ -441,6 +482,10 @@ export default function Display() {
   });
 
   const hebrewDate = getHebrewDate();
+  const mashivHaruach = getMashivHaruach(currentTime);
+  const birkatHashanim = getBirkatHashanim(currentTime);
+  const roshChodesh = getRoshChodesh(currentTime);
+  const todayHoliday = getTodayHolidayHebrew();
 
   return (
     <div
@@ -547,27 +592,51 @@ export default function Display() {
         )}
       </AnimatePresence>
       {/* Header with Clock and Hebrew Date - Always visible */}
-      <header className="shrink-0 flex items-center justify-between px-[3vw] py-[2vh] border-b border-black/10 bg-inherit z-10">
-        <div className="text-center">
-          <div
-            className={`text-[6vh] md:text-[7vh] font-bold tabular-nums leading-none ${styleConfig.text}`}
-            dir="ltr"
-          >
-            {timeString}
+      <header className="shrink-0 border-b border-black/10 bg-inherit z-10">
+        <div className="flex items-center justify-between px-[3vw] py-[1.5vh]">
+          <div className="text-center">
+            <div
+              className={`text-[6vh] md:text-[7vh] font-bold tabular-nums leading-none ${styleConfig.text}`}
+              dir="ltr"
+            >
+              {timeString}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className={`text-[3vh] md:text-[4vh] font-semibold ${styleConfig.text}`}>
+              {hebrewDate}
+            </div>
+            <div className={`text-[1.8vh] md:text-[2vh] ${styleConfig.accent}`}>
+              {currentTime.toLocaleDateString('he-IL', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </div>
           </div>
         </div>
-        <div className="text-center">
-          <div className={`text-[3vh] md:text-[4vh] font-semibold ${styleConfig.text}`}>
-            {hebrewDate}
-          </div>
-          <div className={`text-[1.8vh] md:text-[2vh] ${styleConfig.accent}`}>
-            {currentTime.toLocaleDateString('he-IL', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </div>
+        {/* Halachic info bar */}
+        <div className={`flex flex-wrap items-center justify-center gap-x-[3vw] gap-y-[0.5vh] px-[2vw] pb-[1vh] text-[1.6vh] md:text-[2vh] ${styleConfig.accent}`}>
+          <span className="flex items-center gap-[0.5vw]">
+            {mashivHaruach.isGeshem ? '🌧️' : '💧'} {mashivHaruach.text}
+          </span>
+          <span className="opacity-40">|</span>
+          <span className="flex items-center gap-[0.5vw]">
+            {birkatHashanim.isTalUmatar ? '🌾' : '☀️'} {birkatHashanim.text}
+          </span>
+          {roshChodesh && (
+            <>
+              <span className="opacity-40">|</span>
+              <span className="flex items-center gap-[0.5vw]">🌙 {roshChodesh}</span>
+            </>
+          )}
+          {todayHoliday && (
+            <>
+              <span className="opacity-40">|</span>
+              <span className="flex items-center gap-[0.5vw]">⭐ {todayHoliday}</span>
+            </>
+          )}
         </div>
       </header>
 
