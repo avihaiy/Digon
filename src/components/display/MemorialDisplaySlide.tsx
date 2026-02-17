@@ -18,14 +18,25 @@ interface MemorialDisplaySlideProps {
 function AnimatedCandle() {
   return (
     <div className="relative flex flex-col items-center w-[3.5vh]">
-      {/* Flame outer glow */}
+      {/* Outer ambient glow */}
       <motion.div
-        className="absolute -top-[0.5vh] w-[3vh] h-[3vh] rounded-full bg-amber-400/30 blur-md"
+        className="absolute -top-[1.5vh] w-[5vh] h-[5vh] rounded-full blur-xl"
+        style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.45) 0%, rgba(245,158,11,0.15) 50%, transparent 100%)' }}
         animate={{
-          scale: [1, 1.3, 0.9, 1.15, 1],
-          opacity: [0.4, 0.7, 0.3, 0.6, 0.4],
+          scale: [1, 1.4, 0.95, 1.25, 1],
+          opacity: [0.5, 0.85, 0.4, 0.7, 0.5],
         }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {/* Inner bright glow */}
+      <motion.div
+        className="absolute -top-[0.3vh] w-[2.5vh] h-[2.5vh] rounded-full blur-md"
+        style={{ background: 'radial-gradient(circle, rgba(254,243,199,0.8) 0%, rgba(251,191,36,0.3) 60%, transparent 100%)' }}
+        animate={{
+          scale: [1, 1.2, 0.9, 1.15, 1],
+          opacity: [0.7, 1, 0.6, 0.9, 0.7],
+        }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
       />
       {/* Flame */}
       <motion.svg
