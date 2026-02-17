@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Wallet } from 'lucide-react';
 import MemorialManager from '@/components/display/MemorialManager';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
@@ -79,21 +79,28 @@ export default function ManageAds() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showMemorial, setShowMemorial] = useState(true);
+  const [showFinance, setShowFinance] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch memorial toggle setting
+  // Fetch memorial and finance toggle settings
   useEffect(() => {
-    const fetchSetting = async () => {
+    const fetchSettings = async () => {
       const { data } = await supabase
         .from('app_settings')
-        .select('value')
-        .eq('key', 'show_memorial_on_display')
-        .maybeSingle();
+        .select('key, value')
+        .in('key', ['show_memorial_on_display', 'show_finance_on_display']);
       if (data) {
-        setShowMemorial(data.value !== 'false');
+        for (const setting of data) {
+          if (setting.key === 'show_memorial_on_display') {
+            setShowMemorial(setting.value !== 'false');
+          }
+          if (setting.key === 'show_finance_on_display') {
+            setShowFinance(setting.value === 'true');
+          }
+        }
       }
     };
-    fetchSetting();
+    fetchSettings();
   }, []);
 
   const toggleMemorial = async (checked: boolean) => {
@@ -115,6 +122,27 @@ export default function ManageAds() {
         .insert({ key: 'show_memorial_on_display', value: checked ? 'true' : 'false' });
     }
     toast.success(checked ? 'אשכבות יוצגו על המסך' : 'אשכבות הוסרו מהמסך');
+  };
+
+  const toggleFinance = async (checked: boolean) => {
+    setShowFinance(checked);
+    const { data: existing } = await supabase
+      .from('app_settings')
+      .select('id')
+      .eq('key', 'show_finance_on_display')
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from('app_settings')
+        .update({ value: checked ? 'true' : 'false' })
+        .eq('key', 'show_finance_on_display');
+    } else {
+      await supabase
+        .from('app_settings')
+        .insert({ key: 'show_finance_on_display', value: checked ? 'true' : 'false' });
+    }
+    toast.success(checked ? 'מצב כספי יוצג על המסך' : 'מצב כספי הוסר מהמסך');
   };
 
   // Fetch announcements
@@ -319,6 +347,27 @@ export default function ManageAds() {
       </div>
 
       <MemorialManager showMemorial={showMemorial} onToggleMemorial={toggleMemorial} />
+
+      {/* Finance Display Toggle */}
+      <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Wallet className="w-5 h-5 text-blue-500" />
+              <div>
+                <p className="font-semibold text-sm">תצוגת מצב כספי</p>
+                <p className="text-xs text-muted-foreground">
+                  הצג סיכום הכנסות, הוצאות ויתרה על מסך התצוגה
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">הצג על המסך</span>
+              <Switch checked={showFinance} onCheckedChange={toggleFinance} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

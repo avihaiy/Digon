@@ -7,6 +7,7 @@ import { Maximize, Lock, Unlock } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import MemorialDisplaySlide from '@/components/display/MemorialDisplaySlide';
+import FinanceDisplaySlide from '@/components/display/FinanceDisplaySlide';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -151,6 +152,7 @@ export default function Display() {
   const [unlockCode, setUnlockCode] = useState('1234');
   const [memorialPeople, setMemorialPeople] = useState<MemorialPerson[]>([]);
   const [showMemorial, setShowMemorial] = useState(true);
+  const [showFinance, setShowFinance] = useState(false);
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -163,7 +165,7 @@ export default function Display() {
       const { data } = await supabase
         .from('app_settings')
         .select('key, value')
-        .in('key', ['display_lock_code', 'show_memorial_on_display', 'memorial_show_week_before']);
+        .in('key', ['display_lock_code', 'show_memorial_on_display', 'memorial_show_week_before', 'show_finance_on_display']);
       
       if (data) {
         for (const setting of data) {
@@ -175,6 +177,9 @@ export default function Display() {
           }
           if (setting.key === 'memorial_show_week_before') {
             setShowWeekBefore(setting.value === 'true');
+          }
+          if (setting.key === 'show_finance_on_display') {
+            setShowFinance(setting.value === 'true');
           }
         }
       }
@@ -200,6 +205,9 @@ export default function Display() {
           }
           if (payload.new?.key === 'memorial_show_week_before') {
             setShowWeekBefore(payload.new.value === 'true');
+          }
+          if (payload.new?.key === 'show_finance_on_display') {
+            setShowFinance(payload.new.value === 'true');
           }
         }
       )
@@ -441,9 +449,15 @@ export default function Display() {
     });
   }, [announcements, dayType, currentTime]);
 
-  // Build slides: announcements + memorial (if applicable)
+  // Build slides: announcements + memorial + finance (if applicable)
   const hasMemorial = showMemorial && memorialPeople.length > 0;
-  const totalSlides = validAnnouncements.length + (hasMemorial ? 1 : 0);
+  const hasFinance = showFinance;
+  
+  // Slide order: memorial (0), finance (1 if memorial, 0 if not), then announcements
+  const specialSlides: ('memorial' | 'finance')[] = [];
+  if (hasMemorial) specialSlides.push('memorial');
+  if (hasFinance) specialSlides.push('finance');
+  const totalSlides = validAnnouncements.length + specialSlides.length;
 
   // Carousel rotation every 10 seconds
   useEffect(() => {
@@ -463,16 +477,20 @@ export default function Display() {
     }
   }, [totalSlides, currentIndex]);
 
-  // Determine what's showing: memorial slide is at index 0 when present
-  const isMemorialSlide = hasMemorial && currentIndex === 0;
-  const announcementIndex = hasMemorial ? currentIndex - 1 : currentIndex;
-  const currentAnnouncement = !isMemorialSlide ? validAnnouncements[announcementIndex] : null;
+  // Determine what's showing
+  const currentSlideType = currentIndex < specialSlides.length
+    ? specialSlides[currentIndex]
+    : 'announcement';
+  const announcementIndex = currentIndex - specialSlides.length;
+  const currentAnnouncement = currentSlideType === 'announcement' ? validAnnouncements[announcementIndex] : null;
 
-  const styleConfig = isMemorialSlide
+  const styleConfig = currentSlideType === 'memorial'
     ? STYLE_CONFIGS.modern_dark
-    : currentAnnouncement
-      ? STYLE_CONFIGS[currentAnnouncement.style]
-      : STYLE_CONFIGS.traditional_gold;
+    : currentSlideType === 'finance'
+      ? STYLE_CONFIGS.modern_dark
+      : currentAnnouncement
+        ? STYLE_CONFIGS[currentAnnouncement.style]
+        : STYLE_CONFIGS.traditional_gold;
 
   const timeString = currentTime.toLocaleTimeString('he-IL', {
     hour: '2-digit',
@@ -667,16 +685,21 @@ export default function Display() {
             >
               <div className="text-[4vh]">אין הודעות להצגה כרגע</div>
             </motion.div>
-          ) : isMemorialSlide ? (
+          ) : currentSlideType === 'memorial' ? (
             <MemorialDisplaySlide
               key="memorial"
               people={memorialPeople}
               textClass={styleConfig.text}
               accentClass={styleConfig.accent}
             />
+          ) : currentSlideType === 'finance' ? (
+            <FinanceDisplaySlide
+              key="finance"
+              textClass={styleConfig.text}
+              accentClass={styleConfig.accent}
+            />
           ) : currentAnnouncement ? (
             currentAnnouncement.image_url ? (
-              // Fullscreen image mode
               <motion.div
                 key={currentAnnouncement.id}
                 initial={{ opacity: 0 }}
@@ -692,7 +715,6 @@ export default function Display() {
                 />
               </motion.div>
             ) : (
-              // Text-only mode
               <motion.div
                 key={currentAnnouncement.id}
                 initial={{ opacity: 0, scale: 0.95 }}
