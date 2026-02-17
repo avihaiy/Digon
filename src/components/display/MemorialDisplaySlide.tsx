@@ -76,9 +76,13 @@ function ParchmentCard({ person, index }: { person: MemorialPerson; index: numbe
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.12, duration: 0.5 }}
+      initial={{ opacity: 0, y: 40, scale: 0.92, filter: 'blur(6px)' }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+      transition={{
+        delay: index * 0.18,
+        duration: 0.8,
+        ease: [0.22, 1, 0.36, 1],
+      }}
       className="relative"
     >
       <div
