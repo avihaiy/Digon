@@ -378,11 +378,71 @@ export function getRoshChodesh(date: Date = new Date()): string | null {
     return `ראש חודש ${monthNames[hdate.getMonth()] || ''}`;
   }
   if (day === 30) {
-    // Day 30 is also Rosh Chodesh (first day of two-day RC)
     const nextMonth = new HDate(hdate.abs() + 1);
     return `ראש חודש ${monthNames[nextMonth.getMonth()] || ''}`;
   }
   return null;
+}
+
+// Check if tomorrow is Rosh Chodesh (Erev Rosh Chodesh / Yom Kippur Katan)
+// Yom Kippur Katan is observed on Erev Rosh Chodesh (day before RC)
+// Not observed before Tishrei (month 7) or Cheshvan (month 8)
+export function getErevRoshChodesh(date: Date = new Date()): string | null {
+  const hdate = new HDate(date);
+  const day = hdate.getDate();
+  const month = hdate.getMonth();
+  
+  const monthNames: Record<number, string> = {
+    1: 'ניסן', 2: 'אייר', 3: 'סיוון', 4: 'תמוז', 5: 'אב', 6: 'אלול',
+    7: 'תשרי', 8: 'חשוון', 9: 'כסלו', 10: 'טבת', 11: 'שבט', 12: 'אדר', 13: 'אדר ב׳',
+  };
+  
+  // Check if tomorrow is 1st of month (meaning today is erev RC)
+  const tomorrow = new HDate(hdate.abs() + 1);
+  if (tomorrow.getDate() === 1) {
+    const nextMonth = tomorrow.getMonth();
+    // Skip before Tishrei and Cheshvan for Yom Kippur Katan
+    if (nextMonth === 7 || nextMonth === 8) return null;
+    return `ערב ר״ח ${monthNames[nextMonth] || ''} (יום כיפור קטן)`;
+  }
+  
+  // Day 29 of a 30-day month: tomorrow is day 30 which is already RC day 1
+  // So day 29 is Erev RC only in a 29-day month. The above check handles it.
+  return null;
+}
+
+// Sefirat HaOmer calculation
+// Counted from 2nd night of Pesach (16 Nisan) for 49 days
+export function getSefiratHaOmer(date: Date = new Date()): string | null {
+  const hdate = new HDate(date);
+  const month = hdate.getMonth(); // 1=Nisan
+  const day = hdate.getDate();
+  
+  // Omer is counted from 16 Nisan to 5 Sivan (49 days)
+  // Calculate day of Omer
+  let omerDay = 0;
+  
+  if (month === 1) { // Nisan
+    if (day >= 16) omerDay = day - 15;
+  } else if (month === 2) { // Iyyar
+    omerDay = 15 + day; // 15 days of Nisan (16-30) + Iyyar days
+  } else if (month === 3) { // Sivan
+    if (day <= 5) omerDay = 44 + day; // 15 + 29 + day
+  }
+  
+  if (omerDay < 1 || omerDay > 49) return null;
+  
+  const weeks = Math.floor(omerDay / 7);
+  const days = omerDay % 7;
+  
+  let label = `ספירת העומר: יום ${omerDay}`;
+  if (weeks > 0 && days === 0) {
+    label += ` (${weeks} שבועות)`;
+  } else if (weeks > 0) {
+    label += ` (${weeks} שבועות ו-${days} ימים)`;
+  }
+  
+  return label;
 }
 
 // Birkat Hashanim calculation

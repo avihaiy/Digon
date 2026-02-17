@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { Flame } from 'lucide-react';
 
 interface MemorialPerson {
   id: string;
@@ -16,25 +15,52 @@ interface MemorialDisplaySlideProps {
   accentClass?: string;
 }
 
-function CandleIcon({ className = '' }: { className?: string }) {
+function AnimatedCandle() {
   return (
-    <div className={`relative flex flex-col items-center ${className}`}>
+    <div className="relative flex flex-col items-center w-[3.5vh]">
+      {/* Flame outer glow */}
       <motion.div
-        animate={{ 
-          scale: [1, 1.2, 1],
-          opacity: [0.85, 1, 0.85],
+        className="absolute -top-[0.5vh] w-[3vh] h-[3vh] rounded-full bg-amber-400/30 blur-md"
+        animate={{
+          scale: [1, 1.3, 0.9, 1.15, 1],
+          opacity: [0.4, 0.7, 0.3, 0.6, 0.4],
         }}
-        transition={{ 
-          duration: 1.8, 
-          repeat: Infinity, 
-          ease: 'easeInOut' 
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      {/* Flame */}
+      <motion.svg
+        viewBox="0 0 24 36"
+        className="w-[2.5vh] h-[3.5vh] relative z-10"
+        animate={{
+          scaleX: [1, 0.85, 1.1, 0.9, 1],
+          scaleY: [1, 1.1, 0.9, 1.05, 1],
         }}
-        className="relative"
+        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Flame className="w-[3.5vh] h-[3.5vh] text-amber-400 fill-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.7)]" />
-      </motion.div>
-      <div className="w-[1vh] h-[4vh] bg-gradient-to-b from-amber-100 to-amber-300 rounded-b-sm shadow-inner" />
-      <div className="w-[2vh] h-[0.8vh] bg-gradient-to-b from-slate-400 to-slate-500 rounded-b-md" />
+        <defs>
+          <radialGradient id="flameGrad" cx="50%" cy="60%" r="50%">
+            <stop offset="0%" stopColor="#FFF7ED" />
+            <stop offset="30%" stopColor="#FDE68A" />
+            <stop offset="60%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#D97706" />
+          </radialGradient>
+        </defs>
+        <path
+          d="M12 2 C12 2, 4 14, 4 22 C4 28, 8 32, 12 32 C16 32, 20 28, 20 22 C20 14, 12 2, 12 2Z"
+          fill="url(#flameGrad)"
+        />
+        <path
+          d="M12 10 C12 10, 8 18, 8 22 C8 26, 10 28, 12 28 C14 28, 16 26, 16 22 C16 18, 12 10, 12 10Z"
+          fill="#FEF3C7"
+          opacity="0.7"
+        />
+      </motion.svg>
+      {/* Wick */}
+      <div className="w-[0.3vh] h-[0.8vh] bg-gray-700 rounded-b-full -mt-[0.3vh] relative z-10" />
+      {/* Candle body */}
+      <div className="w-[1.2vh] h-[4vh] bg-gradient-to-b from-amber-100 via-amber-50 to-amber-200 rounded-b-sm shadow-inner relative z-10" />
+      {/* Candle base */}
+      <div className="w-[1.8vh] h-[0.6vh] bg-gradient-to-b from-slate-400 to-slate-500 rounded-b-md relative z-10" />
     </div>
   );
 }
@@ -47,68 +73,104 @@ function getDaysLabel(days: number): string | null {
 
 function ParchmentCard({ person, index }: { person: MemorialPerson; index: number }) {
   const daysLabel = getDaysLabel(person.days_until);
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.15, duration: 0.6 }}
+      transition={{ delay: index * 0.12, duration: 0.5 }}
       className="relative"
     >
-      {/* Parchment card */}
-      <div className="relative bg-gradient-to-br from-amber-50 via-amber-100/90 to-yellow-100 
-        border-2 border-amber-700/40 rounded-lg shadow-lg overflow-hidden
-        px-[2vw] py-[2vh] min-h-[14vh] flex flex-col items-center justify-center text-center"
+      <div
+        className="relative rounded-lg overflow-hidden shadow-lg
+          px-[2vw] py-[2.5vh] min-h-[18vh] h-[18vh]
+          flex flex-col items-center justify-center text-center"
         style={{
-          backgroundImage: `
-            radial-gradient(ellipse at 20% 50%, rgba(139, 90, 43, 0.06) 0%, transparent 60%),
-            radial-gradient(ellipse at 80% 50%, rgba(139, 90, 43, 0.06) 0%, transparent 60%),
-            linear-gradient(to bottom, rgba(210, 180, 140, 0.15), rgba(245, 235, 210, 0.3), rgba(210, 180, 140, 0.15))
-          `
+          background: `
+            radial-gradient(ellipse at 30% 20%, rgba(218, 195, 150, 0.25) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, rgba(188, 160, 110, 0.2) 0%, transparent 50%),
+            linear-gradient(175deg, #F5ECD7 0%, #EDE3C8 30%, #E8D9B5 60%, #F0E5CC 100%)
+          `,
+          boxShadow: `
+            inset 0 2px 8px rgba(139, 90, 43, 0.15),
+            inset 0 -2px 6px rgba(139, 90, 43, 0.1),
+            0 4px 20px rgba(0, 0, 0, 0.15)
+          `,
+          border: '1.5px solid rgba(180, 150, 100, 0.4)',
         }}
       >
         {/* Inner decorative border */}
-        <div className="absolute inset-[0.5vh] border border-amber-600/20 rounded pointer-events-none" />
-        
-        {/* Candle at top */}
-        <CandleIcon className="mb-[0.5vh]" />
-        
+        <div
+          className="absolute inset-[0.6vh] rounded pointer-events-none"
+          style={{ border: '1px solid rgba(160, 130, 80, 0.2)' }}
+        />
+
+        {/* Top decorative line */}
+        <div
+          className="absolute top-[1.2vh] left-[8%] right-[8%] h-[1px]"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(160, 130, 80, 0.3), transparent)' }}
+        />
+
         {/* Name */}
-        <p className="text-[2.8vh] md:text-[3.5vh] font-bold leading-tight text-blue-900 mt-[0.3vh]">
+        <p
+          className="text-[2.8vh] md:text-[3.2vh] font-bold leading-tight"
+          style={{ color: '#1a365d', fontFamily: "'Heebo', 'Assistant', sans-serif" }}
+        >
           {person.deceased_name} ז״ל
         </p>
-        
+
         {/* Father's name */}
-        <p className="text-[2vh] md:text-[2.5vh] text-blue-800/80 mt-[0.3vh]">
+        <p
+          className="text-[1.8vh] md:text-[2.2vh] mt-[0.5vh]"
+          style={{ color: '#2a4a7f', fontFamily: "'Heebo', 'Assistant', sans-serif" }}
+        >
           {person.is_male !== false ? 'בן' : 'בת'} {person.father_name}
         </p>
-        
+
         {/* Hebrew date */}
-        <p className="text-[1.6vh] md:text-[1.8vh] text-amber-800/70 mt-[0.5vh]">
+        <p
+          className="text-[1.4vh] md:text-[1.6vh] mt-[0.8vh]"
+          style={{ color: '#8B6914' }}
+        >
           {person.hebrew_date_display}
         </p>
 
         {/* Days until indicator */}
         {person.days_until > 0 && daysLabel && (
-          <p className="text-[1.4vh] md:text-[1.6vh] mt-[0.3vh] text-amber-600 font-semibold">
+          <p
+            className="text-[1.2vh] md:text-[1.4vh] mt-[0.3vh] font-semibold"
+            style={{ color: '#92400E' }}
+          >
             {daysLabel}
           </p>
         )}
+
+        {/* Candle in bottom-left corner */}
+        <div className="absolute bottom-[1vh] left-[1.5vw]">
+          <AnimatedCandle />
+        </div>
+
+        {/* Bottom decorative line */}
+        <div
+          className="absolute bottom-[1.2vh] left-[8%] right-[8%] h-[1px]"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(160, 130, 80, 0.3), transparent)' }}
+        />
       </div>
     </motion.div>
   );
 }
 
 export default function MemorialDisplaySlide({ people }: MemorialDisplaySlideProps) {
-  const gridClass = people.length === 1 
-    ? 'flex justify-center' 
-    : people.length === 2 
-      ? 'grid grid-cols-2 gap-[2vw]' 
-      : people.length <= 4 
-        ? 'grid grid-cols-2 gap-[2vw]' 
-        : people.length <= 6
-          ? 'grid grid-cols-3 gap-[1.5vw]'
-          : 'grid grid-cols-3 lg:grid-cols-4 gap-[1.5vw]';
+  const gridClass =
+    people.length === 1
+      ? 'flex justify-center'
+      : people.length === 2
+        ? 'grid grid-cols-1 sm:grid-cols-2 gap-[2vw]'
+        : people.length <= 4
+          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[2vw]'
+          : people.length <= 6
+            ? 'grid grid-cols-2 lg:grid-cols-3 gap-[1.5vw]'
+            : 'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[1.5vw]';
 
   return (
     <motion.div
@@ -122,7 +184,7 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
       <div className="mb-[2vh]">
         <h2 className="text-[4vh] md:text-[5vh] font-bold text-white flex items-center justify-center gap-[1vw]">
           <span className="text-[3vh]">🕯️</span>
-          <span>אשכבה</span>
+          <span>אזכרה</span>
           <span className="text-[3vh]">🕯️</span>
         </h2>
         <p className="text-[2vh] md:text-[2.5vh] mt-[0.5vh] text-slate-300">
@@ -131,7 +193,7 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
       </div>
 
       {/* Names grid */}
-      <div className={`w-full max-w-[80vw] ${gridClass}`}>
+      <div className={`w-full max-w-[85vw] ${gridClass}`}>
         {people.map((person, index) => (
           <ParchmentCard key={person.id} person={person} index={index} />
         ))}

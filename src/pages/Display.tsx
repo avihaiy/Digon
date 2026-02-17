@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { HDate, months, gematriya, HebrewCalendar, flags } from '@hebcal/core';
-import { getMashivHaruach, getRoshChodesh, getBirkatHashanim } from '@/lib/hebrew-utils';
+import { getMashivHaruach, getRoshChodesh, getErevRoshChodesh, getBirkatHashanim, getSefiratHaOmer } from '@/lib/hebrew-utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize, Lock, Unlock } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -485,7 +485,9 @@ export default function Display() {
   const mashivHaruach = getMashivHaruach(currentTime);
   const birkatHashanim = getBirkatHashanim(currentTime);
   const roshChodesh = getRoshChodesh(currentTime);
+  const erevRoshChodesh = getErevRoshChodesh(currentTime);
   const todayHoliday = getTodayHolidayHebrew();
+  const sefiratHaOmer = getSefiratHaOmer(currentTime);
 
   return (
     <div
@@ -631,10 +633,22 @@ export default function Display() {
               <span className="flex items-center gap-[0.5vw]">🌙 {roshChodesh}</span>
             </>
           )}
+          {!roshChodesh && erevRoshChodesh && (
+            <>
+              <span className="opacity-40">|</span>
+              <span className="flex items-center gap-[0.5vw]">🌑 {erevRoshChodesh}</span>
+            </>
+          )}
           {todayHoliday && (
             <>
               <span className="opacity-40">|</span>
               <span className="flex items-center gap-[0.5vw]">⭐ {todayHoliday}</span>
+            </>
+          )}
+          {sefiratHaOmer && (
+            <>
+              <span className="opacity-40">|</span>
+              <span className="flex items-center gap-[0.5vw]">🌾 {sefiratHaOmer}</span>
             </>
           )}
         </div>
