@@ -5,6 +5,84 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// פונקציה לניקוי טקסט
+function clean(str: string = "") {
+  return str.replace(/\n/g, " ").trim();
+}
+
+// פונקציה לבניית קבלה בפורמט ESC/POS ב-base64
+function buildReceipt(receipt: any) {
+  const ESC = "\x1B";
+  const GS = "\x1D";
+  const encoder = new TextEncoder();
+
+  // בחר Hebrew Code Page (אם יוצא ג'יבריש אפשר לשנות ל-27 או 177 לפי צורך)
+  // \x15 = Code page 21 (Hebrew Windows)
+  // אם יש בעיות, אפשר לנסות לשנות את \x15 ל־\x27 או \xb1
+  const content =
+    ESC +
+    "@" + // Initialize printer
+    ESC +
+    "t" +
+    "\x15" + // Set code page to Hebrew Windows
+    ESC +
+    "a" +
+    "\x01" + // Center align
+    'בס"ד\n' +
+    "בית כנסת ברית שלום עכו\n" +
+    "רח' קדושי קהיר 18, עכו\n" +
+    "------------------------------\n" +
+    ESC +
+    "a" +
+    "\x02" + // Right align
+    "קבלה מס': " +
+    clean(receipt.receipt_number) +
+    "\n" +
+    "תאריך: " +
+    clean(receipt.greg_date) +
+    "\n" +
+    "תאריך עברי: " +
+    clean(receipt.hebrew_date) +
+    "\n" +
+    "------------------------------\n" +
+    "התקבל מאת: " +
+    clean(receipt.member_name) +
+    "\n" +
+    "עבור: " +
+    clean(receipt.description || "תרומה") +
+    "\n" +
+    "אמצעי תשלום: " +
+    clean(receipt.payment_method) +
+    "\n" +
+    "------------------------------\n" +
+    ESC +
+    "a" +
+    "\x01" + // Center align
+    'סה"כ שולם:\n\n' +
+    GS +
+    "!" +
+    "\x11" + // Double size text
+    clean(
+      new Intl.NumberFormat("he-IL", {
+        style: "currency",
+        currency: "ILS",
+        maximumFractionDigits: 0,
+      }).format(Number(receipt.total_amount)),
+    ) +
+    "\n\n" +
+    GS +
+    "!" +
+    "\x00" + // Normal size
+    "תודה על תרומתכם!\n" +
+    "050-5768723\n\n\n" +
+    GS +
+    "V" +
+    "\x00"; // Cut paper
+
+  // encode to Uint8Array and convert to base64 string
+  return btoa(String.fromCharCode(...encoder.encode(content)));
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,152 +102,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "receipt data is required" }), { status: 400, headers: corsHeaders });
     }
 
-    // ─────────────────────────────────────────────
-    // HTML מותאם לסיבוב 180 מעלות עבור SAM4S
-    // ─────────────────────────────────────────────
-    const html = `
-<html dir="rtl" lang="he">
-<head>
-<meta charset="UTF-8">
-<style>
-/* הגדרת גודל דף פיזי התואם להגדרות הדרייבר שבתמונה */
-@page {
-size: 80mm 120mm;
-margin: 0;
-}
+    const base64Content = buildReceipt(receipt);
 
-body {
-width: 80mm;
-height: 120mm;
-margin: 0;
-padding: 0;
-font-family: Arial, sans-serif;
-display: flex;
-justify-content: center;
-align-items: center;
-background-color: white;
-}
-
-/* המכולה הראשית שמסובבת את הכל */
-.rotate-container {
-width: 80mm;
-height: 120mm;
-padding: 6mm;
-box-sizing: border-box;
-transform: rotate(180deg);
-transform-origin: center center;
-display: flex;
-flex-direction: column;
-direction: rtl;
-text-align: right;
-}
-
-.center { text-align: center; }
-
-.sep {
-border-top: 1px dashed #000;
-margin: 10px 0;
-}
-
-.amount-box {
-font-size: 28px;
-font-weight: bold;
-text-align: center;
-border: 2px solid #000;
-margin: 15px 0;
-padding: 10px;
-}
-
-.header-title {
-font-size: 18px;
-font-weight: bold;
-margin-bottom: 2px;
-}
-
-.details {
-font-size: 14px;
-line-height: 1.4;
-}
-
-.footer {
-margin-top: auto;
-padding-bottom: 10mm; /* ריווח מהחיתוך */
-font-size: 12px;
-text-align: center;
-}
-</style>
-</head>
-<body>
-<div class="rotate-container">
-<div class="center">
-<div>בס"ד</div>
-<div class="header-title">בית כנסת "ברית שלום" עכו</div>
-<div>רח' קדושי קהיר 18, עכו</div>
-</div>
-
-<div class="sep"></div>
-
-<div class="details">
-<div><strong>קבלה מספר:</strong> ${receipt.receipt_number ?? ""}</div>
-<div><strong>תאריך:</strong> ${receipt.greg_date ?? ""}</div>
-<div><strong>תאריך עברי:</strong> ${receipt.hebrew_date ?? ""}</div>
-</div>
-
-<div class="sep"></div>
-
-<div class="details">
-<div><strong>התקבל מאת:</strong> ${receipt.member_name ?? "-"}</div>
-<div><strong>עבור:</strong> ${receipt.description ?? "תרומה"}</div>
-<div><strong>אמצעי תשלום:</strong> ${receipt.payment_method ?? "-"}</div>
-</div>
-
-<div class="sep"></div>
-
-<div class="center">סה"כ שולם:</div>
-<div class="amount-box">
-${new Intl.NumberFormat("he-IL", {
-  style: "currency",
-  currency: "ILS",
-  maximumFractionDigits: 0,
-}).format(Number(receipt.total_amount))}
-</div>
-
-<div class="sep"></div>
-
-<div class="footer">
-תודה על תרומתכם!<br/>
-נציג: 050-5768723
-</div>
-</div>
-</body>
-</html>
-`;
-
-    // ─────────────────────────────────────────────
-    // רינדור PDF דרך Puppeteer
-    // ─────────────────────────────────────────────
-    const puppeteer = await import("npm:puppeteer@21.3.8");
-    const browser = await puppeteer.default.launch({
-      args: ["--no-sandbox"],
-    });
-
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-
-    const pdfBuffer = await page.pdf({
-      width: "80mm",
-      height: "120mm",
-      printBackground: true,
-      margin: { top: 0, bottom: 0, left: 0, right: 0 },
-    });
-
-    await browser.close();
-
-    const base64Pdf = btoa(new Uint8Array(pdfBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ""));
-
-    // ─────────────────────────────────────────────
-    // שליחה ל-PrintNode
-    // ─────────────────────────────────────────────
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
@@ -179,8 +113,8 @@ ${new Intl.NumberFormat("he-IL", {
       body: JSON.stringify({
         printerId: parseInt(printerId),
         title: `Receipt #${receipt.receipt_number ?? ""}`,
-        contentType: "pdf_base64",
-        content: base64Pdf,
+        contentType: "raw_base64", // חשוב מאוד - מדפיס RAW ESC/POS
+        content: base64Content,
         source: "Brit Shalom Receipt System",
       }),
     });
