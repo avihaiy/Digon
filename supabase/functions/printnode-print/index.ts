@@ -2,11 +2,44 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ESC/POS helper: encode text to ESC/POS binary with Hebrew support
+// ============================================================
+// CHANGE THIS NUMBER TO TEST DIFFERENT CODE PAGES:
+// 0x06 = PC862 Hebrew (standard)
+// 0x24 = PC862 Hebrew (Sam4s variant 1)  
+// 0x35 = PC862 Hebrew (Sam4s variant 2)
+// 0x15 = PC862 Hebrew (Sam4s variant 3)
+// 0x11 = PC862 Hebrew (Sam4s variant 4)
+// ============================================================
+const HEBREW_CODEPAGE = 0x06;
+
+const hebrewToCP862: Record<string, number> = {
+  'א': 0x80, 'ב': 0x81, 'ג': 0x82, 'ד': 0x83, 'ה': 0x84,
+  'ו': 0x85, 'ז': 0x86, 'ח': 0x87, 'ט': 0x88, 'י': 0x89,
+  'ך': 0x8A, 'כ': 0x8B, 'ל': 0x8C, 'ם': 0x8D, 'מ': 0x8E,
+  'ן': 0x8F, 'נ': 0x90, 'ס': 0x91, 'ע': 0x92, 'ף': 0x93,
+  'פ': 0x94, 'ץ': 0x95, 'צ': 0x96, 'ק': 0x97, 'ר': 0x98,
+  'ש': 0x99, 'ת': 0x9A,
+  '"': 0x22, "'": 0x27, '׳': 0x27, '״': 0x22,
+};
+
+function encodeHebrew(text: string): Uint8Array {
+  const reversed = [...text].reverse().join("");
+  const bytes: number[] = [];
+  for (const char of reversed) {
+    if (hebrewToCP862[char] !== undefined) {
+      bytes.push(hebrewToCP862[char]);
+    } else if (char === ' ') {
+      bytes.push(0x20);
+    } else if (char.charCodeAt(0) < 128) {
+      bytes.push(char.charCodeAt(0));
+    }
+  }
+  return new Uint8Array(bytes);
+}
+
 function buildEscPosReceipt(receipt: {
   receipt_number: number | null;
   created_at: string;
@@ -17,131 +50,99 @@ function buildEscPosReceipt(receipt: {
   greg_date?: string;
   hebrew_date?: string;
 }): Uint8Array {
-  const encoder = new TextEncoder();
   const parts: Uint8Array[] = [];
-
   const push = (data: number[] | Uint8Array) => {
     parts.push(data instanceof Uint8Array ? data : new Uint8Array(data));
   };
-
-  const pushText = (text: string) => {
-    push(encoder.encode(text));
-  };
+  const pushH = (text: string) => push(encodeHebrew(text));
+  const pushA = (text: string) => push(new TextEncoder().encode(text));
 
   const ESC = 0x1b;
-  const GS = 0x1d;
-  const LF = 0x0a;
+  const GS  = 0x1d;
+  const LF  = 0x0a;
 
-  // Initialize printer
-  push([ESC, 0x40]); // ESC @ - Initialize
+  push([ESC, 0x40]);                    // Init printer
+  push([ESC, 0x74, HEBREW_CODEPAGE]);   // Set Hebrew code page
+  push([ESC, 0x61, 0x01]);              // Center align
+  push([ESC, 0x45, 0x01]);              // Bold ON
 
-  // Center alignment
-  push([ESC, 0x61, 1]); // ESC a 1 - Center
-
-  // Bold ON
-  push([ESC, 0x45, 1]); // ESC E 1 - Bold on
-
-  // בס"ד
-  pushText('בס"ד');
+  pushH('בס"ד');
   push([LF]);
 
-  // Synagogue name (double height for emphasis)
-  push([ESC, 0x21, 0x10]); // Double height
-  pushText('בית כנסת "ברית שלום" עכו');
+  push([ESC, 0x21, 0x10]);
+  pushH('בית כנסת "ברית שלום" עכו');
   push([LF]);
-  push([ESC, 0x21, 0x00]); // Normal size
-  push([ESC, 0x45, 1]); // Bold back on
+  push([ESC, 0x21, 0x00]);
+  push([ESC, 0x45, 0x01]);
 
-  // Address
-  pushText("רח' קדושי קהיר 18, עכו");
+  pushH("רח' קדושי קהיר 18, עכו");
   push([LF, LF]);
 
-  // Receipt number
-  pushText(`קבלה מספר: ${receipt.receipt_number || ""}`);
+  pushH(`קבלה מספר: ${receipt.receipt_number || ""}`);
   push([LF]);
 
-  // Dates
   if (receipt.greg_date || receipt.hebrew_date) {
-    pushText(`${receipt.greg_date || ""} • ${receipt.hebrew_date || ""}`);
+    pushA(`${receipt.greg_date || ""}`);
+    push([LF]);
+    pushH(`${receipt.hebrew_date || ""}`);
     push([LF]);
   }
 
-  // Separator
-  pushText("--------------------------------");
+  pushA("================================");
   push([LF]);
 
-  // Details
-  pushText(`התקבל מאת: ${receipt.member_name || "-"}`);
+  pushH(`התקבל מאת: ${receipt.member_name || "-"}`);
   push([LF]);
 
-  pushText(`עבור: ${receipt.description || "תרומה"}`);
+  pushH(`עבור: ${receipt.description || "תרומה"}`);
   push([LF]);
 
   const methodMap: Record<string, string> = {
-    bit: "ביט",
-    cash: "מזומן",
-    check: "צ׳ק",
-    bank_transfer: "העברה בנקאית",
+    bit: "ביט", cash: "מזומן", check: "צ'ק", bank_transfer: "העברה בנקאית",
   };
-  pushText(`אמצעי תשלום: ${methodMap[receipt.payment_method || ""] || receipt.payment_method || "-"}`);
+  pushH(`אמצעי תשלום: ${methodMap[receipt.payment_method || ""] || receipt.payment_method || "-"}`);
   push([LF]);
 
-  // Separator
-  pushText("--------------------------------");
+  pushA("================================");
   push([LF]);
 
-  // Total - large and bold
-  pushText("סה״כ שולם");
+  pushH('סה"כ שולם:');
   push([LF]);
 
-  // Double width + double height for amount
-  push([ESC, 0x21, 0x30]); // Double width + double height
+  push([ESC, 0x21, 0x30]);
   const amount = new Intl.NumberFormat("he-IL", {
-    style: "currency",
-    currency: "ILS",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    style: "currency", currency: "ILS",
+    minimumFractionDigits: 0, maximumFractionDigits: 0,
   }).format(receipt.total_amount);
-  pushText(amount);
+  pushA(amount);
   push([LF]);
-  push([ESC, 0x21, 0x00]); // Normal size
-  push([ESC, 0x45, 1]); // Bold back on
+  push([ESC, 0x21, 0x00]);
+  push([ESC, 0x45, 0x01]);
 
-  // Separator
-  pushText("--------------------------------");
+  pushA("================================");
   push([LF]);
 
-  // Footer
-  pushText("תודה על תרומתכם!");
+  pushH("תודה על תרומתכם!");
   push([LF]);
-  pushText('בית כנסת "ברית שלום" עכו');
+  pushH('בית כנסת "ברית שלום" עכו');
   push([LF]);
-  pushText("רח' קדושי קהיר 18 עכו");
+  pushH("רח' קדושי קהיר 18 עכו");
   push([LF]);
-  pushText("טלפון: 050-5768723");
+  pushA("Tel: 050-5768723");
   push([LF, LF, LF]);
 
-  // Cut paper
-  push([GS, 0x56, 1]); // GS V 1 - Partial cut
+  push([GS, 0x56, 0x01]);
 
-  // Combine all parts
   const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
   const result = new Uint8Array(totalLength);
   let offset = 0;
-  for (const part of parts) {
-    result.set(part, offset);
-    offset += part.length;
-  }
-
+  for (const part of parts) { result.set(part, offset); offset += part.length; }
   return result;
 }
 
-// Convert Uint8Array to base64
 function uint8ToBase64(data: Uint8Array): string {
   let binary = "";
-  for (let i = 0; i < data.length; i++) {
-    binary += String.fromCharCode(data[i]);
-  }
+  for (let i = 0; i < data.length; i++) { binary += String.fromCharCode(data[i]); }
   return btoa(binary);
 }
 
@@ -149,40 +150,25 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
   try {
-    const apiKey = Deno.env.get("PRINTNODE_API_KEY");
+    const apiKey    = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
     if (!apiKey || !printerId) {
       return new Response(JSON.stringify({ error: "PrintNode credentials not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const body = await req.json();
-    const { receipt } = body;
-
+    const { receipt } = await req.json();
     if (!receipt) {
       return new Response(JSON.stringify({ error: "Receipt data is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Build ESC/POS binary
-    const escposData = buildEscPosReceipt(receipt);
+    const escposData    = buildEscPosReceipt(receipt);
     const base64Content = uint8ToBase64(escposData);
-
-    // Send to PrintNode
-    const printJobPayload = {
-      printerId: parseInt(printerId, 10),
-      title: `Receipt #${receipt.receipt_number || "N/A"}`,
-      contentType: "raw_base64",
-      content: base64Content,
-      source: "Brit Shalom Receipt System",
-    };
 
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
@@ -190,29 +176,30 @@ serve(async (req) => {
         Authorization: `Basic ${btoa(apiKey + ":")}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(printJobPayload),
+      body: JSON.stringify({
+        printerId:   parseInt(printerId, 10),
+        title:       `Receipt #${receipt.receipt_number || "N/A"}`,
+        contentType: "raw_base64",
+        content:     base64Content,
+        source:      "Brit Shalom Receipt System",
+      }),
     });
 
     if (!printResponse.ok) {
       const errorText = await printResponse.text();
-      console.error("PrintNode API error:", errorText);
       return new Response(JSON.stringify({ error: "PrintNode API error", details: errorText }), {
-        status: printResponse.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: printResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const printResult = await printResponse.json();
-    console.log("PrintNode job created:", printResult);
-
     return new Response(JSON.stringify({ success: true, jobId: printResult }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
-    console.error("Error in printnode-print:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
