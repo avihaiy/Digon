@@ -5,6 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// פונקציה להפוך מחרוזת בעברית
+function reverseHebrew(str: string = ""): string {
+  // שומר על מספרים ופיסוק כמו שהם
+  return str.split("").reverse().join("");
+}
+
 // ניקוי טקסט
 function clean(str: string = "") {
   return str.replace(/\n/g, " ").trim();
@@ -16,53 +22,46 @@ function buildReceipt(receipt: any) {
   const GS = "\x1D";
   const encoder = new TextEncoder();
 
+  // הפיכת הטקסט בעברית
   const content =
     ESC +
     "@" + // Initialize printer
     ESC +
-    "t" +
-    "\x15" + // Set code page Hebrew Windows
-    ESC +
-    "`" +
-    "\x01" + // Enable RTL mode
-    ESC +
     "a" +
     "\x01" + // Center align
-    'בס"ד\n' +
-    "בית כנסת ברית שלום עכו\n" +
-    "רח' קדושי קהיר 18, עכו\n" +
+    reverseHebrew('בס"ד') +
+    "\n" +
+    reverseHebrew("בית כנסת ברית שלום עכו") +
+    "\n" +
+    reverseHebrew("רח' קדושי קהיר 18, עכו") +
+    "\n" +
     "------------------------------\n" +
     ESC +
     "a" +
     "\x02" + // Right align
-    "קבלה מס': " +
-    clean(receipt.receipt_number) +
+    reverseHebrew("קבלה מס': " + clean(receipt.receipt_number)) +
     "\n" +
-    "תאריך: " +
-    clean(receipt.greg_date) +
+    reverseHebrew("תאריך: " + clean(receipt.greg_date)) +
     "\n" +
-    "תאריך עברי: " +
-    clean(receipt.hebrew_date) +
+    reverseHebrew("תאריך עברי: " + clean(receipt.hebrew_date)) +
     "\n" +
     "------------------------------\n" +
-    "התקבל מאת: " +
-    clean(receipt.member_name) +
+    reverseHebrew("התקבל מאת: " + clean(receipt.member_name)) +
     "\n" +
-    "עבור: " +
-    clean(receipt.description || "תרומה") +
+    reverseHebrew("עבור: " + clean(receipt.description || "תרומה")) +
     "\n" +
-    "אמצעי תשלום: " +
-    clean(receipt.payment_method) +
+    reverseHebrew("אמצעי תשלום: " + clean(receipt.payment_method)) +
     "\n" +
     "------------------------------\n" +
     ESC +
     "a" +
     "\x01" + // Center align
-    'סה"כ שולם:\n\n' +
+    reverseHebrew('סה"כ שולם:') +
+    "\n\n" +
     GS +
     "!" +
     "\x11" + // Double size text
-    clean(
+    reverseHebrew(
       new Intl.NumberFormat("he-IL", {
         style: "currency",
         currency: "ILS",
@@ -73,7 +72,8 @@ function buildReceipt(receipt: any) {
     GS +
     "!" +
     "\x00" + // Normal size
-    "תודה על תרומתכם!\n" +
+    reverseHebrew("תודה על תרומתכם!") +
+    "\n" +
     "050-5768723\n\n\n" +
     GS +
     "V" +
