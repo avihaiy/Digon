@@ -2,82 +2,67 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// פונקציה להפוך מחרוזת בעברית
-function reverseHebrew(str: string = ""): string {
-  // שומר על מספרים ופיסוק כמו שהם
-  return str.split("").reverse().join("");
+// RTL חכם – לא הופך מספרים
+function rtl(text: string = ""): string {
+  return text
+    .split(" ")
+    .map(word => {
+      if (/^[0-9₪:\/\.\-]+$/.test(word)) return word;
+      return word.split("").reverse().join("");
+    })
+    .reverse()
+    .join(" ");
 }
 
-// ניקוי טקסט
-function clean(str: string = "") {
-  return str.replace(/\n/g, " ").trim();
-}
-
-// פונקציה לבניית קבלה בפורמט ESC/POS RAW Base64
 function buildReceipt(receipt: any) {
   const ESC = "\x1B";
   const GS = "\x1D";
   const encoder = new TextEncoder();
 
-  // הפיכת הטקסט בעברית
+  const LINE = "------------------------------------------"; // 42 chars = 80mm
+
   const content =
-    ESC +
-    "@" + // Initialize printer
-    ESC +
-    "a" +
-    "\x01" + // Center align
-    reverseHebrew('בס"ד') +
-    "\n" +
-    reverseHebrew("בית כנסת ברית שלום עכו") +
-    "\n" +
-    reverseHebrew("רח' קדושי קהיר 18, עכו") +
-    "\n" +
-    "------------------------------\n" +
-    ESC +
-    "a" +
-    "\x02" + // Right align
-    reverseHebrew("קבלה מס': " + clean(receipt.receipt_number)) +
-    "\n" +
-    reverseHebrew("תאריך: " + clean(receipt.greg_date)) +
-    "\n" +
-    reverseHebrew("תאריך עברי: " + clean(receipt.hebrew_date)) +
-    "\n" +
-    "------------------------------\n" +
-    reverseHebrew("התקבל מאת: " + clean(receipt.member_name)) +
-    "\n" +
-    reverseHebrew("עבור: " + clean(receipt.description || "תרומה")) +
-    "\n" +
-    reverseHebrew("אמצעי תשלום: " + clean(receipt.payment_method)) +
-    "\n" +
-    "------------------------------\n" +
-    ESC +
-    "a" +
-    "\x01" + // Center align
-    reverseHebrew('סה"כ שולם:') +
-    "\n\n" +
-    GS +
-    "!" +
-    "\x11" + // Double size text
-    reverseHebrew(
+    ESC + "@" +                 // Initialize
+    ESC + "t" + "\x18" +        // Hebrew code page
+    ESC + "a" + "\x01" +        // Center align
+    GS + "!" + "\x00" +         // Normal size
+    rtl('בס"ד') + "\n" +
+    rtl("בית כנסת ברית שלום עכו") + "\n" +
+    rtl("רח' קדושי קהיר 18, עכו") + "\n" +
+    LINE + "\n" +
+
+    ESC + "a" + "\x02" +        // Right align
+    rtl("קבלה מס': " + receipt.receipt_number) + "\n" +
+    rtl("תאריך: " + receipt.greg_date) + "\n" +
+    rtl("תאריך עברי: " + receipt.hebrew_date) + "\n" +
+    LINE + "\n" +
+
+    rtl("התקבל מאת: " + receipt.member_name) + "\n" +
+    rtl("עבור: " + (receipt.description || "תרומה")) + "\n" +
+    rtl("אמצעי תשלום: " + receipt.payment_method) + "\n" +
+    LINE + "\n" +
+
+    ESC + "a" + "\x01" +        // Center
+    rtl('סה"כ שולם:') + "\n\n" +
+
+    GS + "!" + "\x11" +         // Double size ONLY for amount
+    rtl(
       new Intl.NumberFormat("he-IL", {
         style: "currency",
         currency: "ILS",
         maximumFractionDigits: 0,
-      }).format(Number(receipt.total_amount)),
+      }).format(Number(receipt.total_amount))
     ) +
     "\n\n" +
-    GS +
-    "!" +
-    "\x00" + // Normal size
-    reverseHebrew("תודה על תרומתכם!") +
-    "\n" +
+
+    GS + "!" + "\x00" +         // Back to normal
+    rtl("תודה על תרומתכם!") + "\n" +
     "050-5768723\n\n\n" +
-    GS +
-    "V" +
-    "\x00"; // Cut paper
+
+    GS + "V" + "\x00";          // Cut paper
 
   return btoa(String.fromCharCode(...encoder.encode(content)));
 }
@@ -98,7 +83,10 @@ serve(async (req) => {
     const { receipt } = await req.json();
 
     if (!receipt) {
-      return new Response(JSON.stringify({ error: "receipt data is required" }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "receipt data is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const base64Content = buildReceipt(receipt);
@@ -112,7 +100,7 @@ serve(async (req) => {
       body: JSON.stringify({
         printerId: parseInt(printerId),
         title: `Receipt #${receipt.receipt_number ?? ""}`,
-        contentType: "raw_base64", // חשוב מאוד
+        contentType: "raw_base64",
         content: base64Content,
         source: "Brit Shalom Receipt System",
       }),
@@ -123,10 +111,14 @@ serve(async (req) => {
       throw new Error(err);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    const printResult = await printResponse.json();
+    return new Response(JSON.stringify({ success: true, jobId: printResult }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
