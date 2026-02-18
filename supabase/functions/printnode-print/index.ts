@@ -1,33 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { PDFDocument, rgb } from "npm:pdf-lib@1.17.1";
-import fontkit from "npm:@pdf-lib/fontkit@1.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Hebrew font served from the published app's public folder
-const HEBREW_FONT_URL = "https://brit-shlum.lovable.app/fonts/Alef-Regular.ttf";
-
-// Pre-reversal strategy for Hebrew text in a LTR PDF renderer:
-// 1. Reverse the entire string so Hebrew displays RTL.
-// 2. Re-reverse number/currency sequences so they keep correct digit order.
-function prepareRTL(text: string): string {
-  const reversed = [...text].reverse().join("");
-  // Re-reverse digits and the ₪ shekel sign so numbers stay intact
-  return reversed.replace(/[\u20AA]?[0-9][0-9,.'\u20AA]*/g, (m) =>
-    [...m].reverse().join("")
-  );
-}
-
-function uint8ToBase64(data: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < data.length; i++) {
-    binary += String.fromCharCode(data[i]);
-  }
-  return btoa(binary);
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,118 +15,121 @@ serve(async (req) => {
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
     if (!apiKey || !printerId) {
-      return new Response(
-        JSON.stringify({ error: "PrintNode credentials not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      throw new Error("Missing PrintNode credentials");
     }
 
-    const body = await req.json();
-    const receipt = body.receipt;
+    const { receipt } = await req.json();
 
     if (!receipt) {
-      return new Response(
-        JSON.stringify({ error: "receipt data is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "receipt data is required" }), { status: 400, headers: corsHeaders });
     }
 
-    // ── Fetch Hebrew font ────────────────────────────────────────────────────
-    const fontRes = await fetch(HEBREW_FONT_URL);
-    if (!fontRes.ok) throw new Error(`Could not fetch font: ${fontRes.status}`);
-    const fontBytes = await fontRes.arrayBuffer();
+    // ─────────────────────────────────────────────
+    // HTML עם RTL אמיתי
+    // ─────────────────────────────────────────────
+    const html = `
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+@page {
+size: 80mm 120mm;
+margin: 0;
+}
 
-    // ── Build PDF ────────────────────────────────────────────────────────────
-    const pdfDoc = await PDFDocument.create();
-    pdfDoc.registerFontkit(fontkit);
-    const font = await pdfDoc.embedFont(fontBytes);
+body {
+width: 80mm;
+margin: 0;
+padding: 5mm;
+font-family: Arial, sans-serif;
+direction: rtl;
+text-align: right;
+font-size: 12px;
+}
 
-    // 80 mm = 226.77pt, 120 mm = 340.16pt
-    const PAGE_W = 227;
-    const PAGE_H = 340;
-    const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
-    const black = rgb(0, 0, 0);
+.center {
+text-align: center;
+}
 
-    let y = PAGE_H - 8;
+.sep {
+border-top: 1px dashed #000;
+margin: 6px 0;
+}
 
-    const drawText = (raw: string, size: number, gap = 3) => {
-      const text = prepareRTL(raw);
-      const w = font.widthOfTextAtSize(text, size);
-      const x = Math.max(4, (PAGE_W - w) / 2);
-      page.drawText(text, { x, y, size, font, color: black });
-      y -= size + gap;
-    };
+.amount {
+font-size: 22px;
+font-weight: bold;
+text-align: center;
+}
+</style>
+</head>
+<body>
 
-    // Plain text without RTL reversal (for dates, phone, amounts)
-    const drawPlain = (text: string, size: number, gap = 3) => {
-      const w = font.widthOfTextAtSize(text, size);
-      const x = Math.max(4, (PAGE_W - w) / 2);
-      page.drawText(text, { x, y, size, font, color: black });
-      y -= size + gap;
-    };
+<div class="center">
+<div>בס"ד</div>
+<strong>בית כנסת "ברית שלום" עכו</strong><br/>
+רח' קדושי קהיר 18, עכו
+</div>
 
-    const drawSep = () => {
-      page.drawLine({
-        start: { x: 6, y: y + 2 },
-        end: { x: PAGE_W - 6, y: y + 2 },
-        thickness: 0.5,
-        color: black,
-        dashArray: [3, 3],
-      });
-      y -= 8;
-    };
+<div class="sep"></div>
 
-    // ── Receipt content ──────────────────────────────────────────────────────
-    drawText('בס"ד', 8, 2);
-    drawText('בית כנסת "ברית שלום" עכו', 11, 2);
-    drawText("רח' קדושי קהיר 18, עכו", 8, 4);
+<div>קבלה מספר: ${receipt.receipt_number ?? ""}</div>
+<div>${receipt.greg_date ?? ""}</div>
+<div>${receipt.hebrew_date ?? ""}</div>
 
-    drawText(`קבלה מספר: ${receipt.receipt_number ?? ""}`, 10, 2);
+<div class="sep"></div>
 
-    if (receipt.greg_date || receipt.hebrew_date) {
-      drawPlain(`${receipt.greg_date ?? ""}`, 8, 1);
-      drawText(`${receipt.hebrew_date ?? ""}`, 8, 3);
-    }
+<div>התקבל מאת: ${receipt.member_name ?? "-"}</div>
+<div>עבור: ${receipt.description ?? "תרומה"}</div>
+<div>אמצעי תשלום: ${receipt.payment_method ?? "-"}</div>
 
-    drawSep();
+<div class="sep"></div>
 
-    drawText(`התקבל מאת: ${receipt.member_name ?? "-"}`, 9, 2);
-    drawText(`עבור: ${receipt.description ?? "תרומה"}`, 9, 2);
+<div class="center">סה"כ שולם:</div>
+<div class="amount">
+${new Intl.NumberFormat("he-IL", {
+  style: "currency",
+  currency: "ILS",
+  maximumFractionDigits: 0,
+}).format(Number(receipt.total_amount))}
+</div>
 
-    const methodMap: Record<string, string> = {
-      bit: "ביט",
-      cash: "מזומן",
-      check: "צ'ק",
-      bank_transfer: "העברה בנקאית",
-    };
-    const method =
-      methodMap[receipt.payment_method ?? ""] || receipt.payment_method || "-";
-    drawText(`אמצעי תשלום: ${method}`, 9, 4);
+<div class="sep"></div>
 
-    drawSep();
+<div class="center">
+תודה על תרומתכם!<br/>
+050-5768723
+</div>
 
-    drawText('סה"כ שולם:', 10, 2);
+</body>
+</html>
+`;
 
-    const amount = new Intl.NumberFormat("he-IL", {
-      style: "currency",
-      currency: "ILS",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(Number(receipt.total_amount));
-    drawPlain(amount, 20, 4);
+    // ─────────────────────────────────────────────
+    // רינדור PDF דרך Puppeteer
+    // ─────────────────────────────────────────────
+    const puppeteer = await import("npm:puppeteer@21.3.8");
+    const browser = await puppeteer.default.launch({
+      args: ["--no-sandbox"],
+    });
 
-    drawSep();
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
 
-    drawText("תודה על תרומתכם!", 10, 2);
-    drawText('בית כנסת "ברית שלום" עכו', 8, 1);
-    drawText("רח' קדושי קהיר 18 עכו", 8, 1);
-    drawPlain("050-5768723", 8);
+    const pdfBuffer = await page.pdf({
+      width: "80mm",
+      height: "120mm",
+      printBackground: true,
+      margin: { top: 0, bottom: 0, left: 0, right: 0 },
+    });
 
-    // ── Encode PDF → Base64 ──────────────────────────────────────────────────
-    const pdfBytes = await pdfDoc.save();
-    const base64Pdf = uint8ToBase64(pdfBytes);
+    await browser.close();
 
-    // ── Send to PrintNode ────────────────────────────────────────────────────
+    const base64Pdf = btoa(new Uint8Array(pdfBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ""));
+
+    // ─────────────────────────────────────────────
+    // שליחה ל-PrintNode
+    // ─────────────────────────────────────────────
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
@@ -158,8 +137,8 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        printerId: parseInt(printerId, 10),
-        title: `Receipt #${receipt.receipt_number ?? "N/A"}`,
+        printerId: parseInt(printerId),
+        title: `Receipt #${receipt.receipt_number ?? ""}`,
         contentType: "pdf_base64",
         content: base64Pdf,
         source: "Brit Shalom Receipt System",
@@ -167,22 +146,14 @@ serve(async (req) => {
     });
 
     if (!printResponse.ok) {
-      const errorText = await printResponse.text();
-      return new Response(
-        JSON.stringify({ error: "PrintNode API error", details: errorText }),
-        { status: printResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const err = await printResponse.text();
+      throw new Error(err);
     }
 
-    const printResult = await printResponse.json();
-    return new Response(
-      JSON.stringify({ success: true, jobId: printResult }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 });
