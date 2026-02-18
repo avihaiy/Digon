@@ -5,19 +5,73 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// פונקציה לניקוי HTML
-function escapeHtml(str: string = "") {
-  return str.replace(
-    /[&<>"']/g,
-    (m) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;",
-      })[m]!,
-  );
+// ניקוי טקסט
+function clean(str: string = "") {
+  return str.replace(/\n/g, " ").trim();
+}
+
+// בניית קבלה ב-ESC/POS
+function buildReceipt(receipt: any) {
+  const encoder = new TextEncoder();
+
+  const ESC = "\x1B";
+  const GS = "\x1D";
+
+  const content =
+    ESC +
+    "@" + // Initialize printer
+    ESC +
+    "t" +
+    "\x15" + // Hebrew code page (אם יוצא ג'יבריש נשנה)
+    ESC +
+    "a" +
+    "\x01" + // Center
+    'בס"ד\n' +
+    "בית כנסת ברית שלום עכו\n" +
+    "רח' קדושי קהיר 18, עכו\n" +
+    "-------------------------------\n" +
+    ESC +
+    "a" +
+    "\x02" + // Right align
+    "קבלה מס': " +
+    clean(receipt.receipt_number) +
+    "\n" +
+    "תאריך: " +
+    clean(receipt.greg_date) +
+    "\n" +
+    "תאריך עברי: " +
+    clean(receipt.hebrew_date) +
+    "\n" +
+    "-------------------------------\n" +
+    "התקבל מאת: " +
+    clean(receipt.member_name) +
+    "\n" +
+    "עבור: " +
+    clean(receipt.description || "תרומה") +
+    "\n" +
+    "אמצעי תשלום: " +
+    clean(receipt.payment_method) +
+    "\n" +
+    "-------------------------------\n" +
+    ESC +
+    "a" +
+    "\x01" + // Center
+    'סה"כ שולם\n\n' +
+    GS +
+    "!" +
+    "\x11" + // Double size
+    clean(receipt.total_amount) +
+    " ₪\n\n" +
+    GS +
+    "!" +
+    "\x00" + // Normal size
+    "תודה על תרומתכם!\n" +
+    "050-5768723\n\n\n" +
+    GS +
+    "V" +
+    "\x00"; // Full cut
+
+  return btoa(String.fromCharCode(...encoder.encode(content)));
 }
 
 serve(async (req) => {
@@ -38,114 +92,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "receipt data is required" }), { status: 400, headers: corsHeaders });
     }
 
-    // HTML מותאם ל-SAM4S GIANT-100
-    const html = `
-    <html dir="rtl" lang="he">
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        @page { margin: 0; }
+    const base64Content = buildReceipt(receipt);
 
-        body {
-          width: 72mm;
-          margin: 0 auto;
-          padding: 4mm 2mm;
-          font-family: "Courier New", monospace;
-          font-size: 12px;
-          direction: rtl;
-          text-align: right;
-          box-sizing: border-box;
-        }
-
-        .center { text-align: center; }
-
-        .sep {
-          border-top: 1px dashed #000;
-          margin: 6px 0;
-        }
-
-        .amount-label {
-          text-align: center;
-          margin-top: 6px;
-        }
-
-        .amount {
-          font-size: 20px;
-          font-weight: bold;
-          text-align: center;
-          direction: ltr;
-        }
-
-        .footer {
-          margin-top: 10px;
-          font-size: 11px;
-          text-align: center;
-        }
-      </style>
-    </head>
-    <body>
-
-      <div class="center">
-        <div>בס"ד</div>
-        <strong>בית כנסת "ברית שלום" עכו</strong><br/>
-        רח' קדושי קהיר 18, עכו
-      </div>
-
-      <div class="sep"></div>
-
-      <div><strong>קבלה מספר:</strong> ${escapeHtml(receipt.receipt_number)}</div>
-      <div><strong>תאריך:</strong> ${escapeHtml(receipt.greg_date)}</div>
-      <div><strong>תאריך עברי:</strong> ${escapeHtml(receipt.hebrew_date)}</div>
-
-      <div class="sep"></div>
-
-      <div><strong>התקבל מאת:</strong> ${escapeHtml(receipt.member_name)}</div>
-      <div><strong>עבור:</strong> ${escapeHtml(receipt.description || "תרומה")}</div>
-      <div><strong>אמצעי תשלום:</strong> ${escapeHtml(receipt.payment_method)}</div>
-
-      <div class="sep"></div>
-
-      <div class="amount-label">סה"כ שולם:</div>
-      <div class="amount">
-        ${new Intl.NumberFormat("he-IL", {
-          style: "currency",
-          currency: "ILS",
-          maximumFractionDigits: 0,
-        }).format(Number(receipt.total_amount))}
-      </div>
-
-      <div class="sep"></div>
-
-      <div class="footer">
-        תודה על תרומתכם!<br/>
-        נציג: 050-5768723
-      </div>
-
-    </body>
-    </html>
-    `;
-
-    // יצירת PDF נכון ל-80mm
-    const puppeteer = await import("npm:puppeteer@21.3.8");
-    const browser = await puppeteer.default.launch({
-      args: ["--no-sandbox"],
-    });
-
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-
-    const pdfBuffer = await page.pdf({
-      width: "72mm", // חשוב מאוד למדפסת 80mm
-      printBackground: true,
-      margin: { top: 0, bottom: 0, left: 0, right: 0 },
-    });
-
-    await browser.close();
-
-    // המרה תקינה ל-Base64
-    const base64Pdf = Buffer.from(pdfBuffer).toString("base64");
-
-    // שליחה ל-PrintNode עם rotate תקין
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
@@ -155,12 +103,9 @@ serve(async (req) => {
       body: JSON.stringify({
         printerId: parseInt(printerId),
         title: `Receipt #${receipt.receipt_number ?? ""}`,
-        contentType: "pdf_base64",
-        content: base64Pdf,
+        contentType: "raw_base64", // 🔥 חשוב מאוד
+        content: base64Content,
         source: "Brit Shalom Receipt System",
-        options: {
-          rotate: 180, // פותר הדפסה הפוכה
-        },
       }),
     });
 
