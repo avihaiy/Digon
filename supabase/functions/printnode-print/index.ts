@@ -5,8 +5,60 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// המרת עברית ל-CP862 (DOS Hebrew)
+function encodeCP862(str: string) {
+  const table: Record<string, number> = {
+    א: 0x80,
+    ב: 0x81,
+    ג: 0x82,
+    ד: 0x83,
+    ה: 0x84,
+    ו: 0x85,
+    ז: 0x86,
+    ח: 0x87,
+    ט: 0x88,
+    י: 0x89,
+    כ: 0x8a,
+    ל: 0x8b,
+    מ: 0x8c,
+    נ: 0x8d,
+    ס: 0x8e,
+    ע: 0x8f,
+    פ: 0x90,
+    צ: 0x91,
+    ק: 0x92,
+    ר: 0x93,
+    ש: 0x94,
+    ת: 0x95,
+    ך: 0x9a,
+    ם: 0x9b,
+    ן: 0x9c,
+    ף: 0x9d,
+    ץ: 0x9e,
+  };
+
+  const bytes: number[] = [];
+
+  for (const ch of str) {
+    if (table[ch] !== undefined) {
+      bytes.push(table[ch]);
+    } else {
+      bytes.push(ch.charCodeAt(0));
+    }
+  }
+
+  return new Uint8Array(bytes);
+}
+
+// הפיכת טקסט RTL למדפסת
+function reverse(str: string) {
+  return str.split("").reverse().join("");
+}
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
@@ -18,122 +70,52 @@ serve(async (req) => {
 
     const { receipt } = await req.json();
 
-    // ===============================
-    // HTML קבלה – עברית תקינה
-    // ===============================
-    const html = `
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<style>
-  body {
-    width: 576px; /* מותאם למדפסת 80mm */
-    margin: 0;
-    padding: 20px;
-    font-family: Arial, sans-serif;
-    direction: rtl;
-    text-align: center;
-    background: white;
-  }
-  .sep {
-    border-top: 2px solid black;
-    margin: 10px 0;
-  }
-  .details {
-    text-align: right;
-    font-size: 16px;
-    line-height: 1.6;
-  }
-  .amount {
-    font-size: 28px;
-    font-weight: bold;
-    border: 2px solid black;
-    padding: 8px;
-    margin: 10px 0;
-  }
-</style>
-</head>
-<body>
+    // ===== ESC/POS INIT =====
+    const init = new Uint8Array([
+      0x1b,
+      0x40, // Initialize
+      0x1b,
+      0x74,
+      0x15, // Code page 862 (Hebrew)
+      0x1b,
+      0x61,
+      0x02, // Align right
+    ]);
 
-<div style="font-size:14px;">בס"ד</div>
-<div style="font-size:22px; font-weight:bold;">בית כנסת "ברית שלום" עכו</div>
-<div style="font-size:14px;">רח' קדושי קהיר 18, עכו</div>
+    const textContent = `
+${reverse("בית כנסת ברית שלום")}
+${reverse("עכו")}
 
-<div class="sep"></div>
+--------------------------------
 
-<div class="details">
-  <div><strong>קבלה:</strong> ${receipt.receipt_number ?? ""}</div>
-  <div><strong>תאריך:</strong> ${receipt.greg_date ?? ""}</div>
-  <div><strong>עברי:</strong> ${receipt.hebrew_date ?? ""}</div>
-</div>
+${reverse("קבלה:")} ${receipt.receipt_number ?? ""}
+${reverse("תאריך:")} ${receipt.greg_date ?? ""}
+${reverse("מאת:")} ${reverse(receipt.member_name ?? "")}
 
-<div class="sep"></div>
+--------------------------------
 
-<div class="details">
-  <div><strong>מאת:</strong> ${receipt.member_name ?? "-"}</div>
-  <div><strong>עבור:</strong> ${receipt.description ?? ""}</div>
-  <div><strong>תשלום:</strong> ${receipt.payment_method ?? ""}</div>
-</div>
+${reverse('סה"כ:')} ₪ ${receipt.total_amount ?? "0"}
 
-<div class="sep"></div>
+--------------------------------
 
-<div style="font-size:18px;">סה"כ שולם:</div>
-<div class="amount">₪ ${receipt.total_amount ?? "0"}</div>
-
-<div class="sep"></div>
-
-<div style="font-size:14px;">
-תודה על תרומתכם!<br/>
-050-5768723
-</div>
-
-</body>
-</html>
+${reverse("תודה רבה!")}
 `;
 
-    // ===============================
-    // Puppeteer – יצירת PNG תקין
-    // ===============================
-    const puppeteer = await import("npm:puppeteer@21.3.8");
+    const textBytes = encodeCP862(textContent);
 
-    const browser = await puppeteer.default.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    const cut = new Uint8Array([
+      0x0a,
+      0x0a,
+      0x0a,
+      0x1d,
+      0x56,
+      0x00, // Cut paper
+    ]);
 
-    const page = await browser.newPage();
+    const finalData = new Uint8Array([...init, ...textBytes, ...cut]);
 
-    await page.setViewport({
-      width: 576,
-      height: 1000,
-      deviceScaleFactor: 2,
-    });
+    const base64Data = btoa(String.fromCharCode(...finalData));
 
-    await page.setContent(html, { waitUntil: "networkidle0" });
-
-    // לחכות לפונטים
-    await page.evaluateHandle("document.fonts.ready");
-
-    // גובה דינמי
-    const height = await page.evaluate(() => document.body.scrollHeight);
-
-    const pngBuffer = await page.screenshot({
-      type: "png",
-      clip: {
-        x: 0,
-        y: 0,
-        width: 576,
-        height: Math.ceil(height),
-      },
-    });
-
-    await browser.close();
-
-    const base64Png = pngBuffer.toString("base64");
-
-    // ===============================
-    // שליחה ל-PrintNode
-    // ===============================
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
@@ -143,14 +125,14 @@ serve(async (req) => {
       body: JSON.stringify({
         printerId: parseInt(printerId),
         title: "Receipt",
-        contentType: "image/png_base64",
-        content: base64Png,
+        contentType: "raw_base64",
+        content: base64Data,
       }),
     });
 
     if (!printResponse.ok) {
-      const errorText = await printResponse.text();
-      throw new Error(errorText);
+      const errText = await printResponse.text();
+      throw new Error(errText);
     }
 
     return new Response(JSON.stringify({ success: true }), {
