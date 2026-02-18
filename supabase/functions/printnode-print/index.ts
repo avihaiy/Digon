@@ -25,13 +25,14 @@ serve(async (req) => {
     }
 
     // ─────────────────────────────────────────────
-    // HTML מותאם ל-SAM4S GIANT-100 (סיבוב 180 מעלות)
+    // HTML מותאם לסיבוב 180 מעלות עבור SAM4S
     // ─────────────────────────────────────────────
     const html = `
 <html dir="rtl" lang="he">
 <head>
 <meta charset="UTF-8">
 <style>
+/* הגדרת גודל דף פיזי התואם להגדרות הדרייבר שבתמונה */
 @page {
 size: 80mm 120mm;
 margin: 0;
@@ -41,75 +42,91 @@ body {
 width: 80mm;
 height: 120mm;
 margin: 0;
-padding: 5mm;
+padding: 0;
 font-family: Arial, sans-serif;
-direction: rtl;
-text-align: right;
-font-size: 14px;
-box-sizing: border-box;
 display: flex;
-flex-direction: column;
+justify-content: center;
+align-items: center;
+background-color: white;
+}
 
-/* סיבוב למניעת הדפסה הפוכה */
+/* המכולה הראשית שמסובבת את הכל */
+.rotate-container {
+width: 80mm;
+height: 120mm;
+padding: 6mm;
+box-sizing: border-box;
 transform: rotate(180deg);
 transform-origin: center center;
+display: flex;
+flex-direction: column;
+direction: rtl;
+text-align: right;
 }
 
-.content-wrapper {
-flex: 1;
-/* הוספת ריווח כדי שהחיתוך לא יפגע בטקסט בסוף הקבלה */
-padding-top: 10mm;
-}
-
-.center {
-text-align: center;
-}
+.center { text-align: center; }
 
 .sep {
 border-top: 1px dashed #000;
-margin: 8px 0;
+margin: 10px 0;
 }
 
-.amount {
-font-size: 26px;
+.amount-box {
+font-size: 28px;
 font-weight: bold;
 text-align: center;
-margin: 10px 0;
 border: 2px solid #000;
-padding: 5px;
+margin: 15px 0;
+padding: 10px;
+}
+
+.header-title {
+font-size: 18px;
+font-weight: bold;
+margin-bottom: 2px;
+}
+
+.details {
+font-size: 14px;
+line-height: 1.4;
 }
 
 .footer {
-margin-top: 15px;
+margin-top: auto;
+padding-bottom: 10mm; /* ריווח מהחיתוך */
 font-size: 12px;
+text-align: center;
 }
 </style>
 </head>
 <body>
-
-<div class="content-wrapper">
+<div class="rotate-container">
 <div class="center">
 <div>בס"ד</div>
-<strong style="font-size: 18px;">בית כנסת "ברית שלום" עכו</strong><br/>
-רח' קדושי קהיר 18, עכו
+<div class="header-title">בית כנסת "ברית שלום" עכו</div>
+<div>רח' קדושי קהיר 18, עכו</div>
 </div>
 
 <div class="sep"></div>
 
+<div class="details">
 <div><strong>קבלה מספר:</strong> ${receipt.receipt_number ?? ""}</div>
 <div><strong>תאריך:</strong> ${receipt.greg_date ?? ""}</div>
 <div><strong>תאריך עברי:</strong> ${receipt.hebrew_date ?? ""}</div>
+</div>
 
 <div class="sep"></div>
 
+<div class="details">
 <div><strong>התקבל מאת:</strong> ${receipt.member_name ?? "-"}</div>
 <div><strong>עבור:</strong> ${receipt.description ?? "תרומה"}</div>
 <div><strong>אמצעי תשלום:</strong> ${receipt.payment_method ?? "-"}</div>
+</div>
 
 <div class="sep"></div>
 
 <div class="center">סה"כ שולם:</div>
-<div class="amount">
+<div class="amount-box">
 ${new Intl.NumberFormat("he-IL", {
   style: "currency",
   currency: "ILS",
@@ -119,18 +136,17 @@ ${new Intl.NumberFormat("he-IL", {
 
 <div class="sep"></div>
 
-<div class="center footer">
+<div class="footer">
 תודה על תרומתכם!<br/>
 נציג: 050-5768723
 </div>
 </div>
-
 </body>
 </html>
 `;
 
     // ─────────────────────────────────────────────
-    // רינדור PDF
+    // רינדור PDF דרך Puppeteer
     // ─────────────────────────────────────────────
     const puppeteer = await import("npm:puppeteer@21.3.8");
     const browser = await puppeteer.default.launch({
