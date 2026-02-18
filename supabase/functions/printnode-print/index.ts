@@ -5,7 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// המרת עברית ל-CP862 (DOS Hebrew)
+// -----------------------------
+// פונקציות עזר
+// -----------------------------
+
+// המרה ל-CP862 (עברית DOS)
 function encodeCP862(str: string) {
   const table: Record<string, number> = {
     א: 0x80,
@@ -38,15 +42,10 @@ function encodeCP862(str: string) {
   };
 
   const bytes: number[] = [];
-
   for (const ch of str) {
-    if (table[ch] !== undefined) {
-      bytes.push(table[ch]);
-    } else {
-      bytes.push(ch.charCodeAt(0));
-    }
+    if (table[ch] !== undefined) bytes.push(table[ch]);
+    else bytes.push(ch.charCodeAt(0));
   }
-
   return new Uint8Array(bytes);
 }
 
@@ -55,33 +54,37 @@ function reverse(str: string) {
   return str.split("").reverse().join("");
 }
 
+// -----------------------------
+// פונקציית Server
+// -----------------------------
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
-    if (!apiKey || !printerId) {
-      throw new Error("Missing PrintNode configuration");
-    }
+    if (!apiKey || !printerId) throw new Error("Missing PrintNode configuration");
 
     const { receipt } = await req.json();
 
-    // ===== ESC/POS INIT =====
+    // -----------------------------
+    // ESC/POS INIT
+    // -----------------------------
     const init = new Uint8Array([
       0x1b,
-      0x40, // Initialize
+      0x40, // Initialize printer
       0x1b,
       0x74,
-      0x15, // Code page 862 (Hebrew)
+      0x15, // CP862 (Hebrew)
       0x1b,
       0x61,
       0x02, // Align right
     ]);
 
+    // -----------------------------
+    // טקסט ההדפסה בעברית
+    // -----------------------------
     const textContent = `
 ${reverse("בית כנסת ברית שלום")}
 ${reverse("עכו")}
@@ -103,19 +106,18 @@ ${reverse("תודה רבה!")}
 
     const textBytes = encodeCP862(textContent);
 
-    const cut = new Uint8Array([
-      0x0a,
-      0x0a,
-      0x0a,
-      0x1d,
-      0x56,
-      0x00, // Cut paper
-    ]);
+    // -----------------------------
+    // חיתוך נייר בסוף
+    // -----------------------------
+    const cut = new Uint8Array([0x0a, 0x0a, 0x0a, 0x1d, 0x56, 0x00]);
 
     const finalData = new Uint8Array([...init, ...textBytes, ...cut]);
 
     const base64Data = btoa(String.fromCharCode(...finalData));
 
+    // -----------------------------
+    // שליחה ל-PrintNode
+    // -----------------------------
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
