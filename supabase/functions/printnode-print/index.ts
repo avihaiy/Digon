@@ -11,104 +11,130 @@ serve(async (req) => {
   try {
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
+
+    if (!apiKey || !printerId) {
+      throw new Error("Missing PrintNode configuration");
+    }
+
     const { receipt } = await req.json();
 
-    // ─────────────────────────────────────────────
-    // HTML הקבלה בעברית
-    // ─────────────────────────────────────────────
+    // ===============================
+    // HTML קבלה – עברית תקינה
+    // ===============================
     const html = `
-<html dir="rtl">
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=David+Libre&display=swap" rel="stylesheet">
 <style>
   body {
-    width: 800px; /* מותאם להדפסה 80mm */
-    margin: 0; padding: 20px;
-    font-family: 'David Libre', Arial, sans-serif;
-    direction: rtl; text-align: center;
+    width: 576px; /* מותאם למדפסת 80mm */
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    direction: rtl;
+    text-align: center;
     background: white;
   }
-  .wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .sep {
+    border-top: 2px solid black;
+    margin: 10px 0;
   }
-  .center { text-align: center; }
-  .sep { border-top: 1.5pt dashed black; margin: 10px 0; width: 100%; }
-  .amount { font-size: 28pt; font-weight: bold; text-align: center; border: 2pt solid black; margin: 10px 0; padding: 5px; }
-  .details { font-size: 14pt; line-height: 1.5; text-align: right; width: 100%; }
+  .details {
+    text-align: right;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .amount {
+    font-size: 28px;
+    font-weight: bold;
+    border: 2px solid black;
+    padding: 8px;
+    margin: 10px 0;
+  }
 </style>
 </head>
 <body>
-  <div class="wrapper">
-    <div class="center">
-      <div style="font-size: 10pt;">בס"ד</div>
-      <div style="font-size: 18pt; font-weight: bold;">בית כנסת "ברית שלום" עכו</div>
-      <div style="font-size: 12pt;">רח' קדושי קהיר 18, עכו</div>
-    </div>
 
-    <div class="sep"></div>
+<div style="font-size:14px;">בס"ד</div>
+<div style="font-size:22px; font-weight:bold;">בית כנסת "ברית שלום" עכו</div>
+<div style="font-size:14px;">רח' קדושי קהיר 18, עכו</div>
 
-    <div class="details">
-      <div><strong>קבלה:</strong> ${receipt.receipt_number ?? ""}</div>
-      <div><strong>תאריך:</strong> ${receipt.greg_date ?? ""}</div>
-      <div><strong>עברי:</strong> ${receipt.hebrew_date ?? ""}</div>
-    </div>
+<div class="sep"></div>
 
-    <div class="sep"></div>
+<div class="details">
+  <div><strong>קבלה:</strong> ${receipt.receipt_number ?? ""}</div>
+  <div><strong>תאריך:</strong> ${receipt.greg_date ?? ""}</div>
+  <div><strong>עברי:</strong> ${receipt.hebrew_date ?? ""}</div>
+</div>
 
-    <div class="details">
-      <div><strong>מאת:</strong> ${receipt.member_name ?? "-"}</div>
-      <div><strong>עבור:</strong> ${receipt.description ?? ""}</div>
-      <div><strong>תשלום:</strong> ${receipt.payment_method ?? ""}</div>
-    </div>
+<div class="sep"></div>
 
-    <div class="sep"></div>
+<div class="details">
+  <div><strong>מאת:</strong> ${receipt.member_name ?? "-"}</div>
+  <div><strong>עבור:</strong> ${receipt.description ?? ""}</div>
+  <div><strong>תשלום:</strong> ${receipt.payment_method ?? ""}</div>
+</div>
 
-    <div class="center" style="font-size: 14pt;">סה"כ שולם:</div>
-    <div class="amount">₪ ${receipt.total_amount}</div>
+<div class="sep"></div>
 
-    <div class="sep"></div>
+<div style="font-size:18px;">סה"כ שולם:</div>
+<div class="amount">₪ ${receipt.total_amount ?? "0"}</div>
 
-    <div class="center" style="font-size: 11pt; margin-top: auto;">
-      תודה על תרומתכם!<br/>050-5768723
-    </div>
-  </div>
+<div class="sep"></div>
+
+<div style="font-size:14px;">
+תודה על תרומתכם!<br/>
+050-5768723
+</div>
+
 </body>
-</html>`;
+</html>
+`;
 
-    // ─────────────────────────────────────────────
-    // Puppeteer – המרה ל-PNG עם גובה גמיש
-    // ─────────────────────────────────────────────
+    // ===============================
+    // Puppeteer – יצירת PNG תקין
+    // ===============================
     const puppeteer = await import("npm:puppeteer@21.3.8");
-    const browser = await puppeteer.default.launch({ args: ["--no-sandbox"] });
+
+    const browser = await puppeteer.default.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+
     const page = await browser.newPage();
 
-    // רוחב 800px מותאם ל-80mm; גובה מותאם לפי תוכן
-    await page.setViewport({ width: 800, height: 1200, deviceScaleFactor: 2 });
+    await page.setViewport({
+      width: 576,
+      height: 1000,
+      deviceScaleFactor: 2,
+    });
+
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    // הוצאת screenshot עם גובה מותאם אוטומטית לפי תוכן
-    const bodyHandle = await page.$("body");
-    const boundingBox = await bodyHandle!.boundingBox();
+    // לחכות לפונטים
+    await page.evaluateHandle("document.fonts.ready");
+
+    // גובה דינמי
+    const height = await page.evaluate(() => document.body.scrollHeight);
+
     const pngBuffer = await page.screenshot({
       type: "png",
       clip: {
         x: 0,
         y: 0,
-        width: Math.ceil(boundingBox!.width),
-        height: Math.ceil(boundingBox!.height),
+        width: 576,
+        height: Math.ceil(height),
       },
     });
+
     await browser.close();
 
     const base64Png = pngBuffer.toString("base64");
 
-    // ─────────────────────────────────────────────
+    // ===============================
     // שליחה ל-PrintNode
-    // ─────────────────────────────────────────────
-    await fetch("https://api.printnode.com/printjobs", {
+    // ===============================
+    const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
         Authorization: `Basic ${btoa(apiKey + ":")}`,
@@ -121,6 +147,11 @@ serve(async (req) => {
         content: base64Png,
       }),
     });
+
+    if (!printResponse.ok) {
+      const errorText = await printResponse.text();
+      throw new Error(errorText);
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
