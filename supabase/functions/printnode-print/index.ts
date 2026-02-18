@@ -25,7 +25,7 @@ serve(async (req) => {
     }
 
     // ─────────────────────────────────────────────
-    // HTML עם RTL אמיתי
+    // HTML עם RTL וסיבוב 180 מעלות לתיקון הדפסה הפוכה
     // ─────────────────────────────────────────────
     const html = `
 <html dir="rtl" lang="he">
@@ -39,12 +39,18 @@ margin: 0;
 
 body {
 width: 80mm;
+height: 120mm;
 margin: 0;
 padding: 5mm;
 font-family: Arial, sans-serif;
 direction: rtl;
 text-align: right;
-font-size: 12px;
+font-size: 14px;
+box-sizing: border-box;
+
+/* תיקון הדפסה הפוכה - סיבוב כל תוכן הדף */
+transform: rotate(180deg);
+transform-origin: center center;
 }
 
 .center {
@@ -53,13 +59,19 @@ text-align: center;
 
 .sep {
 border-top: 1px dashed #000;
-margin: 6px 0;
+margin: 8px 0;
 }
 
 .amount {
-font-size: 22px;
+font-size: 24px;
 font-weight: bold;
 text-align: center;
+margin: 10px 0;
+}
+
+.footer {
+margin-top: 15px;
+font-size: 12px;
 }
 </style>
 </head>
@@ -67,21 +79,21 @@ text-align: center;
 
 <div class="center">
 <div>בס"ד</div>
-<strong>בית כנסת "ברית שלום" עכו</strong><br/>
+<strong style="font-size: 16px;">בית כנסת "ברית שלום" עכו</strong><br/>
 רח' קדושי קהיר 18, עכו
 </div>
 
 <div class="sep"></div>
 
-<div>קבלה מספר: ${receipt.receipt_number ?? ""}</div>
-<div>${receipt.greg_date ?? ""}</div>
-<div>${receipt.hebrew_date ?? ""}</div>
+<div><strong>קבלה מספר:</strong> ${receipt.receipt_number ?? ""}</div>
+<div><strong>תאריך:</strong> ${receipt.greg_date ?? ""}</div>
+<div><strong>תאריך עברי:</strong> ${receipt.hebrew_date ?? ""}</div>
 
 <div class="sep"></div>
 
-<div>התקבל מאת: ${receipt.member_name ?? "-"}</div>
-<div>עבור: ${receipt.description ?? "תרומה"}</div>
-<div>אמצעי תשלום: ${receipt.payment_method ?? "-"}</div>
+<div><strong>התקבל מאת:</strong> ${receipt.member_name ?? "-"}</div>
+<div><strong>עבור:</strong> ${receipt.description ?? "תרומה"}</div>
+<div><strong>אמצעי תשלום:</strong> ${receipt.payment_method ?? "-"}</div>
 
 <div class="sep"></div>
 
@@ -96,9 +108,9 @@ ${new Intl.NumberFormat("he-IL", {
 
 <div class="sep"></div>
 
-<div class="center">
+<div class="center footer">
 תודה על תרומתכם!<br/>
-050-5768723
+נציג: 050-5768723
 </div>
 
 </body>
