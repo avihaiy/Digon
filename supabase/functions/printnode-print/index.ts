@@ -5,26 +5,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// פונקציה לניקוי טקסט
+// ניקוי טקסט
 function clean(str: string = "") {
   return str.replace(/\n/g, " ").trim();
 }
 
-// פונקציה לבניית קבלה בפורמט ESC/POS ב-base64
+// פונקציה לבניית קבלה בפורמט ESC/POS RAW Base64
 function buildReceipt(receipt: any) {
   const ESC = "\x1B";
   const GS = "\x1D";
   const encoder = new TextEncoder();
 
-  // בחר Hebrew Code Page (אם יוצא ג'יבריש אפשר לשנות ל-27 או 177 לפי צורך)
-  // \x15 = Code page 21 (Hebrew Windows)
-  // אם יש בעיות, אפשר לנסות לשנות את \x15 ל־\x27 או \xb1
   const content =
     ESC +
     "@" + // Initialize printer
     ESC +
     "t" +
-    "\x15" + // Set code page to Hebrew Windows
+    "\x15" + // Set code page Hebrew Windows
+    ESC +
+    "`" +
+    "\x01" + // Enable RTL mode
     ESC +
     "a" +
     "\x01" + // Center align
@@ -79,7 +79,6 @@ function buildReceipt(receipt: any) {
     "V" +
     "\x00"; // Cut paper
 
-  // encode to Uint8Array and convert to base64 string
   return btoa(String.fromCharCode(...encoder.encode(content)));
 }
 
@@ -113,7 +112,7 @@ serve(async (req) => {
       body: JSON.stringify({
         printerId: parseInt(printerId),
         title: `Receipt #${receipt.receipt_number ?? ""}`,
-        contentType: "raw_base64", // חשוב מאוד - מדפיס RAW ESC/POS
+        contentType: "raw_base64", // חשוב מאוד
         content: base64Content,
         source: "Brit Shalom Receipt System",
       }),
