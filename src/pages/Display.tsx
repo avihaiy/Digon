@@ -8,6 +8,7 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import MemorialDisplaySlide from '@/components/display/MemorialDisplaySlide';
 import FinanceDisplaySlide from '@/components/display/FinanceDisplaySlide';
+import PrayerTimesSlide from '@/components/display/PrayerTimesSlide';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -484,13 +485,16 @@ export default function Display() {
   const announcementIndex = currentIndex - specialSlides.length;
   const currentAnnouncement = currentSlideType === 'announcement' ? validAnnouncements[announcementIndex] : null;
 
+  const isPrayerTimesAd = currentAnnouncement?.title === 'זמני תפילה';
   const styleConfig = currentSlideType === 'memorial'
     ? STYLE_CONFIGS.modern_dark
     : currentSlideType === 'finance'
       ? STYLE_CONFIGS.modern_dark
-      : currentAnnouncement
-        ? STYLE_CONFIGS[currentAnnouncement.style]
-        : STYLE_CONFIGS.traditional_gold;
+      : isPrayerTimesAd
+        ? STYLE_CONFIGS.royal_blue
+        : currentAnnouncement
+          ? STYLE_CONFIGS[currentAnnouncement.style]
+          : STYLE_CONFIGS.traditional_gold;
 
   const timeString = currentTime.toLocaleTimeString('he-IL', {
     hour: '2-digit',
@@ -699,7 +703,40 @@ export default function Display() {
               accentClass={styleConfig.accent}
             />
           ) : currentAnnouncement ? (
-            currentAnnouncement.image_url ? (
+            currentAnnouncement.title === 'זמני תפילה' ? (
+              (() => {
+                // Try to render structured prayer times slide
+                try {
+                  JSON.parse(currentAnnouncement.content);
+                  return (
+                    <PrayerTimesSlide
+                      key={currentAnnouncement.id}
+                      content={currentAnnouncement.content}
+                      isShabbat={dayType === 'shabbat' || dayType === 'friday'}
+                    />
+                  );
+                } catch {
+                  // Fallback to normal ad if JSON invalid
+                  return (
+                    <motion.div
+                      key={currentAnnouncement.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.8, ease: 'easeInOut' }}
+                      className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
+                    >
+                      <h1 className={`text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight ${styleConfig.text}`}>
+                        {currentAnnouncement.title}
+                      </h1>
+                      <p className={`text-[3vh] md:text-[4vh] leading-relaxed ${styleConfig.accent} whitespace-pre-line`}>
+                        {currentAnnouncement.content}
+                      </p>
+                    </motion.div>
+                  );
+                }
+              })()
+            ) : currentAnnouncement.image_url ? (
               <motion.div
                 key={currentAnnouncement.id}
                 initial={{ opacity: 0 }}
