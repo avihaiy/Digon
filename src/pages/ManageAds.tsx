@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Wallet } from 'lucide-react';
 import MemorialManager from '@/components/display/MemorialManager';
+import PrayerTimesEditor from '@/components/display/PrayerTimesEditor';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -387,23 +388,43 @@ export default function ManageAds() {
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => {
+                    const newTitle = e.target.value;
+                    const updates: Partial<typeof formData> = { title: newTitle };
+                    // Auto-init JSON content when switching to prayer times
+                    if (newTitle === 'זמני תפילה') {
+                      try { JSON.parse(formData.content); } catch {
+                        updates.content = JSON.stringify({
+                          weekday: { prayers: [{ name: 'שחרית', time: '05:00' }], lessons: [] },
+                          shabbat: { prayers: [{ name: 'שחרית שבת', time: '08:30' }], lessons: [] },
+                        }, null, 2);
+                      }
+                    }
+                    setFormData({ ...formData, ...updates });
+                  }}
                   placeholder="כותרת המודעה"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="content">תוכן</Label>
-                <Textarea
-                  id="content"
+              {formData.title === 'זמני תפילה' ? (
+                <PrayerTimesEditor
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="תוכן המודעה"
-                  rows={3}
-                  required
+                  onChange={(json) => setFormData({ ...formData, content: json })}
                 />
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="content">תוכן</Label>
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    placeholder="תוכן המודעה"
+                    rows={3}
+                    required
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
