@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Wallet } from 'lucide-react';
 import MemorialManager from '@/components/display/MemorialManager';
 import PrayerTimesEditor from '@/components/display/PrayerTimesEditor';
+import { Separator } from '@/components/ui/separator';
 
 type DayType = 'weekdays' | 'friday' | 'shabbat';
 type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
@@ -81,6 +82,9 @@ export default function ManageAds() {
   const [isUploading, setIsUploading] = useState(false);
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
+  const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
+  const [bgUploading, setBgUploading] = useState(false);
+  const bgFileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch memorial and finance toggle settings
@@ -89,7 +93,7 @@ export default function ManageAds() {
       const { data } = await supabase
         .from('app_settings')
         .select('key, value')
-        .in('key', ['show_memorial_on_display', 'show_finance_on_display']);
+        .in('key', ['show_memorial_on_display', 'show_finance_on_display', 'display_background_url']);
       if (data) {
         for (const setting of data) {
           if (setting.key === 'show_memorial_on_display') {
@@ -97,6 +101,9 @@ export default function ManageAds() {
           }
           if (setting.key === 'show_finance_on_display') {
             setShowFinance(setting.value === 'true');
+          }
+          if (setting.key === 'display_background_url') {
+            setDisplayBgUrl(setting.value || null);
           }
         }
       }
@@ -144,6 +151,64 @@ export default function ManageAds() {
         .insert({ key: 'show_finance_on_display', value: checked ? 'true' : 'false' });
     }
     toast.success(checked ? 'מצב כספי יוצג על המסך' : 'מצב כספי הוסר מהמסך');
+  };
+
+  // Background image upload/remove
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('הקובץ גדול מדי. הגודל המקסימלי הוא 5MB');
+      return;
+    }
+    setBgUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `background/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('announcement-images')
+        .upload(fileName, file);
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('announcement-images')
+        .getPublicUrl(fileName);
+
+      // Save to app_settings
+      const { data: existing } = await supabase
+        .from('app_settings')
+        .select('id')
+        .eq('key', 'display_background_url')
+        .maybeSingle();
+
+      if (existing) {
+        await supabase.from('app_settings').update({ value: publicUrl }).eq('key', 'display_background_url');
+      } else {
+        await supabase.from('app_settings').insert({ key: 'display_background_url', value: publicUrl });
+      }
+      setDisplayBgUrl(publicUrl);
+      toast.success('רקע התצוגה עודכן בהצלחה');
+    } catch (err) {
+      console.error('Background upload error:', err);
+      toast.error('שגיאה בהעלאת הרקע');
+    } finally {
+      setBgUploading(false);
+      if (bgFileInputRef.current) bgFileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveBg = async () => {
+    const { data: existing } = await supabase
+      .from('app_settings')
+      .select('id')
+      .eq('key', 'display_background_url')
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from('app_settings').update({ value: '' }).eq('key', 'display_background_url');
+    }
+    setDisplayBgUrl(null);
+    toast.success('רקע התצוגה הוסר');
   };
 
   // Fetch announcements
@@ -367,6 +432,73 @@ export default function ManageAds() {
               <Switch checked={showFinance} onCheckedChange={toggleFinance} />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Display Background Image */}
+      <Card className="border-border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Image className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <p className="font-semibold text-sm">רקע מסך תצוגה</p>
+                <p className="text-xs text-muted-foreground">
+                  העלה תמונת רקע שתוצג מאחורי התוכן במסך התצוגה
+                </p>
+              </div>
+            </div>
+          </div>
+          <input
+            ref={bgFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleBgUpload}
+            className="hidden"
+          />
+          {displayBgUrl ? (
+            <div className="relative rounded-lg overflow-hidden border">
+              <img src={displayBgUrl} alt="רקע תצוגה" className="w-full h-32 object-cover" />
+              <div className="absolute top-2 left-2 flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => bgFileInputRef.current?.click()}
+                  disabled={bgUploading}
+                  className="h-8"
+                >
+                  <Upload className="w-3 h-3 ml-1" />
+                  החלף
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleRemoveBg}
+                  className="h-8"
+                >
+                  <X className="w-3 h-3 ml-1" />
+                  הסר
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-20 border-dashed"
+              onClick={() => bgFileInputRef.current?.click()}
+              disabled={bgUploading}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <Upload className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {bgUploading ? 'מעלה...' : 'לחץ להעלאת תמונת רקע'}
+                </span>
+              </div>
+            </Button>
+          )}
         </CardContent>
       </Card>
 

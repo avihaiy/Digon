@@ -155,6 +155,7 @@ export default function Display() {
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
   const [showWeekBefore, setShowWeekBefore] = useState(false);
+  const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -166,7 +167,7 @@ export default function Display() {
       const { data } = await supabase
         .from('app_settings')
         .select('key, value')
-        .in('key', ['display_lock_code', 'show_memorial_on_display', 'memorial_show_week_before', 'show_finance_on_display']);
+        .in('key', ['display_lock_code', 'show_memorial_on_display', 'memorial_show_week_before', 'show_finance_on_display', 'display_background_url']);
       
       if (data) {
         for (const setting of data) {
@@ -181,6 +182,9 @@ export default function Display() {
           }
           if (setting.key === 'show_finance_on_display') {
             setShowFinance(setting.value === 'true');
+          }
+          if (setting.key === 'display_background_url' && setting.value) {
+            setDisplayBgUrl(setting.value);
           }
         }
       }
@@ -209,6 +213,9 @@ export default function Display() {
           }
           if (payload.new?.key === 'show_finance_on_display') {
             setShowFinance(payload.new.value === 'true');
+          }
+          if (payload.new?.key === 'display_background_url') {
+            setDisplayBgUrl(payload.new.value || null);
           }
         }
       )
@@ -515,7 +522,18 @@ export default function Display() {
     <div
       ref={containerRef}
       className={`fixed inset-0 flex flex-col ${styleConfig.bg} overflow-hidden`}
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        ...(displayBgUrl ? {
+          backgroundImage: `url(${displayBgUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        } : {}),
+      }}
       dir="rtl"
       onMouseMove={resetControlsTimeout}
       onTouchStart={resetControlsTimeout}
