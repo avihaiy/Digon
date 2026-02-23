@@ -786,17 +786,25 @@ export default function Display() {
                 transition={{ duration: 0.8, ease: "easeInOut" }}
                 className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
               >
-                {/* ===== שיפור 8: backdrop לתוכן הודעה ===== */}
-                <div className="bg-black/30 backdrop-blur-sm rounded-3xl px-[4vw] py-[3vh] border border-white/10 shadow-2xl">
+                {/* רקע קלף לתוכן הודעה */}
+                <div
+                  className="rounded-3xl px-[5vw] py-[4vh] shadow-2xl"
+                  style={{
+                    background: "rgba(245, 230, 190, 0.50)",
+                    backdropFilter: "blur(10px)",
+                    border: "1.5px solid rgba(160, 110, 40, 0.5)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6)",
+                  }}
+                >
                   <h1
-                    className={`text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight ${styleConfig.text}`}
-                    style={{ textShadow: "0 3px 20px rgba(0,0,0,0.7)" }}
+                    className="text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight text-amber-950"
+                    style={{ textShadow: "0 2px 8px rgba(160,100,0,0.3)" }}
                   >
                     {currentAnnouncement.title}
                   </h1>
                   <p
-                    className={`text-[3vh] md:text-[4vh] leading-relaxed ${styleConfig.accent} whitespace-pre-line`}
-                    style={{ textShadow: "0 2px 10px rgba(0,0,0,0.6)" }}
+                    className="text-[3vh] md:text-[4vh] leading-relaxed text-amber-800 whitespace-pre-line"
+                    style={{ textShadow: "0 1px 4px rgba(160,100,0,0.2)" }}
                   >
                     {currentAnnouncement.content}
                   </p>
