@@ -67,6 +67,8 @@ const defaultMemorialForm = {
 interface MemorialManagerProps {
   showMemorial: boolean;
   onToggleMemorial: (checked: boolean) => void;
+  showHeichal: boolean;
+  onToggleHeichal: (checked: boolean) => void;
 }
 
 const saveSetting = async (key: string, value: string) => {
@@ -82,7 +84,7 @@ const saveSetting = async (key: string, value: string) => {
   }
 };
 
-export default function MemorialManager({ showMemorial, onToggleMemorial }: MemorialManagerProps) {
+export default function MemorialManager({ showMemorial, onToggleMemorial, showHeichal, onToggleHeichal }: MemorialManagerProps) {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -218,7 +220,11 @@ export default function MemorialManager({ showMemorial, onToggleMemorial }: Memo
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">הצג על המסך</span>
+              <span className="text-xs text-muted-foreground">היכל ה׳ (כל השנה)</span>
+              <Switch checked={showHeichal} onCheckedChange={onToggleHeichal} />
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">אזכרות (לפי תאריך)</span>
               <Switch checked={showMemorial} onCheckedChange={onToggleMemorial} />
             </div>
             <div className="flex items-center gap-3">
