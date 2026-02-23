@@ -178,12 +178,10 @@ export default function HeichalDisplaySlide() {
                     boxShadow: "0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
                   }}
                 >
-                  <p className="text-[2.6vh] md:text-[3vh] font-bold leading-tight text-amber-100">
-                    {person.is_male !== false ? "ר'" : "מרת"} {person.name} ז״ל
-                  </p>
+                  <p className="text-[2.6vh] md:text-[3vh] font-bold leading-tight text-amber-100">{person.name} ז״ל</p>
                   {person.father_name && (
                     <p className="text-[1.6vh] md:text-[1.8vh] mt-[0.2vh] text-amber-200/70">
-                      {person.is_male !== false ? "בן" : "בת"} ר' {person.father_name}
+                      {person.is_male !== false ? "בן" : "מלכה"} {person.father_name}
                     </p>
                   )}
                   <p className="text-[1.4vh] md:text-[1.6vh] mt-[0.3vh] font-semibold text-amber-400">
