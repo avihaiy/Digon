@@ -85,15 +85,8 @@ function getCurrentDayType(): DayType {
   const now = new Date();
   const day = now.getDay();
   const hour = now.getHours();
-  const isAfterShabbatStart = hour >= 18;
-  const isBeforeShabbatEnd = hour < 20;
-
-  if ((day === 5 && isAfterShabbatStart) || (day === 6 && isBeforeShabbatEnd)) {
-    return "shabbat";
-  }
-  if (day === 5) {
-    return "friday";
-  }
+  if ((day === 5 && hour >= 18) || (day === 6 && hour < 20)) return "shabbat";
+  if (day === 5) return "friday";
   return "weekdays";
 }
 
@@ -102,14 +95,11 @@ function isTimeInRange(startTime: string, endTime: string): boolean {
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const [startH, startM] = startTime.split(":").map(Number);
   const [endH, endM] = endTime.split(":").map(Number);
-  const startMinutes = startH * 60 + startM;
-  const endMinutes = endH * 60 + endM;
-  return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  return currentMinutes >= startH * 60 + startM && currentMinutes <= endH * 60 + endM;
 }
 
 function getHebrewDate(): string {
-  const hDate = new HDate();
-  return hDate.renderGematriya(true);
+  return new HDate().renderGematriya(true);
 }
 
 function getTodayHolidayHebrew(): string | null {
@@ -136,12 +126,10 @@ function getTodayHolidayHebrew(): string | null {
     "Ta'anit Esther": "תענית אסתר",
     "Tzom Tammuz": "צום י״ז בתמוז",
   };
-
   try {
     const hdate = new HDate();
     const events = HebrewCalendar.getHolidaysOnDate(hdate, true);
     if (!events || events.length === 0) return null;
-
     for (const ev of events) {
       const desc = ev.getDesc();
       const evFlags = ev.getFlags();
@@ -163,6 +151,18 @@ function getTodayHolidayHebrew(): string | null {
   return null;
 }
 
+// האם מודעה היא מסוג זמני תפילה (חול או שבת)
+function isPrayerTimesAnnouncement(title: string): boolean {
+  return title === "זמני תפילה" || title === "זמני תפילה שבת";
+}
+
+// האם להציג מצב שבת ב-PrayerTimesSlide
+// "זמני תפילה שבת" — תמיד שבת
+// "זמני תפילה" — רק בשישי/שבת
+function getPrayerIsShabbat(title: string, dayType: DayType): boolean {
+  if (title === "זמני תפילה שבת") return true;
+  return dayType === "shabbat" || dayType === "friday";
+}
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [announcements, setAnnouncements] = useState<ScheduledAnnouncement[]>([]);
@@ -197,7 +197,6 @@ export default function Display() {
           "display_background_url",
           "show_heichal_on_display",
         ]);
-
       if (data) {
         for (const setting of data) {
           if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
@@ -210,7 +209,6 @@ export default function Display() {
       }
     };
     fetchSettings();
-
     const channel = supabase
       .channel("display-settings")
       .on(
@@ -226,7 +224,6 @@ export default function Display() {
         },
       )
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
@@ -237,19 +234,16 @@ export default function Display() {
       const hDateToday = new HDate();
       const datePairs: { day: number; month: number }[] = [];
       datePairs.push({ day: hDateToday.getDate(), month: hDateToday.getMonth() });
-
       if (showWeekBefore) {
         for (let i = 1; i <= 7; i++) {
           const futureDate = new HDate(hDateToday.abs() + i);
           datePairs.push({ day: futureDate.getDate(), month: futureDate.getMonth() });
         }
       }
-
       const { data, error } = await supabase
         .from("memorial_names")
         .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
         .eq("is_active", true);
-
       if (!error && data) {
         const matched = data.filter((p) =>
           datePairs.some((dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month),
@@ -259,27 +253,24 @@ export default function Display() {
             const matchingPair = datePairs.find(
               (dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month,
             );
-            const matchIndex = matchingPair ? datePairs.indexOf(matchingPair) : 0;
             return {
               id: p.id,
               deceased_name: p.deceased_name,
               father_name: p.father_name,
               is_male: p.is_male,
               hebrew_date_display: `${gematriya(p.hebrew_death_day)} ${HEBREW_MONTH_NAMES[p.hebrew_death_month] || ""}`,
-              days_until: matchIndex,
+              days_until: matchingPair ? datePairs.indexOf(matchingPair) : 0,
             };
           }),
         );
       }
     };
-
     fetchYahrzeits();
     const interval = setInterval(fetchYahrzeits, 10 * 60 * 1000);
     const channel = supabase
       .channel("memorial-display")
       .on("postgres_changes", { event: "*", schema: "public", table: "memorial_names" }, () => fetchYahrzeits())
       .subscribe();
-
     return () => {
       clearInterval(interval);
       supabase.removeChannel(channel);
@@ -289,11 +280,7 @@ export default function Display() {
   useRegisterSW({
     immediate: true,
     onRegistered(registration) {
-      if (registration) {
-        setInterval(() => {
-          registration.update();
-        }, 30 * 1000);
-      }
+      if (registration) setInterval(() => registration.update(), 30 * 1000);
     },
     onNeedRefresh() {
       window.location.reload();
@@ -345,9 +332,7 @@ export default function Display() {
   );
 
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
@@ -381,9 +366,7 @@ export default function Display() {
   }, [resetControlsTimeout]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -391,7 +374,6 @@ export default function Display() {
   useEffect(() => {
     const pollInterval = setInterval(
       async () => {
-        // רענון הגדרות
         const { data: settingsData } = await supabase
           .from("app_settings")
           .select("key, value")
@@ -413,7 +395,6 @@ export default function Display() {
             if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
           }
         }
-        // רענון הודעות
         const { data: adsData, error: adsError } = await supabase
           .from("scheduled_announcements")
           .select("*")
@@ -427,9 +408,7 @@ export default function Display() {
   }, []);
 
   useEffect(() => {
-    const checkInterval = setInterval(() => {
-      setDayType(getCurrentDayType());
-    }, 30000);
+    const checkInterval = setInterval(() => setDayType(getCurrentDayType()), 30000);
     return () => clearInterval(checkInterval);
   }, []);
 
@@ -442,7 +421,6 @@ export default function Display() {
         .order("priority", { ascending: false });
       if (!error && data) setAnnouncements(data as ScheduledAnnouncement[]);
     };
-
     fetchAnnouncements();
     const channel = supabase
       .channel("scheduled-announcements-display")
@@ -450,35 +428,24 @@ export default function Display() {
         fetchAnnouncements(),
       )
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
 
   const validAnnouncements = useMemo(() => {
-    return announcements.filter((a) => {
-      const matchesDay = a.day_types.includes(dayType);
-      const matchesTime = isTimeInRange(a.start_time, a.end_time);
-      return matchesDay && matchesTime;
-    });
+    return announcements.filter((a) => a.day_types.includes(dayType) && isTimeInRange(a.start_time, a.end_time));
   }, [announcements, dayType, currentTime]);
 
-  const hasMemorial = showMemorial && memorialPeople.length > 0;
-  const hasFinance = showFinance;
-  const hasHeichal = showHeichal;
-
   const specialSlides: ("heichal" | "memorial" | "finance")[] = [];
-  if (hasHeichal) specialSlides.push("heichal");
-  if (hasMemorial) specialSlides.push("memorial");
-  if (hasFinance) specialSlides.push("finance");
+  if (showHeichal) specialSlides.push("heichal");
+  if (showMemorial && memorialPeople.length > 0) specialSlides.push("memorial");
+  if (showFinance) specialSlides.push("finance");
   const totalSlides = validAnnouncements.length + specialSlides.length;
 
   useEffect(() => {
     if (totalSlides <= 1) return;
-    const rotateInterval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % totalSlides);
-    }, 10000);
+    const rotateInterval = setInterval(() => setCurrentIndex((prev) => (prev + 1) % totalSlides), 10000);
     return () => clearInterval(rotateInterval);
   }, [totalSlides]);
 
@@ -489,8 +456,8 @@ export default function Display() {
   const currentSlideType = currentIndex < specialSlides.length ? specialSlides[currentIndex] : "announcement";
   const announcementIndex = currentIndex - specialSlides.length;
   const currentAnnouncement = currentSlideType === "announcement" ? validAnnouncements[announcementIndex] : null;
+  const isPrayerAd = currentAnnouncement ? isPrayerTimesAnnouncement(currentAnnouncement.title) : false;
 
-  const isPrayerTimesAd = currentAnnouncement?.title === "זמני תפילה";
   const styleConfig =
     currentSlideType === "memorial"
       ? STYLE_CONFIGS.modern_dark
@@ -498,7 +465,7 @@ export default function Display() {
         ? STYLE_CONFIGS.modern_dark
         : currentSlideType === "finance"
           ? STYLE_CONFIGS.modern_dark
-          : isPrayerTimesAd
+          : isPrayerAd
             ? STYLE_CONFIGS.royal_blue
             : currentAnnouncement
               ? STYLE_CONFIGS[currentAnnouncement.style]
@@ -510,7 +477,6 @@ export default function Display() {
     second: "2-digit",
     hour12: false,
   });
-
   const hebrewDate = getHebrewDate();
   const mashivHaruach = getMashivHaruach(currentTime);
   const birkatHashanim = getBirkatHashanim(currentTime);
@@ -541,7 +507,6 @@ export default function Display() {
       onMouseMove={resetControlsTimeout}
       onTouchStart={resetControlsTimeout}
     >
-      {/* ===== שיפור 1: Overlay כהה מעל תמונת הרקע לקריאות ===== */}
       {displayBgUrl && <div className="absolute inset-0 bg-black/50 z-0" />}
 
       {/* Fullscreen Controls */}
@@ -565,9 +530,7 @@ export default function Display() {
               <>
                 <button
                   onClick={isLocked ? handleUnlockAttempt : () => setIsLocked(true)}
-                  className={`p-3 rounded-full backdrop-blur-sm transition-colors ${
-                    isLocked ? "bg-red-500/50 hover:bg-red-500/70" : "bg-black/20 hover:bg-black/30"
-                  } ${styleConfig.text}`}
+                  className={`p-3 rounded-full backdrop-blur-sm transition-colors ${isLocked ? "bg-red-500/50 hover:bg-red-500/70" : "bg-black/20 hover:bg-black/30"} ${styleConfig.text}`}
                   title={isLocked ? "בטל נעילה" : "נעל מסך"}
                 >
                   {isLocked ? <Lock className="w-6 h-6" /> : <Unlock className="w-6 h-6" />}
@@ -631,13 +594,10 @@ export default function Display() {
         )}
       </AnimatePresence>
 
-      {/* ===== HEADER - משופר ===== */}
+      {/* HEADER */}
       <header className="shrink-0 z-10 relative">
-        {/* ===== שיפור 2: רקע כהה שקוף מאחורי ה-header לקריאות ===== */}
         <div className="absolute inset-0 bg-black/30 backdrop-blur-md border-b border-white/10" />
-
         <div className="relative flex items-center justify-between px-[3vw] py-[1.5vh]">
-          {/* ===== שיפור 3: שעה גדולה יותר עם צל חזק ===== */}
           <div className="text-center">
             <div
               className="text-[7vh] md:text-[9vh] font-bold tabular-nums leading-none text-white"
@@ -647,8 +607,6 @@ export default function Display() {
               {timeString}
             </div>
           </div>
-
-          {/* ===== שיפור 4: תאריך עם צל לקריאות ===== */}
           <div className="text-center">
             <div
               className="text-[3.5vh] md:text-[4.5vh] font-bold text-white"
@@ -669,8 +627,6 @@ export default function Display() {
             </div>
           </div>
         </div>
-
-        {/* ===== שיפור 5: שורת מידע הלכתי - כרטיס בולט יותר ===== */}
         <div className="relative flex flex-wrap items-center justify-center gap-x-[2vw] gap-y-[0.5vh] px-[2vw] pb-[1.2vh]">
           {[
             { icon: mashivHaruach.isGeshem ? "🌧️" : "💧", text: mashivHaruach.text },
@@ -693,7 +649,7 @@ export default function Display() {
         </div>
       </header>
 
-      {/* ===== MAIN CONTENT ===== */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 flex items-center justify-center overflow-hidden relative z-10">
         <AnimatePresence mode="wait">
           {totalSlides === 0 ? (
@@ -704,7 +660,6 @@ export default function Display() {
               exit={{ opacity: 0 }}
               className="text-center p-[4vw]"
             >
-              {/* ===== שיפור 6: הודעת "אין הודעות" עם כרטיס ===== */}
               <div
                 className="text-[4vh] text-white bg-black/40 backdrop-blur-sm rounded-2xl px-[4vw] py-[3vh] border border-white/10"
                 style={{ textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}
@@ -724,7 +679,7 @@ export default function Display() {
           ) : currentSlideType === "finance" ? (
             <FinanceDisplaySlide key="finance" textClass={styleConfig.text} accentClass={styleConfig.accent} />
           ) : currentAnnouncement ? (
-            currentAnnouncement.title === "זמני תפילה" ? (
+            isPrayerTimesAnnouncement(currentAnnouncement.title) ? (
               (() => {
                 try {
                   JSON.parse(currentAnnouncement.content);
@@ -732,7 +687,7 @@ export default function Display() {
                     <PrayerTimesSlide
                       key={currentAnnouncement.id}
                       content={currentAnnouncement.content}
-                      isShabbat={dayType === "shabbat" || dayType === "friday"}
+                      isShabbat={getPrayerIsShabbat(currentAnnouncement.title, dayType)}
                     />
                   );
                 } catch {
@@ -745,7 +700,6 @@ export default function Display() {
                       transition={{ duration: 0.8, ease: "easeInOut" }}
                       className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
                     >
-                      {/* ===== שיפור 7: כותרת הודעה עם צל חזק ===== */}
                       <h1
                         className="text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight text-white"
                         style={{ textShadow: "0 3px 20px rgba(0,0,0,0.9)" }}
@@ -815,15 +769,13 @@ export default function Display() {
         </AnimatePresence>
       </main>
 
-      {/* ===== FOOTER - Progress indicator ===== */}
+      {/* FOOTER */}
       {totalSlides > 1 && (
         <footer className="shrink-0 flex items-center justify-center gap-3 py-[1.5vh] z-10 relative">
           {Array.from({ length: totalSlides }).map((_, idx) => (
             <div
               key={idx}
-              className={`rounded-full transition-all duration-500 ${
-                idx === currentIndex ? "w-[3vh] h-[1.5vh] bg-white shadow-lg" : "w-[1.5vh] h-[1.5vh] bg-white/30"
-              }`}
+              className={`rounded-full transition-all duration-500 ${idx === currentIndex ? "w-[3vh] h-[1.5vh] bg-white shadow-lg" : "w-[1.5vh] h-[1.5vh] bg-white/30"}`}
             />
           ))}
         </footer>
