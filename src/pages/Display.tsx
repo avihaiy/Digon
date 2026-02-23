@@ -387,6 +387,14 @@ export default function Display() {
     return () => clearInterval(timer);
   }, []);
 
+  // רענון אוטומטי כל 30 שניות
+  useEffect(() => {
+    const refreshTimer = setInterval(() => {
+      window.location.reload();
+    }, 30 * 1000);
+    return () => clearInterval(refreshTimer);
+  }, []);
+
   useEffect(() => {
     const checkInterval = setInterval(() => {
       setDayType(getCurrentDayType());
