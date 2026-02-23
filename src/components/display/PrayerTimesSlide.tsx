@@ -146,9 +146,13 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-[4.5vh] md:text-[6vh] font-bold text-amber-800 mb-[2.5vh] text-center"
+        className="text-[4.5vh] md:text-[6vh] font-bold text-amber-800 mb-[2.5vh] text-center px-[4vw] py-[1.2vh] rounded-2xl"
         style={{
-          textShadow: "0 2px 15px rgba(160,100,0,0.5), 0 3px 8px rgba(0,0,0,0.4)",
+          background: "rgba(240, 215, 160, 0.80)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(160,110,40,0.45)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+          textShadow: "0 2px 8px rgba(160,100,0,0.4)",
           letterSpacing: "0.02em",
         }}
       >
