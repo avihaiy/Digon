@@ -28,24 +28,26 @@ function TimeRow({ entry, isLesson = false, index = 0 }: { entry: PrayerEntry; i
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.08, duration: 0.4 }}
-      className={`flex justify-between items-center py-[1.4vh] px-[2vw] rounded-xl mx-[0.5vw] my-[0.3vh] transition-colors ${
-        isLesson ? "hover:bg-blue-800/30" : "hover:bg-blue-800/40"
+      className={`flex flex-row-reverse justify-between items-center py-[1.4vh] px-[2vw] rounded-xl mx-[0.5vw] my-[0.3vh] transition-colors ${
+        isLesson ? "hover:bg-amber-900/20" : "hover:bg-amber-900/30"
       }`}
     >
-      {/* ===== שיפור 1: שעה גדולה יותר עם צל וצבע זהב עשיר יותר ===== */}
+      {/* שעה - צבע חום/זהב כהה */}
       <span
         dir="ltr"
         className={`font-bold tabular-nums tracking-wide ${
           isLesson ? "text-[3vh] md:text-[3.8vh]" : "text-[3.8vh] md:text-[4.8vh]"
-        } text-amber-300`}
-        style={{ textShadow: "0 0 20px rgba(251,191,36,0.5), 0 2px 8px rgba(0,0,0,0.8)" }}
+        } text-amber-800`}
+        style={{ textShadow: "0 1px 4px rgba(180,100,0,0.3)" }}
       >
         {entry.time}
       </span>
-      {/* ===== שיפור 2: שם תפילה גדול יותר עם צל ===== */}
+      {/* שם תפילה - חום כהה */}
       <span
-        className={`font-bold ${isLesson ? "text-[2.8vh] md:text-[3.5vh]" : "text-[3.2vh] md:text-[4.2vh]"} text-white`}
-        style={{ textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}
+        className={`font-bold ${
+          isLesson ? "text-[2.8vh] md:text-[3.5vh]" : "text-[3.2vh] md:text-[4.2vh]"
+        } text-amber-950`}
+        style={{ textShadow: "0 1px 3px rgba(0,0,0,0.15)" }}
       >
         {entry.name}
       </span>
@@ -71,37 +73,37 @@ function SectionPanel({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      // ===== שיפור 3: border זהב, border-radius גדול יותר, backdrop-blur =====
       className="rounded-3xl overflow-hidden shadow-2xl"
       style={{
-        background: "rgba(15, 30, 80, 0.65)",
-        backdropFilter: "blur(12px)",
-        border: "1.5px solid rgba(251,191,36,0.35)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+        /* רקע בז'/קנבס עתיק */
+        background: "rgba(245, 230, 190, 0.82)",
+        backdropFilter: "blur(10px)",
+        border: "1.5px solid rgba(160, 110, 40, 0.5)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6)",
       }}
     >
-      {/* ===== שיפור 4: כותרת פאנל מודגשת יותר ===== */}
+      {/* כותרת פאנל - זהב חם */}
       <div
         className="px-[2vw] py-[1.2vh] border-b"
         style={{
-          background: "linear-gradient(to left, rgba(180,120,0,0.35), rgba(120,80,0,0.15))",
-          borderColor: "rgba(251,191,36,0.3)",
+          background: "linear-gradient(to left, rgba(160,100,0,0.25), rgba(200,140,0,0.15))",
+          borderColor: "rgba(160,110,40,0.4)",
         }}
       >
         <h3
-          className="text-[2.8vh] md:text-[3.5vh] font-bold text-amber-400 flex items-center justify-end gap-[0.8vw]"
-          style={{ textShadow: "0 2px 12px rgba(251,191,36,0.6)" }}
+          className="text-[2.8vh] md:text-[3.5vh] font-bold text-amber-800 flex items-center justify-end gap-[0.8vw]"
+          style={{ textShadow: "0 1px 6px rgba(160,100,0,0.4)" }}
         >
           {title} {icon}
         </h3>
       </div>
 
-      {/* ===== שיפור 5: מפריד עדין בין שורות ===== */}
+      {/* שורות */}
       <div className="px-[0.5vw] py-[0.8vh]">
         {entries.map((entry, idx) => (
           <div key={idx}>
             <TimeRow entry={entry} isLesson={isLesson} index={idx} />
-            {idx < entries.length - 1 && <div className="mx-[2vw] h-px bg-blue-600/20" />}
+            {idx < entries.length - 1 && <div className="mx-[2vw] h-px bg-amber-800/20" />}
           </div>
         ))}
       </div>
@@ -138,21 +140,20 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
       transition={{ duration: 0.8, ease: "easeInOut" }}
       className="w-full h-full flex flex-col items-center justify-center p-[3vw]"
     >
-      {/* ===== שיפור 6: כותרת ראשית עם גלו זהב ===== */}
+      {/* כותרת ראשית - חום/זהב כהה */}
       <motion.h2
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-[4.5vh] md:text-[6vh] font-bold text-amber-400 mb-[2.5vh] text-center"
+        className="text-[4.5vh] md:text-[6vh] font-bold text-amber-800 mb-[2.5vh] text-center"
         style={{
-          textShadow: "0 0 30px rgba(251,191,36,0.7), 0 3px 15px rgba(0,0,0,0.9)",
+          textShadow: "0 2px 15px rgba(160,100,0,0.5), 0 3px 8px rgba(0,0,0,0.4)",
           letterSpacing: "0.02em",
         }}
       >
         🕎 {titleText}
       </motion.h2>
 
-      {/* ===== שיפור 7: גריד רספונסיבי עם גאפ גדול יותר ===== */}
       <div
         className={`w-full max-w-[92vw] ${
           hasLessons ? "grid grid-cols-1 md:grid-cols-2 gap-[3vw]" : "flex justify-center max-w-[55vw]"
