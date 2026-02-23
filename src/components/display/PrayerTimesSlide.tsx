@@ -33,7 +33,6 @@ function TimeRow({ entry, isLesson = false, index = 0 }: { entry: PrayerEntry; i
       }`}
       dir="rtl"
     >
-      {/* שם התפילה — מימין */}
       <span
         className={`font-bold flex-1 text-right ${
           isLesson ? "text-[2.8vh] md:text-[3.5vh]" : "text-[3.2vh] md:text-[4.2vh]"
@@ -42,7 +41,6 @@ function TimeRow({ entry, isLesson = false, index = 0 }: { entry: PrayerEntry; i
       >
         {entry.name}
       </span>
-      {/* שעה — משמאל */}
       <span
         className={`font-bold tabular-nums tracking-wide ${
           isLesson ? "text-[3vh] md:text-[3.8vh]" : "text-[3.8vh] md:text-[4.8vh]"
@@ -75,13 +73,12 @@ function SectionPanel({
       transition={{ duration: 0.5 }}
       className="rounded-3xl overflow-hidden shadow-2xl"
       style={{
-        background: "rgba(245, 230, 190, 0.82)",
+        background: "rgba(245, 230, 190, 0.50)",
         backdropFilter: "blur(10px)",
         border: "1.5px solid rgba(160, 110, 40, 0.5)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6)",
       }}
     >
-      {/* כותרת פאנל */}
       <div
         className="px-[2vw] py-[1.2vh] border-b"
         dir="rtl"
@@ -98,7 +95,6 @@ function SectionPanel({
         </h3>
       </div>
 
-      {/* שורות */}
       <div className="px-[0.5vw] py-[0.8vh]">
         {entries.map((entry, idx) => (
           <div key={idx}>
@@ -141,14 +137,13 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
       className="w-full h-full flex flex-col items-center justify-center p-[3vw] min-h-0"
       dir="rtl"
     >
-      {/* כותרת ראשית */}
       <motion.h2
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="text-[4.5vh] md:text-[6vh] font-bold text-amber-800 mb-[2.5vh] text-center px-[4vw] py-[1.2vh] rounded-2xl"
         style={{
-          background: "rgba(240, 215, 160, 0.80)",
+          background: "rgba(240, 215, 160, 0.50)",
           backdropFilter: "blur(8px)",
           border: "1px solid rgba(160,110,40,0.45)",
           boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
