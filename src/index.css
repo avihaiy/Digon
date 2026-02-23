@@ -455,3 +455,18 @@
     display: block !important;
   }
 }
+
+/* Force landscape orientation for display page on portrait tablets/phones */
+@media (orientation: portrait) {
+  .display-force-landscape {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vh;
+    height: 100vw;
+    transform: rotate(90deg);
+    transform-origin: top left;
+    translate: 100vw 0;
+    overflow: hidden;
+  }
+}
