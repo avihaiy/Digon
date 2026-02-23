@@ -81,6 +81,7 @@ export default function ManageAds() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showMemorial, setShowMemorial] = useState(true);
+  const [showHeichal, setShowHeichal] = useState(false);
   const [showFinance, setShowFinance] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
   const [bgUploading, setBgUploading] = useState(false);
@@ -93,7 +94,7 @@ export default function ManageAds() {
       const { data } = await supabase
         .from('app_settings')
         .select('key, value')
-        .in('key', ['show_memorial_on_display', 'show_finance_on_display', 'display_background_url']);
+        .in('key', ['show_memorial_on_display', 'show_finance_on_display', 'display_background_url', 'show_heichal_on_display']);
       if (data) {
         for (const setting of data) {
           if (setting.key === 'show_memorial_on_display') {
@@ -104,6 +105,9 @@ export default function ManageAds() {
           }
           if (setting.key === 'display_background_url') {
             setDisplayBgUrl(setting.value || null);
+          }
+          if (setting.key === 'show_heichal_on_display') {
+            setShowHeichal(setting.value === 'true');
           }
         }
       }
@@ -130,6 +134,27 @@ export default function ManageAds() {
         .insert({ key: 'show_memorial_on_display', value: checked ? 'true' : 'false' });
     }
     toast.success(checked ? 'אשכבות יוצגו על המסך' : 'אשכבות הוסרו מהמסך');
+  };
+
+  const toggleHeichal = async (checked: boolean) => {
+    setShowHeichal(checked);
+    const { data: existing } = await supabase
+      .from('app_settings')
+      .select('id')
+      .eq('key', 'show_heichal_on_display')
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from('app_settings')
+        .update({ value: checked ? 'true' : 'false' })
+        .eq('key', 'show_heichal_on_display');
+    } else {
+      await supabase
+        .from('app_settings')
+        .insert({ key: 'show_heichal_on_display', value: checked ? 'true' : 'false' });
+    }
+    toast.success(checked ? 'היכל ה׳ יוצג על המסך' : 'היכל ה׳ הוסר מהמסך');
   };
 
   const toggleFinance = async (checked: boolean) => {
@@ -412,7 +437,7 @@ export default function ManageAds() {
         </div>
       </div>
 
-      <MemorialManager showMemorial={showMemorial} onToggleMemorial={toggleMemorial} />
+      <MemorialManager showMemorial={showMemorial} onToggleMemorial={toggleMemorial} showHeichal={showHeichal} onToggleHeichal={toggleHeichal} />
 
       {/* Finance Display Toggle */}
       <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">

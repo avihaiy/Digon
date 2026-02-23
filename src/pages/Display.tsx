@@ -7,6 +7,7 @@ import { Maximize, Lock, Unlock } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import MemorialDisplaySlide from '@/components/display/MemorialDisplaySlide';
+import HeichalDisplaySlide from '@/components/display/HeichalDisplaySlide';
 import FinanceDisplaySlide from '@/components/display/FinanceDisplaySlide';
 import PrayerTimesSlide from '@/components/display/PrayerTimesSlide';
 
@@ -155,6 +156,7 @@ export default function Display() {
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
   const [showWeekBefore, setShowWeekBefore] = useState(false);
+  const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -167,7 +169,7 @@ export default function Display() {
       const { data } = await supabase
         .from('app_settings')
         .select('key, value')
-        .in('key', ['display_lock_code', 'show_memorial_on_display', 'memorial_show_week_before', 'show_finance_on_display', 'display_background_url']);
+        .in('key', ['display_lock_code', 'show_memorial_on_display', 'memorial_show_week_before', 'show_finance_on_display', 'display_background_url', 'show_heichal_on_display']);
       
       if (data) {
         for (const setting of data) {
@@ -185,6 +187,9 @@ export default function Display() {
           }
           if (setting.key === 'display_background_url' && setting.value) {
             setDisplayBgUrl(setting.value);
+          }
+          if (setting.key === 'show_heichal_on_display') {
+            setShowHeichal(setting.value === 'true');
           }
         }
       }
@@ -216,6 +221,9 @@ export default function Display() {
           }
           if (payload.new?.key === 'display_background_url') {
             setDisplayBgUrl(payload.new.value || null);
+          }
+          if (payload.new?.key === 'show_heichal_on_display') {
+            setShowHeichal(payload.new.value === 'true');
           }
         }
       )
@@ -457,12 +465,14 @@ export default function Display() {
     });
   }, [announcements, dayType, currentTime]);
 
-  // Build slides: announcements + memorial + finance (if applicable)
+  // Build slides: announcements + heichal + memorial + finance (if applicable)
   const hasMemorial = showMemorial && memorialPeople.length > 0;
   const hasFinance = showFinance;
+  const hasHeichal = showHeichal;
   
-  // Slide order: memorial (0), finance (1 if memorial, 0 if not), then announcements
-  const specialSlides: ('memorial' | 'finance')[] = [];
+  // Slide order: heichal, memorial, finance, then announcements
+  const specialSlides: ('heichal' | 'memorial' | 'finance')[] = [];
+  if (hasHeichal) specialSlides.push('heichal');
   if (hasMemorial) specialSlides.push('memorial');
   if (hasFinance) specialSlides.push('finance');
   const totalSlides = validAnnouncements.length + specialSlides.length;
@@ -495,13 +505,15 @@ export default function Display() {
   const isPrayerTimesAd = currentAnnouncement?.title === 'זמני תפילה';
   const styleConfig = currentSlideType === 'memorial'
     ? STYLE_CONFIGS.modern_dark
-    : currentSlideType === 'finance'
+    : currentSlideType === 'heichal'
       ? STYLE_CONFIGS.modern_dark
-      : isPrayerTimesAd
-        ? STYLE_CONFIGS.royal_blue
-        : currentAnnouncement
-          ? STYLE_CONFIGS[currentAnnouncement.style]
-          : STYLE_CONFIGS.traditional_gold;
+      : currentSlideType === 'finance'
+        ? STYLE_CONFIGS.modern_dark
+        : isPrayerTimesAd
+          ? STYLE_CONFIGS.royal_blue
+          : currentAnnouncement
+            ? STYLE_CONFIGS[currentAnnouncement.style]
+            : STYLE_CONFIGS.traditional_gold;
 
   const timeString = currentTime.toLocaleTimeString('he-IL', {
     hour: '2-digit',
@@ -707,6 +719,8 @@ export default function Display() {
             >
               <div className="text-[4vh]">אין הודעות להצגה כרגע</div>
             </motion.div>
+          ) : currentSlideType === 'heichal' ? (
+            <HeichalDisplaySlide key="heichal" />
           ) : currentSlideType === 'memorial' ? (
             <MemorialDisplaySlide
               key="memorial"
