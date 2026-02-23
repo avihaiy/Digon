@@ -138,7 +138,7 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.8, ease: "easeInOut" }}
-      className="w-full h-full flex flex-col items-center justify-center p-[3vw]"
+      className="w-full h-full flex flex-col items-center justify-center p-[3vw] min-h-0"
       dir="rtl"
     >
       {/* כותרת ראשית */}
@@ -156,7 +156,7 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
       </motion.h2>
 
       <div
-        className={`w-full max-w-[92vw] ${
+        className={`w-full max-w-[92vw] my-auto ${
           hasLessons ? "grid grid-cols-1 md:grid-cols-2 gap-[3vw]" : "flex justify-center max-w-[55vw]"
         }`}
       >
