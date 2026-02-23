@@ -387,12 +387,43 @@ export default function Display() {
     return () => clearInterval(timer);
   }, []);
 
-  // רענון אוטומטי כל 30 שניות
+  // רענון נתונים כל 3 דקות — בלי reload, שומר מסך מלא ונעילה
   useEffect(() => {
-    const refreshTimer = setInterval(() => {
-      window.location.reload();
-    }, 30 * 1000);
-    return () => clearInterval(refreshTimer);
+    const pollInterval = setInterval(
+      async () => {
+        // רענון הגדרות
+        const { data: settingsData } = await supabase
+          .from("app_settings")
+          .select("key, value")
+          .in("key", [
+            "display_lock_code",
+            "show_memorial_on_display",
+            "memorial_show_week_before",
+            "show_finance_on_display",
+            "display_background_url",
+            "show_heichal_on_display",
+          ]);
+        if (settingsData) {
+          for (const setting of settingsData) {
+            if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
+            if (setting.key === "show_memorial_on_display") setShowMemorial(setting.value !== "false");
+            if (setting.key === "memorial_show_week_before") setShowWeekBefore(setting.value === "true");
+            if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
+            if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
+            if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+          }
+        }
+        // רענון הודעות
+        const { data: adsData, error: adsError } = await supabase
+          .from("scheduled_announcements")
+          .select("*")
+          .eq("is_active", true)
+          .order("priority", { ascending: false });
+        if (!adsError && adsData) setAnnouncements(adsData as ScheduledAnnouncement[]);
+      },
+      3 * 60 * 1000,
+    );
+    return () => clearInterval(pollInterval);
   }, []);
 
   useEffect(() => {
