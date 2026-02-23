@@ -491,7 +491,7 @@ export default function Display() {
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 flex flex-col overflow-hidden display-force-landscape ${!displayBgUrl ? styleConfig.bg : ""}`}
+      className={`fixed inset-0 flex flex-col overflow-hidden ${!displayBgUrl ? styleConfig.bg : ""}`}
       style={{
         paddingTop: "env(safe-area-inset-top)",
         paddingLeft: "env(safe-area-inset-left)",
