@@ -941,6 +941,25 @@ export default function Display() {
         </div>
       </main>
 
+      {/* CREDIT */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "clamp(4px, 0.8vh, 10px)",
+          left: "50%",
+          transform: "translateX(-50%)",
+          fontSize: "clamp(9px, 1.2vh, 13px)",
+          color: "rgba(255,255,255,0.25)",
+          fontWeight: 400,
+          letterSpacing: "0.04em",
+          zIndex: 5,
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+        }}
+      >
+        נבנה ע״י Avihai Yosipovich
+      </div>
+
       {/* FOOTER */}
       {totalSlides > 1 && (
         <footer className="shrink-0 flex items-center justify-center gap-3 py-[1.5vh] z-10 relative">
