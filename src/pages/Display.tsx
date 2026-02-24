@@ -768,137 +768,137 @@ export default function Display() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 flex items-center justify-center overflow-hidden relative z-10 h-full">
-        <AnimatePresence mode="wait">
-          {totalSlides === 0 ? (
-            <motion.div
-              key="no-announcements"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center p-[4vw]"
-            >
-              <div
-                className="text-[4vh] text-white bg-black/40 backdrop-blur-sm rounded-2xl px-[4vw] py-[3vh] border border-white/10"
-                style={{ textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}
-              >
-                אין הודעות להצגה כרגע
-              </div>
-            </motion.div>
-          ) : currentSlideType === "heichal" ? (
-            <HeichalDisplaySlide key="heichal" />
-          ) : currentSlideType === "memorial" ? (
-            <div
-              key="memorial"
-              style={{
-                width: "100%",
-                height: "100%",
-                maxHeight: "100%",
-                overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-              }}
-            >
-              <MemorialDisplaySlide
-                people={memorialPeople}
-                textClass={styleConfig.text}
-                accentClass={styleConfig.accent}
-              />
-            </div>
-          ) : currentSlideType === "zmanim" ? (
-            <ZmanimDisplaySlide key="zmanim" />
-          ) : currentSlideType === "finance" ? (
-            <FinanceDisplaySlide key="finance" textClass={styleConfig.text} accentClass={styleConfig.accent} />
-          ) : currentAnnouncement ? (
-            isPrayerTimesAnnouncement(currentAnnouncement.title) ? (
-              (() => {
-                try {
-                  JSON.parse(currentAnnouncement.content);
-                  return (
-                    <PrayerTimesSlide
-                      key={currentAnnouncement.id}
-                      content={currentAnnouncement.content}
-                      isShabbat={getPrayerIsShabbat(currentAnnouncement.title, dayType)}
-                    />
-                  );
-                } catch {
-                  return (
-                    <motion.div
-                      key={currentAnnouncement.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.8, ease: "easeInOut" }}
-                      className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
-                    >
-                      <h1
-                        className="text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight text-white"
-                        style={{ textShadow: "0 3px 20px rgba(0,0,0,0.9)" }}
-                      >
-                        {currentAnnouncement.title}
-                      </h1>
-                      <p
-                        className="text-[3vh] md:text-[4vh] leading-relaxed text-white/85 whitespace-pre-line"
-                        style={{ textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}
-                      >
-                        {currentAnnouncement.content}
-                      </p>
-                    </motion.div>
-                  );
-                }
-              })()
-            ) : currentAnnouncement.image_url ? (
+      <main className="flex-1 flex items-stretch justify-center overflow-hidden relative z-10">
+        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+          <AnimatePresence mode="wait">
+            {totalSlides === 0 ? (
               <motion.div
-                key={currentAnnouncement.id}
+                key="no-announcements"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-                className="absolute inset-0 flex items-center justify-center p-[2vh]"
+                className="text-center p-[4vw]"
               >
-                <img
-                  src={currentAnnouncement.image_url}
-                  alt={currentAnnouncement.title}
-                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key={currentAnnouncement.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-                className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
-              >
-                {/* רקע קלף לתוכן הודעה */}
                 <div
-                  className="rounded-3xl px-[5vw] py-[4vh] shadow-2xl"
-                  style={{
-                    background: "rgba(245, 230, 190, 0.50)",
-                    backdropFilter: "blur(10px)",
-                    border: "1.5px solid rgba(160, 110, 40, 0.5)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6)",
-                  }}
+                  className="text-[4vh] text-white bg-black/40 backdrop-blur-sm rounded-2xl px-[4vw] py-[3vh] border border-white/10"
+                  style={{ textShadow: "0 2px 8px rgba(0,0,0,0.8)" }}
                 >
-                  <h1
-                    className="text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight text-amber-950"
-                    style={{ textShadow: "0 2px 8px rgba(160,100,0,0.3)" }}
-                  >
-                    {currentAnnouncement.title}
-                  </h1>
-                  <p
-                    className="text-[3vh] md:text-[4vh] leading-relaxed text-amber-800 whitespace-pre-line"
-                    style={{ textShadow: "0 1px 4px rgba(160,100,0,0.2)" }}
-                  >
-                    {currentAnnouncement.content}
-                  </p>
+                  אין הודעות להצגה כרגע
                 </div>
               </motion.div>
-            )
-          ) : null}
-        </AnimatePresence>
+            ) : currentSlideType === "heichal" ? (
+              <div key="heichal" style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+                <HeichalDisplaySlide />
+              </div>
+            ) : currentSlideType === "memorial" ? (
+              <div
+                key="memorial"
+                style={{ width: "100%", height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}
+              >
+                <MemorialDisplaySlide
+                  people={memorialPeople}
+                  textClass={styleConfig.text}
+                  accentClass={styleConfig.accent}
+                />
+              </div>
+            ) : currentSlideType === "zmanim" ? (
+              <div key="zmanim" style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+                <ZmanimDisplaySlide />
+              </div>
+            ) : currentSlideType === "finance" ? (
+              <div key="finance" style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+                <FinanceDisplaySlide textClass={styleConfig.text} accentClass={styleConfig.accent} />
+              </div>
+            ) : currentAnnouncement ? (
+              isPrayerTimesAnnouncement(currentAnnouncement.title) ? (
+                (() => {
+                  try {
+                    JSON.parse(currentAnnouncement.content);
+                    return (
+                      <PrayerTimesSlide
+                        key={currentAnnouncement.id}
+                        content={currentAnnouncement.content}
+                        isShabbat={getPrayerIsShabbat(currentAnnouncement.title, dayType)}
+                      />
+                    );
+                  } catch {
+                    return (
+                      <motion.div
+                        key={currentAnnouncement.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.8, ease: "easeInOut" }}
+                        className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
+                      >
+                        <h1
+                          className="text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight text-white"
+                          style={{ textShadow: "0 3px 20px rgba(0,0,0,0.9)" }}
+                        >
+                          {currentAnnouncement.title}
+                        </h1>
+                        <p
+                          className="text-[3vh] md:text-[4vh] leading-relaxed text-white/85 whitespace-pre-line"
+                          style={{ textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}
+                        >
+                          {currentAnnouncement.content}
+                        </p>
+                      </motion.div>
+                    );
+                  }
+                })()
+              ) : currentAnnouncement.image_url ? (
+                <motion.div
+                  key={currentAnnouncement.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                  className="absolute inset-0 flex items-center justify-center p-[2vh]"
+                >
+                  <img
+                    src={currentAnnouncement.image_url}
+                    alt={currentAnnouncement.title}
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={currentAnnouncement.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                  className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
+                >
+                  {/* רקע קלף לתוכן הודעה */}
+                  <div
+                    className="rounded-3xl px-[5vw] py-[4vh] shadow-2xl"
+                    style={{
+                      background: "rgba(245, 230, 190, 0.50)",
+                      backdropFilter: "blur(10px)",
+                      border: "1.5px solid rgba(160, 110, 40, 0.5)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6)",
+                    }}
+                  >
+                    <h1
+                      className="text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight text-amber-950"
+                      style={{ textShadow: "0 2px 8px rgba(160,100,0,0.3)" }}
+                    >
+                      {currentAnnouncement.title}
+                    </h1>
+                    <p
+                      className="text-[3vh] md:text-[4vh] leading-relaxed text-amber-800 whitespace-pre-line"
+                      style={{ textShadow: "0 1px 4px rgba(160,100,0,0.2)" }}
+                    >
+                      {currentAnnouncement.content}
+                    </p>
+                  </div>
+                </motion.div>
+              )
+            ) : null}
+          </AnimatePresence>
+        </div>
       </main>
 
       {/* FOOTER */}
