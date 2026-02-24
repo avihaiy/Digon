@@ -198,6 +198,34 @@ export default function Display() {
     announcements: 10,
   });
   const containerRef = useRef<HTMLDivElement>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  // Wake Lock — מונע כיבוי מסך כשנעול
+  useEffect(() => {
+    const requestWakeLock = async () => {
+      if (isLocked && "wakeLock" in navigator) {
+        try {
+          wakeLockRef.current = await (
+            navigator as Navigator & { wakeLock: { request: (type: string) => Promise<WakeLockSentinel> } }
+          ).wakeLock.request("screen");
+        } catch (e) {
+          console.log("Wake lock failed:", e);
+        }
+      } else if (!isLocked && wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+        } catch (e) {}
+      }
+    };
+    requestWakeLock();
+    // רכש מחדש אחרי visibility change
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && isLocked) requestWakeLock();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [isLocked]);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -371,14 +399,29 @@ export default function Display() {
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
-      const preventExit = (e: KeyboardEvent) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-        }
+      const preventKeys = (e: KeyboardEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
       };
-      document.addEventListener("keydown", preventExit, true);
-      return () => document.removeEventListener("keydown", preventExit, true);
+      const preventTouch = (e: TouchEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+      const preventMenu = (e: Event) => {
+        e.preventDefault();
+      };
+      document.addEventListener("keydown", preventKeys, { capture: true, passive: false });
+      document.addEventListener("touchstart", preventTouch, { capture: true, passive: false });
+      document.addEventListener("touchmove", preventTouch, { capture: true, passive: false });
+      document.addEventListener("touchend", preventTouch, { capture: true, passive: false });
+      document.addEventListener("contextmenu", preventMenu, { capture: true });
+      return () => {
+        document.removeEventListener("keydown", preventKeys, true);
+        document.removeEventListener("touchstart", preventTouch, true);
+        document.removeEventListener("touchmove", preventTouch, true);
+        document.removeEventListener("touchend", preventTouch, true);
+        document.removeEventListener("contextmenu", preventMenu, true);
+      };
     }
   }, [isLocked, isFullscreen]);
 
