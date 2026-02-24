@@ -22,34 +22,35 @@ function TimeRow({ entry, index = 0 }: { entry: PrayerEntry; index?: number }) {
       initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.06, duration: 0.35 }}
-      className="flex items-center justify-between px-[2vw] rounded-xl"
       style={{
-        padding: "clamp(10px, 1.8vh, 22px) clamp(12px, 2vw, 24px)",
-        background: index % 2 === 0 ? "rgba(255,255,255,0.07)" : "transparent",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "clamp(10px, 1.8vh, 22px) clamp(14px, 2.5vw, 28px)",
+        borderRadius: "10px",
+        background: index % 2 === 0 ? "rgba(160,100,0,0.1)" : "transparent",
       }}
       dir="rtl"
     >
       <span
         style={{
-          fontSize: "clamp(18px, 3.5vh, 40px)",
-          fontWeight: 700,
-          color: "#FFFFFF",
+          fontSize: "clamp(20px, 3.8vh, 42px)",
+          fontWeight: 800,
+          color: "#3b1a00",
           flex: 1,
           textAlign: "right",
-          textShadow: "0 1px 6px rgba(0,0,0,0.4)",
         }}
       >
         {entry.name}
       </span>
       <span
         style={{
-          fontSize: "clamp(22px, 4.2vh, 48px)",
-          fontWeight: 800,
-          color: "#FCD34D",
+          fontSize: "clamp(24px, 4.5vh, 52px)",
+          fontWeight: 900,
+          color: "#7c2d12",
           direction: "ltr",
           minWidth: "5ch",
           textAlign: "left",
-          textShadow: "0 1px 8px rgba(0,0,0,0.4)",
           fontVariantNumeric: "tabular-nums",
         }}
       >
@@ -67,48 +68,46 @@ function SectionPanel({ title, icon, entries }: { title: string; icon: string; e
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       style={{
-        borderRadius: "16px",
+        borderRadius: "18px",
         overflow: "hidden",
         flex: 1,
-        background: "rgba(0,0,0,0.45)",
+        background: "rgba(250, 235, 195, 0.75)",
         backdropFilter: "blur(14px)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        border: "1.5px solid rgba(160,110,40,0.55)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.7)",
       }}
     >
       {/* כותרת פאנל */}
       <div
         dir="rtl"
         style={{
-          padding: "clamp(8px, 1.4vh, 16px) clamp(12px, 2.5vw, 28px)",
+          padding: "clamp(8px, 1.4vh, 16px) clamp(14px, 2.5vw, 28px)",
           display: "flex",
           alignItems: "center",
           gap: "10px",
-          background: "rgba(255,255,255,0.06)",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          background: "linear-gradient(to left, rgba(160,100,0,0.2), rgba(200,140,0,0.1))",
+          borderBottom: "1.5px solid rgba(160,110,40,0.3)",
         }}
       >
-        <span style={{ fontSize: "clamp(16px, 2.8vh, 30px)" }}>{icon}</span>
+        <span style={{ fontSize: "clamp(18px, 3vh, 32px)" }}>{icon}</span>
         <h3
           style={{
-            fontSize: "clamp(16px, 3vh, 32px)",
-            fontWeight: 800,
-            color: "#FDE68A",
-            textShadow: "0 1px 6px rgba(0,0,0,0.4)",
+            fontSize: "clamp(18px, 3.2vh, 36px)",
+            fontWeight: 900,
+            color: "#3b1a00",
           }}
         >
           {title}
         </h3>
       </div>
 
-      {/* שורות */}
-      <div style={{ padding: "clamp(4px, 0.6vh, 8px) 0" }}>
+      <div style={{ padding: "clamp(4px, 0.5vh, 8px) 0" }}>
         {entries.map((entry, idx) => (
           <div key={idx}>
             <TimeRow entry={entry} index={idx} />
             {idx < entries.length - 1 && (
               <div
-                style={{ margin: "0 clamp(12px, 2vw, 24px)", height: "1px", background: "rgba(255,255,255,0.08)" }}
+                style={{ margin: "0 clamp(14px, 2.5vw, 28px)", height: "1px", background: "rgba(160,110,40,0.2)" }}
               />
             )}
           </div>
@@ -161,18 +160,18 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         style={{
-          fontSize: "clamp(24px, 5vh, 64px)",
+          fontSize: "clamp(26px, 5.5vh, 68px)",
           fontWeight: 900,
-          color: "#FFFFFF",
+          color: "#3b1a00",
           textAlign: "center",
           width: "100%",
           flexShrink: 0,
           padding: "clamp(8px, 1.4vh, 18px) clamp(16px, 3vw, 40px)",
           borderRadius: "14px",
-          background: "rgba(0,0,0,0.4)",
+          background: "rgba(250, 235, 195, 0.75)",
           backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          textShadow: "0 2px 12px rgba(0,0,0,0.6)",
+          border: "1.5px solid rgba(160,110,40,0.5)",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.7)",
           letterSpacing: "0.02em",
         }}
       >
