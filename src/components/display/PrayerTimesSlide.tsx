@@ -26,7 +26,7 @@ function TimeRow({ entry, index = 0 }: { entry: PrayerEntry; index?: number }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "clamp(10px, 1.8vh, 22px) clamp(14px, 2.5vw, 28px)",
+        padding: "clamp(6px, 1vh, 12px) clamp(10px, 1.8vw, 20px)",
         borderRadius: "10px",
         background: index % 2 === 0 ? "rgba(160,100,0,0.1)" : "transparent",
       }}
@@ -34,7 +34,7 @@ function TimeRow({ entry, index = 0 }: { entry: PrayerEntry; index?: number }) {
     >
       <span
         style={{
-          fontSize: "clamp(20px, 3.8vh, 42px)",
+          fontSize: "clamp(15px, 2.6vh, 30px)",
           fontWeight: 800,
           color: "#3b1a00",
           flex: 1,
@@ -45,7 +45,7 @@ function TimeRow({ entry, index = 0 }: { entry: PrayerEntry; index?: number }) {
       </span>
       <span
         style={{
-          fontSize: "clamp(24px, 4.5vh, 52px)",
+          fontSize: "clamp(17px, 3vh, 34px)",
           fontWeight: 900,
           color: "#7c2d12",
           direction: "ltr",
@@ -81,7 +81,7 @@ function SectionPanel({ title, icon, entries }: { title: string; icon: string; e
       <div
         dir="rtl"
         style={{
-          padding: "clamp(8px, 1.4vh, 16px) clamp(14px, 2.5vw, 28px)",
+          padding: "clamp(5px, 0.9vh, 10px) clamp(10px, 1.8vw, 20px)",
           display: "flex",
           alignItems: "center",
           gap: "10px",
@@ -89,10 +89,10 @@ function SectionPanel({ title, icon, entries }: { title: string; icon: string; e
           borderBottom: "1.5px solid rgba(160,110,40,0.3)",
         }}
       >
-        <span style={{ fontSize: "clamp(18px, 3vh, 32px)" }}>{icon}</span>
+        <span style={{ fontSize: "clamp(14px, 2.4vh, 26px)" }}>{icon}</span>
         <h3
           style={{
-            fontSize: "clamp(18px, 3.2vh, 36px)",
+            fontSize: "clamp(14px, 2.4vh, 26px)",
             fontWeight: 900,
             color: "#3b1a00",
           }}
@@ -107,7 +107,7 @@ function SectionPanel({ title, icon, entries }: { title: string; icon: string; e
             <TimeRow entry={entry} index={idx} />
             {idx < entries.length - 1 && (
               <div
-                style={{ margin: "0 clamp(14px, 2.5vw, 28px)", height: "1px", background: "rgba(160,110,40,0.2)" }}
+                style={{ margin: "0 clamp(10px, 1.8vw, 20px)", height: "1px", background: "rgba(160,110,40,0.2)" }}
               />
             )}
           </div>
@@ -160,13 +160,13 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         style={{
-          fontSize: "clamp(26px, 5.5vh, 68px)",
+          fontSize: "clamp(20px, 3.8vh, 46px)",
           fontWeight: 900,
           color: "#3b1a00",
           textAlign: "center",
           width: "100%",
           flexShrink: 0,
-          padding: "clamp(8px, 1.4vh, 18px) clamp(16px, 3vw, 40px)",
+          padding: "clamp(6px, 1vh, 12px) clamp(14px, 2.5vw, 32px)",
           borderRadius: "14px",
           background: "rgba(250, 235, 195, 0.75)",
           backdropFilter: "blur(10px)",
