@@ -14,6 +14,7 @@ import { Maximize, Lock, Unlock } from "lucide-react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import MemorialDisplaySlide from "@/components/display/MemorialDisplaySlide";
+import ZmanimDisplaySlide from "@/components/display/ZmanimDisplaySlide";
 import HeichalDisplaySlide from "@/components/display/HeichalDisplaySlide";
 import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
@@ -182,15 +183,17 @@ export default function Display() {
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
-  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "finance" | "announcements")[]>([
+  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]>([
     "heichal",
     "memorial",
+    "zmanim",
     "finance",
     "announcements",
   ]);
   const [slideDurations, setSlideDurations] = useState<Record<string, number>>({
     heichal: 10,
     memorial: 15,
+    zmanim: 20,
     finance: 10,
     announcements: 10,
   });
@@ -485,6 +488,7 @@ export default function Display() {
   type Slide =
     | { type: "heichal" }
     | { type: "memorial" }
+    | { type: "zmanim" }
     | { type: "finance" }
     | { type: "announcement"; announcement: ScheduledAnnouncement };
 
@@ -495,6 +499,8 @@ export default function Display() {
         result.push({ type: "heichal" });
       } else if (id === "memorial" && showMemorial && memorialPeople.length > 0) {
         result.push({ type: "memorial" });
+      } else if (id === "zmanim") {
+        result.push({ type: "zmanim" });
       } else if (id === "finance" && showFinance) {
         result.push({ type: "finance" });
       } else if (id === "announcements") {
@@ -536,15 +542,17 @@ export default function Display() {
   const styleConfig =
     currentSlideType === "memorial"
       ? STYLE_CONFIGS.modern_dark
-      : currentSlideType === "heichal"
+      : currentSlideType === "zmanim"
         ? STYLE_CONFIGS.modern_dark
-        : currentSlideType === "finance"
+        : currentSlideType === "heichal"
           ? STYLE_CONFIGS.modern_dark
-          : isPrayerAd
-            ? STYLE_CONFIGS.royal_blue
-            : currentAnnouncement
-              ? STYLE_CONFIGS[currentAnnouncement.style]
-              : STYLE_CONFIGS.traditional_gold;
+          : currentSlideType === "finance"
+            ? STYLE_CONFIGS.modern_dark
+            : isPrayerAd
+              ? STYLE_CONFIGS.royal_blue
+              : currentAnnouncement
+                ? STYLE_CONFIGS[currentAnnouncement.style]
+                : STYLE_CONFIGS.traditional_gold;
 
   const timeString = currentTime.toLocaleTimeString("he-IL", {
     hour: "2-digit",
@@ -790,6 +798,8 @@ export default function Display() {
                 accentClass={styleConfig.accent}
               />
             </div>
+          ) : currentSlideType === "zmanim" ? (
+            <ZmanimDisplaySlide key="zmanim" />
           ) : currentSlideType === "finance" ? (
             <FinanceDisplaySlide key="finance" textClass={styleConfig.text} accentClass={styleConfig.accent} />
           ) : currentAnnouncement ? (
