@@ -72,6 +72,7 @@ const defaultFormData = {
   style: "traditional_gold" as StyleType,
   priority: 0,
   image_url: null as string | null,
+  duration_seconds: 10,
 };
 
 // בדיקה אם כותרת היא מסוג זמני תפילה
@@ -371,6 +372,7 @@ export default function ManageAds() {
       style: announcement.style,
       priority: announcement.priority,
       image_url: announcement.image_url,
+      duration_seconds: announcement.duration_seconds ?? 10,
     });
     setImagePreview(announcement.image_url);
     setImageFile(null);
