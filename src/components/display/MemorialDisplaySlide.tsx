@@ -19,7 +19,6 @@ interface MemorialDisplaySlideProps {
 function Candle() {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      {/* להבה */}
       <motion.div
         animate={{ scaleX: [1, 0.75, 1.15, 0.85, 1], scaleY: [1, 1.2, 0.88, 1.12, 1], opacity: [0.9, 1, 0.8, 1, 0.9] }}
         transition={{ duration: 1.9, repeat: Infinity, ease: "easeInOut" }}
@@ -33,7 +32,6 @@ function Candle() {
           filter: "blur(0.3px)",
         }}
       />
-      {/* גוף הנר */}
       <div
         style={{
           width: "clamp(5px, 0.9vw, 11px)",
@@ -43,7 +41,6 @@ function Candle() {
           boxShadow: "inset -1px 0 2px rgba(0,0,0,0.15), inset 1px 0 2px rgba(255,255,255,0.35)",
         }}
       />
-      {/* בסיס */}
       <div
         style={{
           width: "clamp(9px, 1.5vw, 17px)",
@@ -58,7 +55,6 @@ function Candle() {
 
 function MemorialCard({ person }: { person: MemorialPerson }) {
   const isToday = person.days_until === 0;
-
   return (
     <div
       style={{
@@ -76,11 +72,10 @@ function MemorialCard({ person }: { person: MemorialPerson }) {
         boxShadow: isToday ? "0 4px 16px rgba(212,175,55,0.2)" : "0 2px 8px rgba(0,0,0,0.12)",
         gap: "clamp(3px, 0.5vh, 7px)",
         height: "100%",
-        boxSizing: "border-box",
+        boxSizing: "border-box" as const,
       }}
     >
       <Candle />
-
       <div
         style={{
           fontSize: "clamp(12px, 2vh, 22px)",
@@ -91,7 +86,6 @@ function MemorialCard({ person }: { person: MemorialPerson }) {
       >
         {person.is_male !== false ? "ר'" : "מרת"} {person.deceased_name} ז״ל
       </div>
-
       <div
         style={{
           fontSize: "clamp(10px, 1.6vh, 17px)",
@@ -101,31 +95,12 @@ function MemorialCard({ person }: { person: MemorialPerson }) {
       >
         {person.is_male !== false ? "בן" : "בת"} {person.father_name}
       </div>
-
-      <div
-        style={{
-          fontSize: "clamp(10px, 1.5vh, 16px)",
-          fontWeight: 700,
-          color: isToday ? "#fbbf24" : "#92400e",
-        }}
-      >
+      <div style={{ fontSize: "clamp(10px, 1.5vh, 16px)", fontWeight: 700, color: isToday ? "#fbbf24" : "#92400e" }}>
         {person.hebrew_date_display}
         {isToday && " 🕯️"}
         {person.days_until === 1 && " • מחר"}
       </div>
     </div>
-  );
-}
-
-function EmptyCard() {
-  return (
-    <div
-      style={{
-        borderRadius: "10px",
-        background: "rgba(245,225,170,0.2)",
-        border: "1.5px dashed rgba(160,110,40,0.15)",
-      }}
-    />
   );
 }
 
@@ -156,10 +131,9 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
         padding: "clamp(6px, 1vw, 14px)",
         gap: "clamp(4px, 0.7vh, 10px)",
         overflow: "hidden",
-        boxSizing: "border-box",
+        boxSizing: "border-box" as const,
       }}
     >
-      {/* כותרת */}
       <div style={{ textAlign: "center", flexShrink: 0 }}>
         <div
           style={{
@@ -174,18 +148,11 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
         >
           🕯️ היכל ה׳ לזכרון עולם
         </div>
-        <div
-          style={{
-            fontSize: "clamp(9px, 1.4vh, 15px)",
-            color: "rgba(253,230,138,0.6)",
-            marginTop: "1px",
-          }}
-        >
+        <div style={{ fontSize: "clamp(9px, 1.4vh, 15px)", color: "rgba(253,230,138,0.6)", marginTop: "1px" }}>
           — לעילוי נשמת כל ישראל —
         </div>
       </div>
 
-      {/* גריד 2×3 */}
       <AnimatePresence mode="wait">
         <motion.div
           key={page}
@@ -204,12 +171,22 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
           }}
         >
           {slots.map((person, idx) =>
-            person ? <MemorialCard key={person.id} person={person} /> : <EmptyCard key={`e-${idx}`} />,
+            person ? (
+              <MemorialCard key={person.id} person={person} />
+            ) : (
+              <div
+                key={`e-${idx}`}
+                style={{
+                  borderRadius: "10px",
+                  background: "rgba(245,225,170,0.2)",
+                  border: "1.5px dashed rgba(160,110,40,0.15)",
+                }}
+              />
+            ),
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* נקודות */}
       {pages > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: "7px", flexShrink: 0 }}>
           {Array.from({ length: pages }).map((_, i) => (
