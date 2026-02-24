@@ -768,7 +768,7 @@ export default function Display() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-hidden relative z-10">
+      <main className="flex-1 overflow-hidden relative z-10" style={{ height: 0 }}>
         <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
           <AnimatePresence mode="wait">
             {totalSlides === 0 ? (
