@@ -11,9 +11,9 @@ export type SlideId = "heichal" | "memorial" | "zmanim" | "finance" | "announcem
 const SLIDE_LABELS: Record<SlideId, { label: string; emoji: string; desc: string }> = {
   heichal: { label: "היכל ה'", emoji: "🕍", desc: "תמונת היכל" },
   memorial: { label: "אשכבות", emoji: "🕯️", desc: "יארצייט היום" },
-  finance: { label: "מצב כספי", emoji: "💰", desc: "הכנסות והוצאות" },
   zmanim: { label: "זמני היום", emoji: "🕐", desc: "זמני הלכה יומיים" },
   finance: { label: "מצב כספי", emoji: "💰", desc: "הכנסות והוצאות" },
+  announcements: { label: "מודעות", emoji: "📢", desc: "הודעות ומודעות" },
 };
 
 const DEFAULT_ORDER: SlideId[] = ["heichal", "memorial", "zmanim", "finance", "announcements"];
