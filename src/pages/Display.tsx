@@ -470,9 +470,16 @@ export default function Display() {
     };
   }, []);
 
+  // מחושב כל דקה — לא תלוי ב-currentTime (שמשתנה כל שניה)
+  const [timeKey, setTimeKey] = useState(() => Math.floor(Date.now() / 60000));
+  useEffect(() => {
+    const t = setInterval(() => setTimeKey(Math.floor(Date.now() / 60000)), 30000);
+    return () => clearInterval(t);
+  }, []);
+
   const validAnnouncements = useMemo(() => {
     return announcements.filter((a) => a.day_types.includes(dayType) && isTimeInRange(a.start_time, a.end_time));
-  }, [announcements, dayType, currentTime]);
+  }, [announcements, dayType, timeKey]);
 
   // בניית רשימת סליידים מסודרת לפי slideOrder
   type Slide =
