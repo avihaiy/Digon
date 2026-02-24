@@ -455,17 +455,32 @@ export default function Display() {
     return announcements.filter((a) => a.day_types.includes(dayType) && isTimeInRange(a.start_time, a.end_time));
   }, [announcements, dayType, currentTime]);
 
-  // סדר הסליידים לפי הגדרת הניהול
-  const specialSlides = slideOrder.filter((id) => {
-    if (id === "heichal") return showHeichal;
-    if (id === "memorial") return showMemorial && memorialPeople.length > 0;
-    if (id === "finance") return showFinance;
-    return false;
-  }) as ("heichal" | "memorial" | "finance")[];
+  // בניית רשימת סליידים מסודרת לפי slideOrder
+  type Slide =
+    | { type: "heichal" }
+    | { type: "memorial" }
+    | { type: "finance" }
+    | { type: "announcement"; announcement: ScheduledAnnouncement };
 
-  // מודעות — מוסיפות לפי מיקום "announcements" בסדר
-  const announcementsPos = slideOrder.indexOf("announcements");
-  const totalSlides = validAnnouncements.length + specialSlides.length;
+  const orderedSlides = useMemo<Slide[]>(() => {
+    const result: Slide[] = [];
+    for (const id of slideOrder) {
+      if (id === "heichal" && showHeichal) {
+        result.push({ type: "heichal" });
+      } else if (id === "memorial" && showMemorial && memorialPeople.length > 0) {
+        result.push({ type: "memorial" });
+      } else if (id === "finance" && showFinance) {
+        result.push({ type: "finance" });
+      } else if (id === "announcements") {
+        for (const a of validAnnouncements) {
+          result.push({ type: "announcement", announcement: a });
+        }
+      }
+    }
+    return result;
+  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, validAnnouncements]);
+
+  const totalSlides = orderedSlides.length;
 
   useEffect(() => {
     if (totalSlides <= 1) return;
@@ -477,9 +492,9 @@ export default function Display() {
     if (currentIndex >= totalSlides) setCurrentIndex(0);
   }, [totalSlides, currentIndex]);
 
-  const currentSlideType = currentIndex < specialSlides.length ? specialSlides[currentIndex] : "announcement";
-  const announcementIndex = currentIndex - specialSlides.length;
-  const currentAnnouncement = currentSlideType === "announcement" ? validAnnouncements[announcementIndex] : null;
+  const currentSlide = orderedSlides[currentIndex] ?? null;
+  const currentSlideType = currentSlide?.type ?? "announcement";
+  const currentAnnouncement = currentSlide?.type === "announcement" ? currentSlide.announcement : null;
   const isPrayerAd = currentAnnouncement ? isPrayerTimesAnnouncement(currentAnnouncement.title) : false;
 
   const styleConfig =
