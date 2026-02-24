@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 interface MemorialPerson {
@@ -23,9 +23,8 @@ function AnimatedCandle() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        width: "4vw",
-        minWidth: "28px",
-        maxWidth: "44px",
+        width: "clamp(20px, 3.5vw, 40px)",
+        flexShrink: 0,
       }}
     >
       <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -33,67 +32,52 @@ function AnimatedCandle() {
           style={{
             position: "absolute",
             top: "-8px",
-            width: "5vw",
-            height: "5vw",
-            maxWidth: "36px",
-            maxHeight: "36px",
+            width: "clamp(24px, 4vw, 44px)",
+            height: "clamp(24px, 4vw, 44px)",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(251,191,36,0.6) 0%, transparent 70%)",
-            filter: "blur(6px)",
+            background: "radial-gradient(circle, rgba(251,191,36,0.65) 0%, transparent 70%)",
+            filter: "blur(8px)",
           }}
-          animate={{ scale: [1, 1.5, 0.9, 1.3, 1], opacity: [0.5, 0.9, 0.4, 0.8, 0.5] }}
+          animate={{ scale: [1, 1.5, 0.85, 1.3, 1], opacity: [0.5, 0.9, 0.35, 0.8, 0.5] }}
           transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.svg
           viewBox="0 0 24 36"
           style={{
-            width: "3vw",
-            height: "4.5vw",
-            minWidth: "18px",
-            maxWidth: "26px",
+            width: "clamp(14px, 2.5vw, 28px)",
+            height: "clamp(20px, 3.8vw, 42px)",
             position: "relative",
             zIndex: 10,
           }}
-          animate={{ scaleX: [1, 0.82, 1.1, 0.9, 1], scaleY: [1, 1.1, 0.88, 1.05, 1] }}
+          animate={{ scaleX: [1, 0.82, 1.12, 0.9, 1], scaleY: [1, 1.12, 0.88, 1.06, 1] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         >
           <defs>
-            <radialGradient id="candleFlame" cx="50%" cy="60%" r="50%">
+            <radialGradient id="cf4" cx="50%" cy="60%" r="50%">
               <stop offset="0%" stopColor="#FFF7ED" />
-              <stop offset="35%" stopColor="#FDE68A" />
-              <stop offset="65%" stopColor="#F59E0B" />
+              <stop offset="30%" stopColor="#FDE68A" />
+              <stop offset="62%" stopColor="#F59E0B" />
               <stop offset="100%" stopColor="#D97706" />
             </radialGradient>
           </defs>
-          <path
-            d="M12 2 C12 2, 4 14, 4 22 C4 28, 8 32, 12 32 C16 32, 20 28, 20 22 C20 14, 12 2, 12 2Z"
-            fill="url(#candleFlame)"
-          />
-          <path
-            d="M12 10 C12 10, 8 18, 8 22 C8 26, 10 28, 12 28 C14 28, 16 26, 16 22 C16 18, 12 10, 12 10Z"
-            fill="#FEF3C7"
-            opacity="0.7"
-          />
+          <path d="M12 2C12 2 4 14 4 22c0 6 4 10 8 10s8-4 8-10C20 14 12 2 12 2z" fill="url(#cf4)" />
+          <path d="M12 10c0 0-4 8-4 12 0 4 2 6 4 6s4-2 4-6c0-4-4-12-4-12z" fill="#FEF3C7" opacity="0.75" />
         </motion.svg>
       </div>
-      <div style={{ width: "2px", height: "6px", background: "#374151" }} />
+      <div style={{ width: "2px", height: "5px", background: "#4B5563" }} />
       <div
         style={{
-          width: "2vw",
-          minWidth: "12px",
-          maxWidth: "18px",
+          width: "clamp(10px, 1.8vw, 20px)",
           flex: 1,
-          minHeight: "40px",
+          minHeight: "clamp(30px, 5vh, 60px)",
           background: "linear-gradient(180deg, #F5E6A3 0%, #D4A843 35%, #C4942E 50%, #D4A843 70%, #F5E6A3 100%)",
-          boxShadow: "inset -1px 0 3px rgba(0,0,0,0.15), inset 1px 0 3px rgba(255,255,255,0.3)",
+          boxShadow: "inset -1px 0 3px rgba(0,0,0,0.18), inset 1px 0 3px rgba(255,255,255,0.35)",
         }}
       />
       <div
         style={{
-          width: "3vw",
-          minWidth: "18px",
-          maxWidth: "24px",
-          height: "8px",
+          width: "clamp(14px, 2.5vw, 28px)",
+          height: "clamp(5px, 0.8vh, 10px)",
           background: "linear-gradient(to bottom, #B45309, #92400E)",
           borderRadius: "0 0 4px 4px",
         }}
@@ -102,16 +86,16 @@ function AnimatedCandle() {
   );
 }
 
-function MemorialCard({ person, index, compact }: { person: MemorialPerson; index: number; compact: boolean }) {
+function MemorialCard({ person, index }: { person: MemorialPerson; index: number }) {
   const isToday = person.days_until === 0;
   const daysLabel = person.days_until === 1 ? "מחר" : person.days_until > 1 ? `בעוד ${person.days_until} ימים` : null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16, scale: 0.97 }}
+      initial={{ opacity: 0, y: 14, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      style={{ display: "flex", alignItems: "stretch", gap: "clamp(6px, 1.5vw, 18px)" }}
+      transition={{ delay: index * 0.07, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      style={{ display: "flex", alignItems: "stretch", gap: "clamp(8px, 1.5vw, 20px)" }}
     >
       <AnimatedCandle />
 
@@ -123,25 +107,26 @@ function MemorialCard({ person, index, compact }: { person: MemorialPerson; inde
           alignItems: "center",
           justifyContent: "center",
           textAlign: "center",
-          padding: compact
-            ? "clamp(6px, 1vh, 12px) clamp(8px, 1.5vw, 16px)"
-            : "clamp(10px, 1.8vh, 20px) clamp(12px, 2.5vw, 28px)",
-          borderRadius: "12px",
+          padding: "clamp(8px, 1.4vh, 18px) clamp(10px, 2vw, 24px)",
+          borderRadius: "14px",
           background: isToday
-            ? "linear-gradient(135deg, rgba(70,45,10,0.97), rgba(50,30,5,0.99))"
-            : "linear-gradient(135deg, rgba(30,30,30,0.94), rgba(20,20,20,0.97))",
-          border: isToday ? "1.5px solid rgba(212,175,55,0.6)" : "1px solid rgba(160,130,60,0.25)",
-          boxShadow: isToday ? "0 0 20px rgba(212,175,55,0.15)" : "0 2px 12px rgba(0,0,0,0.3)",
+            ? "linear-gradient(135deg, rgba(80,52,8,0.97), rgba(55,34,4,0.99))"
+            : "linear-gradient(135deg, rgba(28,28,28,0.95), rgba(18,18,18,0.98))",
+          border: isToday ? "1.5px solid rgba(212,175,55,0.65)" : "1px solid rgba(180,150,70,0.28)",
+          boxShadow: isToday
+            ? "0 4px 24px rgba(0,0,0,0.4), 0 0 24px rgba(212,175,55,0.14)"
+            : "0 3px 16px rgba(0,0,0,0.35)",
         }}
       >
-        {/* שם הנפטר — הכי גדול */}
+        {/* שם הנפטר */}
         <p
           style={{
-            fontSize: compact ? "clamp(16px, 3vh, 28px)" : "clamp(20px, 4vh, 38px)",
+            fontSize: "clamp(18px, 3.5vh, 36px)",
             fontWeight: 800,
             lineHeight: 1.15,
-            color: isToday ? "#FDE68A" : "#FEF3C7",
-            marginBottom: "2px",
+            color: isToday ? "#FDE68A" : "#FFFFFF",
+            textShadow: isToday ? "0 1px 6px rgba(212,175,55,0.4)" : "0 1px 8px rgba(0,0,0,0.5)",
+            marginBottom: "3px",
           }}
         >
           {person.is_male !== false ? "ר'" : "מרת"} {person.deceased_name} ז״ל
@@ -150,8 +135,9 @@ function MemorialCard({ person, index, compact }: { person: MemorialPerson; inde
         {/* שם האב */}
         <p
           style={{
-            fontSize: compact ? "clamp(13px, 2.2vh, 22px)" : "clamp(16px, 3vh, 28px)",
-            color: "rgba(253,230,138,0.75)",
+            fontSize: "clamp(14px, 2.5vh, 26px)",
+            fontWeight: 500,
+            color: isToday ? "rgba(253,230,138,0.85)" : "rgba(240,240,240,0.82)",
             lineHeight: 1.2,
           }}
         >
@@ -161,10 +147,11 @@ function MemorialCard({ person, index, compact }: { person: MemorialPerson; inde
         {/* תאריך עברי */}
         <p
           style={{
-            fontSize: compact ? "clamp(12px, 2vh, 20px)" : "clamp(14px, 2.5vh, 24px)",
-            color: "#F59E0B",
+            fontSize: "clamp(13px, 2.2vh, 22px)",
             fontWeight: 700,
-            marginTop: "2px",
+            color: isToday ? "#FBBF24" : "#F59E0B",
+            marginTop: "3px",
+            textShadow: "0 1px 4px rgba(0,0,0,0.4)",
           }}
         >
           {person.hebrew_date_display}
@@ -173,8 +160,8 @@ function MemorialCard({ person, index, compact }: { person: MemorialPerson; inde
         {daysLabel && (
           <p
             style={{
-              fontSize: compact ? "clamp(10px, 1.5vh, 16px)" : "clamp(12px, 1.8vh, 18px)",
-              color: "rgba(245,158,11,0.65)",
+              fontSize: "clamp(11px, 1.7vh, 17px)",
+              color: "rgba(245,158,11,0.72)",
               marginTop: "2px",
             }}
           >
@@ -188,17 +175,14 @@ function MemorialCard({ person, index, compact }: { person: MemorialPerson; inde
   );
 }
 
-function getPageSize(total: number): { cols: number; perPage: number } {
-  if (total <= 3) return { cols: 1, perPage: 3 };
-  if (total <= 6) return { cols: 2, perPage: 6 };
-  return { cols: 2, perPage: 6 };
-}
-
 export default function MemorialDisplaySlide({ people }: MemorialDisplaySlideProps) {
-  const { cols, perPage } = getPageSize(people.length);
-  const pages = Math.ceil(people.length / perPage);
+  const PER_PAGE = 4;
+  const pages = Math.ceil(people.length / PER_PAGE);
   const [page, setPage] = useState(0);
-  const compact = cols > 1;
+
+  useEffect(() => {
+    setPage(0);
+  }, [people.length]);
 
   useEffect(() => {
     if (pages <= 1) return;
@@ -206,7 +190,7 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
     return () => clearInterval(t);
   }, [pages]);
 
-  const visible = people.slice(page * perPage, page * perPage + perPage);
+  const visible = people.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
 
   return (
     <motion.div
@@ -216,80 +200,88 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
       transition={{ duration: 0.7 }}
       style={{
         width: "100%",
-        maxWidth: "96vw",
+        maxWidth: "88vw",
         margin: "0 auto",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "clamp(6px, 1.2vh, 16px)",
-        padding: "clamp(6px, 1.5vw, 20px)",
+        gap: "clamp(8px, 1.5vh, 20px)",
+        padding: "clamp(6px, 1.2vw, 16px)",
       }}
     >
       {/* כותרת */}
-      <div style={{ textAlign: "center" }}>
+      <div style={{ textAlign: "center", flexShrink: 0 }}>
         <h2
           style={{
-            fontSize: "clamp(22px, 4.5vh, 52px)",
+            fontSize: "clamp(24px, 5vh, 56px)",
             fontWeight: 800,
             lineHeight: 1.1,
-            background: "linear-gradient(180deg, #FFD700 0%, #DAA520 45%, #B8860B 100%)",
+            background: "linear-gradient(180deg, #FFD700 0%, #F0B800 40%, #B8860B 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            filter: "drop-shadow(0 2px 6px rgba(218,165,32,0.4))",
+            filter: "drop-shadow(0 2px 6px rgba(218,165,32,0.5))",
           }}
         >
           🕯️ היכל ה׳ לזכרון עולם
         </h2>
         <p
           style={{
-            fontSize: "clamp(12px, 2vh, 22px)",
-            color: "rgba(253,230,138,0.6)",
+            fontSize: "clamp(13px, 2.2vh, 24px)",
+            color: "rgba(253,230,138,0.7)",
             marginTop: "3px",
+            fontWeight: 500,
           }}
         >
           — לעילוי נשמת כל ישראל —
         </p>
       </div>
 
-      {/* רשימה */}
-      <div
-        style={{
-          width: "100%",
-          display: "grid",
-          gridTemplateColumns: `repeat(${cols}, 1fr)`,
-          gap: compact ? "clamp(5px, 1vh, 12px)" : "clamp(8px, 1.5vh, 18px)",
-          maxWidth: cols === 1 ? "72vw" : "96vw",
-          margin: "0 auto",
-        }}
-      >
-        {visible.map((person, idx) => (
-          <MemorialCard key={person.id} person={person} index={idx} compact={compact} />
-        ))}
-      </div>
+      {/* רשימה — 4 בעמוד */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={page}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          transition={{ duration: 0.4 }}
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "clamp(6px, 1.2vh, 16px)",
+          }}
+        >
+          {visible.map((person, idx) => (
+            <MemorialCard key={person.id} person={person} index={idx} />
+          ))}
+        </motion.div>
+      </AnimatePresence>
 
-      {/* עמודים */}
+      {/* אינדיקטור עמודים */}
       {pages > 1 && (
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div style={{ display: "flex", gap: "8px", marginTop: "2px" }}>
           {Array.from({ length: pages }).map((_, i) => (
             <div
               key={i}
               style={{
-                width: i === page ? "20px" : "8px",
+                width: i === page ? "22px" : "8px",
                 height: "7px",
                 borderRadius: "4px",
-                background: i === page ? "rgba(245,158,11,0.85)" : "rgba(245,158,11,0.3)",
-                transition: "all 0.3s",
+                background: i === page ? "rgba(245,158,11,0.9)" : "rgba(245,158,11,0.3)",
+                transition: "all 0.35s",
               }}
             />
           ))}
         </div>
       )}
 
+      {/* כיתוב תחתון */}
       <p
         style={{
-          fontSize: "clamp(11px, 1.8vh, 20px)",
-          color: "rgba(245,158,11,0.5)",
+          fontSize: "clamp(12px, 1.8vh, 20px)",
+          color: "rgba(245,158,11,0.6)",
           fontWeight: 600,
+          flexShrink: 0,
         }}
       >
         תהא נשמתם צרורה בצרור החיים
