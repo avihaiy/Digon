@@ -6,16 +6,17 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { GripVertical, ArrowUp, ArrowDown, Layers, Timer } from "lucide-react";
 
-export type SlideId = "heichal" | "memorial" | "finance" | "announcements";
+export type SlideId = "heichal" | "memorial" | "zmanim" | "finance" | "announcements";
 
 const SLIDE_LABELS: Record<SlideId, { label: string; emoji: string; desc: string }> = {
   heichal: { label: "היכל ה'", emoji: "🕍", desc: "תמונת היכל" },
   memorial: { label: "אשכבות", emoji: "🕯️", desc: "יארצייט היום" },
   finance: { label: "מצב כספי", emoji: "💰", desc: "הכנסות והוצאות" },
-  announcements: { label: "מודעות", emoji: "📢", desc: "מודעות מתוזמנות" },
+  zmanim: { label: "זמני היום", emoji: "🕐", desc: "זמני הלכה יומיים" },
+  finance: { label: "מצב כספי", emoji: "💰", desc: "הכנסות והוצאות" },
 };
 
-const DEFAULT_ORDER: SlideId[] = ["heichal", "memorial", "finance", "announcements"];
+const DEFAULT_ORDER: SlideId[] = ["heichal", "memorial", "zmanim", "finance", "announcements"];
 const ORDER_KEY = "display_slide_order";
 const DURATIONS_KEY = "display_slide_durations";
 
@@ -23,6 +24,7 @@ const DURATIONS_KEY = "display_slide_durations";
 const DEFAULT_DURATIONS: Record<SlideId, number> = {
   heichal: 10,
   memorial: 15,
+  zmanim: 20,
   finance: 10,
   announcements: 10,
 };
