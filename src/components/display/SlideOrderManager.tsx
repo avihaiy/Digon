@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { GripVertical, ArrowUp, ArrowDown, Layers } from "lucide-react";
+import { GripVertical, ArrowUp, ArrowDown, Layers, Timer } from "lucide-react";
 
 export type SlideId = "heichal" | "memorial" | "finance" | "announcements";
 
@@ -15,45 +16,76 @@ const SLIDE_LABELS: Record<SlideId, { label: string; emoji: string; desc: string
 };
 
 const DEFAULT_ORDER: SlideId[] = ["heichal", "memorial", "finance", "announcements"];
-const SETTINGS_KEY = "display_slide_order";
+const ORDER_KEY = "display_slide_order";
+const DURATIONS_KEY = "display_slide_durations";
 
-async function loadOrder(): Promise<SlideId[]> {
-  const { data } = await supabase.from("app_settings").select("value").eq("key", SETTINGS_KEY).maybeSingle();
-  if (data?.value) {
-    try {
-      const parsed = JSON.parse(data.value) as SlideId[];
-      // וודא שכל הסליידים קיימים
-      const valid = parsed.filter((id) => id in SLIDE_LABELS);
-      const missing = DEFAULT_ORDER.filter((id) => !valid.includes(id));
-      return [...valid, ...missing];
-    } catch {
-      /* fall through */
-    }
+// ברירת מחדל שניות לכל סליייד
+const DEFAULT_DURATIONS: Record<SlideId, number> = {
+  heichal: 10,
+  memorial: 15,
+  finance: 10,
+  announcements: 10,
+};
+
+async function upsertSetting(key: string, value: string) {
+  const { data: existing } = await supabase.from("app_settings").select("id").eq("key", key).maybeSingle();
+  if (existing) {
+    await supabase.from("app_settings").update({ value }).eq("key", key);
+  } else {
+    await supabase.from("app_settings").insert({ key, value });
   }
-  return DEFAULT_ORDER;
 }
 
-async function saveOrder(order: SlideId[]): Promise<void> {
-  const { data: existing } = await supabase.from("app_settings").select("id").eq("key", SETTINGS_KEY).maybeSingle();
-  if (existing) {
-    await supabase
-      .from("app_settings")
-      .update({ value: JSON.stringify(order) })
-      .eq("key", SETTINGS_KEY);
-  } else {
-    await supabase.from("app_settings").insert({ key: SETTINGS_KEY, value: JSON.stringify(order) });
-  }
+async function loadSetting(key: string): Promise<string | null> {
+  const { data } = await supabase.from("app_settings").select("value").eq("key", key).maybeSingle();
+  return data?.value ?? null;
 }
 
 export default function SlideOrderManager() {
   const [order, setOrder] = useState<SlideId[]>(DEFAULT_ORDER);
+  const [durations, setDurations] = useState<Record<SlideId, number>>(DEFAULT_DURATIONS);
   const [saving, setSaving] = useState(false);
   const [dragging, setDragging] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
 
   useEffect(() => {
-    loadOrder().then(setOrder);
+    const load = async () => {
+      const orderVal = await loadSetting(ORDER_KEY);
+      if (orderVal) {
+        try {
+          const parsed = JSON.parse(orderVal) as SlideId[];
+          const valid = parsed.filter((id) => id in SLIDE_LABELS);
+          const missing = DEFAULT_ORDER.filter((id) => !valid.includes(id));
+          setOrder([...valid, ...missing]);
+        } catch {}
+      }
+      const durVal = await loadSetting(DURATIONS_KEY);
+      if (durVal) {
+        try {
+          setDurations({ ...DEFAULT_DURATIONS, ...JSON.parse(durVal) });
+        } catch {}
+      }
+    };
+    load();
   }, []);
+
+  const saveOrder = async (newOrder: SlideId[]) => {
+    setSaving(true);
+    try {
+      await upsertSetting(ORDER_KEY, JSON.stringify(newOrder));
+      toast.success("סדר הסליידים עודכן");
+    } catch {
+      toast.error("שגיאה בשמירה");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveDurations = async (newDurations: Record<SlideId, number>) => {
+    try {
+      await upsertSetting(DURATIONS_KEY, JSON.stringify(newDurations));
+    } catch {}
+  };
 
   const move = async (from: number, to: number) => {
     if (to < 0 || to >= order.length) return;
@@ -61,27 +93,23 @@ export default function SlideOrderManager() {
     const [item] = newOrder.splice(from, 1);
     newOrder.splice(to, 0, item);
     setOrder(newOrder);
-    setSaving(true);
-    try {
-      await saveOrder(newOrder);
-      toast.success("סדר הסליידים עודכן");
-    } catch {
-      toast.error("שגיאה בשמירת הסדר");
-    } finally {
-      setSaving(false);
-    }
+    await saveOrder(newOrder);
   };
 
-  // Drag handlers
+  const updateDuration = async (id: SlideId, val: number) => {
+    const v = Math.max(3, Math.min(120, val || 10));
+    const newDur = { ...durations, [id]: v };
+    setDurations(newDur);
+    await saveDurations(newDur);
+  };
+
   const onDragStart = (idx: number) => setDragging(idx);
   const onDragOver = (e: React.DragEvent, idx: number) => {
     e.preventDefault();
     setDragOver(idx);
   };
   const onDrop = async (idx: number) => {
-    if (dragging !== null && dragging !== idx) {
-      await move(dragging, idx);
-    }
+    if (dragging !== null && dragging !== idx) await move(dragging, idx);
     setDragging(null);
     setDragOver(null);
   };
@@ -98,7 +126,7 @@ export default function SlideOrderManager() {
           סדר הצגת סליידים
           {saving && <span className="text-xs text-muted-foreground font-normal">שומר...</span>}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">גרור או השתמש בחצים לשינוי הסדר</p>
+        <p className="text-xs text-muted-foreground">גרור לשינוי סדר · קבע זמן הצגה לכל סליייד</p>
       </CardHeader>
       <CardContent className="p-3 pt-0">
         <div className="space-y-1.5">
@@ -114,18 +142,29 @@ export default function SlideOrderManager() {
                 onDragOver={(e) => onDragOver(e, idx)}
                 onDrop={() => onDrop(idx)}
                 onDragEnd={onDragEnd}
-                className={`
-                  flex items-center gap-3 p-3 rounded-lg border bg-background cursor-grab active:cursor-grabbing
-                  transition-all duration-150 select-none
+                className={`flex items-center gap-2 p-2.5 rounded-lg border bg-background cursor-grab active:cursor-grabbing transition-all duration-150 select-none
                   ${isDragging ? "opacity-40 scale-95" : "opacity-100"}
-                  ${isOver && !isDragging ? "border-purple-400 bg-purple-50 dark:bg-purple-950/40 scale-[1.02]" : "border-border"}
-                `}
+                  ${isOver && !isDragging ? "border-purple-400 bg-purple-50 dark:bg-purple-950/40 scale-[1.02]" : "border-border"}`}
               >
                 <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-xl shrink-0">{info.emoji}</span>
+                <span className="text-lg shrink-0">{info.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{info.label}</p>
                   <p className="text-xs text-muted-foreground">{info.desc}</p>
+                </div>
+                {/* שדה שניות */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <Timer className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    min={3}
+                    max={120}
+                    value={durations[id]}
+                    onChange={(e) => updateDuration(id, parseInt(e.target.value) || 10)}
+                    className="w-16 h-7 text-xs text-center px-1"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="text-xs text-muted-foreground">ש'</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <Button
