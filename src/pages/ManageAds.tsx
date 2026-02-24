@@ -17,6 +17,7 @@ import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload,
 import MemorialManager from "@/components/display/MemorialManager";
 import PrayerTimesEditor from "@/components/display/PrayerTimesEditor";
 import { Separator } from "@/components/ui/separator";
+import SlideOrderManager from "@/components/display/SlideOrderManager";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
@@ -446,6 +447,8 @@ export default function ManageAds() {
         showHeichal={showHeichal}
         onToggleHeichal={toggleHeichal}
       />
+
+      <SlideOrderManager />
 
       {/* Finance Display Toggle */}
       <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
