@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Wallet } from "lucide-react";
+import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Wallet, Timer } from "lucide-react";
 import MemorialManager from "@/components/display/MemorialManager";
 import PrayerTimesEditor from "@/components/display/PrayerTimesEditor";
 import { Separator } from "@/components/ui/separator";
@@ -33,6 +33,7 @@ interface ScheduledAnnouncement {
   is_active: boolean;
   priority: number;
   image_url: string | null;
+  duration_seconds: number | null;
   created_at: string;
 }
 
@@ -307,6 +308,7 @@ export default function ManageAds() {
         style: data.style,
         priority: data.priority,
         image_url: imageUrl,
+        duration_seconds: data.duration_seconds,
       };
       if (data.id) {
         const { error } = await supabase.from("scheduled_announcements").update(payload).eq("id", data.id);
@@ -712,16 +714,32 @@ export default function ManageAds() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="priority">עדיפות (0-100)</Label>
-                <Input
-                  id="priority"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={formData.priority}
-                  onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="priority">עדיפות (0-100)</Label>
+                  <Input
+                    id="priority"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="duration" className="flex items-center gap-2">
+                    <Timer className="w-4 h-4" />
+                    זמן הצגה (שניות)
+                  </Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    min={3}
+                    max={120}
+                    value={formData.duration_seconds}
+                    onChange={(e) => setFormData({ ...formData, duration_seconds: parseInt(e.target.value) || 10 })}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-2 justify-end sticky bottom-0 bg-background pt-2">
