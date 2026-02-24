@@ -169,7 +169,7 @@ export default function Admin() {
   const { data: heichalNames = [] } = useQuery({
     queryKey: ["heichal-names-admin"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("heichal_names")
         .select("*")
         .order("hebrew_month", { ascending: true })
@@ -283,10 +283,10 @@ export default function Admin() {
   const saveHeichalMutation = useMutation({
     mutationFn: async (data: typeof heichalForm & { id?: string }) => {
       if (data.id) {
-        const { error } = await supabase.from("heichal_names").update(data).eq("id", data.id);
+        const { error } = await (supabase as any).from("heichal_names").update(data).eq("id", data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("heichal_names").insert(data);
+        const { error } = await (supabase as any).from("heichal_names").insert(data);
         if (error) throw error;
       }
     },
@@ -302,7 +302,7 @@ export default function Admin() {
 
   const deleteHeichalMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("heichal_names").delete().eq("id", id);
+      const { error } = await (supabase as any).from("heichal_names").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
