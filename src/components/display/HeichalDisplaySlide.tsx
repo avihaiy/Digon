@@ -90,7 +90,7 @@ export default function HeichalDisplaySlide() {
   const { data: allNames = [] } = useQuery({
     queryKey: ["heichal-names"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("heichal_names")
         .select("id, name, father_name, is_male, hebrew_day, hebrew_month")
         .eq("is_active", true)

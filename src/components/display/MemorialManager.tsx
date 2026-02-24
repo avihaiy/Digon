@@ -233,13 +233,13 @@ export default function MemorialManager({
   const { data: heichalNames = [], isLoading: heichalLoading } = useQuery({
     queryKey: ["heichal-names-manage"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("heichal_names")
         .select("*")
         .order("hebrew_month")
         .order("hebrew_day");
       if (error) throw error;
-      return data as HeichalName[];
+      return (data || []) as HeichalName[];
     },
   });
 
@@ -253,10 +253,10 @@ export default function MemorialManager({
         hebrew_month: data.hebrew_month,
       };
       if (data.id) {
-        const { error } = await supabase.from("heichal_names").update(payload).eq("id", data.id);
+        const { error } = await (supabase as any).from("heichal_names").update(payload).eq("id", data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("heichal_names").insert(payload);
+        const { error } = await (supabase as any).from("heichal_names").insert(payload);
         if (error) throw error;
       }
     },
@@ -270,7 +270,7 @@ export default function MemorialManager({
 
   const deleteHeichalMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("heichal_names").delete().eq("id", id);
+      const { error } = await (supabase as any).from("heichal_names").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -449,6 +449,39 @@ export type Database = {
           },
         ]
       }
+      heichal_names: {
+        Row: {
+          created_at: string | null
+          father_name: string | null
+          hebrew_day: number
+          hebrew_month: number
+          id: string
+          is_active: boolean | null
+          is_male: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          father_name?: string | null
+          hebrew_day: number
+          hebrew_month: number
+          id?: string
+          is_active?: boolean | null
+          is_male?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          father_name?: string | null
+          hebrew_day?: number
+          hebrew_month?: number
+          id?: string
+          is_active?: boolean | null
+          is_male?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           active: boolean | null
