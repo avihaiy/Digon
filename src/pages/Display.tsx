@@ -7,6 +7,7 @@ import {
   getErevRoshChodesh,
   getBirkatHashanim,
   getSefiratHaOmer,
+  getCurrentParasha,
 } from "@/lib/hebrew-utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Maximize, Lock, Unlock } from "lucide-react";
@@ -551,6 +552,7 @@ export default function Display() {
   const erevRoshChodesh = getErevRoshChodesh(currentTime);
   const todayHoliday = getTodayHolidayHebrew();
   const sefiratHaOmer = getSefiratHaOmer(currentTime);
+  const parasha = getCurrentParasha();
 
   return (
     <div
@@ -667,8 +669,11 @@ export default function Display() {
         <div className="relative flex items-center justify-between px-[3vw] py-[1.5vh]">
           <div className="text-center">
             <div
-              className="text-[7vh] md:text-[9vh] font-bold tabular-nums leading-none text-white"
-              style={{ textShadow: "0 2px 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)" }}
+              className="font-bold tabular-nums leading-none text-white"
+              style={{
+                fontSize: "clamp(42px, 8vh, 96px)",
+                textShadow: "0 2px 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
+              }}
               dir="ltr"
             >
               {timeString}
@@ -676,14 +681,14 @@ export default function Display() {
           </div>
           <div className="text-center">
             <div
-              className="text-[3.5vh] md:text-[4.5vh] font-bold text-white"
-              style={{ textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}
+              className="font-bold text-white"
+              style={{ fontSize: "clamp(22px, 4vh, 52px)", textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}
             >
               {hebrewDate}
             </div>
             <div
-              className="text-[1.8vh] md:text-[2.2vh] text-white/80 mt-[0.3vh]"
-              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}
+              className="text-white/80 mt-[0.3vh]"
+              style={{ fontSize: "clamp(14px, 2.2vh, 26px)", textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}
             >
               {currentTime.toLocaleDateString("he-IL", {
                 weekday: "long",
@@ -702,13 +707,18 @@ export default function Display() {
             !roshChodesh && erevRoshChodesh ? { icon: "🌑", text: erevRoshChodesh } : null,
             todayHoliday ? { icon: "⭐", text: todayHoliday } : null,
             sefiratHaOmer ? { icon: "🌾", text: sefiratHaOmer } : null,
+            parasha ? { icon: "📖", text: `פרשת ${parasha}` } : null,
           ]
             .filter(Boolean)
             .map((item, i) => (
               <span
                 key={i}
-                className="flex items-center gap-[0.4vw] bg-black/30 backdrop-blur-sm rounded-full px-[1.2vw] py-[0.3vh] text-[1.6vh] md:text-[2vh] text-white/90 border border-white/10"
-                style={{ textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}
+                className="flex items-center gap-[0.5vw] bg-black/30 backdrop-blur-sm rounded-full text-white/90 border border-white/10"
+                style={{
+                  fontSize: "clamp(13px, 2vh, 22px)",
+                  padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.5vw, 20px)",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+                }}
               >
                 {item!.icon} {item!.text}
               </span>
