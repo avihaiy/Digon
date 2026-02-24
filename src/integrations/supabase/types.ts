@@ -763,6 +763,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           day_types: string[]
+          duration_seconds: number | null
           end_time: string
           id: string
           image_url: string | null
@@ -778,6 +779,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           day_types?: string[]
+          duration_seconds?: number | null
           end_time?: string
           id?: string
           image_url?: string | null
@@ -793,6 +795,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           day_types?: string[]
+          duration_seconds?: number | null
           end_time?: string
           id?: string
           image_url?: string | null
