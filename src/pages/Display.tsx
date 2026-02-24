@@ -404,6 +404,7 @@ export default function Display() {
         e.stopPropagation();
       };
       const preventTouch = (e: TouchEvent) => {
+        // חסום הכל כשנעול
         e.preventDefault();
         e.stopPropagation();
       };
@@ -646,7 +647,7 @@ export default function Display() {
 
       {/* Fullscreen Controls */}
       <AnimatePresence>
-        {(!isFullscreen || showControls) && (
+        {(!isFullscreen || (showControls && !isLocked)) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -663,13 +664,24 @@ export default function Display() {
               </button>
             ) : (
               <>
-                <button
-                  onClick={isLocked ? handleUnlockAttempt : () => setIsLocked(true)}
-                  className={`p-3 rounded-full backdrop-blur-sm transition-colors ${isLocked ? "bg-red-500/50 hover:bg-red-500/70" : "bg-black/20 hover:bg-black/30"} ${styleConfig.text}`}
-                  title={isLocked ? "בטל נעילה" : "נעל מסך"}
-                >
-                  {isLocked ? <Lock className="w-6 h-6" /> : <Unlock className="w-6 h-6" />}
-                </button>
+                {isLocked ? (
+                  <div
+                    onTouchEnd={(e) => {
+                      e.stopPropagation();
+                      handleUnlockAttempt();
+                    }}
+                    onClick={handleUnlockAttempt}
+                    style={{ width: 56, height: 56, opacity: 0, cursor: "default" }}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setIsLocked(true)}
+                    className={`p-3 rounded-full backdrop-blur-sm transition-colors bg-black/20 hover:bg-black/30 ${styleConfig.text}`}
+                    title="נעל מסך"
+                  >
+                    <Unlock className="w-6 h-6" />
+                  </button>
+                )}
                 {!isLocked && (
                   <button
                     onClick={exitFullscreen}
