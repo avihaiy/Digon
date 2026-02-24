@@ -16,60 +16,65 @@ interface MemorialDisplaySlideProps {
   accentClass?: string;
 }
 
-function CandleIcon() {
-  return <span style={{ fontSize: "clamp(18px, 3vh, 32px)", lineHeight: 1 }}>🕯️</span>;
-}
-
 function MemorialCard({ person }: { person: MemorialPerson }) {
   const isToday = person.days_until === 0;
   return (
     <div
       style={{
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        gap: "clamp(6px, 1vw, 12px)",
-        padding: "clamp(8px, 1.2vh, 16px) clamp(10px, 1.5vw, 18px)",
-        borderRadius: "12px",
+        justifyContent: "center",
+        textAlign: "center",
+        padding: "clamp(8px, 1.5vh, 18px) clamp(6px, 1vw, 14px)",
+        borderRadius: "14px",
         background: isToday
           ? "linear-gradient(135deg, rgba(80,52,8,0.97), rgba(55,34,4,0.99))"
-          : "rgba(255,255,255,0.06)",
-        border: isToday ? "1.5px solid rgba(212,175,55,0.65)" : "1px solid rgba(255,255,255,0.1)",
+          : "rgba(255,255,255,0.07)",
+        border: isToday ? "1.5px solid rgba(212,175,55,0.7)" : "1px solid rgba(255,255,255,0.12)",
+        gap: "3px",
+        flex: 1,
       }}
     >
-      <CandleIcon />
-      <div style={{ flex: 1, textAlign: "center" }}>
-        <div
-          style={{
-            fontSize: "clamp(16px, 2.8vh, 30px)",
-            fontWeight: 800,
-            color: isToday ? "#FDE68A" : "#FFFFFF",
-            lineHeight: 1.2,
-          }}
-        >
-          {person.is_male !== false ? "ר'" : "מרת"} {person.deceased_name} ז״ל
-        </div>
-        <div
-          style={{
-            fontSize: "clamp(13px, 2vh, 22px)",
-            color: isToday ? "rgba(253,230,138,0.85)" : "rgba(220,220,220,0.85)",
-            lineHeight: 1.2,
-          }}
-        >
-          {person.is_male !== false ? "בן" : "בת"} {person.father_name}
-        </div>
-        <div
-          style={{
-            fontSize: "clamp(12px, 1.8vh, 20px)",
-            fontWeight: 700,
-            color: "#F59E0B",
-          }}
-        >
-          {person.hebrew_date_display}
-          {person.days_until === 1 && " • מחר"}
-          {person.days_until > 1 && ` • בעוד ${person.days_until} ימים`}
-        </div>
+      {/* נר */}
+      <div style={{ fontSize: "clamp(20px, 3.5vh, 38px)", lineHeight: 1, marginBottom: "4px" }}>🕯️</div>
+
+      {/* שם */}
+      <div
+        style={{
+          fontSize: "clamp(14px, 2.4vh, 26px)",
+          fontWeight: 800,
+          color: isToday ? "#FDE68A" : "#FFFFFF",
+          lineHeight: 1.2,
+        }}
+      >
+        {person.is_male !== false ? "ר'" : "מרת"} {person.deceased_name} ז״ל
       </div>
-      <CandleIcon />
+
+      {/* אב */}
+      <div
+        style={{
+          fontSize: "clamp(12px, 1.8vh, 20px)",
+          color: isToday ? "rgba(253,230,138,0.85)" : "rgba(210,210,210,0.85)",
+          lineHeight: 1.2,
+        }}
+      >
+        {person.is_male !== false ? "בן" : "בת"} {person.father_name}
+      </div>
+
+      {/* תאריך */}
+      <div
+        style={{
+          fontSize: "clamp(11px, 1.7vh, 18px)",
+          fontWeight: 700,
+          color: "#F59E0B",
+          marginTop: "2px",
+        }}
+      >
+        {person.hebrew_date_display}
+        {person.days_until === 0 && " 🕯️"}
+        {person.days_until === 1 && " • מחר"}
+      </div>
     </div>
   );
 }
@@ -89,6 +94,8 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
   }, [pages]);
 
   const visible = people.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+  // תמיד 4 slots — אם פחות ממלאים עם null
+  const slots = [...visible, ...Array(Math.max(0, PER_PAGE - visible.length)).fill(null)];
 
   return (
     <div
@@ -97,30 +104,30 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        padding: "clamp(6px, 1vw, 14px)",
+        padding: "clamp(8px, 1.2vw, 16px)",
         gap: "clamp(6px, 1vh, 12px)",
         overflow: "hidden",
         boxSizing: "border-box",
       }}
     >
-      {/* כותרת — תמיד נראית */}
+      {/* כותרת */}
       <div style={{ textAlign: "center", flexShrink: 0 }}>
         <div
           style={{
-            fontSize: "clamp(20px, 4vh, 46px)",
+            fontSize: "clamp(18px, 3.5vh, 40px)",
             fontWeight: 900,
-            background: "linear-gradient(180deg, #FFD700 0%, #F0B800 40%, #B8860B 100%)",
+            background: "linear-gradient(180deg, #FFD700 0%, #D4A017 60%, #B8860B 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            lineHeight: 1.1,
+            lineHeight: 1.15,
           }}
         >
           🕯️ היכל ה׳ לזכרון עולם
         </div>
         <div
           style={{
-            fontSize: "clamp(11px, 1.8vh, 20px)",
-            color: "rgba(253,230,138,0.65)",
+            fontSize: "clamp(10px, 1.6vh, 18px)",
+            color: "rgba(253,230,138,0.6)",
             marginTop: "2px",
           }}
         >
@@ -128,25 +135,36 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
         </div>
       </div>
 
-      {/* כרטיסי נפטרים — בדיוק 4 */}
+      {/* גריד 2x2 */}
       <AnimatePresence mode="wait">
         <motion.div
           key={page}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.35 }}
           style={{
             flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            gap: "clamp(5px, 0.8vh, 10px)",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gridTemplateRows: "1fr 1fr",
+            gap: "clamp(6px, 1vw, 12px)",
             overflow: "hidden",
           }}
         >
-          {visible.map((person) => (
-            <MemorialCard key={person.id} person={person} />
-          ))}
+          {slots.map((person, idx) =>
+            person ? (
+              <MemorialCard key={person.id} person={person} />
+            ) : (
+              <div
+                key={`empty-${idx}`}
+                style={{
+                  borderRadius: "14px",
+                  border: "1px dashed rgba(255,255,255,0.06)",
+                }}
+              />
+            ),
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -172,8 +190,8 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
       <div
         style={{
           textAlign: "center",
-          fontSize: "clamp(11px, 1.6vh, 18px)",
-          color: "rgba(245,158,11,0.55)",
+          fontSize: "clamp(10px, 1.5vh, 16px)",
+          color: "rgba(245,158,11,0.5)",
           fontWeight: 600,
           flexShrink: 0,
         }}
