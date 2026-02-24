@@ -16,36 +16,41 @@ interface PrayerTimesSlideProps {
   isShabbat: boolean;
 }
 
-function TimeRow({ entry, isLesson = false, index = 0 }: { entry: PrayerEntry; isLesson?: boolean; index?: number }) {
+function TimeRow({ entry, index = 0 }: { entry: PrayerEntry; index?: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.06, duration: 0.35 }}
-      className="flex items-center justify-between py-[1.2vh] px-[2vw] rounded-xl"
-      style={{ background: index % 2 === 0 ? "rgba(160,100,0,0.08)" : "transparent" }}
+      className="flex items-center justify-between px-[2vw] rounded-xl"
+      style={{
+        padding: "clamp(10px, 1.8vh, 22px) clamp(12px, 2vw, 24px)",
+        background: index % 2 === 0 ? "rgba(255,255,255,0.07)" : "transparent",
+      }}
       dir="rtl"
     >
       <span
-        className="font-bold text-right leading-tight"
         style={{
-          fontSize: "clamp(14px, 3.2vh, 32px)",
-          color: isLesson ? "#92400e" : "#78350f",
-          textShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          fontSize: "clamp(18px, 3.5vh, 40px)",
+          fontWeight: 700,
+          color: "#FFFFFF",
           flex: 1,
+          textAlign: "right",
+          textShadow: "0 1px 6px rgba(0,0,0,0.4)",
         }}
       >
         {entry.name}
       </span>
       <span
-        className="font-bold tabular-nums tracking-wide"
         style={{
-          fontSize: "clamp(16px, 3.8vh, 38px)",
-          color: "#92400e",
-          textShadow: "0 1px 4px rgba(180,100,0,0.25)",
+          fontSize: "clamp(22px, 4.2vh, 48px)",
+          fontWeight: 800,
+          color: "#FCD34D",
           direction: "ltr",
           minWidth: "5ch",
-          textAlign: "right",
+          textAlign: "left",
+          textShadow: "0 1px 8px rgba(0,0,0,0.4)",
+          fontVariantNumeric: "tabular-nums",
         }}
       >
         {entry.time}
@@ -54,53 +59,57 @@ function TimeRow({ entry, isLesson = false, index = 0 }: { entry: PrayerEntry; i
   );
 }
 
-function SectionPanel({
-  title,
-  icon,
-  entries,
-  isLesson = false,
-}: {
-  title: string;
-  icon: string;
-  entries: PrayerEntry[];
-  isLesson?: boolean;
-}) {
+function SectionPanel({ title, icon, entries }: { title: string; icon: string; entries: PrayerEntry[] }) {
   if (!entries || entries.length === 0) return null;
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="rounded-2xl overflow-hidden flex-1"
       style={{
-        background: "rgba(245, 230, 190, 0.52)",
-        backdropFilter: "blur(12px)",
-        border: "1.5px solid rgba(160, 110, 40, 0.5)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.65)",
+        borderRadius: "16px",
+        overflow: "hidden",
+        flex: 1,
+        background: "rgba(0,0,0,0.45)",
+        backdropFilter: "blur(14px)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
       }}
     >
+      {/* כותרת פאנל */}
       <div
-        className="px-[2.5vw] py-[1.2vh] border-b flex items-center gap-[0.8vw]"
         dir="rtl"
         style={{
-          background: "linear-gradient(to left, rgba(160,100,0,0.22), rgba(200,140,0,0.12))",
-          borderColor: "rgba(160,110,40,0.35)",
+          padding: "clamp(8px, 1.4vh, 16px) clamp(12px, 2.5vw, 28px)",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          background: "rgba(255,255,255,0.06)",
+          borderBottom: "1px solid rgba(255,255,255,0.1)",
         }}
       >
-        <span style={{ fontSize: "clamp(14px, 2.6vh, 26px)" }}>{icon}</span>
+        <span style={{ fontSize: "clamp(16px, 2.8vh, 30px)" }}>{icon}</span>
         <h3
-          className="font-bold text-amber-800"
-          style={{ fontSize: "clamp(16px, 3vh, 30px)", textShadow: "0 1px 5px rgba(160,100,0,0.35)", fontWeight: 700 }}
+          style={{
+            fontSize: "clamp(16px, 3vh, 32px)",
+            fontWeight: 800,
+            color: "#FDE68A",
+            textShadow: "0 1px 6px rgba(0,0,0,0.4)",
+          }}
         >
           {title}
         </h3>
       </div>
-      <div className="px-[1vw] py-[0.6vh]">
+
+      {/* שורות */}
+      <div style={{ padding: "clamp(4px, 0.6vh, 8px) 0" }}>
         {entries.map((entry, idx) => (
           <div key={idx}>
-            <TimeRow entry={entry} isLesson={isLesson} index={idx} />
+            <TimeRow entry={entry} index={idx} />
             {idx < entries.length - 1 && (
-              <div className="mx-[2vw] h-px" style={{ background: "rgba(160,110,40,0.18)" }} />
+              <div
+                style={{ margin: "0 clamp(12px, 2vw, 24px)", height: "1px", background: "rgba(255,255,255,0.08)" }}
+              />
             )}
           </div>
         ))}
@@ -134,26 +143,37 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.7, ease: "easeInOut" }}
-      className="w-full h-full flex flex-col items-center justify-start"
-      style={{ padding: "clamp(8px, 2vw, 24px)", gap: "clamp(6px, 1.5vh, 18px)" }}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        padding: "clamp(8px, 2vw, 24px)",
+        gap: "clamp(8px, 1.5vh, 20px)",
+      }}
       dir="rtl"
     >
-      {/* כותרת */}
+      {/* כותרת ראשית */}
       <motion.h2
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="font-bold text-amber-800 text-center rounded-2xl w-full"
         style={{
-          fontSize: "clamp(24px, 5vh, 60px)",
-          padding: "clamp(6px, 1.2vh, 14px) clamp(12px, 3vw, 32px)",
-          background: "rgba(240, 215, 160, 0.52)",
-          backdropFilter: "blur(8px)",
-          border: "1px solid rgba(160,110,40,0.4)",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
-          textShadow: "0 2px 8px rgba(160,100,0,0.35)",
-          letterSpacing: "0.02em",
+          fontSize: "clamp(24px, 5vh, 64px)",
+          fontWeight: 900,
+          color: "#FFFFFF",
+          textAlign: "center",
+          width: "100%",
           flexShrink: 0,
+          padding: "clamp(8px, 1.4vh, 18px) clamp(16px, 3vw, 40px)",
+          borderRadius: "14px",
+          background: "rgba(0,0,0,0.4)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.15)",
+          textShadow: "0 2px 12px rgba(0,0,0,0.6)",
+          letterSpacing: "0.02em",
         }}
       >
         🕎 {titleText}
@@ -161,16 +181,18 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
 
       {/* תוכן */}
       <div
-        className="w-full flex-1 min-h-0"
         style={{
-          display: "flex",
+          width: "100%",
+          flex: 1,
+          minHeight: 0,
+          display: hasLessons ? "grid" : "flex",
           flexDirection: hasLessons ? undefined : "column",
+          gridTemplateColumns: hasLessons ? "1fr 1fr" : undefined,
           gap: "clamp(8px, 1.5vw, 20px)",
-          ...(hasLessons ? { display: "grid", gridTemplateColumns: "1fr 1fr" } : {}),
         }}
       >
         <SectionPanel title="זמני תפילה" icon="🕐" entries={prayers} />
-        {hasLessons && <SectionPanel title="שיעורי תורה" icon="📖" entries={lessons} isLesson />}
+        {hasLessons && <SectionPanel title="שיעורי תורה" icon="📖" entries={lessons} />}
       </div>
     </motion.div>
   );
