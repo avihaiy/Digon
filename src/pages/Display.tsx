@@ -752,7 +752,7 @@ export default function Display() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 flex items-center justify-center overflow-hidden relative z-10">
+      <main className="flex-1 flex items-center justify-center overflow-hidden relative z-10 h-full">
         <AnimatePresence mode="wait">
           {totalSlides === 0 ? (
             <motion.div
@@ -772,12 +772,24 @@ export default function Display() {
           ) : currentSlideType === "heichal" ? (
             <HeichalDisplaySlide key="heichal" />
           ) : currentSlideType === "memorial" ? (
-            <MemorialDisplaySlide
+            <div
               key="memorial"
-              people={memorialPeople}
-              textClass={styleConfig.text}
-              accentClass={styleConfig.accent}
-            />
+              style={{
+                width: "100%",
+                height: "100%",
+                maxHeight: "100%",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
+              <MemorialDisplaySlide
+                people={memorialPeople}
+                textClass={styleConfig.text}
+                accentClass={styleConfig.accent}
+              />
+            </div>
           ) : currentSlideType === "finance" ? (
             <FinanceDisplaySlide key="finance" textClass={styleConfig.text} accentClass={styleConfig.accent} />
           ) : currentAnnouncement ? (
