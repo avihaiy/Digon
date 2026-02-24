@@ -181,6 +181,12 @@ export default function Display() {
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
+  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "finance" | "announcements")[]>([
+    "heichal",
+    "memorial",
+    "finance",
+    "announcements",
+  ]);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -196,6 +202,7 @@ export default function Display() {
           "show_finance_on_display",
           "display_background_url",
           "show_heichal_on_display",
+          "display_slide_order",
         ]);
       if (data) {
         for (const setting of data) {
@@ -205,6 +212,11 @@ export default function Display() {
           if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
           if (setting.key === "display_background_url" && setting.value) setDisplayBgUrl(setting.value);
           if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+          if (setting.key === "display_slide_order" && setting.value) {
+            try {
+              setSlideOrder(JSON.parse(setting.value));
+            } catch {}
+          }
         }
       }
     };
@@ -384,6 +396,7 @@ export default function Display() {
             "show_finance_on_display",
             "display_background_url",
             "show_heichal_on_display",
+            "display_slide_order",
           ]);
         if (settingsData) {
           for (const setting of settingsData) {
@@ -393,6 +406,11 @@ export default function Display() {
             if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
             if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
             if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+            if (setting.key === "display_slide_order" && setting.value) {
+              try {
+                setSlideOrder(JSON.parse(setting.value));
+              } catch {}
+            }
           }
         }
         const { data: adsData, error: adsError } = await supabase
@@ -437,10 +455,16 @@ export default function Display() {
     return announcements.filter((a) => a.day_types.includes(dayType) && isTimeInRange(a.start_time, a.end_time));
   }, [announcements, dayType, currentTime]);
 
-  const specialSlides: ("heichal" | "memorial" | "finance")[] = [];
-  if (showHeichal) specialSlides.push("heichal");
-  if (showMemorial && memorialPeople.length > 0) specialSlides.push("memorial");
-  if (showFinance) specialSlides.push("finance");
+  // סדר הסליידים לפי הגדרת הניהול
+  const specialSlides = slideOrder.filter((id) => {
+    if (id === "heichal") return showHeichal;
+    if (id === "memorial") return showMemorial && memorialPeople.length > 0;
+    if (id === "finance") return showFinance;
+    return false;
+  }) as ("heichal" | "memorial" | "finance")[];
+
+  // מודעות — מוסיפות לפי מיקום "announcements" בסדר
+  const announcementsPos = slideOrder.indexOf("announcements");
   const totalSlides = validAnnouncements.length + specialSlides.length;
 
   useEffect(() => {
