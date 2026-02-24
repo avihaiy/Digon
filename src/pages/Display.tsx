@@ -230,7 +230,11 @@ export default function Display() {
           }
           if (setting.key === "display_slide_order" && setting.value) {
             try {
-              setSlideOrder(JSON.parse(setting.value));
+              const parsed = JSON.parse(setting.value);
+              const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
+              // הוסף סליידים חדשים שלא היו ב-DB
+              const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
+              setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
             } catch {}
           }
         }
@@ -425,7 +429,11 @@ export default function Display() {
             if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
             if (setting.key === "display_slide_order" && setting.value) {
               try {
-                setSlideOrder(JSON.parse(setting.value));
+                const parsed = JSON.parse(setting.value);
+                const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
+                // הוסף סליידים חדשים שלא היו ב-DB
+                const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
+                setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
               } catch {}
             }
             if (setting.key === "display_slide_durations" && setting.value) {
