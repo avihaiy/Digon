@@ -41,7 +41,7 @@ function TimeRow({ entry, isLesson = false, index = 0 }: { entry: PrayerEntry; i
         className="font-bold tabular-nums tracking-wide"
         style={{
           fontSize: "clamp(16px, 3.8vh, 38px)",
-          color: "#b45309",
+          color: "#92400e",
           textShadow: "0 1px 4px rgba(180,100,0,0.25)",
           direction: "ltr",
           minWidth: "5ch",
@@ -90,7 +90,7 @@ function SectionPanel({
         <span style={{ fontSize: "clamp(14px, 2.6vh, 26px)" }}>{icon}</span>
         <h3
           className="font-bold text-amber-800"
-          style={{ fontSize: "clamp(14px, 2.6vh, 26px)", textShadow: "0 1px 5px rgba(160,100,0,0.35)" }}
+          style={{ fontSize: "clamp(16px, 3vh, 30px)", textShadow: "0 1px 5px rgba(160,100,0,0.35)", fontWeight: 700 }}
         >
           {title}
         </h3>
@@ -145,7 +145,7 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
         transition={{ duration: 0.5 }}
         className="font-bold text-amber-800 text-center rounded-2xl w-full"
         style={{
-          fontSize: "clamp(20px, 4.5vh, 52px)",
+          fontSize: "clamp(24px, 5vh, 60px)",
           padding: "clamp(6px, 1.2vh, 14px) clamp(12px, 3vw, 32px)",
           background: "rgba(240, 215, 160, 0.52)",
           backdropFilter: "blur(8px)",
