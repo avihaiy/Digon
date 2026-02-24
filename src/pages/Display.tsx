@@ -673,42 +673,22 @@ export default function Display() {
       {/* HEADER */}
       <header className="shrink-0 z-10 relative">
         <div className="absolute inset-0 bg-black/30 backdrop-blur-md border-b border-white/10" />
-        <div className="relative flex items-center px-[3vw] py-[1.5vh] gap-[3vw]">
-          {/* שעה */}
-          <div className="flex-shrink-0">
-            <div
-              className="font-bold tabular-nums leading-none text-white"
-              style={{
-                fontSize: "clamp(42px, 8vh, 96px)",
-                textShadow: "0 2px 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
-              }}
-              dir="ltr"
-            >
-              {timeString}
-            </div>
-          </div>
-          {/* קו מפריד */}
-          <div
-            style={{
-              width: "2px",
-              alignSelf: "stretch",
-              margin: "4px 0",
-              background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.55), transparent)",
-              borderRadius: "1px",
-              flexShrink: 0,
-            }}
-          />
-          {/* תאריך */}
-          <div className="flex-1 text-right">
+        <div className="relative flex items-center justify-between px-[3vw] py-[1.5vh]" dir="rtl">
+          {/* תאריך — ימין */}
+          <div className="text-right">
             <div
               className="font-bold text-white"
-              style={{ fontSize: "clamp(22px, 4vh, 52px)", textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}
+              style={{
+                fontSize: "clamp(24px, 4.5vh, 56px)",
+                textShadow: "0 2px 12px rgba(0,0,0,0.9)",
+                lineHeight: 1.1,
+              }}
             >
               {hebrewDate}
             </div>
             <div
-              className="text-white/80 mt-[0.3vh]"
-              style={{ fontSize: "clamp(14px, 2.2vh, 26px)", textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}
+              className="text-white/85"
+              style={{ fontSize: "clamp(13px, 2vh, 24px)", textShadow: "0 1px 8px rgba(0,0,0,0.9)", marginTop: "2px" }}
             >
               {currentTime.toLocaleDateString("he-IL", {
                 weekday: "long",
@@ -716,6 +696,31 @@ export default function Display() {
                 month: "long",
                 day: "numeric",
               })}
+            </div>
+          </div>
+          {/* קו מפריד */}
+          <div
+            style={{
+              width: "2px",
+              height: "clamp(40px, 6vh, 72px)",
+              background:
+                "linear-gradient(to bottom, transparent, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent)",
+              borderRadius: "2px",
+              flexShrink: 0,
+              margin: "0 clamp(8px, 2vw, 24px)",
+            }}
+          />
+          {/* שעה — שמאל */}
+          <div dir="ltr">
+            <div
+              className="font-bold tabular-nums leading-none text-white"
+              style={{
+                fontSize: "clamp(44px, 9vh, 100px)",
+                textShadow: "0 2px 24px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.4)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {timeString}
             </div>
           </div>
         </div>
