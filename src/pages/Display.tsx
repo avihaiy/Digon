@@ -768,7 +768,7 @@ export default function Display() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 flex items-stretch justify-center overflow-hidden relative z-10">
+      <main className="flex-1 overflow-hidden relative z-10">
         <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
           <AnimatePresence mode="wait">
             {totalSlides === 0 ? (
@@ -787,14 +787,11 @@ export default function Display() {
                 </div>
               </motion.div>
             ) : currentSlideType === "heichal" ? (
-              <div key="heichal" style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+              <div key="heichal" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
                 <HeichalDisplaySlide />
               </div>
             ) : currentSlideType === "memorial" ? (
-              <div
-                key="memorial"
-                style={{ width: "100%", height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}
-              >
+              <div key="memorial" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
                 <MemorialDisplaySlide
                   people={memorialPeople}
                   textClass={styleConfig.text}
@@ -802,11 +799,11 @@ export default function Display() {
                 />
               </div>
             ) : currentSlideType === "zmanim" ? (
-              <div key="zmanim" style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+              <div key="zmanim" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
                 <ZmanimDisplaySlide />
               </div>
             ) : currentSlideType === "finance" ? (
-              <div key="finance" style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+              <div key="finance" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
                 <FinanceDisplaySlide textClass={styleConfig.text} accentClass={styleConfig.accent} />
               </div>
             ) : currentAnnouncement ? (
