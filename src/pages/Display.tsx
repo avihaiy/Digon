@@ -187,6 +187,12 @@ export default function Display() {
     "finance",
     "announcements",
   ]);
+  const [slideDurations, setSlideDurations] = useState<Record<string, number>>({
+    heichal: 10,
+    memorial: 15,
+    finance: 10,
+    announcements: 10,
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -203,6 +209,7 @@ export default function Display() {
           "display_background_url",
           "show_heichal_on_display",
           "display_slide_order",
+          "display_slide_durations",
         ]);
       if (data) {
         for (const setting of data) {
@@ -212,6 +219,11 @@ export default function Display() {
           if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
           if (setting.key === "display_background_url" && setting.value) setDisplayBgUrl(setting.value);
           if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+          if (setting.key === "display_slide_durations" && setting.value) {
+            try {
+              setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
+            } catch {}
+          }
           if (setting.key === "display_slide_order" && setting.value) {
             try {
               setSlideOrder(JSON.parse(setting.value));
@@ -397,6 +409,7 @@ export default function Display() {
             "display_background_url",
             "show_heichal_on_display",
             "display_slide_order",
+            "display_slide_durations",
           ]);
         if (settingsData) {
           for (const setting of settingsData) {
@@ -409,6 +422,11 @@ export default function Display() {
             if (setting.key === "display_slide_order" && setting.value) {
               try {
                 setSlideOrder(JSON.parse(setting.value));
+              } catch {}
+            }
+            if (setting.key === "display_slide_durations" && setting.value) {
+              try {
+                setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
               } catch {}
             }
           }
@@ -484,9 +502,19 @@ export default function Display() {
 
   useEffect(() => {
     if (totalSlides <= 1) return;
-    const rotateInterval = setInterval(() => setCurrentIndex((prev) => (prev + 1) % totalSlides), 10000);
-    return () => clearInterval(rotateInterval);
-  }, [totalSlides]);
+    const slideId = orderedSlides[currentIndex];
+    let ms = 10000;
+    if (slideId) {
+      if (slideId.type === "announcement") {
+        const dur = (slideId.announcement as ScheduledAnnouncement & { duration_seconds?: number }).duration_seconds;
+        ms = (dur ?? slideDurations["announcements"] ?? 10) * 1000;
+      } else {
+        ms = (slideDurations[slideId.type] ?? 10) * 1000;
+      }
+    }
+    const t = setTimeout(() => setCurrentIndex((prev) => (prev + 1) % totalSlides), ms);
+    return () => clearTimeout(t);
+  }, [totalSlides, currentIndex, slideDurations, orderedSlides]);
 
   useEffect(() => {
     if (currentIndex >= totalSlides) setCurrentIndex(0);
