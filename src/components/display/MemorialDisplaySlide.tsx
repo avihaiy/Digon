@@ -177,8 +177,12 @@ function MemorialCard({ person, index }: { person: MemorialPerson; index: number
 
 export default function MemorialDisplaySlide({ people }: MemorialDisplaySlideProps) {
   const PER_PAGE = 4;
-  const pages = Math.ceil(people.length / PER_PAGE);
+  // חיתוך מפורש - בשום אופן לא מציגים יותר מ-PER_PAGE
+  const pages = Math.max(1, Math.ceil(people.length / PER_PAGE));
   const [page, setPage] = useState(0);
+
+  // Debug
+  console.log("[Memorial] people:", people.length, "pages:", pages, "PER_PAGE:", PER_PAGE);
 
   useEffect(() => {
     setPage(0);
@@ -190,7 +194,9 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
     return () => clearInterval(t);
   }, [pages]);
 
-  const visible = people.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+  const safePage = Math.min(page, pages - 1);
+  const visible = people.slice(safePage * PER_PAGE, safePage * PER_PAGE + PER_PAGE);
+  console.log("[Memorial] page:", safePage, "visible:", visible.length);
 
   return (
     <motion.div
@@ -239,7 +245,7 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
       {/* רשימה — 4 בעמוד */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={page}
+          key={safePage}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
@@ -251,7 +257,7 @@ export default function MemorialDisplaySlide({ people }: MemorialDisplaySlidePro
             gap: "clamp(6px, 1.2vh, 16px)",
           }}
         >
-          {visible.map((person, idx) => (
+          {visible.slice(0, PER_PAGE).map((person, idx) => (
             <MemorialCard key={person.id} person={person} index={idx} />
           ))}
         </motion.div>
