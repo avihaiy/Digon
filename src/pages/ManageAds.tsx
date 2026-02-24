@@ -1,25 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Wallet } from 'lucide-react';
-import MemorialManager from '@/components/display/MemorialManager';
-import PrayerTimesEditor from '@/components/display/PrayerTimesEditor';
-import { Separator } from '@/components/ui/separator';
+import { useState, useRef, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Plus, Edit, Trash2, Megaphone, Clock, Calendar, Palette, Image, Upload, X, Wallet } from "lucide-react";
+import MemorialManager from "@/components/display/MemorialManager";
+import PrayerTimesEditor from "@/components/display/PrayerTimesEditor";
+import { Separator } from "@/components/ui/separator";
 
-type DayType = 'weekdays' | 'friday' | 'shabbat';
-type StyleType = 'traditional_gold' | 'modern_dark' | 'clean_white' | 'royal_blue';
+type DayType = "weekdays" | "friday" | "shabbat";
+type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
 
 interface ScheduledAnnouncement {
   id: string;
@@ -36,41 +36,82 @@ interface ScheduledAnnouncement {
 }
 
 const DAY_TYPE_OPTIONS: { value: DayType; label: string }[] = [
-  { value: 'weekdays', label: "ימי חול (א'-ה')" },
-  { value: 'friday', label: 'יום שישי' },
-  { value: 'shabbat', label: 'שבת' },
+  { value: "weekdays", label: "ימי חול (א'-ה')" },
+  { value: "friday", label: "יום שישי" },
+  { value: "shabbat", label: "שבת" },
 ];
 
 const DAY_TYPE_LABELS: Record<DayType, string> = {
   weekdays: "ימי חול",
-  friday: 'שישי',
-  shabbat: 'שבת',
+  friday: "שישי",
+  shabbat: "שבת",
 };
 
 const STYLE_LABELS: Record<StyleType, string> = {
-  traditional_gold: 'מסורתי זהב',
-  modern_dark: 'מודרני כהה',
-  clean_white: 'לבן נקי',
-  royal_blue: 'כחול מלכותי',
+  traditional_gold: "מסורתי זהב",
+  modern_dark: "מודרני כהה",
+  clean_white: "לבן נקי",
+  royal_blue: "כחול מלכותי",
 };
 
 const STYLE_PREVIEWS: Record<StyleType, string> = {
-  traditional_gold: 'bg-gradient-to-br from-amber-100 to-amber-200 text-amber-900 border-amber-400',
-  modern_dark: 'bg-gradient-to-br from-slate-800 to-slate-900 text-white border-slate-600',
-  clean_white: 'bg-white text-slate-800 border-slate-200',
-  royal_blue: 'bg-gradient-to-br from-blue-600 to-blue-800 text-white border-blue-400',
+  traditional_gold: "bg-gradient-to-br from-amber-100 to-amber-200 text-amber-900 border-amber-400",
+  modern_dark: "bg-gradient-to-br from-slate-800 to-slate-900 text-white border-slate-600",
+  clean_white: "bg-white text-slate-800 border-slate-200",
+  royal_blue: "bg-gradient-to-br from-blue-600 to-blue-800 text-white border-blue-400",
 };
 
 const defaultFormData = {
-  title: '',
-  content: '',
-  day_types: ['weekdays'] as DayType[],
-  start_time: '08:00',
-  end_time: '22:00',
-  style: 'traditional_gold' as StyleType,
+  title: "",
+  content: "",
+  day_types: ["weekdays"] as DayType[],
+  start_time: "08:00",
+  end_time: "22:00",
+  style: "traditional_gold" as StyleType,
   priority: 0,
   image_url: null as string | null,
 };
+
+// בדיקה אם כותרת היא מסוג זמני תפילה
+function isPrayerTimesTitle(title: string): boolean {
+  return title === "זמני תפילה" || title === "זמני תפילה שבת";
+}
+
+// JSON ריק לפי סוג המודעה
+function getDefaultPrayerJson(title: string): string {
+  if (title === "זמני תפילה שבת") {
+    return JSON.stringify(
+      {
+        shabbat: {
+          prayers: [
+            { name: "קבלת שבת", time: "18:00" },
+            { name: "שחרית", time: "08:30" },
+            { name: "מנחה", time: "17:30" },
+            { name: "ערבית", time: "19:15" },
+          ],
+          lessons: [],
+        },
+      },
+      null,
+      2,
+    );
+  }
+  return JSON.stringify(
+    {
+      weekday: {
+        prayers: [
+          { name: "שחרית", time: "05:00" },
+          { name: "מנחה", time: "17:00" },
+          { name: "ערבית", time: "17:50" },
+        ],
+        lessons: [],
+      },
+      shabbat: { prayers: [{ name: "שחרית", time: "08:30" }], lessons: [] },
+    },
+    null,
+    2,
+  );
+}
 
 export default function ManageAds() {
   const queryClient = useQueryClient();
@@ -88,27 +129,23 @@ export default function ManageAds() {
   const bgFileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch memorial and finance toggle settings
   useEffect(() => {
     const fetchSettings = async () => {
       const { data } = await supabase
-        .from('app_settings')
-        .select('key, value')
-        .in('key', ['show_memorial_on_display', 'show_finance_on_display', 'display_background_url', 'show_heichal_on_display']);
+        .from("app_settings")
+        .select("key, value")
+        .in("key", [
+          "show_memorial_on_display",
+          "show_finance_on_display",
+          "display_background_url",
+          "show_heichal_on_display",
+        ]);
       if (data) {
         for (const setting of data) {
-          if (setting.key === 'show_memorial_on_display') {
-            setShowMemorial(setting.value !== 'false');
-          }
-          if (setting.key === 'show_finance_on_display') {
-            setShowFinance(setting.value === 'true');
-          }
-          if (setting.key === 'display_background_url') {
-            setDisplayBgUrl(setting.value || null);
-          }
-          if (setting.key === 'show_heichal_on_display') {
-            setShowHeichal(setting.value === 'true');
-          }
+          if (setting.key === "show_memorial_on_display") setShowMemorial(setting.value !== "false");
+          if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
+          if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
+          if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
         }
       }
     };
@@ -118,255 +155,205 @@ export default function ManageAds() {
   const toggleMemorial = async (checked: boolean) => {
     setShowMemorial(checked);
     const { data: existing } = await supabase
-      .from('app_settings')
-      .select('id')
-      .eq('key', 'show_memorial_on_display')
+      .from("app_settings")
+      .select("id")
+      .eq("key", "show_memorial_on_display")
       .maybeSingle();
-
     if (existing) {
       await supabase
-        .from('app_settings')
-        .update({ value: checked ? 'true' : 'false' })
-        .eq('key', 'show_memorial_on_display');
+        .from("app_settings")
+        .update({ value: checked ? "true" : "false" })
+        .eq("key", "show_memorial_on_display");
     } else {
       await supabase
-        .from('app_settings')
-        .insert({ key: 'show_memorial_on_display', value: checked ? 'true' : 'false' });
+        .from("app_settings")
+        .insert({ key: "show_memorial_on_display", value: checked ? "true" : "false" });
     }
-    toast.success(checked ? 'אשכבות יוצגו על המסך' : 'אשכבות הוסרו מהמסך');
+    toast.success(checked ? "אשכבות יוצגו על המסך" : "אשכבות הוסרו מהמסך");
   };
 
   const toggleHeichal = async (checked: boolean) => {
     setShowHeichal(checked);
     const { data: existing } = await supabase
-      .from('app_settings')
-      .select('id')
-      .eq('key', 'show_heichal_on_display')
+      .from("app_settings")
+      .select("id")
+      .eq("key", "show_heichal_on_display")
       .maybeSingle();
-
     if (existing) {
       await supabase
-        .from('app_settings')
-        .update({ value: checked ? 'true' : 'false' })
-        .eq('key', 'show_heichal_on_display');
+        .from("app_settings")
+        .update({ value: checked ? "true" : "false" })
+        .eq("key", "show_heichal_on_display");
     } else {
-      await supabase
-        .from('app_settings')
-        .insert({ key: 'show_heichal_on_display', value: checked ? 'true' : 'false' });
+      await supabase.from("app_settings").insert({ key: "show_heichal_on_display", value: checked ? "true" : "false" });
     }
-    toast.success(checked ? 'היכל ה׳ יוצג על המסך' : 'היכל ה׳ הוסר מהמסך');
+    toast.success(checked ? "היכל ה׳ יוצג על המסך" : "היכל ה׳ הוסר מהמסך");
   };
 
   const toggleFinance = async (checked: boolean) => {
     setShowFinance(checked);
     const { data: existing } = await supabase
-      .from('app_settings')
-      .select('id')
-      .eq('key', 'show_finance_on_display')
+      .from("app_settings")
+      .select("id")
+      .eq("key", "show_finance_on_display")
       .maybeSingle();
-
     if (existing) {
       await supabase
-        .from('app_settings')
-        .update({ value: checked ? 'true' : 'false' })
-        .eq('key', 'show_finance_on_display');
+        .from("app_settings")
+        .update({ value: checked ? "true" : "false" })
+        .eq("key", "show_finance_on_display");
     } else {
-      await supabase
-        .from('app_settings')
-        .insert({ key: 'show_finance_on_display', value: checked ? 'true' : 'false' });
+      await supabase.from("app_settings").insert({ key: "show_finance_on_display", value: checked ? "true" : "false" });
     }
-    toast.success(checked ? 'מצב כספי יוצג על המסך' : 'מצב כספי הוסר מהמסך');
+    toast.success(checked ? "מצב כספי יוצג על המסך" : "מצב כספי הוסר מהמסך");
   };
 
-  // Background image upload/remove
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('הקובץ גדול מדי. הגודל המקסימלי הוא 5MB');
+      toast.error("הקובץ גדול מדי. הגודל המקסימלי הוא 5MB");
       return;
     }
     setBgUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `background/${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from('announcement-images')
-        .upload(fileName, file);
+      const { error: uploadError } = await supabase.storage.from("announcement-images").upload(fileName, file);
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('announcement-images')
-        .getPublicUrl(fileName);
-
-      // Save to app_settings
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("announcement-images").getPublicUrl(fileName);
       const { data: existing } = await supabase
-        .from('app_settings')
-        .select('id')
-        .eq('key', 'display_background_url')
+        .from("app_settings")
+        .select("id")
+        .eq("key", "display_background_url")
         .maybeSingle();
-
       if (existing) {
-        await supabase.from('app_settings').update({ value: publicUrl }).eq('key', 'display_background_url');
+        await supabase.from("app_settings").update({ value: publicUrl }).eq("key", "display_background_url");
       } else {
-        await supabase.from('app_settings').insert({ key: 'display_background_url', value: publicUrl });
+        await supabase.from("app_settings").insert({ key: "display_background_url", value: publicUrl });
       }
       setDisplayBgUrl(publicUrl);
-      toast.success('רקע התצוגה עודכן בהצלחה');
+      toast.success("רקע התצוגה עודכן בהצלחה");
     } catch (err) {
-      console.error('Background upload error:', err);
-      toast.error('שגיאה בהעלאת הרקע');
+      console.error("Background upload error:", err);
+      toast.error("שגיאה בהעלאת הרקע");
     } finally {
       setBgUploading(false);
-      if (bgFileInputRef.current) bgFileInputRef.current.value = '';
+      if (bgFileInputRef.current) bgFileInputRef.current.value = "";
     }
   };
 
   const handleRemoveBg = async () => {
     const { data: existing } = await supabase
-      .from('app_settings')
-      .select('id')
-      .eq('key', 'display_background_url')
+      .from("app_settings")
+      .select("id")
+      .eq("key", "display_background_url")
       .maybeSingle();
-
     if (existing) {
-      await supabase.from('app_settings').update({ value: '' }).eq('key', 'display_background_url');
+      await supabase.from("app_settings").update({ value: "" }).eq("key", "display_background_url");
     }
     setDisplayBgUrl(null);
-    toast.success('רקע התצוגה הוסר');
+    toast.success("רקע התצוגה הוסר");
   };
 
-  // Fetch announcements
   const { data: announcements = [], isLoading } = useQuery({
-    queryKey: ['scheduled-announcements'],
+    queryKey: ["scheduled-announcements"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('scheduled_announcements')
-        .select('*')
-        .order('priority', { ascending: false })
-        .order('created_at', { ascending: false });
-      
+        .from("scheduled_announcements")
+        .select("*")
+        .order("priority", { ascending: false })
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as ScheduledAnnouncement[];
     },
   });
 
-  // Upload image to storage
   const uploadImage = async (file: File): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `announcements/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('announcement-images')
-      .upload(filePath, file);
-
+    const fileExt = file.name.split(".").pop();
+    const fileName = `announcements/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage.from("announcement-images").upload(fileName, file);
     if (uploadError) {
-      console.error('Upload error:', uploadError);
+      console.error("Upload error:", uploadError);
       return null;
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('announcement-images')
-      .getPublicUrl(filePath);
-
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("announcement-images").getPublicUrl(fileName);
     return publicUrl;
   };
 
-  // Create/Update mutation
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData & { id?: string }) => {
       setIsUploading(true);
-      
-      // Upload new image if selected
       let imageUrl = data.image_url;
       if (imageFile) {
         const uploadedUrl = await uploadImage(imageFile);
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
         } else {
-          throw new Error('Failed to upload image');
+          throw new Error("Failed to upload image");
         }
       }
-
+      const payload = {
+        title: data.title,
+        content: data.content,
+        day_types: data.day_types,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        style: data.style,
+        priority: data.priority,
+        image_url: imageUrl,
+      };
       if (data.id) {
-        const { error } = await supabase
-          .from('scheduled_announcements')
-          .update({
-            title: data.title,
-            content: data.content,
-            day_types: data.day_types,
-            start_time: data.start_time,
-            end_time: data.end_time,
-            style: data.style,
-            priority: data.priority,
-            image_url: imageUrl,
-          })
-          .eq('id', data.id);
+        const { error } = await supabase.from("scheduled_announcements").update(payload).eq("id", data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from('scheduled_announcements')
-          .insert({
-            title: data.title,
-            content: data.content,
-            day_types: data.day_types,
-            start_time: data.start_time,
-            end_time: data.end_time,
-            style: data.style,
-            priority: data.priority,
-            image_url: imageUrl,
-          });
+        const { error } = await supabase.from("scheduled_announcements").insert(payload);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-announcements'] });
-      toast.success(editingId ? 'המודעה עודכנה בהצלחה' : 'המודעה נוספה בהצלחה');
+      queryClient.invalidateQueries({ queryKey: ["scheduled-announcements"] });
+      toast.success(editingId ? "המודעה עודכנה בהצלחה" : "המודעה נוספה בהצלחה");
       handleCloseDialog();
     },
     onError: (error) => {
-      console.error('Save error:', error);
-      toast.error('שגיאה בשמירת המודעה');
+      console.error("Save error:", error);
+      toast.error("שגיאה בשמירת המודעה");
     },
     onSettled: () => {
       setIsUploading(false);
     },
   });
 
-  // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('scheduled_announcements')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("scheduled_announcements").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-announcements'] });
-      toast.success('המודעה נמחקה בהצלחה');
+      queryClient.invalidateQueries({ queryKey: ["scheduled-announcements"] });
+      toast.success("המודעה נמחקה בהצלחה");
     },
     onError: () => {
-      toast.error('שגיאה במחיקת המודעה');
+      toast.error("שגיאה במחיקת המודעה");
     },
   });
 
-  // Toggle active mutation
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
-        .from('scheduled_announcements')
-        .update({ is_active })
-        .eq('id', id);
+      const { error } = await supabase.from("scheduled_announcements").update({ is_active }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-announcements'] });
-      toast.success('הסטטוס עודכן');
+      queryClient.invalidateQueries({ queryKey: ["scheduled-announcements"] });
+      toast.success("הסטטוס עודכן");
     },
     onError: () => {
-      toast.error('שגיאה בעדכון הסטטוס');
+      toast.error("שגיאה בעדכון הסטטוס");
     },
   });
 
@@ -399,14 +386,12 @@ export default function ManageAds() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('הקובץ גדול מדי. הגודל המקסימלי הוא 5MB');
+        toast.error("הקובץ גדול מדי. הגודל המקסימלי הוא 5MB");
         return;
       }
       setImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
+      reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -415,9 +400,27 @@ export default function ManageAds() {
     setImageFile(null);
     setImagePreview(null);
     setFormData({ ...formData, image_url: null });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleTitleChange = (newTitle: string) => {
+    const updates: Partial<typeof formData> = { title: newTitle };
+    // אתחול JSON אוטומטי כשעוברים למודעת תפילה
+    if (isPrayerTimesTitle(newTitle)) {
+      try {
+        JSON.parse(formData.content);
+      } catch {
+        updates.content = getDefaultPrayerJson(newTitle);
+      }
+      // אם כבר יש JSON אבל עוברים בין חול לשבת — אפשר לאפס
     }
+    // הגדרת ימי ברירת מחדל
+    if (newTitle === "זמני תפילה שבת" && !editingId) {
+      updates.day_types = ["friday", "shabbat"];
+    } else if (newTitle === "זמני תפילה" && !editingId) {
+      updates.day_types = ["weekdays", "friday"];
+    }
+    setFormData({ ...formData, ...updates });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -437,7 +440,12 @@ export default function ManageAds() {
         </div>
       </div>
 
-      <MemorialManager showMemorial={showMemorial} onToggleMemorial={toggleMemorial} showHeichal={showHeichal} onToggleHeichal={toggleHeichal} />
+      <MemorialManager
+        showMemorial={showMemorial}
+        onToggleMemorial={toggleMemorial}
+        showHeichal={showHeichal}
+        onToggleHeichal={toggleHeichal}
+      />
 
       {/* Finance Display Toggle */}
       <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
@@ -447,9 +455,7 @@ export default function ManageAds() {
               <Wallet className="w-5 h-5 text-blue-500" />
               <div>
                 <p className="font-semibold text-sm">תצוגת מצב כספי</p>
-                <p className="text-xs text-muted-foreground">
-                  הצג סיכום הכנסות, הוצאות ויתרה על מסך התצוגה
-                </p>
+                <p className="text-xs text-muted-foreground">הצג סיכום הכנסות, הוצאות ויתרה על מסך התצוגה</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -468,19 +474,11 @@ export default function ManageAds() {
               <Image className="w-5 h-5 text-muted-foreground" />
               <div>
                 <p className="font-semibold text-sm">רקע מסך תצוגה</p>
-                <p className="text-xs text-muted-foreground">
-                  העלה תמונת רקע שתוצג מאחורי התוכן במסך התצוגה
-                </p>
+                <p className="text-xs text-muted-foreground">העלה תמונת רקע שתוצג מאחורי התוכן במסך התצוגה</p>
               </div>
             </div>
           </div>
-          <input
-            ref={bgFileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleBgUpload}
-            className="hidden"
-          />
+          <input ref={bgFileInputRef} type="file" accept="image/*" onChange={handleBgUpload} className="hidden" />
           {displayBgUrl ? (
             <div className="relative rounded-lg overflow-hidden border">
               <img src={displayBgUrl} alt="רקע תצוגה" className="w-full h-32 object-cover" />
@@ -496,13 +494,7 @@ export default function ManageAds() {
                   <Upload className="w-3 h-3 ml-1" />
                   החלף
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={handleRemoveBg}
-                  className="h-8"
-                >
+                <Button type="button" size="sm" variant="destructive" onClick={handleRemoveBg} className="h-8">
                   <X className="w-3 h-3 ml-1" />
                   הסר
                 </Button>
@@ -519,7 +511,7 @@ export default function ManageAds() {
               <div className="flex flex-col items-center gap-1">
                 <Upload className="w-5 h-5 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  {bgUploading ? 'מעלה...' : 'לחץ להעלאת תמונת רקע'}
+                  {bgUploading ? "מעלה..." : "לחץ להעלאת תמונת רקע"}
                 </span>
               </div>
             </Button>
@@ -530,44 +522,44 @@ export default function ManageAds() {
       <div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditingId(null); setFormData(defaultFormData); }}>
+            <Button
+              onClick={() => {
+                setEditingId(null);
+                setFormData(defaultFormData);
+              }}
+            >
               <Plus className="w-4 h-4 ml-2" />
               הוסף מודעה
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
             <DialogHeader>
-              <DialogTitle>{editingId ? 'עריכת מודעה' : 'הוספת מודעה חדשה'}</DialogTitle>
+              <DialogTitle>{editingId ? "עריכת מודעה" : "הוספת מודעה חדשה"}</DialogTitle>
             </DialogHeader>
+
+            {/* טיפ לכותרות מיוחדות */}
+            <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 border">
+              💡 כותרות מיוחדות: <strong>זמני תפילה</strong> (חול) · <strong>זמני תפילה שבת</strong> (שבת)
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">כותרת</Label>
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => {
-                    const newTitle = e.target.value;
-                    const updates: Partial<typeof formData> = { title: newTitle };
-                    // Auto-init JSON content when switching to prayer times
-                    if (newTitle === 'זמני תפילה') {
-                      try { JSON.parse(formData.content); } catch {
-                        updates.content = JSON.stringify({
-                          weekday: { prayers: [{ name: 'שחרית', time: '05:00' }], lessons: [] },
-                          shabbat: { prayers: [{ name: 'שחרית שבת', time: '08:30' }], lessons: [] },
-                        }, null, 2);
-                      }
-                    }
-                    setFormData({ ...formData, ...updates });
-                  }}
+                  onChange={(e) => handleTitleChange(e.target.value)}
                   placeholder="כותרת המודעה"
                   required
                 />
               </div>
 
-              {formData.title === 'זמני תפילה' ? (
+              {/* עורך תפילה — לשתי הכותרות */}
+              {isPrayerTimesTitle(formData.title) ? (
                 <PrayerTimesEditor
                   value={formData.content}
                   onChange={(json) => setFormData({ ...formData, content: json })}
+                  mode={formData.title === "זמני תפילה שבת" ? "shabbat" : "both"}
                 />
               ) : (
                 <div className="space-y-2">
@@ -596,18 +588,12 @@ export default function ManageAds() {
                         checked={formData.day_types.includes(option.value)}
                         onCheckedChange={(checked) => {
                           if (checked) {
+                            setFormData({ ...formData, day_types: [...formData.day_types, option.value] });
+                          } else if (formData.day_types.length > 1) {
                             setFormData({
                               ...formData,
-                              day_types: [...formData.day_types, option.value],
+                              day_types: formData.day_types.filter((d) => d !== option.value),
                             });
-                          } else {
-                            // Prevent unchecking if it's the last one
-                            if (formData.day_types.length > 1) {
-                              setFormData({
-                                ...formData,
-                                day_types: formData.day_types.filter((d) => d !== option.value),
-                              });
-                            }
                           }
                         }}
                       />
@@ -668,57 +654,60 @@ export default function ManageAds() {
                     ))}
                   </SelectContent>
                 </Select>
-                {/* Style Preview */}
-                <div className={`p-4 rounded-lg border-2 mt-2 ${STYLE_PREVIEWS[formData.style]}`}>
-                  <p className="font-bold text-lg">{formData.title || 'כותרת לדוגמה'}</p>
-                  <p className="text-sm opacity-90">{formData.content || 'תוכן המודעה יופיע כאן'}</p>
-                </div>
-              </div>
-
-              {/* Image Upload */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Image className="w-4 h-4" />
-                  תמונה (אופציונלי)
-                </Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-                {imagePreview ? (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="תצוגה מקדימה"
-                      className="w-full h-32 object-cover rounded-lg border"
-                    />
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      className="absolute top-2 left-2 w-6 h-6"
-                      onClick={handleRemoveImage}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
+                {!isPrayerTimesTitle(formData.title) && (
+                  <div className={`p-4 rounded-lg border-2 mt-2 ${STYLE_PREVIEWS[formData.style]}`}>
+                    <p className="font-bold text-lg">{formData.title || "כותרת לדוגמה"}</p>
+                    <p className="text-sm opacity-90">{formData.content || "תוכן המודעה יופיע כאן"}</p>
                   </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-24 border-dashed"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <Upload className="w-6 h-6 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">לחץ להעלאת תמונה</span>
-                    </div>
-                  </Button>
                 )}
               </div>
+
+              {/* תמונה — רק למודעות רגילות */}
+              {!isPrayerTimesTitle(formData.title) && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Image className="w-4 h-4" />
+                    תמונה (אופציונלי)
+                  </Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="תצוגה מקדימה"
+                        className="w-full h-32 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-2 left-2 w-6 h-6"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-24 border-dashed"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Upload className="w-6 h-6 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">לחץ להעלאת תמונה</span>
+                      </div>
+                    </Button>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="priority">עדיפות (0-100)</Label>
@@ -737,7 +726,7 @@ export default function ManageAds() {
                   ביטול
                 </Button>
                 <Button type="submit" disabled={saveMutation.isPending || isUploading} className="min-h-[44px]">
-                  {isUploading ? 'מעלה תמונה...' : saveMutation.isPending ? 'שומר...' : editingId ? 'עדכן' : 'הוסף'}
+                  {isUploading ? "מעלה תמונה..." : saveMutation.isPending ? "שומר..." : editingId ? "עדכן" : "הוסף"}
                 </Button>
               </div>
             </form>
@@ -766,19 +755,21 @@ export default function ManageAds() {
                   <div key={announcement.id} className="p-4 space-y-3 active:bg-muted/50 transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       {announcement.image_url && (
-                        <img 
-                          src={announcement.image_url} 
-                          alt="" 
+                        <img
+                          src={announcement.image_url}
+                          alt=""
                           className="w-16 h-16 object-cover rounded-lg shrink-0"
                         />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-base">{announcement.title}</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-line">{announcement.content}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-line">
+                          {announcement.content}
+                        </p>
                       </div>
                       <Switch
                         checked={announcement.is_active}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={(checked) =>
                           toggleActiveMutation.mutate({ id: announcement.id, is_active: checked })
                         }
                         className="shrink-0"
@@ -789,25 +780,27 @@ export default function ManageAds() {
                         {STYLE_LABELS[announcement.style]}
                       </Badge>
                       {announcement.day_types.map((day) => (
-                        <Badge key={day} variant="outline" className="text-xs">{DAY_TYPE_LABELS[day]}</Badge>
+                        <Badge key={day} variant="outline" className="text-xs">
+                          {DAY_TYPE_LABELS[day]}
+                        </Badge>
                       ))}
                       <Badge variant="secondary" className="text-xs">
                         {announcement.start_time.slice(0, 5)} - {announcement.end_time.slice(0, 5)}
                       </Badge>
                     </div>
                     <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => handleEdit(announcement)}
                         className="flex-1 h-10 text-sm"
                       >
                         <Edit className="w-4 h-4 ml-1" />
                         עריכה
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive" 
+                      <Button
+                        size="sm"
+                        variant="destructive"
                         onClick={() => deleteMutation.mutate(announcement.id)}
                         className="h-10 px-3"
                       >
@@ -837,11 +830,7 @@ export default function ManageAds() {
                       <TableRow key={announcement.id}>
                         <TableCell>
                           {announcement.image_url ? (
-                            <img 
-                              src={announcement.image_url} 
-                              alt="" 
-                              className="w-12 h-12 object-cover rounded"
-                            />
+                            <img src={announcement.image_url} alt="" className="w-12 h-12 object-cover rounded" />
                           ) : (
                             <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
                               <Image className="w-5 h-5 text-muted-foreground" />
@@ -874,7 +863,7 @@ export default function ManageAds() {
                         <TableCell>
                           <Switch
                             checked={announcement.is_active}
-                            onCheckedChange={(checked) => 
+                            onCheckedChange={(checked) =>
                               toggleActiveMutation.mutate({ id: announcement.id, is_active: checked })
                             }
                           />
@@ -884,9 +873,9 @@ export default function ManageAds() {
                             <Button size="icon" variant="ghost" onClick={() => handleEdit(announcement)}>
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
+                            <Button
+                              size="icon"
+                              variant="ghost"
                               className="text-destructive hover:text-destructive"
                               onClick={() => deleteMutation.mutate(announcement.id)}
                             >
