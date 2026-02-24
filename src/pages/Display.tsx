@@ -673,8 +673,9 @@ export default function Display() {
       {/* HEADER */}
       <header className="shrink-0 z-10 relative">
         <div className="absolute inset-0 bg-black/30 backdrop-blur-md border-b border-white/10" />
-        <div className="relative flex items-center justify-between px-[3vw] py-[1.5vh]">
-          <div className="text-center">
+        <div className="relative flex items-center px-[3vw] py-[1.5vh] gap-[3vw]">
+          {/* שעה */}
+          <div className="flex-shrink-0">
             <div
               className="font-bold tabular-nums leading-none text-white"
               style={{
@@ -686,7 +687,19 @@ export default function Display() {
               {timeString}
             </div>
           </div>
-          <div className="text-center">
+          {/* קו מפריד */}
+          <div
+            style={{
+              width: "2px",
+              alignSelf: "stretch",
+              margin: "4px 0",
+              background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.55), transparent)",
+              borderRadius: "1px",
+              flexShrink: 0,
+            }}
+          />
+          {/* תאריך */}
+          <div className="flex-1 text-right">
             <div
               className="font-bold text-white"
               style={{ fontSize: "clamp(22px, 4vh, 52px)", textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}
