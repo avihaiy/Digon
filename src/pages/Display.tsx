@@ -803,6 +803,8 @@ export default function Display() {
         {synagogueName && (
           <div
             style={{
+              position: "relative",
+              zIndex: 1,
               textAlign: "center",
               fontSize: "clamp(12px, 1.8vh, 22px)",
               color: "rgba(255,220,100,0.9)",
