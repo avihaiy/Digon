@@ -60,6 +60,13 @@ interface TickerItem {
   order_index: number;
 }
 
+interface TickerItem {
+  id: string;
+  text: string;
+  is_active: boolean;
+  order_index: number;
+}
+
 const DAY_TYPE_OPTIONS: { value: DayType; label: string }[] = [
   { value: "weekdays", label: "ימי חול (א'-ה')" },
   { value: "friday", label: "יום שישי" },
@@ -253,6 +260,210 @@ function TickerManager() {
 }
 // ─────────────────────────────────────────────────────────────
 
+// ── TickerManager ──────────────────────────────────────────────
+const TICKER_SPEEDS = [
+  { label: "🐢 איטי", value: "slow", seconds: 60 },
+  { label: "🚶 בינוני", value: "medium", seconds: 35 },
+  { label: "🚀 מהיר", value: "fast", seconds: 18 },
+];
+
+function TickerManager() {
+  const [items, setItems] = useState<TickerItem[]>([]);
+  const [newText, setNewText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [speed, setSpeed] = useState("medium");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+
+  const fetchItems = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from("ticker_items").select("*").order("order_index", { ascending: true });
+    if (!error && data) setItems(data);
+    setLoading(false);
+  };
+
+  const fetchSpeed = async () => {
+    const { data } = await supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle();
+    if (data?.value) setSpeed(data.value);
+  };
+
+  useEffect(() => {
+    fetchItems();
+    fetchSpeed();
+  }, []);
+
+  const saveSpeed = async (val: string) => {
+    setSpeed(val);
+    const { data: existing } = await supabase.from("app_settings").select("id").eq("key", "ticker_speed").maybeSingle();
+    if (existing) await supabase.from("app_settings").update({ value: val }).eq("key", "ticker_speed");
+    else await supabase.from("app_settings").insert({ key: "ticker_speed", value: val });
+    toast.success("מהירות עודכנה");
+  };
+
+  const addItem = async () => {
+    if (!newText.trim()) return;
+    setSaving(true);
+    const maxOrder = items.length > 0 ? Math.max(...items.map((i) => i.order_index)) + 1 : 0;
+    await supabase.from("ticker_items").insert({ text: newText.trim(), is_active: true, order_index: maxOrder });
+    setNewText("");
+    fetchItems();
+    setSaving(false);
+    toast.success("נוסף לטיקר");
+  };
+
+  const toggleItem = async (item: TickerItem) => {
+    await supabase.from("ticker_items").update({ is_active: !item.is_active }).eq("id", item.id);
+    fetchItems();
+  };
+
+  const deleteItem = async (id: string) => {
+    await supabase.from("ticker_items").delete().eq("id", id);
+    fetchItems();
+    toast.success("נמחק");
+  };
+
+  const startEdit = (item: TickerItem) => {
+    setEditingId(item.id);
+    setEditText(item.text);
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !editText.trim()) return;
+    await supabase.from("ticker_items").update({ text: editText.trim() }).eq("id", editingId);
+    setEditingId(null);
+    setEditText("");
+    fetchItems();
+    toast.success("עודכן");
+  };
+
+  return (
+    <Card className="border-orange-200 bg-orange-50/50">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Tv className="w-5 h-5 text-orange-500" />
+          טיקר תחתון — עדכוני מערכת
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">טקסט רץ שמוצג בתחתית מסך התצוגה בכל העמודים</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* מהירות */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">מהירות ריצה</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {TICKER_SPEEDS.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => saveSpeed(s.value)}
+                className={`py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${
+                  speed === s.value
+                    ? "bg-orange-500 text-white border-orange-500 shadow-sm"
+                    : "bg-white border-orange-200 text-orange-700 hover:bg-orange-50"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* הוספה */}
+        <div className="flex gap-2">
+          <Input
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addItem()}
+            placeholder="הכנס עדכון חדש..."
+            className="flex-1 min-h-[48px] text-right"
+            dir="rtl"
+          />
+          <Button onClick={addItem} disabled={saving || !newText.trim()} className="min-h-[48px] shrink-0">
+            <Plus className="w-4 h-4 ml-1" />
+            הוסף
+          </Button>
+        </div>
+
+        {/* רשימה */}
+        {loading ? (
+          <div className="text-center text-muted-foreground py-4 text-sm">טוען...</div>
+        ) : items.length === 0 ? (
+          <div className="text-center text-muted-foreground py-6 border-2 border-dashed border-orange-200 rounded-xl text-sm">
+            אין עדכונים בטיקר
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className={`rounded-xl border transition-all ${item.is_active ? "bg-white border-orange-200" : "bg-gray-50 border-gray-200 opacity-60"}`}
+              >
+                {editingId === item.id ? (
+                  /* מצב עריכה */
+                  <div className="p-3 space-y-2">
+                    <Input
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEdit();
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                      className="min-h-[44px] text-right"
+                      dir="rtl"
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={saveEdit} className="flex-1 min-h-[40px] text-sm">
+                        שמור
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingId(null)}
+                        className="flex-1 min-h-[40px] text-sm"
+                      >
+                        ביטול
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* מצב תצוגה */
+                  <div className="flex items-center gap-2 p-3">
+                    <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="flex-1 text-sm text-right truncate" dir="rtl">
+                      {item.text}
+                    </span>
+                    <button
+                      onClick={() => startEdit(item)}
+                      className="p-2 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors shrink-0"
+                      title="עריכה"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => toggleItem(item)}
+                      className={`p-2 rounded-lg transition-colors shrink-0 ${item.is_active ? "text-green-600 hover:bg-green-100" : "text-gray-400 hover:bg-gray-100"}`}
+                      title={item.is_active ? "הסתר" : "הצג"}
+                    >
+                      {item.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => deleteItem(item.id)}
+                      className="p-2 rounded-lg text-red-400 hover:bg-red-100 transition-colors shrink-0"
+                      title="מחק"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+// ──────────────────────────────────────────────────────────────
 
 export default function ManageAds() {
   const queryClient = useQueryClient();
