@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TickerItem {
@@ -8,30 +8,31 @@ interface TickerItem {
   order_index: number;
 }
 
+const SPEED_MAP: Record<string, number> = {
+  slow: 60,
+  medium: 35,
+  fast: 18,
+};
+
 export default function TickerBanner() {
   const [items, setItems] = useState<TickerItem[]>([]);
-  const [animDuration, setAnimDuration] = useState(30);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [speed, setSpeed] = useState("medium");
 
-  const fetchItems = async () => {
-    const { data, error } = await supabase
-      .from("ticker_items")
-      .select("*")
-      .eq("is_active", true)
-      .order("order_index", { ascending: true });
-    if (!error && data) {
-      setItems(data);
-      // מהירות לפי כמות הטקסט
-      const totalChars = data.reduce((sum, i) => sum + i.text.length, 0);
-      setAnimDuration(Math.max(20, Math.min(60, totalChars * 0.18)));
-    }
+  const fetchAll = async () => {
+    const [{ data: tickerData }, { data: speedData }] = await Promise.all([
+      supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
+      supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
+    ]);
+    if (tickerData) setItems(tickerData);
+    if (speedData?.value) setSpeed(speedData.value);
   };
 
   useEffect(() => {
-    fetchItems();
+    fetchAll();
     const channel = supabase
       .channel("ticker-display")
-      .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, fetchItems)
+      .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "app_settings" }, fetchAll)
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -40,7 +41,7 @@ export default function TickerBanner() {
 
   if (items.length === 0) return null;
 
-  // הכפל פעמיים לרצף חלק
+  const animDuration = SPEED_MAP[speed] ?? 35;
   const text = items.map((i) => i.text).join("   •   ");
   const fullText = text + "   •   " + text;
 
@@ -60,7 +61,7 @@ export default function TickerBanner() {
         alignItems: "center",
       }}
     >
-      {/* קו זהב עליון */}
+      {/* קו זהב */}
       <div
         style={{
           position: "absolute",
@@ -91,7 +92,6 @@ export default function TickerBanner() {
 
       {/* טיקר */}
       <div
-        ref={containerRef}
         style={{
           flex: 1,
           overflow: "hidden",
@@ -102,7 +102,7 @@ export default function TickerBanner() {
         }}
       >
         <style>{`
-          @keyframes ticker-rtl {
+          @keyframes ticker-rtl-${speed} {
             0%   { transform: translateX(0); }
             100% { transform: translateX(50%); }
           }
@@ -111,16 +111,14 @@ export default function TickerBanner() {
           style={{
             display: "flex",
             whiteSpace: "nowrap",
-            animation: `ticker-rtl ${animDuration}s linear infinite`,
+            animation: `ticker-rtl-${speed} ${animDuration}s linear infinite`,
             fontSize: "clamp(12px, 2vh, 18px)",
             fontWeight: 500,
             color: "rgba(255,255,255,0.92)",
             direction: "rtl",
           }}
         >
-          {fullText}
-          &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;
-          {fullText}
+          {fullText}&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;{fullText}
         </div>
       </div>
     </div>
