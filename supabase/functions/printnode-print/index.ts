@@ -12,25 +12,56 @@ serve(async (req) => {
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
-    if (!apiKey || !printerId) throw new Error("Missing PrintNode Config");
+    // הגדרות בייטים בסיסיות
+    const ESC = 0x1b;
+    const GS = 0x1d;
 
-    // אנחנו יוצרים תוכן HTML פשוט שיהפוך ל-PDF
-    // בצורה הזו העברית תמיד תצא ישר (RTL) ובגופן יפה
-    const htmlContent = `
-      <div style="width: 280px; font-family: Arial; text-align: right; direction: rtl;">
-        <h1 style="font-size: 20px; text-align: center;">בדיקת הדפסה</h1>
-        <p style="font-size: 16px;">שלום, זו בדיקה בעברית למדפסת Giant-100</p>
-        <hr>
-        <p>תאריך: ${new Date().toLocaleDateString("he-IL")}</p>
-        <p style="text-align: center; font-weight: bold;">תודה רבה!</p>
-      </div>
-    `;
+    // 1. אתחול נקי של המדפסת
+    const init = [ESC, 0x40];
 
-    // שלב 1: הופכים את ה-HTML ל-Base64
-    const base64Html = btoa(unescape(encodeURIComponent(htmlContent)));
+    // 2. פקודה סופר-חשובה ל-Sam4s: בחירת Character Set של ישראל
+    const israelSet = [ESC, 0x52, 0x0d];
 
-    // שלב 2: שולחים ל-PrintNode כ-PDF_BASE64
-    // הערה: בשיטה זו PrintNode Desktop ירנדר את ה-HTML ל-PDF וידפיס
+    // 3. בחירת Code Page 1255 (לפי ה-Self Test שלך)
+    // ברוב המדפסות האלו הערך הוא 33 (0x21)
+    const selectCP1255 = [ESC, 0x74, 0x21];
+
+    // 4. פונקציית המרה ישירה ל-Windows-1255
+    function to1255(text: string): number[] {
+      const reversed = text.split("").reverse().join("");
+      const result: number[] = [];
+      for (let i = 0; i < reversed.length; i++) {
+        const charCode = reversed.charCodeAt(i);
+        if (charCode >= 0x05d0 && charCode <= 0x05ea) {
+          result.push(charCode - 0x05d0 + 0xe0);
+        } else {
+          result.push(charCode & 0xff);
+        }
+      }
+      return result;
+    }
+
+    const textBytes = to1255("עברית ב-Giant 100");
+
+    // 5. בניית מערך הבייטים הסופי
+    const finalBuffer = new Uint8Array([
+      ...init,
+      ...israelSet,
+      ...selectCP1255,
+      0x0a, // ירידת שורה
+      ...textBytes,
+      0x0a,
+      0x0a,
+      0x0a,
+      0x0a, // רווח משמעותי בסוף
+      GS,
+      0x56,
+      0x41,
+      0x03, // חיתוך נייר
+    ]);
+
+    const base64Data = btoa(String.fromCharCode(...finalBuffer));
+
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
@@ -38,22 +69,15 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        printerId: parseInt(printerId),
-        title: "Hebrew PDF Print",
-        contentType: "pdf_base64", // שינוי קריטי ל-PDF
-        content: base64Html, // כאן אתה יכול לשלוח גם URL של PDF מוכן
-        source: "Deno Cloud",
+        printerId: parseInt(printerId!),
+        title: "Final Attempt",
+        contentType: "raw_base64",
+        content: base64Data,
       }),
     });
 
-    const resData = await printResponse.json();
-    return new Response(JSON.stringify(resData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 });
