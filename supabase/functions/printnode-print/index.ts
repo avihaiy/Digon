@@ -6,39 +6,26 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // טיפול ב-CORS
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { orderItems, totalAmount, orderNumber, customerName } = await req.json();
-
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
     if (!apiKey || !printerId) throw new Error("Missing PrintNode Config");
 
-    // עיצוב הקבלה ב-HTML (יהפוך לגרפיקה נקייה ב-PDF)
+    // יצירת תוכן גרפי ב-PDF למניעת ג'יבריש
     const htmlContent = `
-      <!DOCTYPE html>
-      <html dir="rtl">
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          body { font-family: sans-serif; width: 260px; margin: 0; padding: 10px; font-size: 14px; }
-          .header { text-align: center; font-weight: bold; font-size: 18px; border-bottom: 2px solid #000; margin-bottom: 10px; }
-          .item { display: flex; justify-content: space-between; margin-bottom: 4px; }
-          .total { margin-top: 10px; border-top: 1px dashed #000; padding-top: 5px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; }
-        </style>
-      </head>
-      <body>
-        <div class="header">הזמנה #${orderNumber || "חדשה"}</div>
-        <div style="margin-bottom: 8px;">לקוח: ${customerName || "אורח"}</div>
-        
+      <div style="width: 260px; font-family: Arial; direction: rtl; text-align: right;">
+        <h2 style="text-align: center; border-bottom: 2px solid #000;">הזמנה #${orderNumber || "1034"}</h2>
+        <p>לקוח: ${customerName || "אורח"}</p>
+        <hr>
         ${
           orderItems
             ?.map(
               (item: any) => `
-          <div class="item">
+          <div style="display: flex; justify-content: space-between;">
             <span>${item.name}</span>
             <span>${item.price} ₪</span>
           </div>
@@ -46,21 +33,15 @@ serve(async (req) => {
             )
             .join("") || "אין פריטים"
         }
-
-        <div class="total">
-          <span>סה"כ:</span>
-          <span>${totalAmount || 0} ₪</span>
+        <div style="margin-top: 10px; font-weight: bold; font-size: 16px;">
+          סה"כ: ${totalAmount || 0} ₪
         </div>
-        <div style="text-align: center; font-size: 10px; margin-top: 15px;">גרסת הדפסה: 2.0 (PDF Mode)</div>
-      </body>
-      </html>
+      </div>
     `;
 
-    // המרה בטוחה ל-Base64 שתומכת בעברית
     const encoder = new TextEncoder();
     const base64Html = btoa(String.fromCharCode(...encoder.encode(htmlContent)));
 
-    // שליחה ל-PrintNode - שים לב לשינויים ב-Title וב-contentType
     const response = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
@@ -69,10 +50,9 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         printerId: parseInt(printerId),
-        title: `VER_2.0_PDF_ORDER_${orderNumber || "1034"}`, // כותרת חדשה לרענון
-        contentType: "pdf_base64", // חובה: זה מה שמוחק את הג'יבריש
+        title: `FORCE_REFRESH_PDF_#${orderNumber || "1034"}`, // שנה את זה כדי לוודא רענון
+        contentType: "pdf_base64", // חובה כדי להפסיק את הג'יבריש
         content: base64Html,
-        source: "Lovable System",
       }),
     });
 
