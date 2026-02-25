@@ -5,50 +5,47 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+// פונקציית עזר להפוך עברית ולהמיר לקידוד PC862 (הסטנדרט של מדפסות תרמיות)
+function encodeHebrewPC862(text: string): Uint8Array {
+  // היפוך הטקסט (כדי שיודפס מימין לשמאל)
+  const reversed = text.split("").reverse().join("");
+  const bytes = new Uint8Array(reversed.length);
+
+  for (let i = 0; i < reversed.length; i++) {
+    const charCode = reversed.charCodeAt(i);
+    // טווח האותיות בעברית ביוניקוד הוא 0x05D0 עד 0x05EA
+    // בטבלת PC862 הן מתחילות מ-0x80
+    if (charCode >= 0x05d0 && charCode <= 0x05ea) {
+      bytes[i] = charCode - 0x05d0 + 0x80;
+    } else {
+      bytes[i] = charCode; // מספרים ותווים רגילים
+    }
   }
+  return bytes;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
-    if (!apiKey || !printerId) {
-      throw new Error("Missing PrintNode configuration");
-    }
+    // 1. אתחול המדפסת
+    const init = [0x1b, 0x40];
 
-    // ============================================================
-    // טסט: מדפיסים את כל הטווח 0xe0-0xfa
-    // כדי לראות בדיוק אילו תווים המדפסת מציגה
-    // ============================================================
-    const init = new Uint8Array([0x1b, 0x40]); // Initialize
+    // 2. פקודה לבחירת טבלת תווים עברית (PC862)
+    // ברוב מדפסות Epson/Star זה 0x1B, 0x74, 0x0F (או 15 בעשרוני)
+    const selectHebrew = [0x1b, 0x74, 0x0f];
 
-    // הדפסת טקסט הסבר
-    const label = new TextEncoder().encode("TEST HEBREW RANGE:\n");
+    // 3. כתיבת הטקסט
+    const myText = "בדיקת הדפסה בעברית 123";
+    const encodedText = encodeHebrewPC862(myText);
 
-    // הדפסת bytes 0xe0 עד 0xfa אחד אחד עם מספר לידו
-    const testBytes: number[] = [];
+    // 4. פקודת חיתוך ורווח בסוף
+    const cut = [0x0a, 0x0a, 0x1d, 0x56, 0x00];
 
-    for (let i = 0xe0; i <= 0xfa; i++) {
-      // כותב: "E0=" ואז את הבייט עצמו ואז newline
-      const hex = i.toString(16).toUpperCase();
-      const prefix = new TextEncoder().encode(`0x${hex}=`);
-      prefix.forEach((b) => testBytes.push(b));
-      testBytes.push(i); // הבייט עצמו
-      testBytes.push(0x0a); // newline
-    }
-
-    // גם בדיקת 0xa4 (שקל)
-    const shekelLabel = new TextEncoder().encode("0xA4=");
-    shekelLabel.forEach((b) => testBytes.push(b));
-    testBytes.push(0xa4);
-    testBytes.push(0x0a);
-
-    const cut = new Uint8Array([0x0a, 0x0a, 0x0a, 0x1d, 0x56, 0x00]);
-
-    const finalData = new Uint8Array([...init, ...label, ...testBytes, ...cut]);
-
+    const finalData = new Uint8Array([...init, ...selectHebrew, ...encodedText, ...cut]);
     const base64Data = btoa(String.fromCharCode(...finalData));
 
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
@@ -58,26 +55,15 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        printerId: parseInt(printerId),
-        title: "Hebrew-Range-Test",
+        printerId: parseInt(printerId!),
+        title: "Hebrew Print Test",
         contentType: "raw_base64",
         content: base64Data,
-        source: "Debug Test",
       }),
     });
 
-    if (!printResponse.ok) {
-      const errText = await printResponse.text();
-      throw new Error(`PrintNode error: ${errText}`);
-    }
-
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 });
