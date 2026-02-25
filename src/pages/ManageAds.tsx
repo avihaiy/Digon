@@ -60,6 +60,13 @@ interface TickerItem {
   order_index: number;
 }
 
+interface TickerItem {
+  id: string;
+  text: string;
+  is_active: boolean;
+  order_index: number;
+}
+
 const DAY_TYPE_OPTIONS: { value: DayType; label: string }[] = [
   { value: "weekdays", label: "ימי חול (א'-ה')" },
   { value: "friday", label: "יום שישי" },
@@ -137,6 +144,120 @@ function getDefaultPrayerJson(title: string): string {
   );
 }
 
+// ── TickerManager מוטמע ──────────────────────────────────────
+function TickerManager() {
+  const [items, setItems] = useState<TickerItem[]>([]);
+  const [newText, setNewText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const fetchItems = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from("ticker_items").select("*").order("order_index", { ascending: true });
+    if (!error && data) setItems(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const addItem = async () => {
+    if (!newText.trim()) return;
+    setSaving(true);
+    const maxOrder = items.length > 0 ? Math.max(...items.map((i) => i.order_index)) + 1 : 0;
+    await supabase.from("ticker_items").insert({ text: newText.trim(), is_active: true, order_index: maxOrder });
+    setNewText("");
+    fetchItems();
+    setSaving(false);
+    toast.success("נוסף לטיקר");
+  };
+
+  const toggleItem = async (item: TickerItem) => {
+    await supabase.from("ticker_items").update({ is_active: !item.is_active }).eq("id", item.id);
+    fetchItems();
+  };
+
+  const deleteItem = async (id: string) => {
+    await supabase.from("ticker_items").delete().eq("id", id);
+    fetchItems();
+    toast.success("נמחק מהטיקר");
+  };
+
+  const updateText = async (id: string, text: string, original: string) => {
+    if (text === original) return;
+    await supabase.from("ticker_items").update({ text }).eq("id", id);
+    fetchItems();
+    toast.success("עודכן");
+  };
+
+  return (
+    <Card className="border-orange-200 bg-orange-50/50">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Tv className="w-5 h-5 text-orange-500" />
+          טיקר תחתון — עדכוני מערכת
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">טקסט רץ שמוצג בתחתית מסך התצוגה בכל העמודים</p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* הוספה */}
+        <div className="flex gap-2">
+          <Input
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addItem()}
+            placeholder="הכנס עדכון חדש..."
+            className="flex-1 min-h-[44px] text-right"
+            dir="rtl"
+          />
+          <Button onClick={addItem} disabled={saving || !newText.trim()} className="min-h-[44px] shrink-0">
+            <Plus className="w-4 h-4 ml-1" />
+            הוסף
+          </Button>
+        </div>
+
+        {/* רשימה */}
+        {loading ? (
+          <div className="text-center text-muted-foreground py-4 text-sm">טוען...</div>
+        ) : items.length === 0 ? (
+          <div className="text-center text-muted-foreground py-6 border-2 border-dashed border-orange-200 rounded-xl text-sm">
+            אין עדכונים בטיקר
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className={`flex items-center gap-2 p-3 rounded-xl border transition-all ${item.is_active ? "bg-white border-orange-200" : "bg-gray-50 border-gray-200 opacity-60"}`}
+              >
+                <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
+                <input
+                  defaultValue={item.text}
+                  onBlur={(e) => updateText(item.id, e.target.value, item.text)}
+                  className="flex-1 bg-transparent text-right focus:outline-none focus:bg-orange-50 focus:px-2 rounded transition-all min-h-[36px] text-sm"
+                  dir="rtl"
+                />
+                <button
+                  onClick={() => toggleItem(item)}
+                  className={`p-2 rounded-lg transition-colors shrink-0 ${item.is_active ? "text-green-600 hover:bg-green-100" : "text-gray-400 hover:bg-gray-100"}`}
+                >
+                  {item.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => deleteItem(item.id)}
+                  className="p-2 rounded-lg text-red-400 hover:bg-red-100 transition-colors shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 // ─────────────────────────────────────────────────────────────
 
 // ── TickerManager ──────────────────────────────────────────────
@@ -353,6 +474,8 @@ export default function ManageAds() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [showMemorial, setShowMemorial] = useState(true);
+  const [synagogueName, setSynagogueName] = useState("");
+  const [synagogueNameSaving, setSynagogueNameSaving] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [showFinance, setShowFinance] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
@@ -370,6 +493,7 @@ export default function ManageAds() {
           "show_finance_on_display",
           "display_background_url",
           "show_heichal_on_display",
+          "synagogue_name",
         ]);
       if (data) {
         for (const setting of data) {
@@ -377,6 +501,7 @@ export default function ManageAds() {
           if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
           if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
           if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+          if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
         }
       }
     };
@@ -390,6 +515,13 @@ export default function ManageAds() {
     } else {
       await supabase.from("app_settings").insert({ key, value });
     }
+  };
+
+  const saveSynagogueName = async (name: string) => {
+    setSynagogueNameSaving(true);
+    await upsertSetting("synagogue_name", name);
+    setSynagogueNameSaving(false);
+    toast.success("שם בית הכנסת עודכן");
   };
 
   const toggleMemorial = async (checked: boolean) => {
@@ -586,6 +718,36 @@ export default function ManageAds() {
         </h1>
         <p className="text-muted-foreground text-sm">נהל מודעות מתוזמנות, טיקר ותצוגות מסך</p>
       </div>
+
+      {/* שם בית כנסת */}
+      <Card className="border-amber-200 bg-amber-50/50">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-xl">🕍</span>
+            <div>
+              <p className="font-semibold text-sm">שם בית הכנסת</p>
+              <p className="text-xs text-muted-foreground">יוצג בפינה הימנית העליונה של המסך</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={synagogueName}
+              onChange={(e) => setSynagogueName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveSynagogueName(synagogueName)}
+              placeholder="לדוגמה: בית כנסת אור החיים"
+              className="flex-1 min-h-[48px] text-right"
+              dir="rtl"
+            />
+            <Button
+              onClick={() => saveSynagogueName(synagogueName)}
+              disabled={synagogueNameSaving}
+              className="min-h-[48px] shrink-0"
+            >
+              {synagogueNameSaving ? "שומר..." : "שמור"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <MemorialManager
         showMemorial={showMemorial}
