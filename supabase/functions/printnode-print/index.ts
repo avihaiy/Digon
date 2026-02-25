@@ -5,20 +5,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// פונקציית עזר להפוך עברית ולהמיר לקידוד PC862 (הסטנדרט של מדפסות תרמיות)
-function encodeHebrewPC862(text: string): Uint8Array {
-  // היפוך הטקסט (כדי שיודפס מימין לשמאל)
+// פונקציה להמרת טקסט יוניקוד לעברית PC862 והיפוך סדר התווים (RTL)
+function encodeForGiant100(text: string): Uint8Array {
+  // 1. הפיכת הטקסט (כדי שיודפס מימין לשמאל)
   const reversed = text.split("").reverse().join("");
   const bytes = new Uint8Array(reversed.length);
 
   for (let i = 0; i < reversed.length; i++) {
     const charCode = reversed.charCodeAt(i);
-    // טווח האותיות בעברית ביוניקוד הוא 0x05D0 עד 0x05EA
-    // בטבלת PC862 הן מתחילות מ-0x80
+    // אותיות עברית ביוניקוד (0x05D0-0x05EA) עוברות ל-0x80-0x9A ב-PC862
     if (charCode >= 0x05d0 && charCode <= 0x05ea) {
       bytes[i] = charCode - 0x05d0 + 0x80;
     } else {
-      bytes[i] = charCode; // מספרים ותווים רגילים
+      bytes[i] = charCode; // מספרים וסימנים נשארים כפי שהם
     }
   }
   return bytes;
@@ -31,24 +30,24 @@ serve(async (req) => {
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
-    // 1. אתחול המדפסת
-    const init = [0x1b, 0x40];
+    // --- פקודות ESC/POS ספציפיות ל-GIANT-100 ---
+    const init = [0x1b, 0x40]; // אתחול
 
-    // 2. פקודה לבחירת טבלת תווים עברית (PC862)
-    // ברוב מדפסות Epson/Star זה 0x1B, 0x74, 0x0F (או 15 בעשרוני)
-    const selectHebrew = [0x1b, 0x74, 0x0f];
+    // בחירת טבלת תווים עברית. ב-Giant-100 זה לרוב 10 (0x0A)
+    // אם לא עובד, נסה להחליף את 0x0a ב-0x16 (22)
+    const selectHebrewTable = [0x1b, 0x74, 0x0a];
 
-    // 3. כתיבת הטקסט
-    const myText = "בדיקת הדפסה בעברית 123";
-    const encodedText = encodeHebrewPC862(myText);
+    const textToPrint = "בדיקת הדפסה בעברית - GIANT 100";
+    const encodedText = encodeForGiant100(textToPrint);
 
-    // 4. פקודת חיתוך ורווח בסוף
-    const cut = [0x0a, 0x0a, 0x1d, 0x56, 0x00];
+    const lineFeed = [0x0a, 0x0a]; // שתי שורות רווח
+    const cut = [0x1d, 0x56, 0x41, 0x03]; // פקודת חיתוך נייר מלאה
 
-    const finalData = new Uint8Array([...init, ...selectHebrew, ...encodedText, ...cut]);
-    const base64Data = btoa(String.fromCharCode(...finalData));
+    const finalBuffer = new Uint8Array([...init, ...selectHebrewTable, ...encodedText, ...lineFeed, ...cut]);
 
-    const printResponse = await fetch("https://api.printnode.com/printjobs", {
+    const base64Data = btoa(String.fromCharCode(...finalBuffer));
+
+    await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
         Authorization: `Basic ${btoa(apiKey + ":")}`,
@@ -56,14 +55,14 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         printerId: parseInt(printerId!),
-        title: "Hebrew Print Test",
+        title: "Giant-100 Hebrew Test",
         contentType: "raw_base64",
         content: base64Data,
       }),
     });
 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
-  } catch (err) {
+  } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
   }
 });
