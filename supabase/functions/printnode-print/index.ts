@@ -5,26 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-/**
- * המרה לקידוד Windows-1255 (הקידוד שמופיע ב-Self Test שלך)
- */
-function encodeHebrewWPC1255(text: string): Uint8Array {
-  // היפוך טקסט חובה כי המדפסת מדפיסה משמאל לימין
-  const reversed = text.split("").reverse().join("");
-  const bytes = new Uint8Array(reversed.length);
-
-  for (let i = 0; i < reversed.length; i++) {
-    const charCode = reversed.charCodeAt(i);
-    // אותיות עברית ב-Windows 1255 הן בטווח 0xE0-0xFA
-    if (charCode >= 0x05d0 && charCode <= 0x05ea) {
-      bytes[i] = charCode - 0x05d0 + 0xe0;
-    } else {
-      bytes[i] = charCode;
-    }
-  }
-  return bytes;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -32,20 +12,25 @@ serve(async (req) => {
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
-    // פקודות בסיסיות ביותר
-    const ESC = 0x1b;
-    const GS = 0x1d;
+    if (!apiKey || !printerId) throw new Error("Missing PrintNode Config");
 
-    // רצף מינימליסטי: איפוס + הטקסט + ירידת שורה + חיתוך
-    const init = [ESC, 0x40];
-    const textBytes = encodeHebrewWPC1255("בדיקה מוצלחת בעברית");
-    const lineFeed = [0x0a, 0x0a, 0x0a];
-    const cut = [GS, 0x56, 0x00]; // פקודת חיתוך בסיסית
+    // אנחנו יוצרים תוכן HTML פשוט שיהפוך ל-PDF
+    // בצורה הזו העברית תמיד תצא ישר (RTL) ובגופן יפה
+    const htmlContent = `
+      <div style="width: 280px; font-family: Arial; text-align: right; direction: rtl;">
+        <h1 style="font-size: 20px; text-align: center;">בדיקת הדפסה</h1>
+        <p style="font-size: 16px;">שלום, זו בדיקה בעברית למדפסת Giant-100</p>
+        <hr>
+        <p>תאריך: ${new Date().toLocaleDateString("he-IL")}</p>
+        <p style="text-align: center; font-weight: bold;">תודה רבה!</p>
+      </div>
+    `;
 
-    const finalData = new Uint8Array([...init, ...textBytes, ...lineFeed, ...cut]);
+    // שלב 1: הופכים את ה-HTML ל-Base64
+    const base64Html = btoa(unescape(encodeURIComponent(htmlContent)));
 
-    const base64Data = btoa(String.fromCharCode(...finalData));
-
+    // שלב 2: שולחים ל-PrintNode כ-PDF_BASE64
+    // הערה: בשיטה זו PrintNode Desktop ירנדר את ה-HTML ל-PDF וידפיס
     const printResponse = await fetch("https://api.printnode.com/printjobs", {
       method: "POST",
       headers: {
@@ -53,15 +38,22 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        printerId: parseInt(printerId!),
-        title: "Hebrew Fix",
-        contentType: "raw_base64",
-        content: base64Data,
+        printerId: parseInt(printerId),
+        title: "Hebrew PDF Print",
+        contentType: "pdf_base64", // שינוי קריטי ל-PDF
+        content: base64Html, // כאן אתה יכול לשלוח גם URL של PDF מוכן
+        source: "Deno Cloud",
       }),
     });
 
-    return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+    const resData = await printResponse.json();
+    return new Response(JSON.stringify(resData), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
