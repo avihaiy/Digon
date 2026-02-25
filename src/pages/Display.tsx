@@ -18,6 +18,7 @@ import ZmanimDisplaySlide from "@/components/display/ZmanimDisplaySlide";
 import HeichalDisplaySlide from "@/components/display/HeichalDisplaySlide";
 import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
+import TickerBanner from "@/components/display/TickerBanner";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
@@ -952,6 +953,9 @@ export default function Display() {
           </AnimatePresence>
         </div>
       </main>
+
+      {/* TICKER */}
+      <TickerBanner />
 
       {/* CREDIT */}
       <div
