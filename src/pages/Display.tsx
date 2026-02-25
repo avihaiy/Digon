@@ -179,6 +179,7 @@ export default function Display() {
   const [pinError, setPinError] = useState(false);
   const [unlockCode, setUnlockCode] = useState("1234");
   const [memorialPeople, setMemorialPeople] = useState<MemorialPerson[]>([]);
+  const [synagogueName, setSynagogueName] = useState<string>("");
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
   const [showWeekBefore, setShowWeekBefore] = useState(false);
@@ -243,6 +244,7 @@ export default function Display() {
           "show_heichal_on_display",
           "display_slide_order",
           "display_slide_durations",
+          "synagogue_name",
         ]);
       if (data) {
         for (const setting of data) {
@@ -748,6 +750,20 @@ export default function Display() {
         <div className="relative flex items-center justify-between px-[3vw] py-[1.5vh]" dir="rtl">
           {/* תאריך — ימין */}
           <div className="text-right">
+            {synagogueName && (
+              <div
+                style={{
+                  fontSize: "clamp(11px, 1.6vh, 18px)",
+                  color: "rgba(255,220,100,0.85)",
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  marginBottom: "2px",
+                  textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+                }}
+              >
+                🕍 {synagogueName}
+              </div>
+            )}
             <div
               className="font-bold text-white"
               style={{
