@@ -5,19 +5,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// פונקציית המרה לעברית Windows-1255 (הסטנדרט של Sam4s Giant-100 בישראל)
-function encodeHebrewWindows1255(text: string): Uint8Array {
-  // 1. הפיכת הטקסט (RTL)
+/**
+ * המרה לעברית Windows-1255 (הקידוד שמופיע ב-Self Test שלך)
+ */
+function encodeHebrewWPC1255(text: string): Uint8Array {
+  // היפוך טקסט עבור RTL
   const reversed = text.split("").reverse().join("");
   const bytes = new Uint8Array(reversed.length);
 
   for (let i = 0; i < reversed.length; i++) {
     const charCode = reversed.charCodeAt(i);
-    // אותיות עברית ביוניקוד (0x05D0-0x05EA) עוברות ל-0xE0-0xFA ב-Windows-1255
+    // ב-WPC1255 אותיות עברית מתחילות ב-0xE0
     if (charCode >= 0x05d0 && charCode <= 0x05ea) {
       bytes[i] = charCode - 0x05d0 + 0xe0;
     } else {
-      bytes[i] = charCode;
+      bytes[i] = charCode; // מספרים וסימנים
     }
   }
   return bytes;
@@ -33,30 +35,28 @@ serve(async (req) => {
     const ESC = 0x1b;
     const GS = 0x1d;
 
-    // --- רצף פקודות "ברזל" למדפסת Giant-100 ---
-    const init = [ESC, 0x40]; // איפוס
-    const setIsrael = [ESC, 0x52, 0x0d]; // בחירת ערכת תווים ישראל
+    // פקודות אתחול
+    const init = [ESC, 0x40];
 
-    // ניסיון להגדיר טבלה 33 (0x21) - זו הטבלה של עברית Windows ב-Giant 100
-    const selectHebrewTable = [ESC, 0x74, 0x21];
+    // למרות שכתוב ב-Self Test שהיא כבר ב-WPC1255,
+    // אנחנו שולחים פקודה ליתר ביטחון (ב-Sam4s זה בד"כ 0x21 עבור 1255)
+    const selectCP1255 = [ESC, 0x74, 0x21];
 
-    const textStr = "בדיקת הדפסה בעברית";
-    const encodedText = encodeHebrewWindows1255(textStr);
+    const textToPrint = "בדיקת הדפסה בעברית - GIANT 100";
+    const encodedText = encodeHebrewWPC1255(textToPrint);
 
     const commands = new Uint8Array([
       ...init,
-      ...setIsrael,
-      ...selectHebrewTable,
+      ...selectCP1255,
       0x0a, // שורה חדשה
       ...encodedText,
       0x0a,
       0x0a,
-      0x0a,
-      0x0a, // רווח לסיום
+      0x0a, // רווח לפני חיתוך
       GS,
       0x56,
       0x41,
-      0x03, // חיתוך נייר
+      0x03, // חיתוך נייר (מתאים ל-Giant 100)
     ]);
 
     const base64Data = btoa(String.fromCharCode(...commands));
@@ -69,7 +69,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         printerId: parseInt(printerId!),
-        title: "Final Hebrew Test",
+        title: "Hebrew Test WPC1255",
         contentType: "raw_base64",
         content: base64Data,
       }),
