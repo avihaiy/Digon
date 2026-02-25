@@ -814,6 +814,24 @@ export default function Display() {
             </div>
           </div>
         </div>
+        {synagogueName && (
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: "clamp(12px, 1.8vh, 22px)",
+              color: "rgba(255,220,100,0.9)",
+              fontWeight: 700,
+              letterSpacing: "0.05em",
+              textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+              paddingBottom: "clamp(2px, 0.4vh, 6px)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            🕍 {synagogueName}
+          </div>
+        )}
         <div className="relative flex flex-wrap items-center justify-center gap-x-[2vw] gap-y-[0.5vh] px-[2vw] pb-[1.2vh]">
           {[
             { icon: mashivHaruach.isGeshem ? "🌧️" : "💧", text: mashivHaruach.text },
