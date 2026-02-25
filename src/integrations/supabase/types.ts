@@ -808,6 +808,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ticker_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          order_index: number | null
+          text: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_index?: number | null
+          text: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_index?: number | null
+          text?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
