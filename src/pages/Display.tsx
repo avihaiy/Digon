@@ -752,20 +752,6 @@ export default function Display() {
         <div className="relative flex items-center justify-between px-[3vw] py-[1.5vh]" dir="rtl">
           {/* תאריך — ימין */}
           <div className="text-right">
-            {synagogueName && (
-              <div
-                style={{
-                  fontSize: "clamp(11px, 1.6vh, 18px)",
-                  color: "rgba(255,220,100,0.85)",
-                  fontWeight: 600,
-                  letterSpacing: "0.04em",
-                  marginBottom: "2px",
-                  textShadow: "0 1px 6px rgba(0,0,0,0.7)",
-                }}
-              >
-                🕍 {synagogueName}
-              </div>
-            )}
             <div
               className="font-bold text-white"
               style={{
