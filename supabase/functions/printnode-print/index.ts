@@ -5,46 +5,24 @@ import fontkit from "https://esm.sh/@pdf-lib/fontkit@1.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-/* ── helpers ─────────────────────────────────────── */
-
-/** 
- * Prepare a line for RTL PDF rendering.
- * PDF renderers don't support BiDi — we must manually reorder:
- * 1. Split text into segments (Hebrew vs non-Hebrew)
- * 2. Reverse Hebrew character runs so they display correctly
- * 3. Reverse the segment order so RTL text flows right-to-left
- * Numbers/dates stay in their original LTR order.
+/** * פונקציה מתוקנת להיפוך עברית (Visual RTL)
+ * הופכת רק את האותיות בתוך מילים עבריות ושומרת על סדר המשפט
  */
 function prepareRtlLine(text: string): string {
-  // Split into segments: Hebrew runs vs everything else (digits, punctuation, spaces, latin)
-  const segments = text.match(/([\u0590-\u05FF\uFB1D-\uFB4F]+|[^\u0590-\u05FF\uFB1D-\uFB4F]+)/g) || [text];
-  
-  // Reverse each Hebrew segment's characters, leave others as-is
-  const processed = segments.map(seg => {
-    if (/[\u0590-\u05FF\uFB1D-\uFB4F]/.test(seg)) {
-      return [...seg].reverse().join("");
-    }
-    return seg; // numbers, spaces, punctuation stay LTR
-  });
-  
-  // Reverse segment order for RTL line direction
-  return processed.reverse().join("");
+  if (!text) return "";
+  // הופך את כל המחרוזת ואז מחזיר מספרים/אנגלית למצבם המקורי
+  const reversed = [...text].reverse().join("");
+  return reversed.replace(/([a-zA-Z0-9:/.,₪+]+)/g, (match) => [...match].reverse().join(""));
 }
-/* ── main ────────────────────────────────────────── */
 
 serve(async (req) => {
-  if (req.method === "OPTIONS")
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const body = await req.json();
-
-    // Support both formats: { receipt: {...} } from remote-print.ts
-    // and legacy { orderItems, totalAmount, orderNumber }
     const receipt = body.receipt ?? null;
 
     const receiptNumber = receipt?.receipt_number ?? body.orderNumber ?? "---";
@@ -55,7 +33,6 @@ serve(async (req) => {
     const gregDate = receipt?.greg_date ?? "";
     const hebrewDate = receipt?.hebrew_date ?? "";
 
-    /* ── Load Hebrew font from Storage ─────────── */
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -65,23 +42,19 @@ serve(async (req) => {
       const { data: fontData, error: fontError } = await supabase.storage
         .from("expense-receipts")
         .download("fonts/Alef-Regular.ttf");
-
-      if (fontError || !fontData) {
-        throw new Error(fontError?.message || "Font not found");
-      }
+      if (fontError || !fontData) throw new Error("Font not found");
       fontBytes = new Uint8Array(await fontData.arrayBuffer());
     } catch (fontErr) {
-      console.warn("Could not load Alef font, falling back to Helvetica:", fontErr);
       fontBytes = null as any;
     }
 
-    /* ── Build PDF ─────────────────────────────── */
+    /* ── בניית PDF עם גובה מותאם ── */
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
 
-    // 80mm × 120mm in points (1mm ≈ 2.835pt)
+    // הגדלת גובה הדף ל-200 מ"מ כדי למנוע חיתוך
     const pageWidth = 226.8; // 80mm
-    const pageHeight = 340.2; // 120mm
+    const pageHeight = 567.0; // 200mm (המדפסת תעצור כשייגמר התוכן)
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
     let font;
@@ -91,15 +64,12 @@ serve(async (req) => {
       font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     }
 
-    const black = rgb(0, 0, 0);
-    const gray = rgb(0.4, 0.4, 0.4);
-
-    const margin = 10;
-    const drawRtl = (text: string, y: number, size: number, color = black) => {
+    const margin = 15;
+    const drawRtl = (text: string, y: number, size: number, color = rgb(0, 0, 0)) => {
       const prepared = prepareRtlLine(text);
       const w = font.widthOfTextAtSize(prepared, size);
       page.drawText(prepared, {
-        x: pageWidth - margin - w,
+        x: pageWidth - margin - w, // יישור לימין
         y,
         size,
         font,
@@ -107,74 +77,50 @@ serve(async (req) => {
       });
     };
 
-    const drawLine = (y: number) => {
-      page.drawLine({
-        start: { x: 10, y },
-        end: { x: pageWidth - 10, y },
-        thickness: 0.5,
-        color: gray,
-      });
-    };
+    let y = pageHeight - 30;
 
-    /* ── Layout ────────────────────────────────── */
-    let y = pageHeight - 25;
+    // Header - בית כנסת
+    drawRtl("בית כנסת - ברית שלום עכו", y, 12);
+    y -= 15;
+    drawRtl("רח' קדושי קהיר 18, עכו", y, 9, rgb(0.4, 0.4, 0.4));
+    y -= 20;
 
-    // Header
-    drawRtl("בית כנסת - ברית שלום עכו", y, 10);
-    y -= 13;
-    drawRtl("רח' קדושי קהיר 18, עכו", y, 7, gray);
-    y -= 16;
-    drawLine(y);
-    y -= 14;
+    page.drawLine({ start: { x: 10, y }, end: { x: pageWidth - 10, y }, thickness: 0.5 });
+    y -= 20;
 
-    // Receipt number
     drawRtl(`קבלה מס' ${receiptNumber}`, y, 11);
-    y -= 16;
-
-    // Dates
-    if (gregDate) {
-      drawRtl(gregDate, y, 8, gray);
-      y -= 11;
-    }
-    if (hebrewDate) {
-      drawRtl(hebrewDate, y, 8, gray);
-      y -= 11;
-    }
-    y -= 4;
-    drawLine(y);
-    y -= 14;
-
-    // Member
-    drawRtl(`התקבל מאת: ${memberName}`, y, 9);
-    y -= 14;
-
-    // Description
-    drawRtl(`עבור: ${description}`, y, 9);
-    y -= 14;
-
-    // Payment method
-    drawRtl(`אמצעי תשלום: ${paymentMethod}`, y, 9);
-    y -= 16;
-    drawLine(y);
     y -= 18;
 
-    // Total — big and bold-ish
-    drawRtl(`סה"כ: ${totalAmount} ₪`, y, 14);
-    y -= 20;
-    drawLine(y);
-    y -= 14;
+    if (gregDate) {
+      drawRtl(gregDate, y, 9, rgb(0.3, 0.3, 0.3));
+      y -= 12;
+    }
+    if (hebrewDate) {
+      drawRtl(hebrewDate, y, 9, rgb(0.3, 0.3, 0.3));
+      y -= 12;
+    }
 
-    // Footer
-    drawRtl("תודה רבה!", y, 9, gray);
+    y -= 15;
+    drawRtl(`התקבל מאת: ${memberName}`, y, 10);
+    y -= 18;
+    drawRtl(`עבור: ${description}`, y, 10);
+    y -= 18;
+    drawRtl(`אמצעי תשלום: ${paymentMethod}`, y, 10);
 
-    /* ── Serialize & send to PrintNode ────────── */
+    y -= 25;
+    page.drawLine({ start: { x: 10, y }, end: { x: pageWidth - 10, y }, thickness: 1 });
+    y -= 25;
+
+    drawRtl(`סה"כ: ${totalAmount} ₪`, y, 16);
+    y -= 30;
+    drawRtl("תודה רבה!", y, 10, rgb(0.4, 0.4, 0.4));
+
+    /* ── שליחה ל-PrintNode ── */
     const pdfBytes = await pdfDoc.save();
-    // Chunk the conversion to avoid max call stack size errors
     let binary = "";
     const chunkSize = 8192;
     for (let i = 0; i < pdfBytes.length; i += chunkSize) {
-      const chunk = pdfBytes.subarray(i, i + chunkSize);
-      binary += String.fromCharCode(...chunk);
+      binary += String.fromCharCode(...pdfBytes.subarray(i, i + chunkSize));
     }
     const base64Pdf = btoa(binary);
 
@@ -192,29 +138,17 @@ serve(async (req) => {
         title: `receipt_${receiptNumber}`,
         contentType: "pdf_base64",
         content: base64Pdf,
-        options: {
-          paper: "Custom.80x120mm",
-        },
       }),
     });
 
     const result = await pnResponse.json();
-    console.log("PrintNode response:", JSON.stringify(result));
-
-    return new Response(
-      JSON.stringify({ success: true, printJobId: result }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ success: true, result }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err: any) {
-    console.error("printnode-print error:", err);
-    return new Response(
-      JSON.stringify({ success: false, error: err.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ success: false, error: err.message }), {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
 });
