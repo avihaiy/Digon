@@ -45,6 +45,13 @@ interface MemorialPerson {
   days_until: number;
 }
 
+interface TickerItem {
+  id: string;
+  text: string;
+  is_active: boolean;
+  order_index: number;
+}
+
 const HEBREW_MONTH_NAMES: Record<number, string> = {
   1: "ניסן",
   2: "אייר",
@@ -154,18 +161,15 @@ function getTodayHolidayHebrew(): string | null {
   return null;
 }
 
-// האם מודעה היא מסוג זמני תפילה (חול או שבת)
 function isPrayerTimesAnnouncement(title: string): boolean {
   return title === "זמני תפילה" || title === "זמני תפילה שבת";
 }
 
-// האם להציג מצב שבת ב-PrayerTimesSlide
-// "זמני תפילה שבת" — תמיד שבת
-// "זמני תפילה" — רק בשישי/שבת
 function getPrayerIsShabbat(title: string, dayType: DayType): boolean {
   if (title === "זמני תפילה שבת") return true;
   return dayType === "shabbat" || dayType === "friday";
 }
+
 export default function Display() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [announcements, setAnnouncements] = useState<ScheduledAnnouncement[]>([]);
@@ -180,6 +184,8 @@ export default function Display() {
   const [unlockCode, setUnlockCode] = useState("1234");
   const [memorialPeople, setMemorialPeople] = useState<MemorialPerson[]>([]);
   const [synagogueName, setSynagogueName] = useState<string>("");
+  const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
+  const [tickerSpeed, setTickerSpeed] = useState("medium");
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
   const [showWeekBefore, setShowWeekBefore] = useState(false);
@@ -202,7 +208,17 @@ export default function Display() {
   const containerRef = useRef<HTMLDivElement>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
-  // Wake Lock — מונע כיבוי מסך כשנעול
+  // פונקציה לטעינת טיקר
+  const fetchTicker = useCallback(async () => {
+    const [{ data: td }, { data: sd }] = await Promise.all([
+      supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
+      supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
+    ]);
+    if (td) setTickerItems(td);
+    if (sd?.value) setTickerSpeed(sd.value);
+  }, []);
+
+  // Wake Lock
   useEffect(() => {
     const requestWakeLock = async () => {
       if (isLocked && "wakeLock" in navigator) {
@@ -221,15 +237,16 @@ export default function Display() {
       }
     };
     requestWakeLock();
-    // רכש מחדש אחרי visibility change
     const handleVisibility = () => {
       if (document.visibilityState === "visible" && isLocked) requestWakeLock();
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [isLocked]);
+
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Settings + ticker setup
   useEffect(() => {
     const fetchSettings = async () => {
       const { data } = await supabase
@@ -245,6 +262,7 @@ export default function Display() {
           "display_slide_order",
           "display_slide_durations",
           "synagogue_name",
+          "ticker_speed",
         ]);
       if (data) {
         for (const setting of data) {
@@ -255,6 +273,7 @@ export default function Display() {
           if (setting.key === "display_background_url" && setting.value) setDisplayBgUrl(setting.value);
           if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
+          if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
           if (setting.key === "display_slide_durations" && setting.value) {
             try {
               setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
@@ -264,15 +283,21 @@ export default function Display() {
             try {
               const parsed = JSON.parse(setting.value);
               const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
-              // הוסף סליידים חדשים שלא היו ב-DB
               const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
               setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
             } catch {}
           }
         }
       }
+      // טען טיקר
+      await fetchTicker();
     };
+
     fetchSettings();
+
+    // polling טיקר כל 15 שניות
+    const tickerPollInterval = setInterval(fetchTicker, 15000);
+
     const channel = supabase
       .channel("display-settings")
       .on(
@@ -286,13 +311,19 @@ export default function Display() {
           if (payload.new?.key === "display_background_url") setDisplayBgUrl(payload.new.value || null);
           if (payload.new?.key === "show_heichal_on_display") setShowHeichal(payload.new.value === "true");
           if (payload.new?.key === "synagogue_name") setSynagogueName(payload.new.value || "");
+          if (payload.new?.key === "ticker_speed") setTickerSpeed(payload.new.value || "medium");
         },
       )
+      .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => {
+        fetchTicker();
+      })
       .subscribe();
+
     return () => {
+      clearInterval(tickerPollInterval);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchTicker]);
 
   useEffect(() => {
     const fetchYahrzeits = async () => {
@@ -409,7 +440,6 @@ export default function Display() {
         e.stopPropagation();
       };
       const preventTouch = (e: TouchEvent) => {
-        // חסום הכל כשנעול
         e.preventDefault();
         e.stopPropagation();
       };
@@ -451,7 +481,7 @@ export default function Display() {
     return () => clearInterval(timer);
   }, []);
 
-  // רענון נתונים כל 3 דקות — בלי reload, שומר מסך מלא ונעילה
+  // רענון נתונים כל 3 דקות
   useEffect(() => {
     const pollInterval = setInterval(
       async () => {
@@ -480,7 +510,6 @@ export default function Display() {
               try {
                 const parsed = JSON.parse(setting.value);
                 const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
-                // הוסף סליידים חדשים שלא היו ב-DB
                 const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
                 setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
               } catch {}
@@ -530,7 +559,6 @@ export default function Display() {
     };
   }, []);
 
-  // מחושב כל דקה — לא תלוי ב-currentTime (שמשתנה כל שניה)
   const [timeKey, setTimeKey] = useState(() => Math.floor(Date.now() / 60000));
   useEffect(() => {
     const t = setInterval(() => setTimeKey(Math.floor(Date.now() / 60000)), 30000);
@@ -541,7 +569,6 @@ export default function Display() {
     return announcements.filter((a) => a.day_types.includes(dayType) && isTimeInRange(a.start_time, a.end_time));
   }, [announcements, dayType, timeKey]);
 
-  // בניית רשימת סליידים מסודרת לפי slideOrder
   type Slide =
     | { type: "heichal" }
     | { type: "memorial" }
@@ -948,7 +975,6 @@ export default function Display() {
                   transition={{ duration: 0.8, ease: "easeInOut" }}
                   className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
                 >
-                  {/* רקע קלף לתוכן הודעה */}
                   <div
                     className="rounded-3xl px-[5vw] py-[4vh] shadow-2xl"
                     style={{
@@ -978,8 +1004,8 @@ export default function Display() {
         </div>
       </main>
 
-      {/* TICKER */}
-      <TickerBanner />
+      {/* TICKER — מקבל נתונים מ-Display */}
+      <TickerBanner items={tickerItems} speed={tickerSpeed} />
 
       {/* CREDIT */}
       <div
