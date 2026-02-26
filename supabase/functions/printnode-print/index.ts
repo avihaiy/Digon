@@ -16,9 +16,9 @@ serve(async (req) => {
     const htmlContent = `
       <div style="width: 260px; font-family: Arial; direction: rtl; text-align: right;">
         <h2 style="text-align: center;">הזמנה #${orderNumber || "1034"}</h2>
-        <p>בדיקה: עברית בפורמט PDF</p>
+        <p style="text-align: center;">הדפסה במנוע Engine 6</p>
         <hr>
-        <div style="font-weight: bold;">סה"כ: ${totalAmount || 0} ₪</div>
+        <div style="font-size: 16px; font-weight: bold;">סה"כ: ${totalAmount || 0} ₪</div>
       </div>
     `;
 
@@ -33,8 +33,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         printerId: parseInt(printerId!),
-        title: `FORCE_PDF_V3_#${orderNumber || "1034"}`,
-        contentType: "pdf_base64", // כאן השינוי שימנע ג'יבריש
+        title: `VERSION_ENGINE_6_#${orderNumber || "1034"}`,
+        contentType: "pdf_base64", // זה השינוי שיעבוד עם ה-Engine החדש שבחרת
         content: base64Html,
       }),
     });
