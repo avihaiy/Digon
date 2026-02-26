@@ -30,6 +30,9 @@ export default function TickerBanner() {
   useEffect(() => {
     fetchAll();
 
+    // polling כל 10 שניות כגיבוי
+    const interval = setInterval(fetchAll, 10000);
+
     const channel = supabase
       .channel("ticker-display-" + Date.now())
       .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => fetchAll())
@@ -37,6 +40,7 @@ export default function TickerBanner() {
       .subscribe();
 
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, [fetchAll]);
