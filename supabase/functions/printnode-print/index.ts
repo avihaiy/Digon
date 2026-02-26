@@ -9,33 +9,16 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { orderItems, totalAmount, orderNumber, customerName } = await req.json();
+    const { orderItems, totalAmount, orderNumber } = await req.json();
     const apiKey = Deno.env.get("PRINTNODE_API_KEY");
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID");
 
-    if (!apiKey || !printerId) throw new Error("Missing PrintNode Config");
-
-    // יצירת תוכן גרפי ב-PDF למניעת ג'יבריש
     const htmlContent = `
       <div style="width: 260px; font-family: Arial; direction: rtl; text-align: right;">
-        <h2 style="text-align: center; border-bottom: 2px solid #000;">הזמנה #${orderNumber || "1034"}</h2>
-        <p>לקוח: ${customerName || "אורח"}</p>
+        <h2 style="text-align: center;">הזמנה #${orderNumber || "1034"}</h2>
+        <p>בדיקה: עברית בפורמט PDF</p>
         <hr>
-        ${
-          orderItems
-            ?.map(
-              (item: any) => `
-          <div style="display: flex; justify-content: space-between;">
-            <span>${item.name}</span>
-            <span>${item.price} ₪</span>
-          </div>
-        `,
-            )
-            .join("") || "אין פריטים"
-        }
-        <div style="margin-top: 10px; font-weight: bold; font-size: 16px;">
-          סה"כ: ${totalAmount || 0} ₪
-        </div>
+        <div style="font-weight: bold;">סה"כ: ${totalAmount || 0} ₪</div>
       </div>
     `;
 
@@ -49,9 +32,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        printerId: parseInt(printerId),
-        title: `FORCE_REFRESH_PDF_#${orderNumber || "1034"}`, // שנה את זה כדי לוודא רענון
-        contentType: "pdf_base64", // חובה כדי להפסיק את הג'יבריש
+        printerId: parseInt(printerId!),
+        title: `FORCE_PDF_V3_#${orderNumber || "1034"}`,
+        contentType: "pdf_base64", // כאן השינוי שימנע ג'יבריש
         content: base64Html,
       }),
     });
