@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TickerItem {
@@ -18,26 +18,28 @@ export default function TickerBanner() {
   const [items, setItems] = useState<TickerItem[]>([]);
   const [speed, setSpeed] = useState("medium");
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     const [{ data: tickerData }, { data: speedData }] = await Promise.all([
       supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
       supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
     ]);
     if (tickerData) setItems(tickerData);
     if (speedData?.value) setSpeed(speedData.value);
-  };
+  }, []);
 
   useEffect(() => {
     fetchAll();
+
     const channel = supabase
-      .channel("ticker-display")
-      .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, fetchAll)
-      .on("postgres_changes", { event: "*", schema: "public", table: "app_settings" }, fetchAll)
+      .channel("ticker-display-" + Date.now())
+      .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => fetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "app_settings" }, () => fetchAll())
       .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchAll]);
 
   if (items.length === 0) return null;
 
@@ -72,7 +74,6 @@ export default function TickerBanner() {
           background: "linear-gradient(to left, transparent, #F59E0B 20%, #F59E0B 80%, transparent)",
         }}
       />
-
       {/* תווית */}
       <div
         style={{
@@ -89,7 +90,6 @@ export default function TickerBanner() {
       >
         📢 עדכונים
       </div>
-
       {/* טיקר */}
       <div
         style={{
@@ -108,6 +108,7 @@ export default function TickerBanner() {
           }
         `}</style>
         <div
+          key={text}
           style={{
             display: "flex",
             whiteSpace: "nowrap",
