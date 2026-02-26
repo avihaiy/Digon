@@ -11,29 +11,29 @@ const corsHeaders = {
 
 /* ── helpers ─────────────────────────────────────── */
 
-/** Reverse only Hebrew character runs; leave digits, punctuation, latin as-is */
-function smartRtl(text: string): string {
-  // Match runs of Hebrew characters (including nikud) and reverse them
-  return text.replace(/[\u0590-\u05FF\uFB1D-\uFB4F]+/g, (m) =>
-    [...m].reverse().join("")
-  );
-}
-
-/** Pre-reverse numbers/dates so they appear LTR inside the RTL PDF line */
-function preReverseNumbers(text: string): string {
-  // Reverse digit groups (including dots, slashes, dashes inside them) so they read LTR
-  return text.replace(/[\d/.:-]+/g, (m) => [...m].reverse().join(""));
-}
-
-/** Prepare a line for RTL PDF rendering */
+/** 
+ * Prepare a line for RTL PDF rendering.
+ * PDF renderers don't support BiDi — we must manually reorder:
+ * 1. Split text into segments (Hebrew vs non-Hebrew)
+ * 2. Reverse Hebrew character runs so they display correctly
+ * 3. Reverse the segment order so RTL text flows right-to-left
+ * Numbers/dates stay in their original LTR order.
+ */
 function prepareRtlLine(text: string): string {
-  // 1. reverse numbers so they stay LTR after the whole-line reversal
-  let t = preReverseNumbers(text);
-  // 2. reverse the entire line (right-to-left display)
-  t = [...t].reverse().join("");
-  return t;
+  // Split into segments: Hebrew runs vs everything else (digits, punctuation, spaces, latin)
+  const segments = text.match(/([\u0590-\u05FF\uFB1D-\uFB4F]+|[^\u0590-\u05FF\uFB1D-\uFB4F]+)/g) || [text];
+  
+  // Reverse each Hebrew segment's characters, leave others as-is
+  const processed = segments.map(seg => {
+    if (/[\u0590-\u05FF\uFB1D-\uFB4F]/.test(seg)) {
+      return [...seg].reverse().join("");
+    }
+    return seg; // numbers, spaces, punctuation stay LTR
+  });
+  
+  // Reverse segment order for RTL line direction
+  return processed.reverse().join("");
 }
-
 /* ── main ────────────────────────────────────────── */
 
 serve(async (req) => {
