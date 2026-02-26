@@ -1,6 +1,3 @@
-import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-
 interface TickerItem {
   id: string;
   text: string;
@@ -14,37 +11,12 @@ const SPEED_MAP: Record<string, number> = {
   fast: 18,
 };
 
-export default function TickerBanner() {
-  const [items, setItems] = useState<TickerItem[]>([]);
-  const [speed, setSpeed] = useState("medium");
+interface Props {
+  items: TickerItem[];
+  speed: string;
+}
 
-  const fetchAll = useCallback(async () => {
-    const [{ data: tickerData }, { data: speedData }] = await Promise.all([
-      supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
-      supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
-    ]);
-    if (tickerData) setItems(tickerData);
-    if (speedData?.value) setSpeed(speedData.value);
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-
-    // polling כל 10 שניות כגיבוי
-    const interval = setInterval(fetchAll, 10000);
-
-    const channel = supabase
-      .channel("ticker-display-" + Date.now())
-      .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => fetchAll())
-      .on("postgres_changes", { event: "*", schema: "public", table: "app_settings" }, () => fetchAll())
-      .subscribe();
-
-    return () => {
-      clearInterval(interval);
-      supabase.removeChannel(channel);
-    };
-  }, [fetchAll]);
-
+export default function TickerBanner({ items, speed }: Props) {
   if (items.length === 0) return null;
 
   const animDuration = SPEED_MAP[speed] ?? 35;
