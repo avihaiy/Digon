@@ -120,24 +120,24 @@ serve(async (req) => {
     let y = pageHeight - 25;
 
     // Header
-    drawCenter("בית כנסת - ברית שלום עכו", y, 10);
+    drawRtl("בית כנסת - ברית שלום עכו", y, 10);
     y -= 13;
-    drawCenter("רח' קדושי קהיר 18, עכו", y, 7, gray);
+    drawRtl("רח' קדושי קהיר 18, עכו", y, 7, gray);
     y -= 16;
     drawLine(y);
     y -= 14;
 
     // Receipt number
-    drawCenter(`קבלה מס' ${receiptNumber}`, y, 11);
+    drawRtl(`קבלה מס' ${receiptNumber}`, y, 11);
     y -= 16;
 
     // Dates
     if (gregDate) {
-      drawCenter(gregDate, y, 8, gray);
+      drawRtl(gregDate, y, 8, gray);
       y -= 11;
     }
     if (hebrewDate) {
-      drawCenter(hebrewDate, y, 8, gray);
+      drawRtl(hebrewDate, y, 8, gray);
       y -= 11;
     }
     y -= 4;
@@ -145,27 +145,27 @@ serve(async (req) => {
     y -= 14;
 
     // Member
-    drawCenter(`התקבל מאת: ${memberName}`, y, 9);
+    drawRtl(`התקבל מאת: ${memberName}`, y, 9);
     y -= 14;
 
     // Description
-    drawCenter(`עבור: ${description}`, y, 9);
+    drawRtl(`עבור: ${description}`, y, 9);
     y -= 14;
 
     // Payment method
-    drawCenter(`אמצעי תשלום: ${paymentMethod}`, y, 9);
+    drawRtl(`אמצעי תשלום: ${paymentMethod}`, y, 9);
     y -= 16;
     drawLine(y);
     y -= 18;
 
     // Total — big and bold-ish
-    drawCenter(`סה"כ: ${totalAmount} ₪`, y, 14);
+    drawRtl(`סה"כ: ${totalAmount} ₪`, y, 14);
     y -= 20;
     drawLine(y);
     y -= 14;
 
     // Footer
-    drawCenter("תודה רבה!", y, 9, gray);
+    drawRtl("תודה רבה!", y, 9, gray);
 
     /* ── Serialize & send to PrintNode ────────── */
     const pdfBytes = await pdfDoc.save();
