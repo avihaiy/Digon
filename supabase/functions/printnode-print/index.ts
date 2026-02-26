@@ -166,7 +166,14 @@ serve(async (req) => {
 
     /* ── Serialize & send to PrintNode ────────── */
     const pdfBytes = await pdfDoc.save();
-    const base64Pdf = btoa(String.fromCharCode(...pdfBytes));
+    // Chunk the conversion to avoid max call stack size errors
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < pdfBytes.length; i += chunkSize) {
+      const chunk = pdfBytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    const base64Pdf = btoa(binary);
 
     const apiKey = Deno.env.get("PRINTNODE_API_KEY")!;
     const printerId = Deno.env.get("PRINTNODE_PRINTER_ID")!;
