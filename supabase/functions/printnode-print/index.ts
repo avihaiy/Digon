@@ -77,6 +77,7 @@ serve(async (req) => {
 
     /* ── Build PDF ─────────────────────────────── */
     const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
 
     // 80mm × 120mm in points (1mm ≈ 2.835pt)
     const pageWidth = 226.8; // 80mm
