@@ -94,11 +94,12 @@ serve(async (req) => {
     const black = rgb(0, 0, 0);
     const gray = rgb(0.4, 0.4, 0.4);
 
-    const drawCenter = (text: string, y: number, size: number, color = black) => {
+    const margin = 10;
+    const drawRtl = (text: string, y: number, size: number, color = black) => {
       const prepared = prepareRtlLine(text);
       const w = font.widthOfTextAtSize(prepared, size);
       page.drawText(prepared, {
-        x: (pageWidth - w) / 2,
+        x: pageWidth - margin - w,
         y,
         size,
         font,
