@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
+import fontkit from "https://esm.sh/@pdf-lib/fontkit@1.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,6 +77,7 @@ serve(async (req) => {
 
     /* ── Build PDF ─────────────────────────────── */
     const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
 
     // 80mm × 120mm in points (1mm ≈ 2.835pt)
     const pageWidth = 226.8; // 80mm
