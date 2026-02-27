@@ -1266,8 +1266,8 @@ export default function ManageAds() {
 
       {/* כפתור הוסף — sticky תחתית */}
       <div className="fixed bottom-0 right-0 left-0 p-3 bg-background/95 backdrop-blur-sm border-t z-40">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
+        <Drawer open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DrawerTrigger asChild>
             <Button
               className="w-full h-14 text-base font-semibold rounded-2xl shadow-lg"
               onClick={() => {
@@ -1278,27 +1278,29 @@ export default function ManageAds() {
               <Plus className="w-5 h-5 ml-2" />
               הוסף מודעה חדשה
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto" dir="rtl">
-            <DialogHeader>
-              <DialogTitle className="text-right text-lg">{editingId ? "עריכת מודעה" : "מודעה חדשה"}</DialogTitle>
-            </DialogHeader>
-            <AnnouncementForm
-              editingId={editingId}
-              formData={formData}
-              setFormData={setFormData}
-              imageFile={imageFile}
-              setImageFile={setImageFile}
-              imagePreview={imagePreview}
-              setImagePreview={setImagePreview}
-              onClose={handleCloseDialog}
-              onSubmit={() => saveMutation.mutate({ ...formData, id: editingId || undefined })}
-              isPending={saveMutation.isPending}
-              isUploading={isUploading}
-              isMobile={true}
-            />
-          </DialogContent>
-        </Dialog>
+          </DrawerTrigger>
+          <DrawerContent className="max-h-[92vh]" dir="rtl">
+            <DrawerHeader className="text-right pb-2">
+              <DrawerTitle className="text-lg">{editingId ? "עריכת מודעה" : "מודעה חדשה"}</DrawerTitle>
+            </DrawerHeader>
+            <div className="overflow-y-auto px-4 pb-6">
+              <AnnouncementForm
+                editingId={editingId}
+                formData={formData}
+                setFormData={setFormData}
+                imageFile={imageFile}
+                setImageFile={setImageFile}
+                imagePreview={imagePreview}
+                setImagePreview={setImagePreview}
+                onClose={handleCloseDialog}
+                onSubmit={() => saveMutation.mutate({ ...formData, id: editingId || undefined })}
+                isPending={saveMutation.isPending}
+                isUploading={isUploading}
+                isMobile={true}
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
       </div>
     </div>
   );
