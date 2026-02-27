@@ -1076,7 +1076,6 @@ export default function ManageAds() {
         icon={<span className="text-xl">🕍</span>}
         subtitle="יוצג בראש מסך התצוגה"
         accentClass="border-amber-200 bg-amber-50/40"
-        defaultOpen
       >
         <div className="flex gap-2 pt-2">
           <Input
@@ -1103,6 +1102,7 @@ export default function ManageAds() {
         onToggleMemorial={toggleMemorial}
         showHeichal={showHeichal}
         onToggleHeichal={toggleHeichal}
+        compact
       />
 
       {/* סדר סליידים */}
@@ -1123,7 +1123,6 @@ export default function ManageAds() {
         icon={<Tv className="w-5 h-5 text-orange-500" />}
         subtitle="עדכונים שוטפים בתחתית המסך"
         accentClass="border-orange-200 bg-orange-50/30"
-        defaultOpen
       >
         <div className="pt-2">
           <TickerManager isMobile={true} />
@@ -1132,13 +1131,13 @@ export default function ManageAds() {
 
       {/* כספים */}
       <Card className="border-blue-200 bg-blue-50/30">
-        <CardContent className="p-4">
+        <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Wallet className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="font-semibold text-base">מצב כספי</p>
-                <p className="text-sm text-muted-foreground">הצג הכנסות ויתרה</p>
+                <p className="font-semibold text-sm">מצב כספי</p>
+                <p className="text-xs text-muted-foreground">הצג הכנסות ויתרה</p>
               </div>
             </div>
             <Switch checked={showFinance} onCheckedChange={toggleFinance} />
@@ -1189,8 +1188,8 @@ export default function ManageAds() {
 
       {/* מודעות */}
       <Card>
-        <CardHeader className="pb-2 pt-4 px-4">
-          <CardTitle className="text-base flex items-center gap-2">
+        <CardHeader className="pb-1 pt-3 px-3">
+          <CardTitle className="text-sm flex items-center gap-2">
             <Megaphone className="w-4 h-4" />
             מודעות ({announcements.length})
           </CardTitle>
@@ -1206,14 +1205,14 @@ export default function ManageAds() {
           ) : (
             <div className="divide-y">
               {announcements.map((a) => (
-                <div key={a.id} className="p-4 space-y-3">
+                <div key={a.id} className="p-3 space-y-2">
                   <div className="flex items-start gap-3">
                     {a.image_url && (
                       <img src={a.image_url} alt="" className="w-12 h-12 object-cover rounded-xl shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-base leading-tight">{a.title}</p>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5">{a.content}</p>
+                      <p className="font-bold text-sm leading-tight">{a.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{a.content}</p>
                     </div>
                     <Switch
                       checked={a.is_active}
@@ -1223,11 +1222,11 @@ export default function ManageAds() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {a.day_types.map((day) => (
-                      <Badge key={day} variant="secondary" className="text-sm px-2 py-0.5">
+                      <Badge key={day} variant="secondary" className="text-xs px-1.5 py-0">
                         {DAY_TYPE_LABELS[day]}
                       </Badge>
                     ))}
-                    <Badge variant="outline" className="text-sm px-2 py-0.5">
+                    <Badge variant="outline" className="text-xs px-1.5 py-0">
                       {a.start_time.slice(0, 5)}–{a.end_time.slice(0, 5)}
                     </Badge>
                     {!a.is_active && (
@@ -1241,7 +1240,7 @@ export default function ManageAds() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleEdit(a)}
-                      className="flex-1 h-11 text-base rounded-xl"
+                      className="flex-1 h-10 text-sm rounded-xl"
                     >
                       <Edit className="w-4 h-4 ml-1" />
                       עריכה
@@ -1250,7 +1249,7 @@ export default function ManageAds() {
                       size="sm"
                       variant="destructive"
                       onClick={() => deleteMutation.mutate(a.id)}
-                      className="h-11 w-11 rounded-xl p-0"
+                      className="h-10 w-10 rounded-xl p-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
