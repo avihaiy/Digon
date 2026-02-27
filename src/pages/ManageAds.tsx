@@ -1123,7 +1123,7 @@ export default function ManageAds() {
         icon={<Tv className="w-5 h-5 text-orange-500" />}
         subtitle="עדכונים שוטפים בתחתית המסך"
         accentClass="border-orange-200 bg-orange-50/30"
-        defaultOpen
+      >
       >
         <div className="pt-2">
           <TickerManager isMobile={true} />
