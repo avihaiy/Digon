@@ -1205,7 +1205,7 @@ export default function ManageAds() {
           ) : (
             <div className="divide-y">
               {announcements.map((a) => (
-                <div key={a.id} className="p-4 space-y-3">
+                <div key={a.id} className="p-3 space-y-2">
                   <div className="flex items-start gap-3">
                     {a.image_url && (
                       <img src={a.image_url} alt="" className="w-12 h-12 object-cover rounded-xl shrink-0" />
