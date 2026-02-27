@@ -165,11 +165,11 @@ function CollapsibleCard({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <Card className={`${accentClass} overflow-hidden`}>
-      <button type="button" className="w-full flex items-center gap-3 p-4 text-right" onClick={() => setOpen(!open)}>
+      <button type="button" className="w-full flex items-center gap-3 p-3 text-right" onClick={() => setOpen(!open)}>
         <div className="shrink-0">{icon}</div>
         <div className="flex-1 text-right">
-          <p className="font-semibold text-base">{title}</p>
-          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+          <p className="font-semibold text-sm">{title}</p>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         </div>
         {open ? (
           <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
@@ -177,7 +177,7 @@ function CollapsibleCard({
           <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
         )}
       </button>
-      {open && <div className="px-4 pb-4">{children}</div>}
+      {open && <div className="px-3 pb-3">{children}</div>}
     </Card>
   );
 }
@@ -1061,13 +1061,13 @@ export default function ManageAds() {
 
   // ── פריסת נייד: עמודה אחת + sticky button ──
   return (
-    <div className="space-y-4 pb-28" dir="rtl">
-      <div className="pt-2 pb-1">
+    <div className="space-y-3 pb-24" dir="rtl">
+      <div className="pb-1">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Megaphone className="w-5 h-5" />
           ניהול מודעות
         </h1>
-        <p className="text-muted-foreground text-sm mt-0.5">מודעות, טיקר והגדרות מסך</p>
+        <p className="text-muted-foreground text-sm">מודעות, טיקר והגדרות מסך</p>
       </div>
 
       {/* שם בית כנסת */}
@@ -1098,14 +1098,12 @@ export default function ManageAds() {
       </CollapsibleCard>
 
       {/* אשכבות */}
-      <Card className="border-gray-200 overflow-hidden">
-        <MemorialManager
-          showMemorial={showMemorial}
-          onToggleMemorial={toggleMemorial}
-          showHeichal={showHeichal}
-          onToggleHeichal={toggleHeichal}
-        />
-      </Card>
+      <MemorialManager
+        showMemorial={showMemorial}
+        onToggleMemorial={toggleMemorial}
+        showHeichal={showHeichal}
+        onToggleHeichal={toggleHeichal}
+      />
 
       {/* סדר סליידים */}
       <CollapsibleCard
