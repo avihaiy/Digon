@@ -1061,7 +1061,7 @@ export default function ManageAds() {
 
   // ── פריסת נייד: עמודה אחת + sticky button ──
   return (
-    <div className="space-y-4 pb-28" dir="rtl">
+    <div className="space-y-3 pb-24" dir="rtl">
       <div className="pt-2 pb-1">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Megaphone className="w-5 h-5" />
