@@ -1240,7 +1240,7 @@ export default function ManageAds() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleEdit(a)}
-                      className="flex-1 h-11 text-base rounded-xl"
+                      className="flex-1 h-10 text-sm rounded-xl"
                     >
                       <Edit className="w-4 h-4 ml-1" />
                       עריכה
