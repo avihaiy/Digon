@@ -1249,7 +1249,7 @@ export default function ManageAds() {
                       size="sm"
                       variant="destructive"
                       onClick={() => deleteMutation.mutate(a.id)}
-                      className="h-11 w-11 rounded-xl p-0"
+                      className="h-10 w-10 rounded-xl p-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
