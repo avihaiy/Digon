@@ -1226,7 +1226,7 @@ export default function ManageAds() {
                         {DAY_TYPE_LABELS[day]}
                       </Badge>
                     ))}
-                    <Badge variant="outline" className="text-sm px-2 py-0.5">
+                    <Badge variant="outline" className="text-xs px-1.5 py-0">
                       {a.start_time.slice(0, 5)}–{a.end_time.slice(0, 5)}
                     </Badge>
                     {!a.is_active && (
