@@ -1188,8 +1188,8 @@ export default function ManageAds() {
 
       {/* מודעות */}
       <Card>
-        <CardHeader className="pb-2 pt-4 px-4">
-          <CardTitle className="text-base flex items-center gap-2">
+        <CardHeader className="pb-1 pt-3 px-3">
+          <CardTitle className="text-sm flex items-center gap-2">
             <Megaphone className="w-4 h-4" />
             מודעות ({announcements.length})
           </CardTitle>
