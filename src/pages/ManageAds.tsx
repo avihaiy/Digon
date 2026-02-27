@@ -1222,7 +1222,7 @@ export default function ManageAds() {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {a.day_types.map((day) => (
-                      <Badge key={day} variant="secondary" className="text-sm px-2 py-0.5">
+                      <Badge key={day} variant="secondary" className="text-xs px-1.5 py-0">
                         {DAY_TYPE_LABELS[day]}
                       </Badge>
                     ))}
