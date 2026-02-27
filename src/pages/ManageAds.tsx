@@ -1124,7 +1124,6 @@ export default function ManageAds() {
         subtitle="עדכונים שוטפים בתחתית המסך"
         accentClass="border-orange-200 bg-orange-50/30"
       >
-      >
         <div className="pt-2">
           <TickerManager isMobile={true} />
         </div>
