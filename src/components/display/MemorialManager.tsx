@@ -119,6 +119,7 @@ export default function MemorialManager({
   onToggleMemorial,
   showHeichal,
   onToggleHeichal,
+  compact = false,
 }: MemorialManagerProps) {
   const queryClient = useQueryClient();
 
