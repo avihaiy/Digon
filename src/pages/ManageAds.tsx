@@ -165,11 +165,11 @@ function CollapsibleCard({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <Card className={`${accentClass} overflow-hidden`}>
-      <button type="button" className="w-full flex items-center gap-3 p-4 text-right" onClick={() => setOpen(!open)}>
+      <button type="button" className="w-full flex items-center gap-3 p-3 text-right" onClick={() => setOpen(!open)}>
         <div className="shrink-0">{icon}</div>
         <div className="flex-1 text-right">
-          <p className="font-semibold text-base">{title}</p>
-          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+          <p className="font-semibold text-sm">{title}</p>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         </div>
         {open ? (
           <ChevronUp className="w-5 h-5 text-muted-foreground shrink-0" />
@@ -177,7 +177,7 @@ function CollapsibleCard({
           <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
         )}
       </button>
-      {open && <div className="px-4 pb-4">{children}</div>}
+      {open && <div className="px-3 pb-3">{children}</div>}
     </Card>
   );
 }
