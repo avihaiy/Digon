@@ -102,6 +102,7 @@ interface MemorialManagerProps {
   onToggleMemorial: (checked: boolean) => void;
   showHeichal: boolean;
   onToggleHeichal: (checked: boolean) => void;
+  compact?: boolean;
 }
 
 const saveSetting = async (key: string, value: string) => {
