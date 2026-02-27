@@ -1103,6 +1103,7 @@ export default function ManageAds() {
         onToggleMemorial={toggleMemorial}
         showHeichal={showHeichal}
         onToggleHeichal={toggleHeichal}
+        compact
       />
 
       {/* סדר סליידים */}

@@ -501,7 +501,7 @@ export default function MemorialManager({
 
       {/* ===== כרטיס היכל ה' ===== */}
       <Card className="border-yellow-300 bg-yellow-50/50 dark:bg-yellow-950/20 dark:border-yellow-800">
-        <CardContent className="p-4 space-y-4">
+        <CardContent className={cardPadding}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Star className="w-5 h-5 text-yellow-500" />
