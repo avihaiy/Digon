@@ -1133,13 +1133,13 @@ export default function ManageAds() {
 
       {/* כספים */}
       <Card className="border-blue-200 bg-blue-50/30">
-        <CardContent className="p-4">
+        <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Wallet className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="font-semibold text-base">מצב כספי</p>
-                <p className="text-sm text-muted-foreground">הצג הכנסות ויתרה</p>
+                <p className="font-semibold text-sm">מצב כספי</p>
+                <p className="text-xs text-muted-foreground">הצג הכנסות ויתרה</p>
               </div>
             </div>
             <Switch checked={showFinance} onCheckedChange={toggleFinance} />
