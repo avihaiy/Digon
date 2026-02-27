@@ -1098,14 +1098,12 @@ export default function ManageAds() {
       </CollapsibleCard>
 
       {/* אשכבות */}
-      <Card className="border-gray-200 overflow-hidden">
-        <MemorialManager
-          showMemorial={showMemorial}
-          onToggleMemorial={toggleMemorial}
-          showHeichal={showHeichal}
-          onToggleHeichal={toggleHeichal}
-        />
-      </Card>
+      <MemorialManager
+        showMemorial={showMemorial}
+        onToggleMemorial={toggleMemorial}
+        showHeichal={showHeichal}
+        onToggleHeichal={toggleHeichal}
+      />
 
       {/* סדר סליידים */}
       <CollapsibleCard
