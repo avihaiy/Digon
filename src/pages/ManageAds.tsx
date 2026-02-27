@@ -1211,8 +1211,8 @@ export default function ManageAds() {
                       <img src={a.image_url} alt="" className="w-12 h-12 object-cover rounded-xl shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-base leading-tight">{a.title}</p>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5">{a.content}</p>
+                      <p className="font-bold text-sm leading-tight">{a.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{a.content}</p>
                     </div>
                     <Switch
                       checked={a.is_active}
