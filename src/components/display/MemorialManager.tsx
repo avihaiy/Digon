@@ -307,6 +307,7 @@ export default function MemorialManager({
       {/* ===== כרטיס אשכבות ===== */}
       <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
         <CardContent className={cardPadding}>
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Flame className="w-5 h-5 text-amber-500" />
               <div>
