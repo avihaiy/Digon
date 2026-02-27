@@ -1077,7 +1077,6 @@ export default function ManageAds() {
         subtitle="יוצג בראש מסך התצוגה"
         accentClass="border-amber-200 bg-amber-50/40"
       >
-      >
         <div className="flex gap-2 pt-2">
           <Input
             value={synagogueName}
