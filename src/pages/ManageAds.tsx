@@ -1076,7 +1076,7 @@ export default function ManageAds() {
         icon={<span className="text-xl">🕍</span>}
         subtitle="יוצג בראש מסך התצוגה"
         accentClass="border-amber-200 bg-amber-50/40"
-        defaultOpen
+      >
       >
         <div className="flex gap-2 pt-2">
           <Input
