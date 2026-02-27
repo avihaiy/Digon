@@ -1062,12 +1062,12 @@ export default function ManageAds() {
   // ── פריסת נייד: עמודה אחת + sticky button ──
   return (
     <div className="space-y-3 pb-24" dir="rtl">
-      <div className="pt-2 pb-1">
+      <div className="pb-1">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Megaphone className="w-5 h-5" />
           ניהול מודעות
         </h1>
-        <p className="text-muted-foreground text-sm mt-0.5">מודעות, טיקר והגדרות מסך</p>
+        <p className="text-muted-foreground text-sm">מודעות, טיקר והגדרות מסך</p>
       </div>
 
       {/* שם בית כנסת */}
