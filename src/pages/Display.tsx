@@ -395,10 +395,11 @@ export default function Display() {
 
   const enterFullscreen = useCallback(async () => {
     try {
-      if (containerRef.current) {
+      if (containerRef.current && !document.fullscreenElement) {
         await containerRef.current.requestFullscreen();
         setIsFullscreen(true);
       }
+      setShowFullscreenPrompt(false);
     } catch (err) {
       console.error("Fullscreen error:", err);
     }
@@ -447,7 +448,6 @@ export default function Display() {
 
   // Auto lock immediately + attempt fullscreen
   useEffect(() => {
-    // Lock and hide controls immediately - no gesture needed
     setIsLocked(true);
     setShowControls(false);
 
@@ -456,25 +456,30 @@ export default function Display() {
         if (containerRef.current && !document.fullscreenElement) {
           await containerRef.current.requestFullscreen();
           setIsFullscreen(true);
+          return;
         }
       } catch {
-        // Chrome requires a user gesture — show prompt overlay
+        // Browser blocked — show prompt
+      }
+      // Show prompt if not in fullscreen
+      if (!document.fullscreenElement) {
         setShowFullscreenPrompt(true);
       }
     };
 
     const timer = setTimeout(attemptFullscreen, 300);
-
     return () => clearTimeout(timer);
   }, []);
 
-  const handleFullscreenPromptClick = useCallback(async () => {
-    setShowFullscreenPrompt(false);
-    if (containerRef.current && !document.fullscreenElement) {
-      try {
+  const goFullscreen = useCallback(async () => {
+    try {
+      if (containerRef.current && !document.fullscreenElement) {
         await containerRef.current.requestFullscreen();
         setIsFullscreen(true);
-      } catch {}
+      }
+      setShowFullscreenPrompt(false);
+    } catch (err) {
+      console.error("Fullscreen error:", err);
     }
   }, []);
 
@@ -738,8 +743,8 @@ export default function Display() {
       {showFullscreenPrompt && (
         <div
           className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer"
-          onClick={handleFullscreenPromptClick}
-          onTouchEnd={(e) => { e.preventDefault(); handleFullscreenPromptClick(); }}
+          onClick={goFullscreen}
+          onTouchEnd={(e) => { e.preventDefault(); goFullscreen(); }}
         >
           <div className="text-center text-white">
             <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
