@@ -443,6 +443,42 @@ export default function Display() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Auto fullscreen + lock on first user interaction
+  useEffect(() => {
+    const autoEnter = async () => {
+      try {
+        if (containerRef.current && !document.fullscreenElement) {
+          await containerRef.current.requestFullscreen();
+          setIsFullscreen(true);
+        }
+        setIsLocked(true);
+        setShowControls(false);
+      } catch (err) {
+        // Fullscreen requires user gesture - try on next click/touch
+        console.log("Auto fullscreen needs user gesture, will retry on interaction");
+        const retryOnInteraction = async () => {
+          try {
+            if (containerRef.current && !document.fullscreenElement) {
+              await containerRef.current.requestFullscreen();
+              setIsFullscreen(true);
+            }
+            setIsLocked(true);
+            setShowControls(false);
+          } catch (e) {
+            console.log("Fullscreen retry failed:", e);
+          }
+          document.removeEventListener("click", retryOnInteraction);
+          document.removeEventListener("touchend", retryOnInteraction);
+        };
+        document.addEventListener("click", retryOnInteraction, { once: true });
+        document.addEventListener("touchend", retryOnInteraction, { once: true });
+      }
+    };
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(autoEnter, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     if (isLocked && isFullscreen) {
       const preventKeys = (e: KeyboardEvent) => {
