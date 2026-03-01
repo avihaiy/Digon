@@ -473,6 +473,8 @@ export default function Display() {
   }, []);
 
   const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
+  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
+  const [fullscreenAttempts, setFullscreenAttempts] = useState(0);
 
   // Auto lock + auto fullscreen + interaction fallback
   useEffect(() => {
