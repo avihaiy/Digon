@@ -393,7 +393,17 @@ export default function Display() {
     },
   });
 
-  const enterFullscreen = goFullscreen;
+  const enterFullscreen = useCallback(async () => {
+    try {
+      if (containerRef.current && !document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      }
+      setShowFullscreenPrompt(false);
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  }, []);
 
   const exitFullscreen = useCallback(async () => {
     if (!isLocked) {
