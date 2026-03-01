@@ -395,21 +395,36 @@ export default function Display() {
 
   const requestFullscreenSafe = useCallback(async () => {
     const el = containerRef.current;
-    if (!el || document.fullscreenElement) return true;
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      msFullscreenElement?: Element | null;
+    };
+
+    if (!el || doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
+      return true;
+    }
+
+    const target = el as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+      msRequestFullscreen?: () => Promise<void> | void;
+    };
 
     try {
-      await el.requestFullscreen();
-      setIsFullscreen(true);
-      return true;
-    } catch {
-      try {
-        await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-        return true;
-      } catch (err) {
-        console.error("Fullscreen error:", err);
+      if (target.requestFullscreen) {
+        await target.requestFullscreen();
+      } else if (target.webkitRequestFullscreen) {
+        await target.webkitRequestFullscreen();
+      } else if (target.msRequestFullscreen) {
+        await target.msRequestFullscreen();
+      } else {
         return false;
       }
+
+      setIsFullscreen(true);
+      return true;
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+      return false;
     }
   }, []);
 
@@ -490,23 +505,8 @@ export default function Display() {
   }, [enterFullscreen, requestFullscreenSafe]);
 
   const goFullscreen = useCallback(() => {
-    const el = containerRef.current ?? document.documentElement;
-    if (document.fullscreenElement) {
-      setShowFullscreenPrompt(false);
-      return;
-    }
-
-    void el
-      .requestFullscreen()
-      .then(() => {
-        setIsFullscreen(true);
-        setShowFullscreenPrompt(false);
-      })
-      .catch((err) => {
-        console.error("Fullscreen error:", err);
-        setShowFullscreenPrompt(true);
-      });
-  }, []);
+    void enterFullscreen();
+  }, [enterFullscreen]);
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
