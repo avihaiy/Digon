@@ -495,19 +495,23 @@ export default function Display() {
   useEffect(() => {
     const pollInterval = setInterval(
       async () => {
-        const { data: settingsData } = await supabase
-          .from("app_settings")
-          .select("key, value")
-          .in("key", [
-            "display_lock_code",
-            "show_memorial_on_display",
-            "memorial_show_week_before",
-            "show_finance_on_display",
-            "display_background_url",
-            "show_heichal_on_display",
-            "display_slide_order",
-            "display_slide_durations",
-          ]);
+        if (!navigator.onLine) return; // skip polling when offline
+        const { data: settingsData } = await fetchWithCache('display-settings-poll', async () => {
+          const { data } = await supabase
+            .from("app_settings")
+            .select("key, value")
+            .in("key", [
+              "display_lock_code",
+              "show_memorial_on_display",
+              "memorial_show_week_before",
+              "show_finance_on_display",
+              "display_background_url",
+              "show_heichal_on_display",
+              "display_slide_order",
+              "display_slide_durations",
+            ]);
+          return data;
+        });
         if (settingsData) {
           for (const setting of settingsData) {
             if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
@@ -531,12 +535,16 @@ export default function Display() {
             }
           }
         }
-        const { data: adsData, error: adsError } = await supabase
-          .from("scheduled_announcements")
-          .select("*")
-          .eq("is_active", true)
-          .order("priority", { ascending: false });
-        if (!adsError && adsData) setAnnouncements(adsData as ScheduledAnnouncement[]);
+        const { data: adsResult } = await fetchWithCache('scheduled-announcements', async () => {
+          const { data, error } = await supabase
+            .from("scheduled_announcements")
+            .select("*")
+            .eq("is_active", true)
+            .order("priority", { ascending: false });
+          if (error) throw error;
+          return data;
+        });
+        if (adsResult) setAnnouncements(adsResult as ScheduledAnnouncement[]);
       },
       3 * 60 * 1000,
     );
