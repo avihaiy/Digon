@@ -711,6 +711,11 @@ export default function Display() {
             {!isFullscreen ? (
               <button
                 onClick={enterFullscreen}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  enterFullscreen();
+                }}
                 className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
                 title="מסך מלא"
               >
@@ -730,6 +735,11 @@ export default function Display() {
                 ) : (
                   <button
                     onClick={() => setIsLocked(true)}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsLocked(true);
+                    }}
                     className={`p-3 rounded-full backdrop-blur-sm transition-colors bg-black/20 hover:bg-black/30 ${styleConfig.text}`}
                     title="נעל מסך"
                   >
@@ -739,6 +749,11 @@ export default function Display() {
                 {!isLocked && (
                   <button
                     onClick={exitFullscreen}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      exitFullscreen();
+                    }}
                     className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
                     title="יציאה ממסך מלא"
                   >
