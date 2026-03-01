@@ -743,8 +743,8 @@ export default function Display() {
       {showFullscreenPrompt && (
         <div
           className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer"
-          onClick={handleFullscreenPromptClick}
-          onTouchEnd={(e) => { e.preventDefault(); handleFullscreenPromptClick(); }}
+          onClick={goFullscreen}
+          onTouchEnd={(e) => { e.preventDefault(); goFullscreen(); }}
         >
           <div className="text-center text-white">
             <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
