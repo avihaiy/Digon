@@ -513,11 +513,27 @@ export default function Display() {
     const doc = document as Document & {
       webkitFullscreenElement?: Element | null;
       msFullscreenElement?: Element | null;
+      fullscreenEnabled?: boolean;
+      webkitFullscreenEnabled?: boolean;
     };
 
+    // Already in fullscreen
     if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
       setShowFullscreenPrompt(false);
+      setFullscreenError(null);
       setIsFullscreen(true);
+      return;
+    }
+
+    // Check if fullscreen is supported at all
+    const isEnabled = doc.fullscreenEnabled ?? doc.webkitFullscreenEnabled ?? false;
+    if (!isEnabled) {
+      const isIframe = window.self !== window.top;
+      if (isIframe) {
+        setFullscreenError("מסך מלא לא זמין בתוך iframe. פתח את הדף בחלון חדש (לחץ על הקישור למטה).");
+      } else {
+        setFullscreenError("הדפדפן שלך לא תומך במסך מלא. נסה לפתוח בכרום או בהתקנה כ-PWA.");
+      }
       return;
     }
 
@@ -540,23 +556,30 @@ export default function Display() {
       target.msRequestFullscreen?.bind(target);
 
     if (!requestFn) {
-      setShowFullscreenPrompt(true);
+      setFullscreenError("מסך מלא לא נתמך במכשיר זה.");
       return;
     }
+
+    setFullscreenAttempts(prev => prev + 1);
 
     try {
       Promise.resolve(requestFn())
         .then(() => {
           setIsFullscreen(true);
           setShowFullscreenPrompt(false);
+          setFullscreenError(null);
         })
-        .catch((err) => {
+        .catch((err: Error) => {
           console.error("Fullscreen error:", err);
-          setShowFullscreenPrompt(true);
+          if (err.message?.includes("not allowed") || err.message?.includes("gesture")) {
+            setFullscreenError("לחיצה לא זוהתה. נסה ללחוץ שוב או פתח בחלון חדש.");
+          } else {
+            setFullscreenError(`שגיאה: ${err.message}`);
+          }
         });
     } catch (err) {
       console.error("Fullscreen error:", err);
-      setShowFullscreenPrompt(true);
+      setFullscreenError("שגיאה בפתיחת מסך מלא.");
     }
   }, []);
 
