@@ -824,9 +824,9 @@ export default function Display() {
           type="button"
           className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer border-none outline-none"
           style={{ WebkitTapHighlightColor: "transparent" }}
-          onPointerDown={goFullscreen}
-          onTouchStart={goFullscreen}
-          onClick={goFullscreen}
+          onPointerDown={(e) => handleFullscreenGesture(e)}
+          onTouchStart={(e) => handleFullscreenGesture(e)}
+          onClick={(e) => handleFullscreenGesture(e)}
         >
           <div className="text-center text-white pointer-events-none">
             <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
