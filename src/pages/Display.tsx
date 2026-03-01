@@ -505,23 +505,8 @@ export default function Display() {
   }, [enterFullscreen, requestFullscreenSafe]);
 
   const goFullscreen = useCallback(() => {
-    const el = containerRef.current ?? document.documentElement;
-    if (document.fullscreenElement) {
-      setShowFullscreenPrompt(false);
-      return;
-    }
-
-    void el
-      .requestFullscreen()
-      .then(() => {
-        setIsFullscreen(true);
-        setShowFullscreenPrompt(false);
-      })
-      .catch((err) => {
-        console.error("Fullscreen error:", err);
-        setShowFullscreenPrompt(true);
-      });
-  }, []);
+    void enterFullscreen();
+  }, [enterFullscreen]);
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
