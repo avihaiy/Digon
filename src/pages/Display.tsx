@@ -741,16 +741,17 @@ export default function Display() {
 
       {/* Fullscreen prompt overlay for Chrome */}
       {showFullscreenPrompt && (
-        <div
-          className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer"
+        <button
+          type="button"
+          className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer border-none outline-none"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
           onClick={goFullscreen}
-          onTouchEnd={(e) => { e.preventDefault(); goFullscreen(); }}
         >
-          <div className="text-center text-white">
+          <div className="text-center text-white pointer-events-none">
             <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
             <p className="text-2xl font-bold">לחץ כאן למסך מלא</p>
           </div>
-        </div>
+        </button>
       )}
 
       {/* Fullscreen Controls */}
