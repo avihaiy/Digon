@@ -253,21 +253,24 @@ export default function Display() {
   // Settings + ticker setup
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase
-        .from("app_settings")
-        .select("key, value")
-        .in("key", [
-          "display_lock_code",
-          "show_memorial_on_display",
-          "memorial_show_week_before",
-          "show_finance_on_display",
-          "display_background_url",
-          "show_heichal_on_display",
-          "display_slide_order",
-          "display_slide_durations",
-          "synagogue_name",
-          "ticker_speed",
-        ]);
+      const { data } = await fetchWithCache('display-settings', async () => {
+        const { data } = await supabase
+          .from("app_settings")
+          .select("key, value")
+          .in("key", [
+            "display_lock_code",
+            "show_memorial_on_display",
+            "memorial_show_week_before",
+            "show_finance_on_display",
+            "display_background_url",
+            "show_heichal_on_display",
+            "display_slide_order",
+            "display_slide_durations",
+            "synagogue_name",
+            "ticker_speed",
+          ]);
+        return data;
+      });
       if (data) {
         for (const setting of data) {
           if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
@@ -293,7 +296,6 @@ export default function Display() {
           }
         }
       }
-      // טען טיקר
       await fetchTicker();
     };
 
