@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/hebrew-utils";
 import { startOfMonth, subMonths, endOfMonth } from "date-fns";
+import { fetchWithCache, getCacheData } from "@/lib/display-cache";
 
 interface FinanceDisplaySlideProps {
   textClass?: string;
