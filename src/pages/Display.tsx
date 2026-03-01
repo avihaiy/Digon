@@ -473,6 +473,8 @@ export default function Display() {
   }, []);
 
   const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
+  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
+  const [fullscreenAttempts, setFullscreenAttempts] = useState(0);
 
   // Auto lock + auto fullscreen + interaction fallback
   useEffect(() => {
@@ -511,11 +513,27 @@ export default function Display() {
     const doc = document as Document & {
       webkitFullscreenElement?: Element | null;
       msFullscreenElement?: Element | null;
+      fullscreenEnabled?: boolean;
+      webkitFullscreenEnabled?: boolean;
     };
 
+    // Already in fullscreen
     if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
       setShowFullscreenPrompt(false);
+      setFullscreenError(null);
       setIsFullscreen(true);
+      return;
+    }
+
+    // Check if fullscreen is supported at all
+    const isEnabled = doc.fullscreenEnabled ?? doc.webkitFullscreenEnabled ?? false;
+    if (!isEnabled) {
+      const isIframe = window.self !== window.top;
+      if (isIframe) {
+        setFullscreenError("מסך מלא לא זמין בתוך iframe. פתח את הדף בחלון חדש (לחץ על הקישור למטה).");
+      } else {
+        setFullscreenError("הדפדפן שלך לא תומך במסך מלא. נסה לפתוח בכרום או בהתקנה כ-PWA.");
+      }
       return;
     }
 
@@ -538,23 +556,30 @@ export default function Display() {
       target.msRequestFullscreen?.bind(target);
 
     if (!requestFn) {
-      setShowFullscreenPrompt(true);
+      setFullscreenError("מסך מלא לא נתמך במכשיר זה.");
       return;
     }
+
+    setFullscreenAttempts(prev => prev + 1);
 
     try {
       Promise.resolve(requestFn())
         .then(() => {
           setIsFullscreen(true);
           setShowFullscreenPrompt(false);
+          setFullscreenError(null);
         })
-        .catch((err) => {
+        .catch((err: Error) => {
           console.error("Fullscreen error:", err);
-          setShowFullscreenPrompt(true);
+          if (err.message?.includes("not allowed") || err.message?.includes("gesture")) {
+            setFullscreenError("לחיצה לא זוהתה. נסה ללחוץ שוב או פתח בחלון חדש.");
+          } else {
+            setFullscreenError(`שגיאה: ${err.message}`);
+          }
         });
     } catch (err) {
       console.error("Fullscreen error:", err);
-      setShowFullscreenPrompt(true);
+      setFullscreenError("שגיאה בפתיחת מסך מלא.");
     }
   }, []);
 
@@ -831,6 +856,23 @@ export default function Display() {
           <div className="text-center text-white pointer-events-none">
             <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
             <p className="text-2xl font-bold">לחץ כאן למסך מלא</p>
+            {fullscreenError && (
+              <p className="mt-4 text-lg text-red-400 max-w-md mx-auto">{fullscreenError}</p>
+            )}
+            {fullscreenAttempts > 0 && !fullscreenError && (
+              <p className="mt-4 text-sm text-white/60">ניסיון {fullscreenAttempts}...</p>
+            )}
+            {(fullscreenError?.includes("iframe") || fullscreenError?.includes("חלון חדש")) && (
+              <a
+                href={window.location.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-block px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg text-white text-lg pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                פתח בחלון חדש ←
+              </a>
+            )}
           </div>
         </button>
       )}
