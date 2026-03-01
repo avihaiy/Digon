@@ -393,17 +393,30 @@ export default function Display() {
     },
   });
 
-  const enterFullscreen = useCallback(async () => {
+  const requestFullscreenSafe = useCallback(async () => {
+    const el = containerRef.current;
+    if (!el || document.fullscreenElement) return true;
+
     try {
-      if (containerRef.current && !document.fullscreenElement) {
-        await containerRef.current.requestFullscreen();
+      await el.requestFullscreen();
+      setIsFullscreen(true);
+      return true;
+    } catch {
+      try {
+        await document.documentElement.requestFullscreen();
         setIsFullscreen(true);
+        return true;
+      } catch (err) {
+        console.error("Fullscreen error:", err);
+        return false;
       }
-      setShowFullscreenPrompt(false);
-    } catch (err) {
-      console.error("Fullscreen error:", err);
     }
   }, []);
+
+  const enterFullscreen = useCallback(async () => {
+    const success = await requestFullscreenSafe();
+    setShowFullscreenPrompt(!success && !document.fullscreenElement);
+  }, [requestFullscreenSafe]);
 
   const exitFullscreen = useCallback(async () => {
     if (!isLocked) {
@@ -446,42 +459,39 @@ export default function Display() {
 
   const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
 
-  // Auto lock immediately + attempt fullscreen
+  // Auto lock + auto fullscreen + interaction fallback
   useEffect(() => {
     setIsLocked(true);
     setShowControls(false);
 
-    const attemptFullscreen = async () => {
-      try {
-        if (containerRef.current && !document.fullscreenElement) {
-          await containerRef.current.requestFullscreen();
-          setIsFullscreen(true);
-          return;
-        }
-      } catch {
-        // Browser blocked — show prompt
-      }
-      // Show prompt if not in fullscreen
-      if (!document.fullscreenElement) {
+    const attemptAuto = async () => {
+      const success = await requestFullscreenSafe();
+      if (!success && !document.fullscreenElement) {
         setShowFullscreenPrompt(true);
       }
     };
 
-    const timer = setTimeout(attemptFullscreen, 300);
-    return () => clearTimeout(timer);
-  }, []);
+    const timer = setTimeout(attemptAuto, 300);
+
+    const handleFirstInteraction = () => {
+      if (!document.fullscreenElement) {
+        void enterFullscreen();
+      }
+    };
+
+    document.addEventListener("pointerdown", handleFirstInteraction, { once: true, passive: true });
+    document.addEventListener("keydown", handleFirstInteraction, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("pointerdown", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, [enterFullscreen, requestFullscreenSafe]);
 
   const goFullscreen = useCallback(async () => {
-    try {
-      if (containerRef.current && !document.fullscreenElement) {
-        await containerRef.current.requestFullscreen();
-        setIsFullscreen(true);
-      }
-      setShowFullscreenPrompt(false);
-    } catch (err) {
-      console.error("Fullscreen error:", err);
-    }
-  }, []);
+    await enterFullscreen();
+  }, [enterFullscreen]);
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
