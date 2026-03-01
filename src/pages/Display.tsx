@@ -489,9 +489,24 @@ export default function Display() {
     };
   }, [enterFullscreen, requestFullscreenSafe]);
 
-  const goFullscreen = useCallback(async () => {
-    await enterFullscreen();
-  }, [enterFullscreen]);
+  const goFullscreen = useCallback(() => {
+    const el = containerRef.current ?? document.documentElement;
+    if (document.fullscreenElement) {
+      setShowFullscreenPrompt(false);
+      return;
+    }
+
+    void el
+      .requestFullscreen()
+      .then(() => {
+        setIsFullscreen(true);
+        setShowFullscreenPrompt(false);
+      })
+      .catch((err) => {
+        console.error("Fullscreen error:", err);
+        setShowFullscreenPrompt(true);
+      });
+  }, []);
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
@@ -754,7 +769,9 @@ export default function Display() {
         <button
           type="button"
           className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer border-none outline-none"
-          style={{ WebkitTapHighlightColor: 'transparent' }}
+          style={{ WebkitTapHighlightColor: "transparent" }}
+          onPointerDown={goFullscreen}
+          onTouchStart={goFullscreen}
           onClick={goFullscreen}
         >
           <div className="text-center text-white pointer-events-none">
@@ -775,11 +792,12 @@ export default function Display() {
           >
             {!isFullscreen ? (
               <button
-                onClick={enterFullscreen}
-                onTouchEnd={(e) => {
+                onPointerDown={goFullscreen}
+                onClick={goFullscreen}
+                onTouchStart={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  enterFullscreen();
+                  goFullscreen();
                 }}
                 className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
                 title="מסך מלא"
