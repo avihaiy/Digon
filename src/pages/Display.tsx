@@ -504,9 +504,63 @@ export default function Display() {
     };
   }, [enterFullscreen, requestFullscreenSafe]);
 
+  const handleFullscreenGesture = useCallback((event?: { preventDefault?: () => void; stopPropagation?: () => void }) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      msFullscreenElement?: Element | null;
+    };
+
+    if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
+      setShowFullscreenPrompt(false);
+      setIsFullscreen(true);
+      return;
+    }
+
+    const el = containerRef.current as
+      | (HTMLElement & {
+          webkitRequestFullscreen?: () => Promise<void> | void;
+          msRequestFullscreen?: () => Promise<void> | void;
+        })
+      | null;
+
+    const fallbackEl = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+      msRequestFullscreen?: () => Promise<void> | void;
+    };
+
+    const target = el ?? fallbackEl;
+    const requestFn =
+      target.requestFullscreen?.bind(target) ??
+      target.webkitRequestFullscreen?.bind(target) ??
+      target.msRequestFullscreen?.bind(target);
+
+    if (!requestFn) {
+      setShowFullscreenPrompt(true);
+      return;
+    }
+
+    try {
+      Promise.resolve(requestFn())
+        .then(() => {
+          setIsFullscreen(true);
+          setShowFullscreenPrompt(false);
+        })
+        .catch((err) => {
+          console.error("Fullscreen error:", err);
+          setShowFullscreenPrompt(true);
+        });
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+      setShowFullscreenPrompt(true);
+    }
+  }, []);
+
   const goFullscreen = useCallback(() => {
-    void enterFullscreen();
-  }, [enterFullscreen]);
+    handleFullscreenGesture();
+  }, [handleFullscreenGesture]);
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
