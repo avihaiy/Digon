@@ -734,6 +734,20 @@ export default function Display() {
     >
       {displayBgUrl && <div className="absolute inset-0 bg-black/50 z-0" />}
 
+      {/* Fullscreen prompt overlay for Chrome */}
+      {showFullscreenPrompt && (
+        <div
+          className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer"
+          onClick={handleFullscreenPromptClick}
+          onTouchEnd={(e) => { e.preventDefault(); handleFullscreenPromptClick(); }}
+        >
+          <div className="text-center text-white">
+            <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
+            <p className="text-2xl font-bold">לחץ כאן למסך מלא</p>
+          </div>
+        </div>
+      )}
+
       {/* Fullscreen Controls */}
       <AnimatePresence>
         {(!isFullscreen || (showControls && !isLocked)) && (
