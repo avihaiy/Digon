@@ -443,40 +443,45 @@ export default function Display() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Auto fullscreen + lock on first user interaction
+  // Auto lock immediately + attempt fullscreen
   useEffect(() => {
-    const autoEnter = async () => {
+    // Lock and hide controls immediately - no gesture needed
+    setIsLocked(true);
+    setShowControls(false);
+
+    const attemptFullscreen = async () => {
       try {
         if (containerRef.current && !document.fullscreenElement) {
           await containerRef.current.requestFullscreen();
           setIsFullscreen(true);
         }
-        setIsLocked(true);
-        setShowControls(false);
-      } catch (err) {
-        // Fullscreen requires user gesture - try on next click/touch
-        console.log("Auto fullscreen needs user gesture, will retry on interaction");
-        const retryOnInteraction = async () => {
-          try {
-            if (containerRef.current && !document.fullscreenElement) {
-              await containerRef.current.requestFullscreen();
-              setIsFullscreen(true);
-            }
-            setIsLocked(true);
-            setShowControls(false);
-          } catch (e) {
-            console.log("Fullscreen retry failed:", e);
-          }
-          document.removeEventListener("click", retryOnInteraction);
-          document.removeEventListener("touchend", retryOnInteraction);
-        };
-        document.addEventListener("click", retryOnInteraction, { once: true });
-        document.addEventListener("touchend", retryOnInteraction, { once: true });
+      } catch {
+        // Browser requires gesture - silently wait for first interaction
       }
     };
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(autoEnter, 500);
-    return () => clearTimeout(timer);
+
+    // Try fullscreen immediately (works on PWA / after programmatic reload)
+    const timer = setTimeout(attemptFullscreen, 300);
+
+    // Fallback: enter fullscreen on first interaction if not already
+    const onInteraction = async () => {
+      if (!document.fullscreenElement && containerRef.current) {
+        try {
+          await containerRef.current.requestFullscreen();
+          setIsFullscreen(true);
+        } catch {}
+      }
+      document.removeEventListener("click", onInteraction);
+      document.removeEventListener("touchstart", onInteraction);
+    };
+    document.addEventListener("click", onInteraction, { once: true });
+    document.addEventListener("touchstart", onInteraction, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", onInteraction);
+      document.removeEventListener("touchstart", onInteraction);
+    };
   }, []);
 
   useEffect(() => {
