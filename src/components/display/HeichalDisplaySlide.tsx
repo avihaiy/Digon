@@ -92,13 +92,16 @@ export default function HeichalDisplaySlide() {
   const { data: allNames = [] } = useQuery({
     queryKey: ["heichal-names"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("heichal_names")
-        .select("id, name, father_name, is_male, hebrew_day, hebrew_month")
-        .eq("is_active", true)
-        .order("hebrew_month")
-        .order("hebrew_day");
-      return (data || []) as HeichalName[];
+      const { data: result } = await fetchWithCache('heichal-names', async () => {
+        const { data } = await (supabase as any)
+          .from("heichal_names")
+          .select("id, name, father_name, is_male, hebrew_day, hebrew_month")
+          .eq("is_active", true)
+          .order("hebrew_month")
+          .order("hebrew_day");
+        return (data || []) as HeichalName[];
+      });
+      return result || (getCacheData<HeichalName[]>('heichal-names') || []);
     },
     refetchInterval: 5 * 60 * 1000,
   });
