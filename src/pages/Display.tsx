@@ -730,6 +730,11 @@ export default function Display() {
                 ) : (
                   <button
                     onClick={() => setIsLocked(true)}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsLocked(true);
+                    }}
                     className={`p-3 rounded-full backdrop-blur-sm transition-colors bg-black/20 hover:bg-black/30 ${styleConfig.text}`}
                     title="נעל מסך"
                   >
