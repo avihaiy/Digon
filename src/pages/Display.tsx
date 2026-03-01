@@ -550,12 +550,16 @@ export default function Display() {
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
-      const { data, error } = await supabase
-        .from("scheduled_announcements")
-        .select("*")
-        .eq("is_active", true)
-        .order("priority", { ascending: false });
-      if (!error && data) setAnnouncements(data as ScheduledAnnouncement[]);
+      const { data: result } = await fetchWithCache('scheduled-announcements', async () => {
+        const { data, error } = await supabase
+          .from("scheduled_announcements")
+          .select("*")
+          .eq("is_active", true)
+          .order("priority", { ascending: false });
+        if (error) throw error;
+        return data;
+      });
+      if (result) setAnnouncements(result as ScheduledAnnouncement[]);
     };
     fetchAnnouncements();
     const channel = supabase
