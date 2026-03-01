@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { gematriya } from "@hebcal/core";
+import { fetchWithCache, getCacheData } from "@/lib/display-cache";
+import { gematriya } from "@hebcal/core";
 
 interface HeichalName {
   id: string;
