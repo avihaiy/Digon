@@ -393,16 +393,7 @@ export default function Display() {
     },
   });
 
-  const enterFullscreen = useCallback(async () => {
-    try {
-      if (containerRef.current) {
-        await containerRef.current.requestFullscreen();
-        setIsFullscreen(true);
-      }
-    } catch (err) {
-      console.error("Fullscreen error:", err);
-    }
-  }, []);
+  const enterFullscreen = goFullscreen;
 
   const exitFullscreen = useCallback(async () => {
     if (!isLocked) {
