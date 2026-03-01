@@ -447,7 +447,6 @@ export default function Display() {
 
   // Auto lock immediately + attempt fullscreen
   useEffect(() => {
-    // Lock and hide controls immediately - no gesture needed
     setIsLocked(true);
     setShowControls(false);
 
@@ -456,25 +455,30 @@ export default function Display() {
         if (containerRef.current && !document.fullscreenElement) {
           await containerRef.current.requestFullscreen();
           setIsFullscreen(true);
+          return;
         }
       } catch {
-        // Chrome requires a user gesture — show prompt overlay
+        // Browser blocked — show prompt
+      }
+      // Show prompt if not in fullscreen
+      if (!document.fullscreenElement) {
         setShowFullscreenPrompt(true);
       }
     };
 
     const timer = setTimeout(attemptFullscreen, 300);
-
     return () => clearTimeout(timer);
   }, []);
 
-  const handleFullscreenPromptClick = useCallback(async () => {
-    setShowFullscreenPrompt(false);
-    if (containerRef.current && !document.fullscreenElement) {
-      try {
+  const goFullscreen = useCallback(async () => {
+    try {
+      if (containerRef.current && !document.fullscreenElement) {
         await containerRef.current.requestFullscreen();
         setIsFullscreen(true);
-      } catch {}
+      }
+      setShowFullscreenPrompt(false);
+    } catch (err) {
+      console.error("Fullscreen error:", err);
     }
   }, []);
 
