@@ -88,7 +88,7 @@ export default function FinanceDisplaySlide({ textClass, accentClass }: FinanceD
 
         return { thisMonthIncome, thisMonthExpenses, thisMonthBalance: thisMonthIncome - thisMonthExpenses, monthlyData };
       });
-      return result || getCacheData('finance-display');
+      return result || getCacheData<{ thisMonthIncome: number; thisMonthExpenses: number; thisMonthBalance: number; monthlyData: any[] }>('finance-display');
     },
     refetchInterval: 5 * 60 * 1000,
   });
