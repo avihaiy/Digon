@@ -342,16 +342,20 @@ export default function Display() {
           datePairs.push({ day: futureDate.getDate(), month: futureDate.getMonth() });
         }
       }
-      const { data, error } = await supabase
-        .from("memorial_names")
-        .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
-        .eq("is_active", true);
-      if (!error && data) {
-        const matched = data.filter((p) =>
+      const { data: memData } = await fetchWithCache('memorial-names', async () => {
+        const { data, error } = await supabase
+          .from("memorial_names")
+          .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
+          .eq("is_active", true);
+        if (error) throw error;
+        return data;
+      });
+      if (memData) {
+        const matched = memData.filter((p: any) =>
           datePairs.some((dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month),
         );
         setMemorialPeople(
-          matched.map((p) => {
+          matched.map((p: any) => {
             const matchingPair = datePairs.find(
               (dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month,
             );
