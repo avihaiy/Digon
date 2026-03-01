@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchWithCache, getCacheData } from "@/lib/display-cache";
 import { HDate, months, gematriya, HebrewCalendar, flags } from "@hebcal/core";
 import {
   getMashivHaruach,
@@ -210,12 +211,15 @@ export default function Display() {
 
   // פונקציה לטעינת טיקר
   const fetchTicker = useCallback(async () => {
-    const [{ data: td }, { data: sd }] = await Promise.all([
-      supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
-      supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
-    ]);
-    if (td) setTickerItems(td);
-    if (sd?.value) setTickerSpeed(sd.value);
+    const { data: result } = await fetchWithCache('ticker', async () => {
+      const [{ data: td }, { data: sd }] = await Promise.all([
+        supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
+        supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
+      ]);
+      return { items: td, speed: sd?.value };
+    });
+    if (result?.items) setTickerItems(result.items);
+    if (result?.speed) setTickerSpeed(result.speed);
   }, []);
 
   // Wake Lock
@@ -249,21 +253,24 @@ export default function Display() {
   // Settings + ticker setup
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase
-        .from("app_settings")
-        .select("key, value")
-        .in("key", [
-          "display_lock_code",
-          "show_memorial_on_display",
-          "memorial_show_week_before",
-          "show_finance_on_display",
-          "display_background_url",
-          "show_heichal_on_display",
-          "display_slide_order",
-          "display_slide_durations",
-          "synagogue_name",
-          "ticker_speed",
-        ]);
+      const { data } = await fetchWithCache('display-settings', async () => {
+        const { data } = await supabase
+          .from("app_settings")
+          .select("key, value")
+          .in("key", [
+            "display_lock_code",
+            "show_memorial_on_display",
+            "memorial_show_week_before",
+            "show_finance_on_display",
+            "display_background_url",
+            "show_heichal_on_display",
+            "display_slide_order",
+            "display_slide_durations",
+            "synagogue_name",
+            "ticker_speed",
+          ]);
+        return data;
+      });
       if (data) {
         for (const setting of data) {
           if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
@@ -289,7 +296,6 @@ export default function Display() {
           }
         }
       }
-      // טען טיקר
       await fetchTicker();
     };
 
@@ -336,16 +342,20 @@ export default function Display() {
           datePairs.push({ day: futureDate.getDate(), month: futureDate.getMonth() });
         }
       }
-      const { data, error } = await supabase
-        .from("memorial_names")
-        .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
-        .eq("is_active", true);
-      if (!error && data) {
-        const matched = data.filter((p) =>
+      const { data: memData } = await fetchWithCache('memorial-names', async () => {
+        const { data, error } = await supabase
+          .from("memorial_names")
+          .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
+          .eq("is_active", true);
+        if (error) throw error;
+        return data;
+      });
+      if (memData) {
+        const matched = memData.filter((p: any) =>
           datePairs.some((dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month),
         );
         setMemorialPeople(
-          matched.map((p) => {
+          matched.map((p: any) => {
             const matchingPair = datePairs.find(
               (dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month,
             );
@@ -485,19 +495,23 @@ export default function Display() {
   useEffect(() => {
     const pollInterval = setInterval(
       async () => {
-        const { data: settingsData } = await supabase
-          .from("app_settings")
-          .select("key, value")
-          .in("key", [
-            "display_lock_code",
-            "show_memorial_on_display",
-            "memorial_show_week_before",
-            "show_finance_on_display",
-            "display_background_url",
-            "show_heichal_on_display",
-            "display_slide_order",
-            "display_slide_durations",
-          ]);
+        if (!navigator.onLine) return; // skip polling when offline
+        const { data: settingsData } = await fetchWithCache('display-settings-poll', async () => {
+          const { data } = await supabase
+            .from("app_settings")
+            .select("key, value")
+            .in("key", [
+              "display_lock_code",
+              "show_memorial_on_display",
+              "memorial_show_week_before",
+              "show_finance_on_display",
+              "display_background_url",
+              "show_heichal_on_display",
+              "display_slide_order",
+              "display_slide_durations",
+            ]);
+          return data;
+        });
         if (settingsData) {
           for (const setting of settingsData) {
             if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
@@ -521,12 +535,16 @@ export default function Display() {
             }
           }
         }
-        const { data: adsData, error: adsError } = await supabase
-          .from("scheduled_announcements")
-          .select("*")
-          .eq("is_active", true)
-          .order("priority", { ascending: false });
-        if (!adsError && adsData) setAnnouncements(adsData as ScheduledAnnouncement[]);
+        const { data: adsResult } = await fetchWithCache('scheduled-announcements', async () => {
+          const { data, error } = await supabase
+            .from("scheduled_announcements")
+            .select("*")
+            .eq("is_active", true)
+            .order("priority", { ascending: false });
+          if (error) throw error;
+          return data;
+        });
+        if (adsResult) setAnnouncements(adsResult as ScheduledAnnouncement[]);
       },
       3 * 60 * 1000,
     );
@@ -540,12 +558,16 @@ export default function Display() {
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
-      const { data, error } = await supabase
-        .from("scheduled_announcements")
-        .select("*")
-        .eq("is_active", true)
-        .order("priority", { ascending: false });
-      if (!error && data) setAnnouncements(data as ScheduledAnnouncement[]);
+      const { data: result } = await fetchWithCache('scheduled-announcements', async () => {
+        const { data, error } = await supabase
+          .from("scheduled_announcements")
+          .select("*")
+          .eq("is_active", true)
+          .order("priority", { ascending: false });
+        if (error) throw error;
+        return data;
+      });
+      if (result) setAnnouncements(result as ScheduledAnnouncement[]);
     };
     fetchAnnouncements();
     const channel = supabase
