@@ -749,6 +749,11 @@ export default function Display() {
                 {!isLocked && (
                   <button
                     onClick={exitFullscreen}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      exitFullscreen();
+                    }}
                     className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
                     title="יציאה ממסך מלא"
                   >
