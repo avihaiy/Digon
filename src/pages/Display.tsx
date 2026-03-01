@@ -443,6 +443,8 @@ export default function Display() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
+
   // Auto lock immediately + attempt fullscreen
   useEffect(() => {
     // Lock and hide controls immediately - no gesture needed
@@ -456,32 +458,24 @@ export default function Display() {
           setIsFullscreen(true);
         }
       } catch {
-        // Browser requires gesture - silently wait for first interaction
+        // Chrome requires a user gesture — show prompt overlay
+        setShowFullscreenPrompt(true);
       }
     };
 
-    // Try fullscreen immediately (works on PWA / after programmatic reload)
     const timer = setTimeout(attemptFullscreen, 300);
 
-    // Fallback: enter fullscreen on first interaction if not already
-    const onInteraction = async () => {
-      if (!document.fullscreenElement && containerRef.current) {
-        try {
-          await containerRef.current.requestFullscreen();
-          setIsFullscreen(true);
-        } catch {}
-      }
-      document.removeEventListener("click", onInteraction);
-      document.removeEventListener("touchstart", onInteraction);
-    };
-    document.addEventListener("click", onInteraction, { once: true });
-    document.addEventListener("touchstart", onInteraction, { once: true });
+    return () => clearTimeout(timer);
+  }, []);
 
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("click", onInteraction);
-      document.removeEventListener("touchstart", onInteraction);
-    };
+  const handleFullscreenPromptClick = useCallback(async () => {
+    setShowFullscreenPrompt(false);
+    if (containerRef.current && !document.fullscreenElement) {
+      try {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } catch {}
+    }
   }, []);
 
   useEffect(() => {
