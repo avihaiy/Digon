@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchWithCache, getCacheData } from "@/lib/display-cache";
 import { HDate, months, gematriya, HebrewCalendar, flags } from "@hebcal/core";
 import {
   getMashivHaruach,
