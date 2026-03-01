@@ -489,9 +489,24 @@ export default function Display() {
     };
   }, [enterFullscreen, requestFullscreenSafe]);
 
-  const goFullscreen = useCallback(async () => {
-    await enterFullscreen();
-  }, [enterFullscreen]);
+  const goFullscreen = useCallback(() => {
+    const el = containerRef.current ?? document.documentElement;
+    if (document.fullscreenElement) {
+      setShowFullscreenPrompt(false);
+      return;
+    }
+
+    void el
+      .requestFullscreen()
+      .then(() => {
+        setIsFullscreen(true);
+        setShowFullscreenPrompt(false);
+      })
+      .catch((err) => {
+        console.error("Fullscreen error:", err);
+        setShowFullscreenPrompt(true);
+      });
+  }, []);
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
