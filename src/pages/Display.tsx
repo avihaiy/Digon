@@ -211,12 +211,15 @@ export default function Display() {
 
   // פונקציה לטעינת טיקר
   const fetchTicker = useCallback(async () => {
-    const [{ data: td }, { data: sd }] = await Promise.all([
-      supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
-      supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
-    ]);
-    if (td) setTickerItems(td);
-    if (sd?.value) setTickerSpeed(sd.value);
+    const { data: result } = await fetchWithCache('ticker', async () => {
+      const [{ data: td }, { data: sd }] = await Promise.all([
+        supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
+        supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
+      ]);
+      return { items: td, speed: sd?.value };
+    });
+    if (result?.items) setTickerItems(result.items);
+    if (result?.speed) setTickerSpeed(result.speed);
   }, []);
 
   // Wake Lock
