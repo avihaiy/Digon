@@ -856,6 +856,23 @@ export default function Display() {
           <div className="text-center text-white pointer-events-none">
             <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
             <p className="text-2xl font-bold">לחץ כאן למסך מלא</p>
+            {fullscreenError && (
+              <p className="mt-4 text-lg text-red-400 max-w-md mx-auto">{fullscreenError}</p>
+            )}
+            {fullscreenAttempts > 0 && !fullscreenError && (
+              <p className="mt-4 text-sm text-white/60">ניסיון {fullscreenAttempts}...</p>
+            )}
+            {(fullscreenError?.includes("iframe") || fullscreenError?.includes("חלון חדש")) && (
+              <a
+                href={window.location.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-block px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg text-white text-lg pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                פתח בחלון חדש ←
+              </a>
+            )}
           </div>
         </button>
       )}
