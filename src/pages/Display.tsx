@@ -792,11 +792,12 @@ export default function Display() {
           >
             {!isFullscreen ? (
               <button
-                onClick={enterFullscreen}
-                onTouchEnd={(e) => {
+                onPointerDown={goFullscreen}
+                onClick={goFullscreen}
+                onTouchStart={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  enterFullscreen();
+                  goFullscreen();
                 }}
                 className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
                 title="מסך מלא"
