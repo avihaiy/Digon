@@ -504,9 +504,63 @@ export default function Display() {
     };
   }, [enterFullscreen, requestFullscreenSafe]);
 
+  const handleFullscreenGesture = useCallback((event?: { preventDefault?: () => void; stopPropagation?: () => void }) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      msFullscreenElement?: Element | null;
+    };
+
+    if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
+      setShowFullscreenPrompt(false);
+      setIsFullscreen(true);
+      return;
+    }
+
+    const el = containerRef.current as
+      | (HTMLElement & {
+          webkitRequestFullscreen?: () => Promise<void> | void;
+          msRequestFullscreen?: () => Promise<void> | void;
+        })
+      | null;
+
+    const fallbackEl = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+      msRequestFullscreen?: () => Promise<void> | void;
+    };
+
+    const target = el ?? fallbackEl;
+    const requestFn =
+      target.requestFullscreen?.bind(target) ??
+      target.webkitRequestFullscreen?.bind(target) ??
+      target.msRequestFullscreen?.bind(target);
+
+    if (!requestFn) {
+      setShowFullscreenPrompt(true);
+      return;
+    }
+
+    try {
+      Promise.resolve(requestFn())
+        .then(() => {
+          setIsFullscreen(true);
+          setShowFullscreenPrompt(false);
+        })
+        .catch((err) => {
+          console.error("Fullscreen error:", err);
+          setShowFullscreenPrompt(true);
+        });
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+      setShowFullscreenPrompt(true);
+    }
+  }, []);
+
   const goFullscreen = useCallback(() => {
-    void enterFullscreen();
-  }, [enterFullscreen]);
+    handleFullscreenGesture();
+  }, [handleFullscreenGesture]);
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
@@ -770,9 +824,9 @@ export default function Display() {
           type="button"
           className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer border-none outline-none"
           style={{ WebkitTapHighlightColor: "transparent" }}
-          onPointerDown={goFullscreen}
-          onTouchStart={goFullscreen}
-          onClick={goFullscreen}
+          onPointerDown={(e) => handleFullscreenGesture(e)}
+          onTouchStart={(e) => handleFullscreenGesture(e)}
+          onClick={(e) => handleFullscreenGesture(e)}
         >
           <div className="text-center text-white pointer-events-none">
             <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
@@ -792,12 +846,10 @@ export default function Display() {
           >
             {!isFullscreen ? (
               <button
-                onPointerDown={goFullscreen}
-                onClick={goFullscreen}
+                onPointerDown={(e) => handleFullscreenGesture(e)}
+                onClick={(e) => handleFullscreenGesture(e)}
                 onTouchStart={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  goFullscreen();
+                  handleFullscreenGesture(e);
                 }}
                 className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
                 title="מסך מלא"
