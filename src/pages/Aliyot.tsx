@@ -217,10 +217,6 @@ export default function Aliyot() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.aliya_type) {
-      toast.error('יש לבחור סוג עלייה');
-      return;
-    }
     createAliya.mutate();
   };
 
