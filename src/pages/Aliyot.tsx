@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import AshkavaBrachaBlock, { type AshkavaData, type BrachaData } from '@/components/payments/AshkavaBrachaBlock';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -49,10 +51,13 @@ import {
 } from '@/lib/hebrew-utils';
 
 export default function Aliyot() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(getNextShabbat());
+  const [ashkava, setAshkava] = useState<AshkavaData>({ enabled: false, quantity: 1, unitPrice: 0, total: 0 });
+  const [bracha, setBracha] = useState<BrachaData>({ enabled: false, type: 'single', price: 0 });
 
   // Get the occasion for the selected date
   const occasion = useMemo(() => getOccasionForDate(selectedDate), [selectedDate]);
@@ -99,19 +104,72 @@ export default function Aliyot() {
   // Create aliya
   const createAliya = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('aliyot').insert({
+      // Create the aliya
+      const { data: aliyaData, error } = await supabase.from('aliyot').insert({
         shabbat_date: shabbatDateStr,
         parasha: occasion.name || 'לא ידוע',
         aliya_type: formData.aliya_type as any,
         member_id: formData.member_id || null,
         price: Number(formData.price) || 0,
         status: 'pending',
-      });
+      }).select().single();
       if (error) throw error;
+
+      // Create ashkava payment if enabled
+      if (ashkava.enabled && ashkava.total > 0 && formData.member_id) {
+        await supabase.from('payments').insert({
+          member_id: formData.member_id,
+          amount: ashkava.total,
+          method: 'cash',
+          received_by: user?.id,
+          status: 'confirmed',
+          payment_type: 'ashkava',
+          quantity: ashkava.quantity,
+          unit_price: ashkava.unitPrice,
+          aliya_id: aliyaData.id,
+        });
+      }
+
+      // Create bracha payment if enabled
+      if (bracha.enabled && bracha.price > 0 && formData.member_id) {
+        await supabase.from('payments').insert({
+          member_id: formData.member_id,
+          amount: bracha.price,
+          method: 'cash',
+          received_by: user?.id,
+          status: 'confirmed',
+          payment_type: 'yearly_bracha',
+          quantity: 1,
+          unit_price: bracha.price,
+          aliya_id: aliyaData.id,
+        });
+
+        // Create bracha package
+        const totalBrachot = bracha.type === 'single' ? 1 :
+          bracha.type === 'package_10' ? 10 :
+          bracha.type === 'package_20' ? 20 : 9999;
+
+        await (supabase as any).from('bracha_packages').insert({
+          member_id: formData.member_id,
+          package_type: bracha.type,
+          total_brachot: totalBrachot,
+          used_brachot: 0,
+          balance: totalBrachot,
+          price_paid: bracha.price,
+          created_by: user?.id,
+        });
+      }
+
+      return aliyaData;
     },
     onSuccess: () => {
-      toast.success('העלייה נוספה בהצלחה');
+      const extras = [];
+      if (ashkava.enabled) extras.push(`${ashkava.quantity} אשכבות`);
+      if (bracha.enabled) extras.push('ברכת שנה');
+      const msg = extras.length > 0 ? `העלייה נוספה עם ${extras.join(' + ')}` : 'העלייה נוספה בהצלחה';
+      toast.success(msg);
       queryClient.invalidateQueries({ queryKey: ['aliyot'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
       handleCloseDialog();
     },
     onError: (error: any) => {
@@ -153,6 +211,8 @@ export default function Aliyot() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setFormData({ aliya_type: '', member_id: '', price: '' });
+    setAshkava({ enabled: false, quantity: 1, unitPrice: 0, total: 0 });
+    setBracha({ enabled: false, type: 'single', price: 0 });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -480,6 +540,45 @@ export default function Aliyot() {
                 className="text-left"
               />
             </div>
+
+            {/* Ashkava & Bracha */}
+            <AshkavaBrachaBlock
+              memberId={formData.member_id || undefined}
+              ashkava={ashkava}
+              bracha={bracha}
+              onAshkavaChange={setAshkava}
+              onBrachaChange={setBracha}
+            />
+
+            {/* Total summary if extras enabled */}
+            {(ashkava.enabled || bracha.enabled) && (
+              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-sm">
+                <div className="space-y-1">
+                  {Number(formData.price) > 0 && (
+                    <div className="flex justify-between">
+                      <span>עלייה</span>
+                      <span className="font-bold">{formatCurrency(Number(formData.price))}</span>
+                    </div>
+                  )}
+                  {ashkava.enabled && (
+                    <div className="flex justify-between">
+                      <span>אשכבות ({ashkava.quantity} יח')</span>
+                      <span className="font-bold">{formatCurrency(ashkava.total)}</span>
+                    </div>
+                  )}
+                  {bracha.enabled && (
+                    <div className="flex justify-between">
+                      <span>ברכת שנה</span>
+                      <span className="font-bold">{formatCurrency(bracha.price)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-primary/20 pt-1 mt-1 flex justify-between font-bold">
+                    <span>סה״כ</span>
+                    <span>{formatCurrency(Number(formData.price || 0) + (ashkava.enabled ? ashkava.total : 0) + (bracha.enabled ? bracha.price : 0))}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" onClick={handleCloseDialog} className="flex-1">
