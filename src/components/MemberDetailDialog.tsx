@@ -52,13 +52,13 @@ export function MemberDetailDialog({
   const [isSharingPdf, setIsSharingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState<'summary' | 'payments' | 'aliyot' | 'receipts'>('summary');
 
-  // Fetch pending payments (debts)
+  // Fetch payments with receipt descriptions
   const { data: payments, isLoading: loadingPayments } = useQuery({
     queryKey: ['member-payments', memberId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('*')
+        .select('*, receipt:receipts(receipt_number, description)')
         .eq('member_id', memberId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -120,7 +120,8 @@ export function MemberDetailDialog({
       if (pendingPayments.length > 0) {
         lines.push(``, `📌 תשלומים ממתינים (${pendingPayments.length}):`);
         pendingPayments.forEach(p => {
-          lines.push(`  • ${formatCurrency(Number(p.amount))} - ${formatShortDate(p.created_at)}`);
+          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
+          lines.push(`  • ${desc} - ${formatCurrency(Number(p.amount))} (${formatShortDate(p.created_at)})`);
         });
       }
 
@@ -128,7 +129,7 @@ export function MemberDetailDialog({
         lines.push(``, `📖 עליות ממתינות (${pendingAliyot.length}):`);
         pendingAliyot.forEach(a => {
           const typeName = ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type;
-          lines.push(`  • ${typeName} - ${a.parasha} - ${formatCurrency(Number(a.price || 0))}`);
+          lines.push(`  • ${typeName} - פרשת ${a.parasha} - ${formatCurrency(Number(a.price || 0))}`);
         });
       }
 
@@ -177,8 +178,9 @@ export function MemberDetailDialog({
       if (pendingPayments.length > 0) {
         html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">תשלומים ממתינים:</div>`;
         pendingPayments.forEach(p => {
+          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
           html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-            <span>${formatShortDate(p.created_at)}</span>
+            <span>${desc}</span>
             <span>${formatCurrency(Number(p.amount))}</span>
           </div>`;
         });
@@ -190,7 +192,7 @@ export function MemberDetailDialog({
         pendingAliyot.forEach(a => {
           const typeName = ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type;
           html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-            <span>${typeName} - ${a.parasha}</span>
+            <span>${typeName} - פרשת ${a.parasha}</span>
             <span>${formatCurrency(Number(a.price || 0))}</span>
           </div>`;
         });
@@ -306,24 +308,58 @@ export function MemberDetailDialog({
                     </CardContent>
                   </Card>
 
+                  {/* Detailed Debt Breakdown */}
+                  {pendingPayments.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+                        <CreditCard className="w-4 h-4" />
+                        תשלומים ממתינים ({pendingPayments.length})
+                      </h4>
+                      <div className="space-y-1">
+                        {pendingPayments.map(p => (
+                          <div key={p.id} className="flex items-center justify-between p-2.5 rounded-lg bg-destructive/5 border border-destructive/10">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-sm truncate">
+                                {p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{formatShortDate(p.created_at)}</p>
+                            </div>
+                            <span className="font-bold text-destructive mr-2">{formatCurrency(Number(p.amount))}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {pendingAliyot.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4" />
+                        עליות ממתינות ({pendingAliyot.length})
+                      </h4>
+                      <div className="space-y-1">
+                        {pendingAliyot.map(a => {
+                          const typeName = ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type;
+                          return (
+                            <div key={a.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/50 border border-border">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm">{typeName}</p>
+                                <p className="text-xs text-muted-foreground">פרשת {a.parasha} • {formatShortDate(a.shabbat_date)}</p>
+                              </div>
+                              <span className="font-bold mr-2">{formatCurrency(Number(a.price || 0))}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Quick Stats */}
                   <div className="grid grid-cols-2 gap-2">
                     <Card>
                       <CardContent className="p-3 text-center">
-                        <p className="text-xs text-muted-foreground">שולם</p>
+                        <p className="text-xs text-muted-foreground">סה״כ שולם</p>
                         <p className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-3 text-center">
-                        <p className="text-xs text-muted-foreground">תשלומים ממתינים</p>
-                        <p className="text-lg font-bold text-destructive">{pendingPayments.length}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-3 text-center">
-                        <p className="text-xs text-muted-foreground">עליות ממתינות</p>
-                        <p className="text-lg font-bold">{pendingAliyot.length}</p>
                       </CardContent>
                     </Card>
                     <Card>
@@ -368,11 +404,13 @@ export function MemberDetailDialog({
                   ) : (
                     payments?.map(p => (
                       <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div>
-                          <p className="font-medium text-sm">
-                            {PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">
+                            {p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method}
                           </p>
-                          <p className="text-xs text-muted-foreground">{formatShortDate(p.created_at)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method} • {formatShortDate(p.created_at)}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold">{formatCurrency(Number(p.amount))}</span>
