@@ -13,6 +13,7 @@ import { remotePrintReceipt } from '@/lib/remote-print';
 import { shareReceipt } from '@/lib/receipt-share';
 
 import html2pdf from 'html2pdf.js';
+import { toast } from 'sonner';
 
 interface ReceiptPreviewDialogProps {
   receipt: any;
