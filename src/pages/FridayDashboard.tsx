@@ -545,9 +545,9 @@ export default function FridayDashboard() {
               </p>
             </div>
 
-            {/* Amount */}
+            {/* Aliya Amount */}
             <div className="space-y-2">
-              <Label>סכום לתשלום</Label>
+              <Label>סכום עלייה</Label>
               <Input
                 type="number"
                 value={paymentAmount}
@@ -556,6 +556,43 @@ export default function FridayDashboard() {
                 dir="ltr"
               />
             </div>
+
+            {/* Ashkava & Bracha */}
+            <AshkavaBrachaBlock
+              memberId={selectedAliya?.member?.id}
+              ashkava={ashkava}
+              bracha={bracha}
+              onAshkavaChange={setAshkava}
+              onBrachaChange={setBracha}
+            />
+
+            {/* Total Summary */}
+            {(ashkava.enabled || bracha.enabled) && (
+              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>עלייה לתורה</span>
+                    <span className="font-bold">{formatCurrency(Number(paymentAmount || 0))}</span>
+                  </div>
+                  {ashkava.enabled && (
+                    <div className="flex justify-between">
+                      <span>אשכבות ({ashkava.quantity} יח')</span>
+                      <span className="font-bold">{formatCurrency(ashkava.total)}</span>
+                    </div>
+                  )}
+                  {bracha.enabled && (
+                    <div className="flex justify-between">
+                      <span>ברכת שנה</span>
+                      <span className="font-bold">{formatCurrency(bracha.price)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-primary/20 pt-1 mt-1 flex justify-between text-base font-bold">
+                    <span>סה״כ לתשלום</span>
+                    <span>{formatCurrency(totalPayment)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Payment Method */}
             <div className="space-y-3">
