@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,16 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   BookOpen,
   Plus,
   Calendar as CalendarIcon,
   Loader2,
-  Edit,
   Trash2,
   User,
+  Star,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -37,28 +37,30 @@ import { he } from 'date-fns/locale';
 import {
   formatCurrency,
   getNextShabbat,
-  getParashaForDate,
   getHebrewDate,
+  getOccasionForDate,
+  getUpcomingOccasions,
   ALIYA_TYPES,
   ALIYA_STATUS,
-  PARASHA_LIST,
+  type DateOccasion,
 } from '@/lib/hebrew-utils';
 
 export default function Aliyot() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(getNextShabbat());
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
-  // Auto-calculate parasha based on selected date
-  const autoParasha = getParashaForDate(selectedDate);
+  // Get the occasion for the selected date
+  const occasion = useMemo(() => getOccasionForDate(selectedDate), [selectedDate]);
+
+  // Get upcoming occasions for quick navigation
+  const upcomingOccasions = useMemo(() => getUpcomingOccasions(new Date(), 120), []);
 
   // Form state
   const [formData, setFormData] = useState({
     aliya_type: '',
     member_id: '',
     price: '',
-    parasha: autoParasha,
   });
 
   // Fetch aliyot for selected date
@@ -68,13 +70,9 @@ export default function Aliyot() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('aliyot')
-        .select(`
-          *,
-          member:members(id, full_name)
-        `)
+        .select(`*, member:members(id, full_name)`)
         .eq('shabbat_date', shabbatDateStr)
         .order('created_at');
-      
       if (error) throw error;
       return data || [];
     },
@@ -89,7 +87,6 @@ export default function Aliyot() {
         .select('id, full_name')
         .eq('active', true)
         .order('full_name');
-      
       if (error) throw error;
       return data || [];
     },
@@ -100,7 +97,7 @@ export default function Aliyot() {
     mutationFn: async () => {
       const { error } = await supabase.from('aliyot').insert({
         shabbat_date: shabbatDateStr,
-        parasha: formData.parasha,
+        parasha: occasion.name || 'לא ידוע',
         aliya_type: formData.aliya_type as any,
         member_id: formData.member_id || null,
         price: Number(formData.price) || 0,
@@ -115,7 +112,7 @@ export default function Aliyot() {
     },
     onError: (error: any) => {
       if (error.message?.includes('duplicate')) {
-        toast.error('עלייה מסוג זה כבר קיימת לשבת זו');
+        toast.error('עלייה מסוג זה כבר קיימת לתאריך זה');
       } else {
         toast.error('שגיאה בהוספת העלייה', { description: error.message });
       }
@@ -151,20 +148,7 @@ export default function Aliyot() {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
-    setFormData({
-      aliya_type: '',
-      member_id: '',
-      price: '',
-      parasha: autoParasha,
-    });
-  };
-
-  // Update parasha when date changes
-  const handleDateChange = (date: Date) => {
-    setSelectedDate(date);
-    const newParasha = getParashaForDate(date);
-    setFormData((prev) => ({ ...prev, parasha: newParasha }));
-    setCalendarOpen(false);
+    setFormData({ aliya_type: '', member_id: '', price: '' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -176,11 +160,27 @@ export default function Aliyot() {
     createAliya.mutate();
   };
 
+  // Navigate to next/prev occasion
+  const currentIndex = upcomingOccasions.findIndex(
+    (o) => o.date.toISOString().split('T')[0] === shabbatDateStr
+  );
+  const navigateOccasion = (direction: 'prev' | 'next') => {
+    if (direction === 'next' && currentIndex < upcomingOccasions.length - 1) {
+      setSelectedDate(upcomingOccasions[currentIndex + 1].date);
+    } else if (direction === 'prev' && currentIndex > 0) {
+      setSelectedDate(upcomingOccasions[currentIndex - 1].date);
+    }
+  };
+
   // Get available aliya types (not yet assigned)
   const assignedTypes = aliyot?.map((a: any) => a.aliya_type) || [];
   const availableTypes = Object.keys(ALIYA_TYPES).filter(
     (type) => !assignedTypes.includes(type)
   );
+
+  const occasionBadgeColor = occasion.type === 'holiday' || occasion.type === 'shabbat_holiday'
+    ? 'bg-amber-600 text-white'
+    : 'bg-primary text-primary-foreground';
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -191,9 +191,7 @@ export default function Aliyot() {
             <BookOpen className="w-6 h-6" />
             ניהול עליות
           </h1>
-          <p className="text-muted-foreground">
-            שיוך עליות לשבתות
-          </p>
+          <p className="text-muted-foreground">שיוך עליות לשבתות וחגים</p>
         </div>
         <Button
           onClick={() => setDialogOpen(true)}
@@ -205,40 +203,76 @@ export default function Aliyot() {
         </Button>
       </div>
 
-      {/* Date Selector */}
+      {/* Date Navigation */}
       <Card className="glass-card">
         <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Label>שבת נבחרת:</Label>
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <CalendarIcon className="w-4 h-4" />
-                    {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })} • {getHebrewDate(selectedDate)}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        handleDateChange(date);
-                      }
-                    }}
-                    disabled={(date) => date.getDay() !== 6}
-                    locale={he}
-                  />
-                </PopoverContent>
-              </Popover>
+          <div className="flex flex-col gap-4">
+            {/* Navigation arrows + current date */}
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => navigateOccasion('next')}
+                disabled={currentIndex >= upcomingOccasions.length - 1}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+
+              <div className="text-center flex-1">
+                <p className="text-sm text-muted-foreground">
+                  {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })}
+                </p>
+                <p className="text-xs text-muted-foreground">{getHebrewDate(selectedDate)}</p>
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => navigateOccasion('prev')}
+                disabled={currentIndex <= 0}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
             </div>
-            <Badge variant="default" className="text-base px-4 py-1 bg-primary">
-              פרשת {autoParasha}
-            </Badge>
-            <Badge variant="secondary" className="text-base px-4 py-1">
-              {aliyot?.length || 0} עליות משויכות
-            </Badge>
+
+            {/* Occasion badge + count */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {occasion.type !== 'none' && (
+                <Badge className={`text-base px-4 py-1 ${occasionBadgeColor}`}>
+                  {occasion.type === 'holiday' || occasion.type === 'shabbat_holiday' ? (
+                    <Star className="w-4 h-4 ml-1 inline" />
+                  ) : null}
+                  {occasion.label}
+                </Badge>
+              )}
+              <Badge variant="secondary" className="text-base px-4 py-1">
+                {aliyot?.length || 0} עליות משויכות
+              </Badge>
+            </div>
+
+            {/* Quick occasion selector */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {upcomingOccasions.slice(0, 8).map((o) => {
+                const dateStr = o.date.toISOString().split('T')[0];
+                const isSelected = dateStr === shabbatDateStr;
+                const isHoliday = o.occasion.type === 'holiday' || o.occasion.type === 'shabbat_holiday';
+                return (
+                  <Button
+                    key={dateStr}
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="sm"
+                    className={`text-xs ${isHoliday && !isSelected ? 'border-amber-500 text-amber-700 dark:text-amber-400' : ''}`}
+                    onClick={() => setSelectedDate(o.date)}
+                  >
+                    {isHoliday && <Star className="w-3 h-3 ml-1" />}
+                    {o.occasion.name.length > 12 ? o.occasion.name.slice(0, 12) + '…' : o.occasion.name}
+                    <span className="mr-1 opacity-60 text-[10px]">
+                      {format(o.date, 'd/M')}
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -253,7 +287,7 @@ export default function Aliyot() {
           <Card className="col-span-full glass-card py-12">
             <CardContent className="text-center text-muted-foreground">
               <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">אין עליות לשבת זו</p>
+              <p className="text-lg font-medium">אין עליות לתאריך זה</p>
               <p className="text-sm">לחץ על "הוסף עלייה" להוספת עליות</p>
             </CardContent>
           </Card>
@@ -267,7 +301,7 @@ export default function Aliyot() {
                       {ALIYA_TYPES[aliya.aliya_type as keyof typeof ALIYA_TYPES]}
                     </Badge>
                     <p className="text-sm text-muted-foreground">
-                      פרשת {aliya.parasha}
+                      {aliya.parasha}
                     </p>
                   </div>
                   <Button
@@ -327,6 +361,16 @@ export default function Aliyot() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Show occasion info */}
+            <div className="p-3 rounded-md border border-border bg-muted/50 text-center">
+              <p className="text-sm text-muted-foreground">
+                {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })}
+              </p>
+              <p className={`text-lg font-bold mt-1 ${occasion.type === 'holiday' || occasion.type === 'shabbat_holiday' ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                {occasion.label || getHebrewDate(selectedDate)}
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label>סוג עלייה *</Label>
               <Select
@@ -344,28 +388,13 @@ export default function Aliyot() {
                   ))}
                 </SelectContent>
               </Select>
-              {availableTypes.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  כל סוגי העליות כבר משויכים לשבת זו
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>פרשה (אוטומטי לפי תאריך)</Label>
-              <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted text-muted-foreground">
-                {autoParasha}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                הפרשה מחושבת אוטומטית לפי התאריך הנבחר
-              </p>
             </div>
 
             <div className="space-y-2">
               <Label>חבר (אופציונלי)</Label>
               <Select
-                value={formData.member_id || "none"}
-                onValueChange={(value) => setFormData({ ...formData, member_id: value === "none" ? "" : value })}
+                value={formData.member_id || 'none'}
+                onValueChange={(value) => setFormData({ ...formData, member_id: value === 'none' ? '' : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר חבר" />
