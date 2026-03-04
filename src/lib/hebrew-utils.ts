@@ -501,8 +501,10 @@ export function getNextShabbat(from: Date = new Date()): Date {
 
 // Get parasha for a specific date (returns the parasha for that week's Shabbat)
 export function getParashaForDate(date: Date): string {
-  // Get the Shabbat for this week
-  const shabbat = getNextShabbat(date);
+  // Use this Shabbat if today is Saturday, otherwise the upcoming Shabbat
+  const shabbat = new Date(date);
+  const daysUntilSaturday = (6 - shabbat.getDay() + 7) % 7;
+  shabbat.setDate(shabbat.getDate() + daysUntilSaturday);
   const hdate = new HDate(shabbat);
   
   // Create Sedra object for Israel (false = diaspora, true = Israel)
