@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, X, FileDown, Loader2, Wifi } from 'lucide-react';
+import { Printer, X, FileDown, Loader2, Wifi, Share2 } from 'lucide-react';
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
@@ -31,6 +31,7 @@ export function ReceiptPreviewDialog({
   const [isSavingPdf, setIsSavingPdf] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [isRemotePrinting, setIsRemotePrinting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   if (!receipt) return null;
 
@@ -76,6 +77,49 @@ export function ReceiptPreviewDialog({
       toast.error('שגיאה בשמירת הקבלה כ-PDF');
     } finally {
       setIsSavingPdf(false);
+    }
+  };
+
+  const handleSharePdf = async () => {
+    if (!receiptRef.current) return;
+
+    setIsSharing(true);
+    try {
+      const element = receiptRef.current;
+      const opt = {
+        margin: 0,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: [80, 120], orientation: 'portrait' as const },
+      };
+
+      const pdfBlob: Blob = await html2pdf().set(opt).from(element).outputPdf('blob');
+      const file = new File([pdfBlob], `קבלה-${receipt.receipt_number}.pdf`, { type: 'application/pdf' });
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          title: `קבלה מספר ${receipt.receipt_number}`,
+          text: `קבלה על סך ${formatCurrency(Number(receipt.total_amount))} - ${receipt.member?.full_name || ''}`,
+          files: [file],
+        });
+        toast.success('הקבלה שותפה בהצלחה');
+      } else {
+        // Fallback: download the file
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `קבלה-${receipt.receipt_number}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success('הקבלה הורדה כ-PDF (שיתוף לא נתמך בדפדפן זה)');
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Share error:', error);
+        toast.error('שגיאה בשיתוף הקבלה');
+      }
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -220,6 +264,20 @@ export function ReceiptPreviewDialog({
                 <FileDown className="w-4 h-4 ml-2" />
               )}
               שמור PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleSharePdf}
+              disabled={isSharing}
+              className="px-4"
+            >
+              {isSharing ? (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              ) : (
+                <Share2 className="w-4 h-4 ml-2" />
+              )}
+              שתף קבלה
             </Button>
           </div>
           <Button
