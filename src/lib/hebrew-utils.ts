@@ -1,5 +1,5 @@
 // Hebrew date and parasha utilities
-import { HDate, Sedra, Location, Zmanim } from '@hebcal/core';
+import { HDate, Sedra, Location, Zmanim, HebrewCalendar, flags } from '@hebcal/core';
 
 // Common Israeli city locations
 export const ISRAEL_LOCATIONS: Record<string, { name: string; lat: number; lng: number; tzid: string }> = {
@@ -528,6 +528,93 @@ export function getParashaForDate(date: Date): string {
 // Get current week's parasha (for current Shabbat)
 export function getCurrentParasha(): string {
   return getParashaForDate(new Date());
+}
+
+// Detect occasion for a given date - returns parasha name for Shabbat, holiday name for holidays
+export interface DateOccasion {
+  type: 'shabbat' | 'holiday' | 'shabbat_holiday' | 'none';
+  name: string;
+  label: string; // display label like "פרשת X" or "חג X"
+}
+
+export function getOccasionForDate(date: Date): DateOccasion {
+  const isSat = date.getDay() === 6;
+  
+  // Check for holidays using hebcal
+  const hdate = new HDate(date);
+  const events = HebrewCalendar.getHolidaysOnDate(hdate, true); // true = Israel
+  
+  // Filter to significant holidays (chag, major fast, etc.)
+  const significantHoliday = events?.find((ev: any) => {
+    const f = ev.getFlags();
+    return (f & flags.CHAG) || (f & flags.MAJOR_FAST) || (f & flags.MINOR_FAST);
+  });
+  
+  // Holiday name mapping
+  const HOLIDAY_HEBREW: Record<string, string> = {
+    'Rosh Hashana': 'ראש השנה',
+    'Rosh Hashana I': 'ראש השנה א׳',
+    'Rosh Hashana II': 'ראש השנה ב׳',
+    'Yom Kippur': 'יום כיפור',
+    'Sukkot I': 'סוכות א׳',
+    'Sukkot II': 'סוכות ב׳',
+    'Sukkot III (CH\'\'M)': 'חול המועד סוכות',
+    'Sukkot IV (CH\'\'M)': 'חול המועד סוכות',
+    'Sukkot V (CH\'\'M)': 'חול המועד סוכות',
+    'Sukkot VI (CH\'\'M)': 'חול המועד סוכות',
+    'Sukkot VII (Hoshana Raba)': 'הושענא רבה',
+    'Shmini Atzeret': 'שמיני עצרת',
+    'Simchat Torah': 'שמחת תורה',
+    'Pesach I': 'פסח א׳',
+    'Pesach II': 'פסח ב׳',
+    'Pesach III (CH\'\'M)': 'חול המועד פסח',
+    'Pesach IV (CH\'\'M)': 'חול המועד פסח',
+    'Pesach V (CH\'\'M)': 'חול המועד פסח',
+    'Pesach VI (CH\'\'M)': 'חול המועד פסח',
+    'Pesach VII': 'שביעי של פסח',
+    'Shavuot': 'שבועות',
+    'Shavuot I': 'שבועות א׳',
+    'Shavuot II': 'שבועות ב׳',
+    'Tzom Gedaliah': 'צום גדליה',
+    'Asara B\'Tevet': 'צום י׳ בטבת',
+    'Ta\'anit Esther': 'תענית אסתר',
+    'Tzom Tammuz': 'צום י״ז בתמוז',
+    'Tish\'a B\'Av': 'תשעה באב',
+    'Purim': 'פורים',
+  };
+  
+  if (significantHoliday) {
+    const desc = significantHoliday.getDesc();
+    const hebrewName = HOLIDAY_HEBREW[desc] || desc;
+    
+    if (isSat) {
+      return { type: 'shabbat_holiday', name: hebrewName, label: hebrewName };
+    }
+    return { type: 'holiday', name: hebrewName, label: hebrewName };
+  }
+  
+  if (isSat) {
+    const parasha = getParashaForDate(date);
+    return { type: 'shabbat', name: parasha, label: `פרשת ${parasha}` };
+  }
+  
+  return { type: 'none', name: '', label: '' };
+}
+
+// Get upcoming dates with aliyot (Shabbatot and holidays) for the next N days
+export function getUpcomingOccasions(fromDate: Date = new Date(), days: number = 90): Array<{ date: Date; occasion: DateOccasion }> {
+  const results: Array<{ date: Date; occasion: DateOccasion }> = [];
+  
+  for (let i = 0; i < days; i++) {
+    const d = new Date(fromDate);
+    d.setDate(d.getDate() + i);
+    const occasion = getOccasionForDate(d);
+    if (occasion.type !== 'none') {
+      results.push({ date: d, occasion });
+    }
+  }
+  
+  return results;
 }
 
 // Format currency in Shekels
