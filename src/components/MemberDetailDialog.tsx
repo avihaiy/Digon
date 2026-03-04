@@ -404,11 +404,13 @@ export function MemberDetailDialog({
                   ) : (
                     payments?.map(p => (
                       <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div>
-                          <p className="font-medium text-sm">
-                            {PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">
+                            {p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method}
                           </p>
-                          <p className="text-xs text-muted-foreground">{formatShortDate(p.created_at)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method} • {formatShortDate(p.created_at)}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold">{formatCurrency(Number(p.amount))}</span>
