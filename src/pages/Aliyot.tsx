@@ -50,6 +50,7 @@ import {
 export default function Aliyot() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(getNextShabbat());
 
   // Get the occasion for the selected date
