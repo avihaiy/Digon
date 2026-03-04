@@ -79,7 +79,7 @@ export default function Aliyot() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('aliyot')
-        .select(`*, member:members(id, full_name)`)
+        .select(`*, member:members(id, full_name), payments:payments(id, payment_type, amount, quantity, unit_price)`)
         .eq('shabbat_date', shabbatDateStr)
         .order('created_at');
       if (error) throw error;
@@ -439,10 +439,38 @@ export default function Aliyot() {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold hebrew-number">
-                      {formatCurrency(Number(aliya.price))}
-                    </span>
+                  {/* Price breakdown */}
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>עלייה</span>
+                      <span className="font-bold hebrew-number">{formatCurrency(Number(aliya.price))}</span>
+                    </div>
+                    {aliya.payments?.filter((p: any) => p.payment_type === 'ashkava').map((p: any) => (
+                      <div key={p.id} className="flex justify-between text-amber-600 dark:text-amber-400">
+                        <span>🕯 אשכבות ({p.quantity} יח')</span>
+                        <span className="font-bold">{formatCurrency(Number(p.amount))}</span>
+                      </div>
+                    ))}
+                    {aliya.payments?.filter((p: any) => p.payment_type === 'yearly_bracha').map((p: any) => (
+                      <div key={p.id} className="flex justify-between text-purple-600 dark:text-purple-400">
+                        <span>✨ ברכת שנה</span>
+                        <span className="font-bold">{formatCurrency(Number(p.amount))}</span>
+                      </div>
+                    ))}
+                    {(aliya.payments?.length > 0 && aliya.payments.some((p: any) => p.payment_type !== 'aliya')) && (
+                      <div className="flex justify-between border-t border-border pt-1 mt-1">
+                        <span className="font-bold">סה״כ</span>
+                        <span className="text-lg font-bold hebrew-number">
+                          {formatCurrency(
+                            Number(aliya.price) +
+                            (aliya.payments?.reduce((sum: number, p: any) => sum + (p.payment_type !== 'aliya' ? Number(p.amount) : 0), 0) || 0)
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end">
                     <Select
                       value={aliya.status}
                       onValueChange={(value) =>
