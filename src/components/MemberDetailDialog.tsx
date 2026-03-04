@@ -298,15 +298,17 @@ export function MemberDetailDialog({
               {/* Summary Tab */}
               {activeTab === 'summary' && (
                 <div className="space-y-3">
-                  {/* Debt Card */}
-                  <Card className={`border-2 ${totalOwed > 0 ? 'border-destructive/30 bg-destructive/5' : 'border-green-500/30 bg-green-500/5'}`}>
-                    <CardContent className="p-4 text-center">
-                      <p className="text-sm text-muted-foreground mb-1">חוב פתוח</p>
-                      <p className={`text-3xl font-black ${totalOwed > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                        {formatCurrency(totalOwed)}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  {/* Debt Card - only show when there's debt */}
+                  {totalOwed > 0 && (
+                    <Card className="border-2 border-destructive/30 bg-destructive/5">
+                      <CardContent className="p-4 text-center">
+                        <p className="text-sm text-muted-foreground mb-1">חוב פתוח</p>
+                        <p className="text-3xl font-black text-destructive">
+                          {formatCurrency(totalOwed)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Detailed Debt Breakdown */}
                   {pendingPayments.length > 0 && (
