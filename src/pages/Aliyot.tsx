@@ -72,6 +72,19 @@ export default function Aliyot() {
     price: '',
   });
 
+
+  const ashkavaCalculatedTotal = useMemo(() => {
+    if (!ashkava.enabled) return 0;
+    const quantity = Math.max(0, Number(ashkava.quantity) || 0);
+    const unitPrice = Math.max(0, Number(ashkava.unitPrice) || 0);
+    return quantity * unitPrice;
+  }, [ashkava.enabled, ashkava.quantity, ashkava.unitPrice]);
+
+  const totalToPay =
+    (Number(formData.price) || 0) +
+    ashkavaCalculatedTotal +
+    (bracha.enabled ? Number(bracha.price) || 0 : 0);
+
   // Fetch aliyot for selected date
   const shabbatDateStr = selectedDate.toISOString().split('T')[0];
   const { data: aliyot, isLoading: aliyotLoading } = useQuery({
