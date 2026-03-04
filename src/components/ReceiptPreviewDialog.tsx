@@ -80,6 +80,49 @@ export function ReceiptPreviewDialog({
     }
   };
 
+  const handleSharePdf = async () => {
+    if (!receiptRef.current) return;
+
+    setIsSharing(true);
+    try {
+      const element = receiptRef.current;
+      const opt = {
+        margin: 0,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: [80, 120], orientation: 'portrait' as const },
+      };
+
+      const pdfBlob: Blob = await html2pdf().set(opt).from(element).outputPdf('blob');
+      const file = new File([pdfBlob], `קבלה-${receipt.receipt_number}.pdf`, { type: 'application/pdf' });
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          title: `קבלה מספר ${receipt.receipt_number}`,
+          text: `קבלה על סך ${formatCurrency(Number(receipt.total_amount))} - ${receipt.member?.full_name || ''}`,
+          files: [file],
+        });
+        toast.success('הקבלה שותפה בהצלחה');
+      } else {
+        // Fallback: download the file
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `קבלה-${receipt.receipt_number}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success('הקבלה הורדה כ-PDF (שיתוף לא נתמך בדפדפן זה)');
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Share error:', error);
+        toast.error('שגיאה בשיתוף הקבלה');
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm p-0 overflow-hidden">
