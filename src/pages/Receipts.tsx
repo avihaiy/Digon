@@ -78,6 +78,7 @@ export default function Receipts() {
     description: '',
     parasha: '',
   });
+  const shareFileCacheRef = useRef<Record<string, File>>({});
 
   // Fetch receipts
   const { data: receipts, isLoading } = useQuery({
