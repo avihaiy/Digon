@@ -222,9 +222,28 @@ export default function Aliyot() {
               </Button>
 
               <div className="text-center flex-1">
-                <p className="text-sm text-muted-foreground">
-                  {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })}
-                </p>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" className="gap-2 text-sm">
+                      <CalendarIcon className="w-4 h-4" />
+                      {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="center">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setSelectedDate(date);
+                          setCalendarOpen(false);
+                        }
+                      }}
+                      locale={he}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
                 <p className="text-xs text-muted-foreground">{getHebrewDate(selectedDate)}</p>
               </div>
 
