@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MemberDetailDialog } from '@/components/MemberDetailDialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +53,7 @@ export default function Members() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [detailMember, setDetailMember] = useState<Member | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -227,9 +229,10 @@ export default function Members() {
           members?.map((member) => (
             <Card
               key={member.id}
-              className={`glass-card transition-all ${
+              className={`glass-card transition-all cursor-pointer hover:ring-2 hover:ring-primary/30 ${
                 !member.active ? 'opacity-60' : ''
               }`}
+              onClick={() => setDetailMember(member)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
@@ -248,7 +251,7 @@ export default function Members() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -381,6 +384,14 @@ export default function Members() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Member Detail Dialog */}
+      <MemberDetailDialog
+        memberId={detailMember?.id || null}
+        memberName={detailMember?.full_name || ''}
+        open={!!detailMember}
+        onOpenChange={(open) => !open && setDetailMember(null)}
+      />
     </div>
   );
 }
