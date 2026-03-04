@@ -96,42 +96,25 @@ export function ReceiptPreviewDialog({
       const pdfBlob: Blob = await html2pdf().set(opt).from(element).toPdf().output('blob');
       const pdfFile = new Blob([pdfBlob], { type: 'application/pdf' });
       const fileName = `receipt-${receipt.receipt_number}.pdf`;
+      const file = new File([pdfFile], fileName, { type: 'application/pdf' });
 
-      // Try native share (works on mobile with WhatsApp etc.)
-      try {
-        const file = new File([pdfFile], fileName, { type: 'application/pdf' });
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file] });
-          toast.success('הקבלה שותפה בהצלחה');
-          return;
-        }
-      } catch (shareErr: any) {
-        if (shareErr.name === 'AbortError') return;
-        console.warn('Native share failed:', shareErr);
-      }
-
-      // Fallback: download PDF + open WhatsApp
-      const phone = receipt.member?.phone?.replace(/\D/g, '') || '';
-      const memberName = receipt.member?.full_name || '';
-      const amount = formatCurrency(Number(receipt.total_amount));
-      const msg = encodeURIComponent(
-        `שלום ${memberName},\n\nקבלה מספר: ${receipt.receipt_number}\nסכום: ${amount}\nתאריך: ${formatDate(receipt.created_at)}\n\nתודה רבה!\nבית כנסת "ברית שלום" עכו`
-      );
-
-      const url = URL.createObjectURL(pdfFile);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-      if (phone) {
-        const waPhone = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
-        window.open(`https://wa.me/${waPhone}?text=${msg}`, '_blank');
+      // Try native share with PDF file
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `קבלה ${receipt.receipt_number}`,
+        });
+        toast.success('הקבלה שותפה בהצלחה');
       } else {
-        window.open(`https://wa.me/?text=${msg}`, '_blank');
+        // Fallback: download the PDF file
+        const url = URL.createObjectURL(pdfFile);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        toast.success('הקבלה הורדה בהצלחה');
       }
-      toast.success('הקבלה הורדה - ניתן לצרף אותה בוואטסאפ');
     } catch (error: any) {
       if (error.name !== 'AbortError') {
         console.error('Share error:', error);
