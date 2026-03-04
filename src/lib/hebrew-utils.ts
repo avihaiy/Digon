@@ -1,5 +1,5 @@
 // Hebrew date and parasha utilities
-import { HDate, Sedra, Location, Zmanim } from '@hebcal/core';
+import { HDate, Sedra, Location, Zmanim, HebrewCalendar, flags } from '@hebcal/core';
 
 // Common Israeli city locations
 export const ISRAEL_LOCATIONS: Record<string, { name: string; lat: number; lng: number; tzid: string }> = {
