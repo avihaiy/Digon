@@ -202,6 +202,26 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* Type Filter */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { key: 'all', label: 'הכל' },
+          { key: 'aliya', label: 'עליות' },
+          { key: 'ashkava', label: 'אשכבות' },
+          { key: 'yearly_bracha', label: 'ברכות שנה' },
+          { key: 'donation', label: 'תרומות' },
+        ].map(f => (
+          <Button
+            key={f.key}
+            variant={typeFilter === f.key ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTypeFilter(f.key)}
+          >
+            {f.label}
+          </Button>
+        ))}
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="glass-card">
