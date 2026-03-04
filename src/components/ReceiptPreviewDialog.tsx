@@ -265,6 +265,20 @@ export function ReceiptPreviewDialog({
               )}
               שמור PDF
             </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleSharePdf}
+              disabled={isSharing}
+              className="px-4"
+            >
+              {isSharing ? (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              ) : (
+                <Share2 className="w-4 h-4 ml-2" />
+              )}
+              שתף קבלה
+            </Button>
           </div>
           <Button
             variant="outline"
