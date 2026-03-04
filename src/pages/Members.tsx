@@ -229,9 +229,10 @@ export default function Members() {
           members?.map((member) => (
             <Card
               key={member.id}
-              className={`glass-card transition-all ${
+              className={`glass-card transition-all cursor-pointer hover:ring-2 hover:ring-primary/30 ${
                 !member.active ? 'opacity-60' : ''
               }`}
+              onClick={() => setDetailMember(member)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
