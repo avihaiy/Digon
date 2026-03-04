@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, X, FileDown, Loader2, Wifi } from 'lucide-react';
+import { Printer, X, FileDown, Loader2, Wifi, Share2 } from 'lucide-react';
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
