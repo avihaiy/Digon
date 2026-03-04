@@ -31,6 +31,7 @@ export function ReceiptPreviewDialog({
   const [isSavingPdf, setIsSavingPdf] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [isRemotePrinting, setIsRemotePrinting] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   if (!receipt) return null;
 
