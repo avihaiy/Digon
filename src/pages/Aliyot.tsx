@@ -487,16 +487,17 @@ export default function Aliyot() {
             </div>
 
             <div className="space-y-2">
-              <Label>סוג עלייה *</Label>
+              <Label>סוג עלייה (אופציונלי)</Label>
               <Select
-                value={formData.aliya_type}
-                onValueChange={(value) => setFormData({ ...formData, aliya_type: value })}
+                value={formData.aliya_type || 'general'}
+                onValueChange={(value) => setFormData({ ...formData, aliya_type: value === 'general' ? '' : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר סוג עלייה" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTypes.map((type) => (
+                  <SelectItem value="general">כללי (ללא סוג)</SelectItem>
+                  {availableTypes.filter(t => t !== 'general').map((type) => (
                     <SelectItem key={type} value={type}>
                       {ALIYA_TYPES[type as keyof typeof ALIYA_TYPES]}
                     </SelectItem>
