@@ -192,7 +192,7 @@ export function MemberDetailDialog({
         pendingAliyot.forEach(a => {
           const typeName = ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type;
           html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-            <span>${typeName} - ${a.parasha}</span>
+            <span>${typeName} - פרשת ${a.parasha}</span>
             <span>${formatCurrency(Number(a.price || 0))}</span>
           </div>`;
         });
