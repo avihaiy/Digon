@@ -544,18 +544,25 @@ export function getOccasionForDate(date: Date): DateOccasion {
   const hdate = new HDate(date);
   const events = HebrewCalendar.getHolidaysOnDate(hdate, true); // true = Israel
   
-  // Filter to significant holidays (chag, major fast, etc.)
+  // Filter to significant holidays
   const significantHoliday = events?.find((ev: any) => {
     const f = ev.getFlags();
-    return (f & flags.CHAG) || (f & flags.MAJOR_FAST) || (f & flags.MINOR_FAST);
+    return (f & flags.CHAG) || (f & flags.MAJOR_FAST) || (f & flags.MINOR_FAST) ||
+           (f & flags.MODERN_HOLIDAY) || (f & flags.SPECIAL_SHABBAT) ||
+           (f & flags.ROSH_CHODESH) || (f & flags.MINOR_HOLIDAY);
   });
   
-  // Holiday name mapping
+  // Comprehensive Hebrew holiday name mapping
   const HOLIDAY_HEBREW: Record<string, string> = {
+    // ימים נוראים
     'Rosh Hashana': 'ראש השנה',
     'Rosh Hashana I': 'ראש השנה א׳',
     'Rosh Hashana II': 'ראש השנה ב׳',
     'Yom Kippur': 'יום כיפור',
+    'Erev Yom Kippur': 'ערב יום כיפור',
+    'Erev Rosh Hashana': 'ערב ראש השנה',
+    // סוכות
+    'Erev Sukkot': 'ערב סוכות',
     'Sukkot I': 'סוכות א׳',
     'Sukkot II': 'סוכות ב׳',
     'Sukkot III (CH\'\'M)': 'חול המועד סוכות',
@@ -565,22 +572,77 @@ export function getOccasionForDate(date: Date): DateOccasion {
     'Sukkot VII (Hoshana Raba)': 'הושענא רבה',
     'Shmini Atzeret': 'שמיני עצרת',
     'Simchat Torah': 'שמחת תורה',
+    // פסח
+    'Erev Pesach': 'ערב פסח',
+    'Pesach': 'פסח',
     'Pesach I': 'פסח א׳',
     'Pesach II': 'פסח ב׳',
+    'Pesach II (CH\'\'M)': 'חול המועד פסח',
     'Pesach III (CH\'\'M)': 'חול המועד פסח',
     'Pesach IV (CH\'\'M)': 'חול המועד פסח',
     'Pesach V (CH\'\'M)': 'חול המועד פסח',
     'Pesach VI (CH\'\'M)': 'חול המועד פסח',
     'Pesach VII': 'שביעי של פסח',
+    'Pesach Sheni': 'פסח שני',
+    // שבועות
+    'Erev Shavuot': 'ערב שבועות',
     'Shavuot': 'שבועות',
-    'Shavuot I': 'שבועות א׳',
+    'Shavuot I': 'שבועות',
     'Shavuot II': 'שבועות ב׳',
+    // חנוכה
+    'Chanukah: 1 Candle': 'חנוכה - נר א׳',
+    'Chanukah: 2 Candles': 'חנוכה - נר ב׳',
+    'Chanukah: 3 Candles': 'חנוכה - נר ג׳',
+    'Chanukah: 4 Candles': 'חנוכה - נר ד׳',
+    'Chanukah: 5 Candles': 'חנוכה - נר ה׳',
+    'Chanukah: 6 Candles': 'חנוכה - נר ו׳',
+    'Chanukah: 7 Candles': 'חנוכה - נר ז׳',
+    'Chanukah: 8 Candles': 'חנוכה - נר ח׳',
+    'Chanukah: 8th Day': 'זאת חנוכה',
+    // פורים
+    'Purim': 'פורים',
+    'Shushan Purim': 'שושן פורים',
+    'Purim Katan': 'פורים קטן',
+    // צומות
     'Tzom Gedaliah': 'צום גדליה',
     'Asara B\'Tevet': 'צום י׳ בטבת',
     'Ta\'anit Esther': 'תענית אסתר',
+    'Ta\'anit Bechorot': 'תענית בכורות',
     'Tzom Tammuz': 'צום י״ז בתמוז',
     'Tish\'a B\'Av': 'תשעה באב',
-    'Purim': 'פורים',
+    // ימים מיוחדים
+    'Yom HaShoah': 'יום השואה',
+    'Yom HaZikaron': 'יום הזיכרון',
+    'Yom HaAtzma\'ut': 'יום העצמאות',
+    'Yom Yerushalayim': 'יום ירושלים',
+    'Lag BaOmer': 'ל״ג בעומר',
+    'Tu BiShvat': 'ט״ו בשבט',
+    'Tu B\'Av': 'ט״ו באב',
+    'Leil Selichot': 'ליל סליחות',
+    // ראש חודש
+    'Rosh Chodesh Nisan': 'ראש חודש ניסן',
+    'Rosh Chodesh Iyyar': 'ראש חודש אייר',
+    'Rosh Chodesh Sivan': 'ראש חודש סיוון',
+    'Rosh Chodesh Tamuz': 'ראש חודש תמוז',
+    'Rosh Chodesh Av': 'ראש חודש אב',
+    'Rosh Chodesh Elul': 'ראש חודש אלול',
+    'Rosh Chodesh Cheshvan': 'ראש חודש חשוון',
+    'Rosh Chodesh Kislev': 'ראש חודש כסלו',
+    'Rosh Chodesh Tevet': 'ראש חודש טבת',
+    'Rosh Chodesh Sh\'vat': 'ראש חודש שבט',
+    'Rosh Chodesh Adar': 'ראש חודש אדר',
+    'Rosh Chodesh Adar I': 'ראש חודש אדר א׳',
+    'Rosh Chodesh Adar II': 'ראש חודש אדר ב׳',
+    // שבתות מיוחדות
+    'Shabbat Shekalim': 'שבת שקלים',
+    'Shabbat Zachor': 'שבת זכור',
+    'Shabbat Parah': 'שבת פרה',
+    'Shabbat HaChodesh': 'שבת החודש',
+    'Shabbat HaGadol': 'שבת הגדול',
+    'Shabbat Chazon': 'שבת חזון',
+    'Shabbat Nachamu': 'שבת נחמו',
+    'Shabbat Shuva': 'שבת שובה',
+    'Shabbat Shirah': 'שבת שירה',
   };
   
   if (significantHoliday) {
@@ -588,7 +650,10 @@ export function getOccasionForDate(date: Date): DateOccasion {
     const hebrewName = HOLIDAY_HEBREW[desc] || desc;
     
     if (isSat) {
-      return { type: 'shabbat_holiday', name: hebrewName, label: hebrewName };
+      // For Shabbat + holiday, try to also get parasha
+      const parasha = getParashaForDate(date);
+      const label = parasha !== 'חג' ? `${hebrewName} • פרשת ${parasha}` : hebrewName;
+      return { type: 'shabbat_holiday', name: hebrewName, label };
     }
     return { type: 'holiday', name: hebrewName, label: hebrewName };
   }
