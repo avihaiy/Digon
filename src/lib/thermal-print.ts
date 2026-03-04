@@ -3,32 +3,50 @@
 
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 
+interface ReceiptLineItem {
+  description: string;
+  amount: number;
+}
+
 interface ReceiptData {
   receipt_number: number | null;
   created_at: string;
   total_amount: number;
   description?: string | null;
   member?: { full_name: string } | null;
-  payment?: { method: string } | null;
+  payment?: { method: string; payment_type?: string; quantity?: number; unit_price?: number } | null;
+  line_items?: ReceiptLineItem[];
+}
+
+export function buildReceiptLineItems(receipt: ReceiptData): ReceiptLineItem[] {
+  if (receipt.line_items && receipt.line_items.length > 0) {
+    return receipt.line_items;
+  }
+  // Fallback: single line from description
+  return [{ description: receipt.description || 'תרומה', amount: Number(receipt.total_amount) }];
 }
 
 function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
   const memberName = receipt.member?.full_name || '-';
-  const description = receipt.description || 'תרומה';
   const method = PAYMENT_METHOD[receipt.payment?.method as keyof typeof PAYMENT_METHOD] || receipt.payment?.method || '-';
-  const amount = formatCurrency(Number(receipt.total_amount));
   const gregDate = formatDate(receipt.created_at);
   const hebrewDate = getHebrewDate(new Date(receipt.created_at));
+  const totalAmount = formatCurrency(Number(receipt.total_amount));
+
+  const lineItems = buildReceiptLineItems(receipt);
+  const lineItemsHTML = lineItems.map(item =>
+    `<div class="detail-row"><span>${item.description}</span><span>${formatCurrency(item.amount)}</span></div>`
+  ).join('\n');
 
   return `<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
 <meta charset="utf-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@700;800;900&display=swap');
   
   @page {
-    size: 80mm 120mm;
+    size: 80mm 140mm;
     margin: 0;
   }
   
@@ -37,20 +55,18 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
     padding: 0;
     box-sizing: border-box;
     font-family: 'Heebo', Arial, sans-serif;
-    font-weight: 700;
+    font-weight: 800;
     color: #000;
   }
   
   html, body {
     width: 80mm;
-    height: 120mm;
     background: #fff;
     overflow: hidden;
   }
   
   .receipt {
     width: 80mm;
-    height: 120mm;
     padding: 2mm;
     display: flex;
     flex-direction: column;
@@ -61,11 +77,6 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
     text-align: center;
     font-size: 10px;
     font-weight: 900;
-    margin-bottom: 1mm;
-  }
-  
-  .logo {
-    height: 10mm;
     margin-bottom: 1mm;
   }
   
@@ -102,12 +113,31 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
     margin: 1.5mm 0;
   }
   
-  .detail-row {
+  .member-row {
     width: 100%;
     display: flex;
     justify-content: center;
     gap: 8px;
+    font-size: 12px;
+    font-weight: 900;
+    padding: 1mm 1mm;
+  }
+  
+  .detail-row {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
     font-size: 11px;
+    font-weight: 800;
+    padding: 0.5mm 2mm;
+  }
+  
+  .method-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    font-size: 10px;
     font-weight: 800;
     padding: 0.5mm 1mm;
   }
@@ -123,13 +153,13 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
   }
   
   .total-amount {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 900;
   }
   
   .footer {
     text-align: center;
-    margin-top: auto;
+    margin-top: 3mm;
   }
   
   .footer .thanks {
@@ -152,13 +182,16 @@ function buildReceiptHTML(receipt: ReceiptData, logoBase64?: string): string {
   <div class="receipt-number">קבלה מספר: ${receipt.receipt_number || ''}</div>
   <div class="dates">${gregDate} • ${hebrewDate}</div>
   <div class="separator"></div>
-  <div class="detail-row"><span>התקבל מאת:</span><span>${memberName}</span></div>
-  <div class="detail-row"><span>עבור:</span><span>${description}</span></div>
-  <div class="detail-row"><span>אמצעי תשלום:</span><span>${method}</span></div>
+  <div class="member-row"><span>התקבל מאת:</span><span>${memberName}</span></div>
+  <div class="separator"></div>
+  <div style="width:100%; text-align:center; font-size:11px; font-weight:900; padding:1mm 0;">פירוט:</div>
+  ${lineItemsHTML}
+  <div class="separator"></div>
+  <div class="method-row"><span>אמצעי תשלום:</span><span>${method}</span></div>
   <div class="separator"></div>
   <div class="total-section">
     <div class="total-label">סה״כ שולם</div>
-    <div class="total-amount">${amount}</div>
+    <div class="total-amount">${totalAmount}</div>
   </div>
   <div class="separator"></div>
   <div class="footer">
@@ -204,7 +237,7 @@ export async function silentPrintReceipt(receipt: ReceiptData): Promise<void> {
     iframe.style.top = '-10000px';
     iframe.style.left = '-10000px';
     iframe.style.width = '80mm';
-    iframe.style.height = '120mm';
+    iframe.style.height = '140mm';
     iframe.style.border = 'none';
     document.body.appendChild(iframe);
 
