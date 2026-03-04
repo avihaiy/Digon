@@ -583,7 +583,7 @@ export default function Aliyot() {
               <Button
                 type="submit"
                 className="flex-1 btn-primary-gradient"
-                disabled={createAliya.isPending || !formData.aliya_type}
+                disabled={createAliya.isPending}
               >
                 {createAliya.isPending ? (
                   <>
