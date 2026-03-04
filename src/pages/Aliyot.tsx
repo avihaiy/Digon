@@ -51,10 +51,13 @@ import {
 } from '@/lib/hebrew-utils';
 
 export default function Aliyot() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(getNextShabbat());
+  const [ashkava, setAshkava] = useState<AshkavaData>({ enabled: false, quantity: 1, unitPrice: 0, total: 0 });
+  const [bracha, setBracha] = useState<BrachaData>({ enabled: false, type: 'single', price: 0 });
 
   // Get the occasion for the selected date
   const occasion = useMemo(() => getOccasionForDate(selectedDate), [selectedDate]);
