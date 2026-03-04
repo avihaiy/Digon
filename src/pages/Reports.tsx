@@ -23,9 +23,11 @@ import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function Reports() {
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+
   // Fetch comprehensive stats
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['reports-stats'],
+    queryKey: ['reports-stats', typeFilter],
     queryFn: async () => {
       const now = new Date();
       const thisMonthStart = startOfMonth(now);
@@ -33,28 +35,42 @@ export default function Reports() {
       const lastMonthStart = startOfMonth(subMonths(now, 1));
       const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
+      // Build base query with type filter
+      const buildQuery = (query: any) => {
+        if (typeFilter !== 'all') {
+          return query.eq('payment_type', typeFilter);
+        }
+        return query;
+      };
+
       // This month payments
-      const { data: thisMonthPayments } = await supabase
-        .from('payments')
-        .select('amount, method, created_at')
-        .gte('created_at', thisMonthStart.toISOString())
-        .lte('created_at', thisMonthEnd.toISOString())
-        .eq('status', 'confirmed');
+      const { data: thisMonthPayments } = await buildQuery(
+        supabase
+          .from('payments')
+          .select('amount, method, created_at, payment_type')
+          .gte('created_at', thisMonthStart.toISOString())
+          .lte('created_at', thisMonthEnd.toISOString())
+          .eq('status', 'confirmed')
+      );
 
       // Last month payments
-      const { data: lastMonthPayments } = await supabase
-        .from('payments')
-        .select('amount')
-        .gte('created_at', lastMonthStart.toISOString())
-        .lte('created_at', lastMonthEnd.toISOString())
-        .eq('status', 'confirmed');
+      const { data: lastMonthPayments } = await buildQuery(
+        supabase
+          .from('payments')
+          .select('amount')
+          .gte('created_at', lastMonthStart.toISOString())
+          .lte('created_at', lastMonthEnd.toISOString())
+          .eq('status', 'confirmed')
+      );
 
       // All payments for chart
-      const { data: allPayments } = await supabase
-        .from('payments')
-        .select('amount, created_at')
-        .eq('status', 'confirmed')
-        .order('created_at');
+      const { data: allPayments } = await buildQuery(
+        supabase
+          .from('payments')
+          .select('amount, created_at, payment_type')
+          .eq('status', 'confirmed')
+          .order('created_at')
+      );
 
       // Members count
       const { count: membersCount } = await supabase
@@ -77,6 +93,14 @@ export default function Reports() {
       // Payment methods breakdown
       const bitPayments = thisMonthPayments?.filter(p => p.method === 'bit').reduce((sum, p) => sum + Number(p.amount), 0) || 0;
       const cashPayments = thisMonthPayments?.filter(p => p.method === 'cash').reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+      // Payment type breakdown
+      const typeBreakdown = {
+        aliya: allPayments?.filter((p: any) => p.payment_type === 'aliya').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
+        ashkava: allPayments?.filter((p: any) => p.payment_type === 'ashkava').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
+        yearly_bracha: allPayments?.filter((p: any) => p.payment_type === 'yearly_bracha').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
+        donation: allPayments?.filter((p: any) => p.payment_type === 'donation').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
+      };
 
       // Monthly data for chart (last 6 months)
       const monthlyData = [];
@@ -111,6 +135,7 @@ export default function Reports() {
         bitPayments,
         cashPayments,
         monthlyData,
+        typeBreakdown,
       };
     },
   });
