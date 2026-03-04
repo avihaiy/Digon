@@ -643,11 +643,57 @@ export function getOccasionForDate(date: Date): DateOccasion {
     'Shabbat Nachamu': 'שבת נחמו',
     'Shabbat Shuva': 'שבת שובה',
     'Shabbat Shirah': 'שבת שירה',
+    // יום כיפור קטן
+    'Yom Kippur Katan Nisan': 'יום כיפור קטן ניסן',
+    'Yom Kippur Katan Iyyar': 'יום כיפור קטן אייר',
+    'Yom Kippur Katan Sivan': 'יום כיפור קטן סיוון',
+    'Yom Kippur Katan Tamuz': 'יום כיפור קטן תמוז',
+    'Yom Kippur Katan Av': 'יום כיפור קטן אב',
+    'Yom Kippur Katan Elul': 'יום כיפור קטן אלול',
+    'Yom Kippur Katan Cheshvan': 'יום כיפור קטן חשוון',
+    'Yom Kippur Katan Kislev': 'יום כיפור קטן כסלו',
+    'Yom Kippur Katan Tevet': 'יום כיפור קטן טבת',
+    'Yom Kippur Katan Sh\'vat': 'יום כיפור קטן שבט',
+    'Yom Kippur Katan Adar': 'יום כיפור קטן אדר',
+    'Yom Kippur Katan Adar I': 'יום כיפור קטן אדר א׳',
+    'Yom Kippur Katan Adar II': 'יום כיפור קטן אדר ב׳',
+    // נוסף
+    'Sigd': 'סיגד',
+    'Herzl Day': 'יום הרצל',
+    'Jabotinsky Day': 'יום ז׳בוטינסקי',
+    'Ben-Gurion Day': 'יום בן-גוריון',
+    'Rabin Day': 'יום רבין',
+    'Family Day': 'יום המשפחה',
+    'Yitzhak Rabin Memorial Day': 'יום הזיכרון ליצחק רבין',
+    'Aliyah Day': 'יום העלייה',
+  };
+  
+  // Generic fallback: translate common English patterns to Hebrew
+  const translateToHebrew = (desc: string): string => {
+    const MONTH_HEBREW: Record<string, string> = {
+      'Nisan': 'ניסן', 'Iyyar': 'אייר', 'Sivan': 'סיוון', 'Tamuz': 'תמוז',
+      'Av': 'אב', 'Elul': 'אלול', 'Tishrei': 'תשרי', 'Cheshvan': 'חשוון',
+      'Kislev': 'כסלו', 'Tevet': 'טבת', 'Sh\'vat': 'שבט', 'Shvat': 'שבט',
+      'Adar': 'אדר', 'Adar I': 'אדר א׳', 'Adar II': 'אדר ב׳',
+    };
+    const WORD_HEBREW: Record<string, string> = {
+      'Erev': 'ערב', 'Rosh Chodesh': 'ראש חודש', 'Yom Kippur Katan': 'יום כיפור קטן',
+      'Chanukah': 'חנוכה', 'Candle': 'נר', 'Candles': 'נרות', 'Day': 'יום',
+    };
+    let result = desc;
+    // Try replacing known phrases first
+    for (const [en, heb] of Object.entries(WORD_HEBREW)) {
+      result = result.replace(en, heb);
+    }
+    for (const [en, heb] of Object.entries(MONTH_HEBREW)) {
+      result = result.replace(new RegExp(`\\b${en.replace("'", "\\'")}\\b`), heb);
+    }
+    return result;
   };
   
   if (significantHoliday) {
     const desc = significantHoliday.getDesc();
-    const hebrewName = HOLIDAY_HEBREW[desc] || desc;
+    const hebrewName = HOLIDAY_HEBREW[desc] || translateToHebrew(desc);
     
     if (isSat) {
       // For Shabbat + holiday, try to also get parasha
