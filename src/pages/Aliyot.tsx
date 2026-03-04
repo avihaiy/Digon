@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -230,29 +231,54 @@ export default function Aliyot() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="center">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => {
-                        if (date) {
-                          setSelectedDate(date);
-                          setCalendarOpen(false);
-                        }
-                      }}
-                      locale={he}
-                      className="p-3 pointer-events-auto"
-                      modifiers={{
-                        shabbat: (date) => date.getDay() === 6,
-                        holiday: (date) => {
-                          const occ = getOccasionForDate(date);
-                          return occ.type === 'holiday' || occ.type === 'shabbat_holiday';
-                        },
-                      }}
-                      modifiersClassNames={{
-                        shabbat: 'bg-primary/15 text-primary font-bold rounded-full',
-                        holiday: 'bg-amber-500/20 text-amber-700 dark:text-amber-400 font-bold rounded-full ring-1 ring-amber-400/50',
-                      }}
-                    />
+                    <TooltipProvider delayDuration={200}>
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                          if (date) {
+                            setSelectedDate(date);
+                            setCalendarOpen(false);
+                          }
+                        }}
+                        locale={he}
+                        className="p-3 pointer-events-auto"
+                        modifiers={{
+                          shabbat: (date) => date.getDay() === 6,
+                          holiday: (date) => {
+                            const occ = getOccasionForDate(date);
+                            return occ.type === 'holiday' || occ.type === 'shabbat_holiday';
+                          },
+                        }}
+                        modifiersClassNames={{
+                          shabbat: 'bg-primary/15 text-primary font-bold rounded-full',
+                          holiday: 'bg-amber-500/20 text-amber-700 dark:text-amber-400 font-bold rounded-full ring-1 ring-amber-400/50',
+                        }}
+                        components={{
+                          DayContent: ({ date, ...props }) => {
+                            const occ = getOccasionForDate(date);
+                            const hasOccasion = occ.type !== 'none';
+                            if (!hasOccasion) {
+                              return <span>{date.getDate()}</span>;
+                            }
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="relative">
+                                    {date.getDate()}
+                                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-current opacity-60" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-sm font-medium">
+                                  <p>{occ.label}</p>
+                                  <p className="text-xs opacity-70">{getHebrewDate(date)}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          },
+                        }}
+                      />
+                    </TooltipProvider>
                   </PopoverContent>
                 </Popover>
                 <p className="text-xs text-muted-foreground">{getHebrewDate(selectedDate)}</p>
