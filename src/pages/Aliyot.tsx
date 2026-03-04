@@ -108,7 +108,7 @@ export default function Aliyot() {
       const { data: aliyaData, error } = await supabase.from('aliyot').insert({
         shabbat_date: shabbatDateStr,
         parasha: occasion.name || 'לא ידוע',
-        aliya_type: formData.aliya_type as any,
+        aliya_type: (formData.aliya_type || 'general') as any,
         member_id: formData.member_id || null,
         price: Number(formData.price) || 0,
         status: 'pending',
@@ -217,10 +217,6 @@ export default function Aliyot() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.aliya_type) {
-      toast.error('יש לבחור סוג עלייה');
-      return;
-    }
     createAliya.mutate();
   };
 
@@ -260,7 +256,7 @@ export default function Aliyot() {
         <Button
           onClick={() => setDialogOpen(true)}
           className="btn-primary-gradient gap-2"
-          disabled={availableTypes.length === 0}
+          disabled={false}
         >
           <Plus className="w-4 h-4" />
           הוסף עלייה
@@ -491,16 +487,17 @@ export default function Aliyot() {
             </div>
 
             <div className="space-y-2">
-              <Label>סוג עלייה *</Label>
+              <Label>סוג עלייה (אופציונלי)</Label>
               <Select
-                value={formData.aliya_type}
-                onValueChange={(value) => setFormData({ ...formData, aliya_type: value })}
+                value={formData.aliya_type || 'general'}
+                onValueChange={(value) => setFormData({ ...formData, aliya_type: value === 'general' ? '' : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר סוג עלייה" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTypes.map((type) => (
+                  <SelectItem value="general">כללי (ללא סוג)</SelectItem>
+                  {availableTypes.filter(t => t !== 'general').map((type) => (
                     <SelectItem key={type} value={type}>
                       {ALIYA_TYPES[type as keyof typeof ALIYA_TYPES]}
                     </SelectItem>
@@ -587,7 +584,7 @@ export default function Aliyot() {
               <Button
                 type="submit"
                 className="flex-1 btn-primary-gradient"
-                disabled={createAliya.isPending || !formData.aliya_type}
+                disabled={createAliya.isPending}
               >
                 {createAliya.isPending ? (
                   <>

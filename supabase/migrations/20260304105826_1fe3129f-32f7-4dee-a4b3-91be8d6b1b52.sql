@@ -1,0 +1,1 @@
+ALTER TYPE public.aliya_type ADD VALUE IF NOT EXISTS 'general';

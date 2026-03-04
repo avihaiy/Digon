@@ -293,6 +293,7 @@ export const ALIYA_TYPES = {
   maftir: 'מפטיר',
   hagbaha: 'הגבהה',
   glila: 'גלילה',
+  general: 'כללי',
 } as const;
 
 export const ALIYA_STATUS = {

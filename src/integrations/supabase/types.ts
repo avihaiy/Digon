@@ -937,6 +937,7 @@ export type Database = {
         | "maftir"
         | "hagbaha"
         | "glila"
+        | "general"
       announcement_style:
         | "traditional_gold"
         | "modern_dark"
@@ -1088,6 +1089,7 @@ export const Constants = {
         "maftir",
         "hagbaha",
         "glila",
+        "general",
       ],
       announcement_style: [
         "traditional_gold",
