@@ -211,6 +211,8 @@ export default function Aliyot() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setFormData({ aliya_type: '', member_id: '', price: '' });
+    setAshkava({ enabled: false, quantity: 1, unitPrice: 0, total: 0 });
+    setBracha({ enabled: false, type: 'single', price: 0 });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
