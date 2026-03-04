@@ -541,6 +541,45 @@ export default function Aliyot() {
               />
             </div>
 
+            {/* Ashkava & Bracha */}
+            <AshkavaBrachaBlock
+              memberId={formData.member_id || undefined}
+              ashkava={ashkava}
+              bracha={bracha}
+              onAshkavaChange={setAshkava}
+              onBrachaChange={setBracha}
+            />
+
+            {/* Total summary if extras enabled */}
+            {(ashkava.enabled || bracha.enabled) && (
+              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-sm">
+                <div className="space-y-1">
+                  {Number(formData.price) > 0 && (
+                    <div className="flex justify-between">
+                      <span>עלייה</span>
+                      <span className="font-bold">{formatCurrency(Number(formData.price))}</span>
+                    </div>
+                  )}
+                  {ashkava.enabled && (
+                    <div className="flex justify-between">
+                      <span>אשכבות ({ashkava.quantity} יח')</span>
+                      <span className="font-bold">{formatCurrency(ashkava.total)}</span>
+                    </div>
+                  )}
+                  {bracha.enabled && (
+                    <div className="flex justify-between">
+                      <span>ברכת שנה</span>
+                      <span className="font-bold">{formatCurrency(bracha.price)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-primary/20 pt-1 mt-1 flex justify-between font-bold">
+                    <span>סה״כ</span>
+                    <span>{formatCurrency(Number(formData.price || 0) + (ashkava.enabled ? ashkava.total : 0) + (bracha.enabled ? bracha.price : 0))}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" onClick={handleCloseDialog} className="flex-1">
                 ביטול
