@@ -696,6 +696,15 @@ export default function Receipts() {
                     <Button
                       size="sm"
                       variant="outline"
+                      onClick={() => handleShareReceipt(receipt)}
+                      title="שתף קבלה כ-PDF"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => handleEmail(receipt)}
                       title="שלח באימייל"
                       className="h-8 w-8 p-0 hidden sm:flex"
