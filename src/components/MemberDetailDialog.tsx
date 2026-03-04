@@ -178,8 +178,9 @@ export function MemberDetailDialog({
       if (pendingPayments.length > 0) {
         html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">תשלומים ממתינים:</div>`;
         pendingPayments.forEach(p => {
+          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
           html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-            <span>${formatShortDate(p.created_at)}</span>
+            <span>${desc}</span>
             <span>${formatCurrency(Number(p.amount))}</span>
           </div>`;
         });
