@@ -256,7 +256,7 @@ export default function Aliyot() {
         <Button
           onClick={() => setDialogOpen(true)}
           className="btn-primary-gradient gap-2"
-          disabled={availableTypes.length === 0}
+          disabled={false}
         >
           <Plus className="w-4 h-4" />
           הוסף עלייה
