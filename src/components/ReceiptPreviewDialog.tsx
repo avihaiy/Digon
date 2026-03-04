@@ -93,7 +93,7 @@ export function ReceiptPreviewDialog({
         jsPDF: { unit: 'mm', format: [80, 120], orientation: 'portrait' as const },
       };
 
-      const pdfBlob: Blob = await html2pdf().set(opt).from(element).outputPdf('blob');
+      const pdfBlob: Blob = await html2pdf().set(opt).from(element).toPdf().output('blob');
       const file = new File([pdfBlob], `קבלה-${receipt.receipt_number}.pdf`, { type: 'application/pdf' });
 
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
