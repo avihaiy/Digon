@@ -794,6 +794,22 @@ export default function Payments() {
                           <CheckCircle2 className="w-4 h-4 sm:hidden" />
                         </Button>
                       )}
+                      {payment.receipt?.[0]?.receipt_number && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSharePaymentReceipt(payment)}
+                          disabled={sharingPaymentId === payment.id}
+                          title="שתף קבלה"
+                          className="h-8 w-8 p-0"
+                        >
+                          {sharingPaymentId === payment.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Share2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
