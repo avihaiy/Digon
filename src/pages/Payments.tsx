@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
+import { shareReceipt } from '@/lib/receipt-share';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ import {
   BookOpen,
   Building2,
   FileCheck,
+  Share2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -424,6 +426,39 @@ export default function Payments() {
     bulkConfirmPayments.mutate(pendingSelected);
   };
 
+  const [sharingPaymentId, setSharingPaymentId] = useState<string | null>(null);
+
+  const handleSharePaymentReceipt = useCallback(async (payment: any) => {
+    setSharingPaymentId(payment.id);
+    try {
+      // Fetch the receipt for this payment
+      const { data: receipt } = await supabase
+        .from('receipts')
+        .select('*, member:members(full_name), payment:payments(method)')
+        .eq('payment_id', payment.id)
+        .single();
+
+      if (!receipt) {
+        toast.error('לא נמצאה קבלה לתשלום זה');
+        return;
+      }
+
+      await shareReceipt(receipt);
+      toast.success('הקבלה שותפה בהצלחה');
+    } catch (error: any) {
+      if (error?.message === 'GESTURE_ERROR') {
+        toast.error('מוכן לשיתוף: לחץ שוב על כפתור השיתוף');
+      } else if (error?.message === 'DOWNLOAD_FALLBACK') {
+        toast.success('הקבלה הורדה כ-PDF');
+      } else if (error?.name !== 'AbortError') {
+        console.error('Share error:', error);
+        toast.error('שגיאה בשיתוף הקבלה');
+      }
+    } finally {
+      setSharingPaymentId(null);
+    }
+  }, []);
+
   // Filter payments
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -757,6 +792,22 @@ export default function Payments() {
                         >
                           <span className="hidden sm:inline">אשר</span>
                           <CheckCircle2 className="w-4 h-4 sm:hidden" />
+                        </Button>
+                      )}
+                      {payment.receipt?.[0]?.receipt_number && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSharePaymentReceipt(payment)}
+                          disabled={sharingPaymentId === payment.id}
+                          title="שתף קבלה"
+                          className="h-8 w-8 p-0"
+                        >
+                          {sharingPaymentId === payment.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Share2 className="w-4 h-4" />
+                          )}
                         </Button>
                       )}
                       <Button
