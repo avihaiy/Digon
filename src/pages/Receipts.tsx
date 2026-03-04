@@ -319,7 +319,8 @@ export default function Receipts() {
       if (canShareFiles) {
         await navigator.share({
           files: [file],
-          title: `קבלה ${receipt.receipt_number}`,
+          title: `קבלה ${receipt.receipt_number} - ${receipt.member?.full_name || ''}`,
+          text: `קבלה מס׳ ${receipt.receipt_number} - ${receipt.member?.full_name || ''}\nתודה, בית כנסת ברית שלום עכו`,
         });
         toast.success('הקבלה שותפה בהצלחה');
         return;
