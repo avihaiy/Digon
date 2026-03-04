@@ -52,13 +52,13 @@ export function MemberDetailDialog({
   const [isSharingPdf, setIsSharingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState<'summary' | 'payments' | 'aliyot' | 'receipts'>('summary');
 
-  // Fetch pending payments (debts)
+  // Fetch payments with receipt descriptions
   const { data: payments, isLoading: loadingPayments } = useQuery({
     queryKey: ['member-payments', memberId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('*')
+        .select('*, receipt:receipts(receipt_number, description)')
         .eq('member_id', memberId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
