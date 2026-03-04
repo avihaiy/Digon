@@ -108,7 +108,7 @@ export default function Aliyot() {
       const { data: aliyaData, error } = await supabase.from('aliyot').insert({
         shabbat_date: shabbatDateStr,
         parasha: occasion.name || 'לא ידוע',
-        aliya_type: formData.aliya_type as any,
+        aliya_type: (formData.aliya_type || 'general') as any,
         member_id: formData.member_id || null,
         price: Number(formData.price) || 0,
         status: 'pending',
