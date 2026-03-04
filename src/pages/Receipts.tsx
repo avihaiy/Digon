@@ -279,22 +279,29 @@ export default function Receipts() {
       const pdfBlob: Blob = await html2pdf().set(opt).from(el).toPdf().output('blob');
       document.body.removeChild(el);
 
-      const file = new File([pdfBlob], `קבלה-${receipt.receipt_number}.pdf`, { type: 'application/pdf' });
+      const pdfFile = new Blob([pdfBlob], { type: 'application/pdf' });
+      const fileName = `receipt-${receipt.receipt_number}.pdf`;
+      const file = new File([pdfFile], fileName, { type: 'application/pdf' });
 
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          title: `קבלה מספר ${receipt.receipt_number}`,
-          text: `קבלה על סך ${formatCurrency(Number(receipt.total_amount))} - ${receipt.member?.full_name || ''}`,
-          files: [file],
-        });
-        toast.success('הקבלה שותפה בהצלחה');
-      } else {
-        const url = URL.createObjectURL(pdfBlob);
+      let shared = false;
+      try {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: `קבלה ${receipt.receipt_number}` });
+          shared = true;
+          toast.success('הקבלה שותפה בהצלחה');
+        }
+      } catch (shareErr: any) {
+        if (shareErr.name === 'AbortError') return;
+        console.warn('Share API failed, falling back to download:', shareErr);
+      }
+
+      if (!shared) {
+        const url = URL.createObjectURL(pdfFile);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `קבלה-${receipt.receipt_number}.pdf`;
+        a.download = fileName;
         a.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
         toast.success('הקבלה הורדה כ-PDF');
       }
     } catch (error: any) {
