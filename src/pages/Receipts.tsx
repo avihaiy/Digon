@@ -52,6 +52,7 @@ import {
   FileDown,
   FileSpreadsheet,
   Wifi,
+  Share2,
 } from 'lucide-react';
 import { formatCurrency, formatShortDate, formatDate, getHebrewDate, PARASHA_LIST } from '@/lib/hebrew-utils';
 import { format } from 'date-fns';
