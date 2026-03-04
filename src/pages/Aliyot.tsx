@@ -79,7 +79,7 @@ export default function Aliyot() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('aliyot')
-        .select(`*, member:members(id, full_name)`)
+        .select(`*, member:members(id, full_name), payments:payments(id, payment_type, amount, quantity, unit_price)`)
         .eq('shabbat_date', shabbatDateStr)
         .order('created_at');
       if (error) throw error;
