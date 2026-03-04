@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,6 +50,7 @@ import {
 export default function Aliyot() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(getNextShabbat());
 
   // Get the occasion for the selected date
@@ -219,9 +222,28 @@ export default function Aliyot() {
               </Button>
 
               <div className="text-center flex-1">
-                <p className="text-sm text-muted-foreground">
-                  {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })}
-                </p>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" className="gap-2 text-sm">
+                      <CalendarIcon className="w-4 h-4" />
+                      {format(selectedDate, 'EEEE, d בMMMM yyyy', { locale: he })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="center">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setSelectedDate(date);
+                          setCalendarOpen(false);
+                        }
+                      }}
+                      locale={he}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
                 <p className="text-xs text-muted-foreground">{getHebrewDate(selectedDate)}</p>
               </div>
 
