@@ -47,6 +47,7 @@ import {
   ALIYA_STATUS,
   PAYMENT_METHOD,
 } from '@/lib/hebrew-utils';
+import AshkavaBrachaBlock, { type AshkavaData, type BrachaData } from '@/components/payments/AshkavaBrachaBlock';
 
 export default function FridayDashboard() {
   const { user } = useAuth();
