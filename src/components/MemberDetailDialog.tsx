@@ -120,7 +120,8 @@ export function MemberDetailDialog({
       if (pendingPayments.length > 0) {
         lines.push(``, `📌 תשלומים ממתינים (${pendingPayments.length}):`);
         pendingPayments.forEach(p => {
-          lines.push(`  • ${formatCurrency(Number(p.amount))} - ${formatShortDate(p.created_at)}`);
+          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
+          lines.push(`  • ${desc} - ${formatCurrency(Number(p.amount))} (${formatShortDate(p.created_at)})`);
         });
       }
 
@@ -128,7 +129,7 @@ export function MemberDetailDialog({
         lines.push(``, `📖 עליות ממתינות (${pendingAliyot.length}):`);
         pendingAliyot.forEach(a => {
           const typeName = ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type;
-          lines.push(`  • ${typeName} - ${a.parasha} - ${formatCurrency(Number(a.price || 0))}`);
+          lines.push(`  • ${typeName} - פרשת ${a.parasha} - ${formatCurrency(Number(a.price || 0))}`);
         });
       }
 
