@@ -1098,7 +1098,7 @@ export default function Payments() {
               </div>
             )}
 
-            <div className="flex gap-3 pt-4">
+            <div className="sticky bottom-0 bg-background/95 backdrop-blur pt-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] flex gap-3">
               <Button type="button" variant="outline" onClick={handleCloseDialog} className="flex-1">
                 ביטול
               </Button>
