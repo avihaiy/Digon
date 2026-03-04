@@ -317,6 +317,8 @@ export default function FridayDashboard() {
       amount: Number(paymentAmount),
       method: paymentMethod,
       reference: paymentMethod === 'bit' ? bitReference : undefined,
+      ashkavaData: ashkava.enabled ? ashkava : undefined,
+      brachaData: bracha.enabled ? bracha : undefined,
     });
   };
 
