@@ -81,42 +81,16 @@ export function ReceiptPreviewDialog({
   };
 
   const handleSharePdf = async () => {
-    if (!receiptRef.current) return;
-
     setIsSharing(true);
     try {
-      const element = receiptRef.current;
-      const opt = {
-        margin: 0,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: [80, 120], orientation: 'portrait' as const },
-      };
-
-      const pdfBlob: Blob = await html2pdf().set(opt).from(element).toPdf().output('blob');
-      const pdfFile = new Blob([pdfBlob], { type: 'application/pdf' });
-      const fileName = `receipt-${receipt.receipt_number}.pdf`;
-      const file = new File([pdfFile], fileName, { type: 'application/pdf' });
-
-      // Try native share with PDF file
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          text: `קבלה מס׳ ${receipt.receipt_number} | ${receipt.member?.full_name || ''}\nתודה, בית כנסת ברית שלום עכו`,
-        });
-        toast.success('הקבלה שותפה בהצלחה');
-      } else {
-        // Fallback: download the PDF file
-        const url = URL.createObjectURL(pdfFile);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        toast.success('הקבלה הורדה בהצלחה');
-      }
+      await shareReceipt(receipt);
+      toast.success('הקבלה שותפה בהצלחה');
     } catch (error: any) {
-      if (error.name !== 'AbortError') {
+      if (error?.message === 'GESTURE_ERROR') {
+        toast.error('מוכן לשיתוף: לחץ שוב על כפתור השיתוף');
+      } else if (error?.message === 'DOWNLOAD_FALLBACK') {
+        toast.success('הקבלה הורדה כ-PDF');
+      } else if (error?.name !== 'AbortError') {
         console.error('Share error:', error);
         toast.error('שגיאה בשיתוף הקבלה');
       }
