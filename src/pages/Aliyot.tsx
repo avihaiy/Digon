@@ -72,6 +72,19 @@ export default function Aliyot() {
     price: '',
   });
 
+
+  const ashkavaCalculatedTotal = useMemo(() => {
+    if (!ashkava.enabled) return 0;
+    const quantity = Math.max(0, Number(ashkava.quantity) || 0);
+    const unitPrice = Math.max(0, Number(ashkava.unitPrice) || 0);
+    return quantity * unitPrice;
+  }, [ashkava.enabled, ashkava.quantity, ashkava.unitPrice]);
+
+  const totalToPay =
+    (Number(formData.price) || 0) +
+    ashkavaCalculatedTotal +
+    (bracha.enabled ? Number(bracha.price) || 0 : 0);
+
   // Fetch aliyot for selected date
   const shabbatDateStr = selectedDate.toISOString().split('T')[0];
   const { data: aliyot, isLoading: aliyotLoading } = useQuery({
@@ -116,10 +129,10 @@ export default function Aliyot() {
       if (error) throw error;
 
       // Create ashkava payment if enabled
-      if (ashkava.enabled && ashkava.total > 0 && formData.member_id) {
+      if (ashkava.enabled && ashkavaCalculatedTotal > 0 && formData.member_id) {
         await supabase.from('payments').insert({
           member_id: formData.member_id,
-          amount: ashkava.total,
+          amount: ashkavaCalculatedTotal,
           method: 'cash',
           received_by: user?.id,
           status: 'confirmed',
@@ -587,7 +600,7 @@ export default function Aliyot() {
                 {ashkava.enabled && (
                   <div className="flex justify-between text-amber-600 dark:text-amber-400">
                     <span>🕯 אשכבות ({ashkava.quantity} יח' × {formatCurrency(ashkava.unitPrice)})</span>
-                    <span className="font-bold">{formatCurrency(ashkava.total)}</span>
+                    <span className="font-bold">{formatCurrency(ashkavaCalculatedTotal)}</span>
                   </div>
                 )}
                 {bracha.enabled && (
@@ -598,7 +611,7 @@ export default function Aliyot() {
                 )}
                 <div className="border-t border-primary/20 pt-1 mt-1 flex justify-between font-bold text-base">
                   <span>סה״כ לתשלום</span>
-                  <span>{formatCurrency(Number(formData.price || 0) + (ashkava.enabled ? ashkava.total : 0) + (bracha.enabled ? bracha.price : 0))}</span>
+                  <span>{formatCurrency(totalToPay)}</span>
                 </div>
               </div>
             </div>
