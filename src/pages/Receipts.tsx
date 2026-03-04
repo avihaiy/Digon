@@ -239,6 +239,10 @@ export default function Receipts() {
 
   const handleShareReceipt = async (receipt: any) => {
     try {
+      console.log('[Share] Starting share for receipt:', receipt.receipt_number);
+      console.log('[Share] navigator.share:', !!navigator.share);
+      console.log('[Share] navigator.canShare:', !!navigator.canShare);
+
       const el = document.createElement('div');
       el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:11px;line-height:1.3;width:80mm;min-height:120mm;padding:3mm;font-weight:700;color:#000;background:#fff;";
       el.innerHTML = `
@@ -275,24 +279,36 @@ export default function Receipts() {
         jsPDF: { unit: 'mm', format: [80, 120], orientation: 'portrait' as const },
       };
 
+      console.log('[Share] Generating PDF...');
       const pdfBlob: Blob = await html2pdf().set(opt).from(el).toPdf().output('blob');
       document.body.removeChild(el);
+      console.log('[Share] PDF generated, size:', pdfBlob.size);
 
-      const pdfFile = new Blob([pdfBlob], { type: 'application/pdf' });
       const fileName = `receipt-${receipt.receipt_number}.pdf`;
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
-      const file = new File([pdfFile], fileName, { type: 'application/pdf' });
+      console.log('[Share] File created:', file.name, file.size, file.type);
 
-      // Try native share with PDF file
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      // Check if canShare supports files
+      let canShareFiles = false;
+      try {
+        canShareFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+        console.log('[Share] canShare files:', canShareFiles);
+      } catch (e) {
+        console.log('[Share] canShare check failed:', e);
+      }
+
+      if (navigator.share && canShareFiles) {
+        console.log('[Share] Calling navigator.share with file...');
         await navigator.share({
           files: [file],
           title: `קבלה ${receipt.receipt_number}`,
         });
         toast.success('הקבלה שותפה בהצלחה');
       } else {
+        console.log('[Share] Share not supported, falling back to download');
         // Fallback: download the PDF file
-        const url = URL.createObjectURL(pdfFile);
+        const url = URL.createObjectURL(file);
         const a = document.createElement('a');
         a.href = url;
         a.download = fileName;
@@ -301,9 +317,11 @@ export default function Receipts() {
         toast.success('הקבלה הורדה בהצלחה');
       }
     } catch (error: any) {
+      console.error('[Share] Error name:', error?.name);
+      console.error('[Share] Error message:', error?.message);
+      console.error('[Share] Full error:', error);
       if (error.name !== 'AbortError') {
-        console.error('Share error:', error);
-        toast.error('שגיאה בשיתוף הקבלה');
+        toast.error(`שגיאה בשיתוף: ${error?.message || 'לא ידוע'}`);
       }
     }
   };
