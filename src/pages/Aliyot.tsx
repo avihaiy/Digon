@@ -600,7 +600,7 @@ export default function Aliyot() {
                 {ashkava.enabled && (
                   <div className="flex justify-between text-amber-600 dark:text-amber-400">
                     <span>🕯 אשכבות ({ashkava.quantity} יח' × {formatCurrency(ashkava.unitPrice)})</span>
-                    <span className="font-bold">{formatCurrency(ashkava.total)}</span>
+                    <span className="font-bold">{formatCurrency(ashkavaCalculatedTotal)}</span>
                   </div>
                 )}
                 {bracha.enabled && (
