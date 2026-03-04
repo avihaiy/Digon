@@ -384,6 +384,14 @@ export default function Members() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Member Detail Dialog */}
+      <MemberDetailDialog
+        memberId={detailMember?.id || null}
+        memberName={detailMember?.full_name || ''}
+        open={!!detailMember}
+        onOpenChange={(open) => !open && setDetailMember(null)}
+      />
     </div>
   );
 }
