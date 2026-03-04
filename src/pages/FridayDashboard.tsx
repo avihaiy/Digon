@@ -61,6 +61,10 @@ export default function FridayDashboard() {
   const [paymentMethod, setPaymentMethod] = useState<'bit' | 'cash'>('bit');
   const [bitReference, setBitReference] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [ashkava, setAshkava] = useState<AshkavaData>({ enabled: false, quantity: 1, unitPrice: 0, total: 0 });
+  const [bracha, setBracha] = useState<BrachaData>({ enabled: false, type: 'single', price: 0 });
+
+  const totalPayment = Number(paymentAmount || 0) + (ashkava.enabled ? ashkava.total : 0) + (bracha.enabled ? bracha.price : 0);
 
   // Fetch Shabbat aliyot
   const { data: aliyot, isLoading: aliyotLoading } = useQuery({
