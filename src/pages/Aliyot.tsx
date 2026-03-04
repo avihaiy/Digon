@@ -104,19 +104,72 @@ export default function Aliyot() {
   // Create aliya
   const createAliya = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('aliyot').insert({
+      // Create the aliya
+      const { data: aliyaData, error } = await supabase.from('aliyot').insert({
         shabbat_date: shabbatDateStr,
         parasha: occasion.name || 'לא ידוע',
         aliya_type: formData.aliya_type as any,
         member_id: formData.member_id || null,
         price: Number(formData.price) || 0,
         status: 'pending',
-      });
+      }).select().single();
       if (error) throw error;
+
+      // Create ashkava payment if enabled
+      if (ashkava.enabled && ashkava.total > 0 && formData.member_id) {
+        await supabase.from('payments').insert({
+          member_id: formData.member_id,
+          amount: ashkava.total,
+          method: 'cash',
+          received_by: user?.id,
+          status: 'confirmed',
+          payment_type: 'ashkava',
+          quantity: ashkava.quantity,
+          unit_price: ashkava.unitPrice,
+          aliya_id: aliyaData.id,
+        });
+      }
+
+      // Create bracha payment if enabled
+      if (bracha.enabled && bracha.price > 0 && formData.member_id) {
+        await supabase.from('payments').insert({
+          member_id: formData.member_id,
+          amount: bracha.price,
+          method: 'cash',
+          received_by: user?.id,
+          status: 'confirmed',
+          payment_type: 'yearly_bracha',
+          quantity: 1,
+          unit_price: bracha.price,
+          aliya_id: aliyaData.id,
+        });
+
+        // Create bracha package
+        const totalBrachot = bracha.type === 'single' ? 1 :
+          bracha.type === 'package_10' ? 10 :
+          bracha.type === 'package_20' ? 20 : 9999;
+
+        await (supabase as any).from('bracha_packages').insert({
+          member_id: formData.member_id,
+          package_type: bracha.type,
+          total_brachot: totalBrachot,
+          used_brachot: 0,
+          balance: totalBrachot,
+          price_paid: bracha.price,
+          created_by: user?.id,
+        });
+      }
+
+      return aliyaData;
     },
     onSuccess: () => {
-      toast.success('העלייה נוספה בהצלחה');
+      const extras = [];
+      if (ashkava.enabled) extras.push(`${ashkava.quantity} אשכבות`);
+      if (bracha.enabled) extras.push('ברכת שנה');
+      const msg = extras.length > 0 ? `העלייה נוספה עם ${extras.join(' + ')}` : 'העלייה נוספה בהצלחה';
+      toast.success(msg);
       queryClient.invalidateQueries({ queryKey: ['aliyot'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
       handleCloseDialog();
     },
     onError: (error: any) => {
