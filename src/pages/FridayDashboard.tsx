@@ -47,6 +47,7 @@ import {
   ALIYA_STATUS,
   PAYMENT_METHOD,
 } from '@/lib/hebrew-utils';
+import AshkavaBrachaBlock, { type AshkavaData, type BrachaData } from '@/components/payments/AshkavaBrachaBlock';
 
 export default function FridayDashboard() {
   const { user } = useAuth();
@@ -60,6 +61,10 @@ export default function FridayDashboard() {
   const [paymentMethod, setPaymentMethod] = useState<'bit' | 'cash'>('bit');
   const [bitReference, setBitReference] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [ashkava, setAshkava] = useState<AshkavaData>({ enabled: false, quantity: 1, unitPrice: 0, total: 0 });
+  const [bracha, setBracha] = useState<BrachaData>({ enabled: false, type: 'single', price: 0 });
+
+  const totalPayment = Number(paymentAmount || 0) + (ashkava.enabled ? ashkava.total : 0) + (bracha.enabled ? bracha.price : 0);
 
   // Fetch Shabbat aliyot
   const { data: aliyot, isLoading: aliyotLoading } = useQuery({
@@ -110,68 +115,167 @@ export default function FridayDashboard() {
       amount,
       method,
       reference,
+      ashkavaData,
+      brachaData,
     }: {
       memberId: string;
       aliyaId: string;
       amount: number;
       method: 'bit' | 'cash';
       reference?: string;
+      ashkavaData?: AshkavaData;
+      brachaData?: BrachaData;
     }) => {
-      // Create payment
-      const { data: payment, error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          member_id: memberId,
-          aliya_id: aliyaId,
-          amount,
-          method,
-          reference,
-          received_by: user?.id,
-          status: 'confirmed',
-        })
-        .select()
-        .single();
+      const lineItems: { description: string; amount: number }[] = [];
+      const payments: any[] = [];
 
-      if (paymentError) throw paymentError;
+      // Main aliya payment
+      if (amount > 0) {
+        const { data: aliyaPayment, error } = await supabase
+          .from('payments')
+          .insert({
+            member_id: memberId,
+            aliya_id: aliyaId,
+            amount,
+            method,
+            reference,
+            received_by: user?.id,
+            status: 'confirmed',
+            payment_type: 'aliya',
+            quantity: 1,
+            unit_price: amount,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        payments.push(aliyaPayment);
+        lineItems.push({ description: `עלייה לתורה - פרשת ${parasha}`, amount });
+      }
+
+      // Ashkava payment
+      if (ashkavaData?.enabled && ashkavaData.total > 0) {
+        const { data: ashkavaPayment, error } = await supabase
+          .from('payments')
+          .insert({
+            member_id: memberId,
+            amount: ashkavaData.total,
+            method,
+            reference,
+            received_by: user?.id,
+            status: 'confirmed',
+            payment_type: 'ashkava',
+            quantity: ashkavaData.quantity,
+            unit_price: ashkavaData.unitPrice,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        payments.push(ashkavaPayment);
+        lineItems.push({
+          description: `אשכבות (${ashkavaData.quantity} יח')`,
+          amount: ashkavaData.total,
+        });
+      }
+
+      // Bracha payment
+      if (brachaData?.enabled && brachaData.price > 0) {
+        const brachaLabel = brachaData.type === 'single' ? 'ברכת שנה' :
+          brachaData.type === 'package_10' ? 'חבילת 10 ברכות' :
+          brachaData.type === 'package_20' ? 'חבילת 20 ברכות' : 'חבילה ללא הגבלה';
+
+        const { data: brachaPayment, error } = await supabase
+          .from('payments')
+          .insert({
+            member_id: memberId,
+            amount: brachaData.price,
+            method,
+            reference,
+            received_by: user?.id,
+            status: 'confirmed',
+            payment_type: 'yearly_bracha',
+            quantity: 1,
+            unit_price: brachaData.price,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        payments.push(brachaPayment);
+        lineItems.push({ description: brachaLabel, amount: brachaData.price });
+
+        // Create/update bracha package
+        const totalBrachot = brachaData.type === 'single' ? 1 :
+          brachaData.type === 'package_10' ? 10 :
+          brachaData.type === 'package_20' ? 20 : 9999;
+
+        await (supabase as any).from('bracha_packages').insert({
+          member_id: memberId,
+          package_type: brachaData.type,
+          total_brachot: totalBrachot,
+          used_brachot: 0,
+          balance: totalBrachot,
+          price_paid: brachaData.price,
+          created_by: user?.id,
+        });
+      }
 
       // Update aliya status
       const { error: aliyaError } = await supabase
         .from('aliyot')
         .update({ status: 'paid' })
         .eq('id', aliyaId);
-
       if (aliyaError) throw aliyaError;
 
-      // Create receipt
+      // Create receipt with total and line items in description
+      const totalAmount = lineItems.reduce((sum, li) => sum + li.amount, 0);
+      const descriptionLines = lineItems.map(li => `${li.description} – ${formatCurrency(li.amount)}`).join('\n');
+
       const { data: receipt, error: receiptError } = await supabase
         .from('receipts')
         .insert({
           member_id: memberId,
-          payment_id: payment.id,
-          total_amount: amount,
-          description: `עלייה לתורה - פרשת ${parasha}`,
+          payment_id: payments[0]?.id || null,
+          total_amount: totalAmount,
+          description: descriptionLines,
         })
         .select()
         .single();
-
       if (receiptError) throw receiptError;
 
-      return { payment, receipt };
+      return { payments, receipt, lineItems };
     },
     onSuccess: async (data) => {
       toast.success('התשלום נקלט בהצלחה!', {
         description: `קבלה מספר ${data.receipt.receipt_number} הונפקה`,
       });
       
-      // Send receipt email automatically
+      // Auto-print receipt with line items
+      try {
+        const { data: receiptFull } = await supabase
+          .from('receipts')
+          .select('*, member:members(full_name), payment:payments(method, payment_type, quantity, unit_price)')
+          .eq('id', data.receipt.id)
+          .single();
+        if (receiptFull) {
+          const { silentPrintReceipt } = await import('@/lib/thermal-print');
+          silentPrintReceipt({ ...receiptFull, line_items: data.lineItems }).catch(err =>
+            console.warn('Auto-print failed:', err)
+          );
+          const { remotePrintReceipt } = await import('@/lib/remote-print');
+          remotePrintReceipt(receiptFull).catch(err =>
+            console.warn('Remote print failed:', err)
+          );
+        }
+      } catch (e) {
+        console.warn('Print error:', e);
+      }
+
+      // Send receipt email
       try {
         await supabase.functions.invoke('send-receipt-email', {
           body: { receiptId: data.receipt.id }
         });
-        toast.success('הקבלה נשלחה למייל');
       } catch (emailError) {
         console.error('Failed to send receipt email:', emailError);
-        // Don't show error to user - email is secondary
       }
       
       queryClient.invalidateQueries({ queryKey: ['friday-aliyot'] });
@@ -180,6 +284,8 @@ export default function FridayDashboard() {
       setSelectedAliya(null);
       setBitReference('');
       setPaymentAmount('');
+      setAshkava({ enabled: false, quantity: 1, unitPrice: 0, total: 0 });
+      setBracha({ enabled: false, type: 'single', price: 0 });
     },
     onError: (error) => {
       toast.error('שגיאה בקליטת התשלום', {
@@ -211,6 +317,8 @@ export default function FridayDashboard() {
       amount: Number(paymentAmount),
       method: paymentMethod,
       reference: paymentMethod === 'bit' ? bitReference : undefined,
+      ashkavaData: ashkava.enabled ? ashkava : undefined,
+      brachaData: bracha.enabled ? bracha : undefined,
     });
   };
 
@@ -437,9 +545,9 @@ export default function FridayDashboard() {
               </p>
             </div>
 
-            {/* Amount */}
+            {/* Aliya Amount */}
             <div className="space-y-2">
-              <Label>סכום לתשלום</Label>
+              <Label>סכום עלייה</Label>
               <Input
                 type="number"
                 value={paymentAmount}
@@ -448,6 +556,43 @@ export default function FridayDashboard() {
                 dir="ltr"
               />
             </div>
+
+            {/* Ashkava & Bracha */}
+            <AshkavaBrachaBlock
+              memberId={selectedAliya?.member?.id}
+              ashkava={ashkava}
+              bracha={bracha}
+              onAshkavaChange={setAshkava}
+              onBrachaChange={setBracha}
+            />
+
+            {/* Total Summary */}
+            {(ashkava.enabled || bracha.enabled) && (
+              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>עלייה לתורה</span>
+                    <span className="font-bold">{formatCurrency(Number(paymentAmount || 0))}</span>
+                  </div>
+                  {ashkava.enabled && (
+                    <div className="flex justify-between">
+                      <span>אשכבות ({ashkava.quantity} יח')</span>
+                      <span className="font-bold">{formatCurrency(ashkava.total)}</span>
+                    </div>
+                  )}
+                  {bracha.enabled && (
+                    <div className="flex justify-between">
+                      <span>ברכת שנה</span>
+                      <span className="font-bold">{formatCurrency(bracha.price)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-primary/20 pt-1 mt-1 flex justify-between text-base font-bold">
+                    <span>סה״כ לתשלום</span>
+                    <span>{formatCurrency(totalPayment)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Payment Method */}
             <div className="space-y-3">
@@ -487,7 +632,7 @@ export default function FridayDashboard() {
                     <div>
                       <p className="font-medium text-purple-900">סרוק QR או שלח לינק</p>
                       <p className="text-sm text-purple-700">
-                        סכום: {formatCurrency(Number(paymentAmount))}
+                        סכום: {formatCurrency(totalPayment)}
                       </p>
                     </div>
                   </div>

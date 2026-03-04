@@ -154,6 +154,56 @@ export type Database = {
         }
         Relationships: []
       }
+      bracha_packages: {
+        Row: {
+          balance: number
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          member_id: string
+          package_type: string
+          price_paid: number
+          total_brachot: number
+          updated_at: string
+          used_brachot: number
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          member_id: string
+          package_type?: string
+          price_paid?: number
+          total_brachot?: number
+          updated_at?: string
+          used_brachot?: number
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          member_id?: string
+          package_type?: string
+          price_paid?: number
+          total_brachot?: number
+          updated_at?: string
+          used_brachot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bracha_packages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_categories: {
         Row: {
           created_at: string
@@ -604,9 +654,12 @@ export type Database = {
           member_id: string
           method: Database["public"]["Enums"]["payment_method"]
           notes: string | null
+          payment_type: string
+          quantity: number | null
           received_by: string | null
           reference: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
+          unit_price: number | null
         }
         Insert: {
           aliya_id?: string | null
@@ -616,9 +669,12 @@ export type Database = {
           member_id: string
           method: Database["public"]["Enums"]["payment_method"]
           notes?: string | null
+          payment_type?: string
+          quantity?: number | null
           received_by?: string | null
           reference?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          unit_price?: number | null
         }
         Update: {
           aliya_id?: string | null
@@ -628,9 +684,12 @@ export type Database = {
           member_id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           notes?: string | null
+          payment_type?: string
+          quantity?: number | null
           received_by?: string | null
           reference?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          unit_price?: number | null
         }
         Relationships: [
           {

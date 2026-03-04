@@ -189,6 +189,7 @@ export default function Payments() {
             status: 'confirmed',
             notes: formData.notes || null,
             aliya_id: formData.aliya_id || null,
+            payment_type: formData.aliya_id ? 'aliya' : 'donation',
           })
           .select()
           .single();

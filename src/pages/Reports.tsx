@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,9 +24,11 @@ import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function Reports() {
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+
   // Fetch comprehensive stats
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['reports-stats'],
+    queryKey: ['reports-stats', typeFilter],
     queryFn: async () => {
       const now = new Date();
       const thisMonthStart = startOfMonth(now);
@@ -33,28 +36,42 @@ export default function Reports() {
       const lastMonthStart = startOfMonth(subMonths(now, 1));
       const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
+      // Build base query with type filter
+      const buildQuery = (query: any) => {
+        if (typeFilter !== 'all') {
+          return query.eq('payment_type', typeFilter);
+        }
+        return query;
+      };
+
       // This month payments
-      const { data: thisMonthPayments } = await supabase
-        .from('payments')
-        .select('amount, method, created_at')
-        .gte('created_at', thisMonthStart.toISOString())
-        .lte('created_at', thisMonthEnd.toISOString())
-        .eq('status', 'confirmed');
+      const { data: thisMonthPayments } = await buildQuery(
+        supabase
+          .from('payments')
+          .select('amount, method, created_at, payment_type')
+          .gte('created_at', thisMonthStart.toISOString())
+          .lte('created_at', thisMonthEnd.toISOString())
+          .eq('status', 'confirmed')
+      );
 
       // Last month payments
-      const { data: lastMonthPayments } = await supabase
-        .from('payments')
-        .select('amount')
-        .gte('created_at', lastMonthStart.toISOString())
-        .lte('created_at', lastMonthEnd.toISOString())
-        .eq('status', 'confirmed');
+      const { data: lastMonthPayments } = await buildQuery(
+        supabase
+          .from('payments')
+          .select('amount')
+          .gte('created_at', lastMonthStart.toISOString())
+          .lte('created_at', lastMonthEnd.toISOString())
+          .eq('status', 'confirmed')
+      );
 
       // All payments for chart
-      const { data: allPayments } = await supabase
-        .from('payments')
-        .select('amount, created_at')
-        .eq('status', 'confirmed')
-        .order('created_at');
+      const { data: allPayments } = await buildQuery(
+        supabase
+          .from('payments')
+          .select('amount, created_at, payment_type')
+          .eq('status', 'confirmed')
+          .order('created_at')
+      );
 
       // Members count
       const { count: membersCount } = await supabase
@@ -77,6 +94,14 @@ export default function Reports() {
       // Payment methods breakdown
       const bitPayments = thisMonthPayments?.filter(p => p.method === 'bit').reduce((sum, p) => sum + Number(p.amount), 0) || 0;
       const cashPayments = thisMonthPayments?.filter(p => p.method === 'cash').reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+      // Payment type breakdown
+      const typeBreakdown = {
+        aliya: allPayments?.filter((p: any) => p.payment_type === 'aliya').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
+        ashkava: allPayments?.filter((p: any) => p.payment_type === 'ashkava').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
+        yearly_bracha: allPayments?.filter((p: any) => p.payment_type === 'yearly_bracha').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
+        donation: allPayments?.filter((p: any) => p.payment_type === 'donation').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
+      };
 
       // Monthly data for chart (last 6 months)
       const monthlyData = [];
@@ -111,6 +136,7 @@ export default function Reports() {
         bitPayments,
         cashPayments,
         monthlyData,
+        typeBreakdown,
       };
     },
   });
@@ -118,6 +144,13 @@ export default function Reports() {
   const paymentMethodData = [
     { name: 'ביט', value: stats?.bitPayments || 0, color: '#9333ea' },
     { name: 'מזומן', value: stats?.cashPayments || 0, color: '#22c55e' },
+  ];
+
+  const typeBreakdownData = [
+    { name: 'עליות', value: stats?.typeBreakdown?.aliya || 0, color: 'hsl(var(--primary))' },
+    { name: 'אשכבות', value: stats?.typeBreakdown?.ashkava || 0, color: '#f59e0b' },
+    { name: 'ברכות שנה', value: stats?.typeBreakdown?.yearly_bracha || 0, color: '#8b5cf6' },
+    { name: 'תרומות', value: stats?.typeBreakdown?.donation || 0, color: '#06b6d4' },
   ];
 
   const aliyotStatusData = [
@@ -167,6 +200,26 @@ export default function Reports() {
             ייצוא לאקסל
           </Button>
         </div>
+      </div>
+
+      {/* Type Filter */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { key: 'all', label: 'הכל' },
+          { key: 'aliya', label: 'עליות' },
+          { key: 'ashkava', label: 'אשכבות' },
+          { key: 'yearly_bracha', label: 'ברכות שנה' },
+          { key: 'donation', label: 'תרומות' },
+        ].map(f => (
+          <Button
+            key={f.key}
+            variant={typeFilter === f.key ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTypeFilter(f.key)}
+          >
+            {f.label}
+          </Button>
+        ))}
       </div>
 
       {/* Stats Cards */}
@@ -308,6 +361,53 @@ export default function Reports() {
                 </ResponsiveContainer>
                 <div className="space-y-3">
                   {paymentMethodData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-3">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ background: item.color }}
+                      />
+                      <span className="font-medium">{item.name}</span>
+                      <span className="text-muted-foreground">
+                        {formatCurrency(item.value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Income by Type */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-lg">הכנסות לפי סוג</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-64 w-full" />
+            ) : (
+              <div className="flex items-center justify-center gap-8">
+                <ResponsiveContainer width={200} height={200}>
+                  <PieChart>
+                    <Pie
+                      data={typeBreakdownData.filter(d => d.value > 0)}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {typeBreakdownData.filter(d => d.value > 0).map((entry, index) => (
+                        <Cell key={`cell-type-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="space-y-3">
+                  {typeBreakdownData.map((item) => (
                     <div key={item.name} className="flex items-center gap-3">
                       <div
                         className="w-4 h-4 rounded-full"
