@@ -129,10 +129,10 @@ export default function Aliyot() {
       if (error) throw error;
 
       // Create ashkava payment if enabled
-      if (ashkava.enabled && ashkava.total > 0 && formData.member_id) {
+      if (ashkava.enabled && ashkavaCalculatedTotal > 0 && formData.member_id) {
         await supabase.from('payments').insert({
           member_id: formData.member_id,
-          amount: ashkava.total,
+          amount: ashkavaCalculatedTotal,
           method: 'cash',
           received_by: user?.id,
           status: 'confirmed',
