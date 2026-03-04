@@ -632,7 +632,7 @@ export default function FridayDashboard() {
                     <div>
                       <p className="font-medium text-purple-900">סרוק QR או שלח לינק</p>
                       <p className="text-sm text-purple-700">
-                        סכום: {formatCurrency(Number(paymentAmount))}
+                        סכום: {formatCurrency(totalPayment)}
                       </p>
                     </div>
                   </div>
