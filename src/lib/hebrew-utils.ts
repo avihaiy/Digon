@@ -542,7 +542,6 @@ export function getOccasionForDate(date: Date): DateOccasion {
   
   // Check for holidays using hebcal
   const hdate = new HDate(date);
-  const { HebrewCalendar, flags } = require('@hebcal/core');
   const events = HebrewCalendar.getHolidaysOnDate(hdate, true); // true = Israel
   
   // Filter to significant holidays (chag, major fast, etc.)
