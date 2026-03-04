@@ -378,6 +378,53 @@ export default function Reports() {
           </CardContent>
         </Card>
 
+        {/* Income by Type */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-lg">הכנסות לפי סוג</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-64 w-full" />
+            ) : (
+              <div className="flex items-center justify-center gap-8">
+                <ResponsiveContainer width={200} height={200}>
+                  <PieChart>
+                    <Pie
+                      data={typeBreakdownData.filter(d => d.value > 0)}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {typeBreakdownData.filter(d => d.value > 0).map((entry, index) => (
+                        <Cell key={`cell-type-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="space-y-3">
+                  {typeBreakdownData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-3">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ background: item.color }}
+                      />
+                      <span className="font-medium">{item.name}</span>
+                      <span className="text-muted-foreground">
+                        {formatCurrency(item.value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Aliyot Status */}
         <Card className="glass-card lg:col-span-2">
           <CardHeader>
