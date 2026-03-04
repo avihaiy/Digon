@@ -611,7 +611,7 @@ export default function Aliyot() {
                 )}
                 <div className="border-t border-primary/20 pt-1 mt-1 flex justify-between font-bold text-base">
                   <span>סה״כ לתשלום</span>
-                  <span>{formatCurrency(Number(formData.price || 0) + (ashkava.enabled ? ashkava.total : 0) + (bracha.enabled ? bracha.price : 0))}</span>
+                  <span>{formatCurrency(totalToPay)}</span>
                 </div>
               </div>
             </div>
