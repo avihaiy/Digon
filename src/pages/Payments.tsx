@@ -839,7 +839,7 @@ export default function Payments() {
 
       {/* Add Payment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] max-h-[90dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
@@ -847,7 +847,7 @@ export default function Payments() {
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 pb-20">
             {/* Link to Aliya (optional) */}
             {!editingPayment && unpaidAliyot && unpaidAliyot.length > 0 && (
               <div className="space-y-2">
@@ -1098,7 +1098,7 @@ export default function Payments() {
               </div>
             )}
 
-            <div className="flex gap-3 pt-4">
+            <div className="sticky bottom-0 bg-background/95 backdrop-blur pt-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] flex gap-3">
               <Button type="button" variant="outline" onClick={handleCloseDialog} className="flex-1">
                 ביטול
               </Button>
