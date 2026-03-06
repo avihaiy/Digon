@@ -360,7 +360,33 @@ export default function Display() {
       clearInterval(tickerPollInterval);
       supabase.removeChannel(channel);
     };
-  }, [fetchTicker]);
+  }, [fetchTicker, applyDisplayToggleSetting]);
+
+  // Immediate cross-tab updates from admin page (without refresh)
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== "display_setting_update" || !event.newValue) return;
+      try {
+        const payload = JSON.parse(event.newValue) as { key?: string; value?: string };
+        applyDisplayToggleSetting(payload.key, payload.value);
+      } catch {
+        // ignore parse errors
+      }
+    };
+
+    const handleLocalEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ key?: string; value?: string }>;
+      applyDisplayToggleSetting(customEvent.detail?.key, customEvent.detail?.value);
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("display-setting-update", handleLocalEvent as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("display-setting-update", handleLocalEvent as EventListener);
+    };
+  }, [applyDisplayToggleSetting]);
 
   useEffect(() => {
     const fetchYahrzeits = async () => {

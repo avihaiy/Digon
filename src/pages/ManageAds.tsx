@@ -741,10 +741,21 @@ export default function ManageAds() {
     fetchSettings();
   }, []);
 
+  const broadcastDisplaySetting = (key: string, value: string) => {
+    try {
+      const payload = JSON.stringify({ key, value, at: Date.now() });
+      localStorage.setItem("display_setting_update", payload);
+      window.dispatchEvent(new CustomEvent("display-setting-update", { detail: { key, value } }));
+    } catch {
+      // ignore local broadcast failures
+    }
+  };
+
   const upsertSetting = async (key: string, value: string) => {
     const { data: ex } = await supabase.from("app_settings").select("id").eq("key", key).maybeSingle();
     if (ex) await supabase.from("app_settings").update({ value }).eq("key", key);
     else await supabase.from("app_settings").insert({ key, value });
+    broadcastDisplaySetting(key, value);
   };
 
   const saveSynagogueName = async (name: string) => {
