@@ -1162,6 +1162,11 @@ export default function Display() {
               <div key="finance" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
                 <FinanceDisplaySlide textClass={styleConfig.text} accentClass={styleConfig.accent} />
               </div>
+            ) : currentSlideType === "vort" ? (
+              <div key="vort" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+                <TorahVortSlide />
+              </div>
+              </div>
             ) : currentAnnouncement ? (
               isPrayerTimesAnnouncement(currentAnnouncement.title) ? (
                 (() => {
