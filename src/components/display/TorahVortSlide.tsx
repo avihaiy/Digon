@@ -13,11 +13,25 @@ const DEFAULT_VERSES = [
   { text: "עֲשֵׂה רְצוֹנוֹ כִרְצוֹנְךָ כְּדֵי שֶׁיַּעֲשֶׂה רְצוֹנְךָ כִרְצוֹנוֹ", source: "אבות ב׳, ד׳" },
   { text: "הֱוֵי מְקַבֵּל אֶת כָּל הָאָדָם בְּסֵבֶר פָּנִים יָפוֹת", source: "אבות א׳, ט״ו" },
   { text: "כָּל יִשְׂרָאֵל עֲרֵבִים זֶה בָּזֶה", source: "שבועות ל״ט ע״א" },
+  { text: "הוּא הָיָה אוֹמֵר: אַל תִּסְתַּכֵּל בַּקַּנְקַן, אֶלָּא בְּמַה שֶּׁיֵּשׁ בּוֹ", source: "אבות ד׳, כ׳" },
+  { text: "אֵיזֶהוּ חָכָם — הַלּוֹמֵד מִכָּל אָדָם", source: "אבות ד׳, א׳" },
+  { text: "אֵיזֶהוּ גִבּוֹר — הַכּוֹבֵשׁ אֶת יִצְרוֹ", source: "אבות ד׳, א׳" },
+  { text: "אֵיזֶהוּ עָשִׁיר — הַשָּׂמֵחַ בְּחֶלְקוֹ", source: "אבות ד׳, א׳" },
+  { text: "רַבִּי טַרְפוֹן אוֹמֵר: לֹא עָלֶיךָ הַמְּלָאכָה לִגְמֹר, וְלֹא אַתָּה בֶן חוֹרִין לִבָּטֵל מִמֶּנָּה", source: "אבות ב׳, ט״ז" },
+  { text: "וְצִיּוֹן — הֲלֹא שָׁם נוֹלַד אִישׁ וְאִישׁ", source: "תהלים פ״ז, ה׳" },
+  { text: "עֵת לַעֲשׂוֹת לַה׳ הֵפֵרוּ תּוֹרָתֶךָ", source: "תהלים קי״ט, קכ״ו" },
 ];
+
+function getWeekNumber(): number {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  return Math.floor((now.getTime() - start.getTime()) / (7 * 86400000));
+}
 
 export default function TorahVortSlide() {
   const [customMessage, setCustomMessage] = useState<string | null>(null);
   const [customTitle, setCustomTitle] = useState<string | null>(null);
+  const [autoRotate, setAutoRotate] = useState("off");
 
   useEffect(() => {
     const fetchMessage = async () => {
@@ -25,29 +39,36 @@ export default function TorahVortSlide() {
         const { data } = await supabase
           .from("app_settings")
           .select("key, value")
-          .in("key", ["display_vort_message", "display_vort_title"]);
+          .in("key", ["display_vort_message", "display_vort_title", "vort_auto_rotate"]);
         return data;
       });
       if (data) {
         for (const s of data) {
           if (s.key === "display_vort_message" && s.value) setCustomMessage(s.value);
           if (s.key === "display_vort_title" && s.value) setCustomTitle(s.value);
+          if (s.key === "vort_auto_rotate") setAutoRotate(s.value || "off");
         }
       }
     };
     fetchMessage();
   }, []);
 
-  // Pick a verse based on the day
-  const dailyVerse = useMemo(() => {
+  // Pick a verse based on mode
+  const autoVerse = useMemo(() => {
+    if (autoRotate === "shabbat") {
+      const weekNum = getWeekNumber();
+      return DEFAULT_VERSES[weekNum % DEFAULT_VERSES.length];
+    }
+    // daily or off (fallback)
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
     );
     return DEFAULT_VERSES[dayOfYear % DEFAULT_VERSES.length];
-  }, []);
+  }, [autoRotate]);
 
-  const displayText = customMessage || dailyVerse.text;
-  const displaySource = customTitle || (customMessage ? "הודעת היום" : dailyVerse.source);
+  // Custom message overrides auto-rotate
+  const displayText = customMessage || autoVerse.text;
+  const displaySource = customTitle || (customMessage ? "הודעת היום" : autoVerse.source);
 
   return (
     <motion.div
@@ -73,10 +94,7 @@ export default function TorahVortSlide() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.5 }}
-        style={{
-          fontSize: "clamp(28px, 5vh, 60px)",
-          lineHeight: 1,
-        }}
+        style={{ fontSize: "clamp(28px, 5vh, 60px)", lineHeight: 1 }}
       >
         ✡️
       </motion.div>
