@@ -478,10 +478,12 @@ export function MemberDetailDialog({
                             onClick={async () => {
                               try {
                                 const receiptWithMember = { ...r, member: { full_name: memberName } };
-                                await shareReceipt(receiptWithMember);
+                                await shareReceiptWithPdf(receiptWithMember);
                                 toast.success('הקבלה שותפה');
                               } catch (error: any) {
-                                if (error?.message === 'DOWNLOAD_FALLBACK') {
+                                if (error?.message === 'GESTURE_ERROR') {
+                                  toast.info('ה-PDF מוכן! לחץ שוב');
+                                } else if (error?.message === 'DOWNLOAD_FALLBACK') {
                                   toast.success('הקבלה הורדה');
                                 } else if (error?.name !== 'AbortError') {
                                   toast.error('שגיאה בשיתוף');
