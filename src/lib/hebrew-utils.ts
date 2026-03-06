@@ -446,6 +446,19 @@ export function getSefiratHaOmer(date: Date = new Date()): string | null {
   return label;
 }
 
+// Birkat HaLevana calculation
+// Can be said from 3 days after the Molad until the 15th of the Hebrew month
+export function getBirkatHalevana(date: Date = new Date()): string | null {
+  const hdate = new HDate(date);
+  const day = hdate.getDate();
+  
+  // Birkat HaLevana is said from ~3rd to ~15th of each Hebrew month
+  if (day >= 3 && day <= 14) {
+    return `ברכת הלבנה (עד ט״ו בחודש)`;
+  }
+  return null;
+}
+
 // Birkat Hashanim calculation
 // In Israel: "Tal Umatar" is said from 7 Cheshvan until Pesach (15 Nisan)
 // hebcal months: NISAN=1, IYYAR=2, SIVAN=3, TAMUZ=4, AV=5, ELUL=6, TISHREI=7, CHESHVAN=8, KISLEV=9, TEVET=10, SHVAT=11, ADAR=12, ADAR_II=13
