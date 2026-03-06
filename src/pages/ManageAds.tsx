@@ -728,7 +728,7 @@ export default function ManageAds() {
     toast.success("הודעת היום עודכנה");
   };
 
-
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
