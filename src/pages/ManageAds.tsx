@@ -1263,42 +1263,49 @@ export default function ManageAds() {
 
       {/* כפתור הוסף — sticky תחתית */}
       <div className="fixed bottom-0 right-0 left-0 p-3 bg-background/95 backdrop-blur-sm border-t z-40">
-        <Drawer open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DrawerTrigger asChild>
-            <Button
-              className="w-full h-14 text-base font-semibold rounded-2xl shadow-lg"
-              onClick={() => {
-                setEditingId(null);
-                setFormData(defaultFormData);
-              }}
-            >
-              <Plus className="w-5 h-5 ml-2" />
-              הוסף מודעה חדשה
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent className="max-h-[92vh]" dir="rtl">
-            <DrawerHeader className="text-right pb-2">
-              <DrawerTitle className="text-lg">{editingId ? "עריכת מודעה" : "מודעה חדשה"}</DrawerTitle>
-            </DrawerHeader>
-            <div className="overflow-y-auto px-4 pb-6">
-              <AnnouncementForm
-                editingId={editingId}
-                formData={formData}
-                setFormData={setFormData}
-                imageFile={imageFile}
-                setImageFile={setImageFile}
-                imagePreview={imagePreview}
-                setImagePreview={setImagePreview}
-                onClose={handleCloseDialog}
-                onSubmit={() => saveMutation.mutate({ ...formData, id: editingId || undefined })}
-                isPending={saveMutation.isPending}
-                isUploading={isUploading}
-                isMobile={true}
-              />
-            </div>
-          </DrawerContent>
-        </Drawer>
+        <Button
+          className="w-full h-14 text-base font-semibold rounded-2xl shadow-lg"
+          onClick={() => {
+            setEditingId(null);
+            setFormData(defaultFormData);
+            setIsDialogOpen(true);
+          }}
+        >
+          <Plus className="w-5 h-5 ml-2" />
+          הוסף מודעה חדשה
+        </Button>
       </div>
+
+      {/* טופס מודעה — מסך מלא על נייד */}
+      {isDialogOpen && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col" dir="rtl">
+          <div className="flex items-center justify-between p-4 border-b bg-background shrink-0">
+            <h2 className="text-lg font-bold">{editingId ? "עריכת מודעה" : "מודעה חדשה"}</h2>
+            <Button variant="ghost" size="icon" onClick={handleCloseDialog} className="h-10 w-10">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain px-4 py-4"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <AnnouncementForm
+              editingId={editingId}
+              formData={formData}
+              setFormData={setFormData}
+              imageFile={imageFile}
+              setImageFile={setImageFile}
+              imagePreview={imagePreview}
+              setImagePreview={setImagePreview}
+              onClose={handleCloseDialog}
+              onSubmit={() => saveMutation.mutate({ ...formData, id: editingId || undefined })}
+              isPending={saveMutation.isPending}
+              isUploading={isUploading}
+              isMobile={true}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
