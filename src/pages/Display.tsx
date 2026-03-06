@@ -9,6 +9,9 @@ import {
   getBirkatHashanim,
   getSefiratHaOmer,
   getCurrentParasha,
+  getBirkatHalevana,
+  getDailyZmanim,
+  formatTimeOnly,
 } from "@/lib/hebrew-utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Maximize, Lock, Unlock } from "lucide-react";
@@ -20,6 +23,7 @@ import HeichalDisplaySlide from "@/components/display/HeichalDisplaySlide";
 import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
 import TickerBanner from "@/components/display/TickerBanner";
+import TorahVortSlide from "@/components/display/TorahVortSlide";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
@@ -192,11 +196,12 @@ export default function Display() {
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
-  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]>([
+  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements" | "vort")[]>([
     "heichal",
     "memorial",
     "zmanim",
     "finance",
+    "vort",
     "announcements",
   ]);
   const [slideDurations, setSlideDurations] = useState<Record<string, number>>({
@@ -204,8 +209,13 @@ export default function Display() {
     memorial: 15,
     zmanim: 20,
     finance: 10,
+    vort: 12,
     announcements: 10,
   });
+  const [showZmanimHeader, setShowZmanimHeader] = useState(true);
+  const [showOmerCounter, setShowOmerCounter] = useState(true);
+  const [showTickerBanner, setShowTickerBanner] = useState(true);
+  const [showVort, setShowVort] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
@@ -268,6 +278,10 @@ export default function Display() {
             "display_slide_durations",
             "synagogue_name",
             "ticker_speed",
+            "show_zmanim_header",
+            "show_omer_counter",
+            "show_ticker_banner",
+            "show_vort_on_display",
           ]);
         return data;
       });
@@ -281,6 +295,10 @@ export default function Display() {
           if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
+          if (setting.key === "show_zmanim_header") setShowZmanimHeader(setting.value !== "false");
+          if (setting.key === "show_omer_counter") setShowOmerCounter(setting.value !== "false");
+          if (setting.key === "show_ticker_banner") setShowTickerBanner(setting.value !== "false");
+          if (setting.key === "show_vort_on_display") setShowVort(setting.value !== "false");
           if (setting.key === "display_slide_durations" && setting.value) {
             try {
               setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
@@ -289,9 +307,9 @@ export default function Display() {
           if (setting.key === "display_slide_order" && setting.value) {
             try {
               const parsed = JSON.parse(setting.value);
-              const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
+              const allTypes = ["heichal", "memorial", "zmanim", "finance", "vort", "announcements"];
               const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-              setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
+              setSlideOrder(merged as typeof slideOrder);
             } catch {}
           }
         }
@@ -318,6 +336,10 @@ export default function Display() {
           if (payload.new?.key === "show_heichal_on_display") setShowHeichal(payload.new.value === "true");
           if (payload.new?.key === "synagogue_name") setSynagogueName(payload.new.value || "");
           if (payload.new?.key === "ticker_speed") setTickerSpeed(payload.new.value || "medium");
+          if (payload.new?.key === "show_zmanim_header") setShowZmanimHeader(payload.new.value !== "false");
+          if (payload.new?.key === "show_omer_counter") setShowOmerCounter(payload.new.value !== "false");
+          if (payload.new?.key === "show_ticker_banner") setShowTickerBanner(payload.new.value !== "false");
+          if (payload.new?.key === "show_vort_on_display") setShowVort(payload.new.value !== "false");
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => {
@@ -653,6 +675,10 @@ export default function Display() {
               "show_heichal_on_display",
               "display_slide_order",
               "display_slide_durations",
+              "show_zmanim_header",
+              "show_omer_counter",
+              "show_ticker_banner",
+              "show_vort_on_display",
             ]);
           return data;
         });
@@ -664,12 +690,16 @@ export default function Display() {
             if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
             if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
             if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+            if (setting.key === "show_zmanim_header") setShowZmanimHeader(setting.value !== "false");
+            if (setting.key === "show_omer_counter") setShowOmerCounter(setting.value !== "false");
+            if (setting.key === "show_ticker_banner") setShowTickerBanner(setting.value !== "false");
+            if (setting.key === "show_vort_on_display") setShowVort(setting.value !== "false");
             if (setting.key === "display_slide_order" && setting.value) {
               try {
                 const parsed = JSON.parse(setting.value);
-                const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
+                const allTypes = ["heichal", "memorial", "zmanim", "finance", "vort", "announcements"];
                 const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-                setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
+                setSlideOrder(merged as typeof slideOrder);
               } catch {}
             }
             if (setting.key === "display_slide_durations" && setting.value) {
@@ -740,6 +770,7 @@ export default function Display() {
     | { type: "memorial" }
     | { type: "zmanim" }
     | { type: "finance" }
+    | { type: "vort" }
     | { type: "announcement"; announcement: ScheduledAnnouncement };
 
   const orderedSlides = useMemo<Slide[]>(() => {
@@ -753,6 +784,8 @@ export default function Display() {
         result.push({ type: "zmanim" });
       } else if (id === "finance" && showFinance) {
         result.push({ type: "finance" });
+      } else if (id === "vort" && showVort) {
+        result.push({ type: "vort" });
       } else if (id === "announcements") {
         for (const a of validAnnouncements) {
           result.push({ type: "announcement", announcement: a });
@@ -760,7 +793,7 @@ export default function Display() {
       }
     }
     return result;
-  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, validAnnouncements]);
+  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, showVort, validAnnouncements]);
 
   const totalSlides = orderedSlides.length;
 
@@ -798,9 +831,11 @@ export default function Display() {
           ? STYLE_CONFIGS.modern_dark
           : currentSlideType === "finance"
             ? STYLE_CONFIGS.modern_dark
-            : isPrayerAd
-              ? STYLE_CONFIGS.royal_blue
-              : currentAnnouncement
+            : currentSlideType === "vort"
+              ? STYLE_CONFIGS.modern_dark
+              : isPrayerAd
+                ? STYLE_CONFIGS.royal_blue
+                : currentAnnouncement
                 ? STYLE_CONFIGS[currentAnnouncement.style]
                 : STYLE_CONFIGS.traditional_gold;
 
@@ -816,8 +851,10 @@ export default function Display() {
   const roshChodesh = getRoshChodesh(currentTime);
   const erevRoshChodesh = getErevRoshChodesh(currentTime);
   const todayHoliday = getTodayHolidayHebrew();
-  const sefiratHaOmer = getSefiratHaOmer(currentTime);
+  const sefiratHaOmer = showOmerCounter ? getSefiratHaOmer(currentTime) : null;
   const parasha = getCurrentParasha();
+  const birkatHalevana = getBirkatHalevana(currentTime);
+  const dailyZmanim = useMemo(() => getDailyZmanim("akko"), []);
 
   return (
     <div
@@ -1069,7 +1106,13 @@ export default function Display() {
             !roshChodesh && erevRoshChodesh ? { icon: "🌑", text: erevRoshChodesh } : null,
             todayHoliday ? { icon: "⭐", text: todayHoliday } : null,
             sefiratHaOmer ? { icon: "🌾", text: sefiratHaOmer } : null,
+            birkatHalevana ? { icon: "🌙", text: birkatHalevana } : null,
             parasha ? { icon: "📖", text: `פרשת ${parasha}` } : null,
+            ...(showZmanimHeader ? [
+              dailyZmanim.sunrise ? { icon: "☀️", text: `הנץ ${formatTimeOnly(dailyZmanim.sunrise)}` } : null,
+              dailyZmanim.sofZmanShmaGRA ? { icon: "📖", text: `סוף ק״ש ${formatTimeOnly(dailyZmanim.sofZmanShmaGRA)}` } : null,
+              dailyZmanim.sunset ? { icon: "🌆", text: `שקיעה ${formatTimeOnly(dailyZmanim.sunset)}` } : null,
+            ] : []),
           ]
             .filter(Boolean)
             .map((item, i) => (
@@ -1126,6 +1169,10 @@ export default function Display() {
             ) : currentSlideType === "finance" ? (
               <div key="finance" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
                 <FinanceDisplaySlide textClass={styleConfig.text} accentClass={styleConfig.accent} />
+              </div>
+            ) : currentSlideType === "vort" ? (
+              <div key="vort" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+                <TorahVortSlide />
               </div>
             ) : currentAnnouncement ? (
               isPrayerTimesAnnouncement(currentAnnouncement.title) ? (
@@ -1219,7 +1266,7 @@ export default function Display() {
       </main>
 
       {/* TICKER — מקבל נתונים מ-Display */}
-      <TickerBanner items={tickerItems} speed={tickerSpeed} />
+      {showTickerBanner && <TickerBanner items={tickerItems} speed={tickerSpeed} />}
 
       {/* CREDIT */}
       <div

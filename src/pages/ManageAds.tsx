@@ -628,6 +628,13 @@ export default function ManageAds() {
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
   const [bgUploading, setBgUploading] = useState(false);
   const bgFileInputRef = useRef<HTMLInputElement>(null);
+  const [showZmanimHeader, setShowZmanimHeader] = useState(true);
+  const [showOmerCounter, setShowOmerCounter] = useState(true);
+  const [showTickerBanner, setShowTickerBanner] = useState(true);
+  const [showVort, setShowVort] = useState(true);
+  const [vortMessage, setVortMessage] = useState("");
+  const [vortTitle, setVortTitle] = useState("");
+  const [vortSaving, setVortSaving] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -640,6 +647,12 @@ export default function ManageAds() {
           "display_background_url",
           "show_heichal_on_display",
           "synagogue_name",
+          "show_zmanim_header",
+          "show_omer_counter",
+          "show_ticker_banner",
+          "show_vort_on_display",
+          "display_vort_message",
+          "display_vort_title",
         ]);
       if (data) {
         for (const s of data) {
@@ -648,6 +661,12 @@ export default function ManageAds() {
           if (s.key === "display_background_url") setDisplayBgUrl(s.value || null);
           if (s.key === "show_heichal_on_display") setShowHeichal(s.value === "true");
           if (s.key === "synagogue_name") setSynagogueName(s.value || "");
+          if (s.key === "show_zmanim_header") setShowZmanimHeader(s.value !== "false");
+          if (s.key === "show_omer_counter") setShowOmerCounter(s.value !== "false");
+          if (s.key === "show_ticker_banner") setShowTickerBanner(s.value !== "false");
+          if (s.key === "show_vort_on_display") setShowVort(s.value !== "false");
+          if (s.key === "display_vort_message") setVortMessage(s.value || "");
+          if (s.key === "display_vort_title") setVortTitle(s.value || "");
         }
       }
     };
@@ -680,6 +699,33 @@ export default function ManageAds() {
     setShowFinance(c);
     await upsertSetting("show_finance_on_display", c ? "true" : "false");
     toast.success(c ? "כספים יוצגו" : "כספים הוסרו");
+  };
+  const toggleZmanimHeader = async (c: boolean) => {
+    setShowZmanimHeader(c);
+    await upsertSetting("show_zmanim_header", c ? "true" : "false");
+    toast.success(c ? "זמנים בכותרת יוצגו" : "זמנים בכותרת הוסרו");
+  };
+  const toggleOmerCounter = async (c: boolean) => {
+    setShowOmerCounter(c);
+    await upsertSetting("show_omer_counter", c ? "true" : "false");
+    toast.success(c ? "ספירת העומר תוצג" : "ספירת העומר הוסרה");
+  };
+  const toggleTickerBanner = async (c: boolean) => {
+    setShowTickerBanner(c);
+    await upsertSetting("show_ticker_banner", c ? "true" : "false");
+    toast.success(c ? "טיקר יוצג" : "טיקר הוסר");
+  };
+  const toggleVort = async (c: boolean) => {
+    setShowVort(c);
+    await upsertSetting("show_vort_on_display", c ? "true" : "false");
+    toast.success(c ? "דבר תורה יוצג" : "דבר תורה הוסר");
+  };
+  const saveVortMessage = async () => {
+    setVortSaving(true);
+    await upsertSetting("display_vort_message", vortMessage);
+    await upsertSetting("display_vort_title", vortTitle);
+    setVortSaving(false);
+    toast.success("הודעת היום עודכנה");
   };
 
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -919,7 +965,64 @@ export default function ManageAds() {
               </CardContent>
             </Card>
 
-            {/* רקע */}
+            {/* הגדרות תצוגה */}
+            <Card className="border-green-200 bg-green-50/50">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Eye className="w-4 h-4 text-green-600" />
+                  <p className="font-semibold text-sm">הגדרות תצוגה</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">הצג זמנים בכותרת</p>
+                  <Switch checked={showZmanimHeader} onCheckedChange={toggleZmanimHeader} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">הצג ספירת העומר</p>
+                  <Switch checked={showOmerCounter} onCheckedChange={toggleOmerCounter} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">הצג טיקר תחתון</p>
+                  <Switch checked={showTickerBanner} onCheckedChange={toggleTickerBanner} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">הצג דבר תורה</p>
+                  <Switch checked={showVort} onCheckedChange={toggleVort} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* דבר תורה / הודעת יום */}
+            <Card className="border-amber-300 bg-amber-50/50">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">✡️</span>
+                  <div>
+                    <p className="font-semibold text-sm">דבר תורה / הודעת היום</p>
+                    <p className="text-xs text-muted-foreground">עוקף את הפסוק האוטומטי</p>
+                  </div>
+                </div>
+                <Input
+                  value={vortTitle}
+                  onChange={(e) => setVortTitle(e.target.value)}
+                  placeholder="כותרת (לדוגמה: מקור)"
+                  className="h-9 text-sm text-right"
+                  dir="rtl"
+                />
+                <Textarea
+                  value={vortMessage}
+                  onChange={(e) => setVortMessage(e.target.value)}
+                  placeholder="הודעת היום או פסוק (השאר ריק לפסוק אוטומטי)"
+                  rows={2}
+                  className="text-sm"
+                  dir="rtl"
+                />
+                <Button onClick={saveVortMessage} disabled={vortSaving} size="sm" className="w-full">
+                  {vortSaving ? "שומר..." : "שמור הודעת יום"}
+                </Button>
+              </CardContent>
+            </Card>
+
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-3">
@@ -1137,6 +1240,62 @@ export default function ManageAds() {
           </div>
         </CardContent>
       </Card>
+
+      {/* הגדרות תצוגה */}
+      <CollapsibleCard
+        title="הגדרות תצוגה"
+        icon={<Eye className="w-5 h-5 text-green-600" />}
+        subtitle="שליטה באלמנטים על המסך"
+        accentClass="border-green-200 bg-green-50/30"
+      >
+        <div className="pt-2 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm">הצג זמנים בכותרת</p>
+            <Switch checked={showZmanimHeader} onCheckedChange={toggleZmanimHeader} />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm">הצג ספירת העומר</p>
+            <Switch checked={showOmerCounter} onCheckedChange={toggleOmerCounter} />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm">הצג טיקר תחתון</p>
+            <Switch checked={showTickerBanner} onCheckedChange={toggleTickerBanner} />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm">הצג דבר תורה</p>
+            <Switch checked={showVort} onCheckedChange={toggleVort} />
+          </div>
+        </div>
+      </CollapsibleCard>
+
+      {/* דבר תורה */}
+      <CollapsibleCard
+        title="דבר תורה / הודעת היום"
+        icon={<span className="text-xl">✡️</span>}
+        subtitle="עוקף את הפסוק האוטומטי"
+        accentClass="border-amber-300 bg-amber-50/30"
+      >
+        <div className="pt-2 space-y-3">
+          <Input
+            value={vortTitle}
+            onChange={(e) => setVortTitle(e.target.value)}
+            placeholder="כותרת (לדוגמה: מקור)"
+            className="h-12 text-base text-right"
+            dir="rtl"
+          />
+          <Textarea
+            value={vortMessage}
+            onChange={(e) => setVortMessage(e.target.value)}
+            placeholder="הודעת היום (השאר ריק לפסוק אוטומטי)"
+            rows={2}
+            className="text-base"
+            dir="rtl"
+          />
+          <Button onClick={saveVortMessage} disabled={vortSaving} className="w-full h-12 text-base">
+            {vortSaving ? "שומר..." : "שמור הודעת יום"}
+          </Button>
+        </div>
+      </CollapsibleCard>
 
       {/* רקע */}
       <CollapsibleCard
