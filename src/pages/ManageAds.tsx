@@ -700,8 +700,35 @@ export default function ManageAds() {
     await upsertSetting("show_finance_on_display", c ? "true" : "false");
     toast.success(c ? "כספים יוצגו" : "כספים הוסרו");
   };
+  const toggleZmanimHeader = async (c: boolean) => {
+    setShowZmanimHeader(c);
+    await upsertSetting("show_zmanim_header", c ? "true" : "false");
+    toast.success(c ? "זמנים בכותרת יוצגו" : "זמנים בכותרת הוסרו");
+  };
+  const toggleOmerCounter = async (c: boolean) => {
+    setShowOmerCounter(c);
+    await upsertSetting("show_omer_counter", c ? "true" : "false");
+    toast.success(c ? "ספירת העומר תוצג" : "ספירת העומר הוסרה");
+  };
+  const toggleTickerBanner = async (c: boolean) => {
+    setShowTickerBanner(c);
+    await upsertSetting("show_ticker_banner", c ? "true" : "false");
+    toast.success(c ? "טיקר יוצג" : "טיקר הוסר");
+  };
+  const toggleVort = async (c: boolean) => {
+    setShowVort(c);
+    await upsertSetting("show_vort_on_display", c ? "true" : "false");
+    toast.success(c ? "דבר תורה יוצג" : "דבר תורה הוסר");
+  };
+  const saveVortMessage = async () => {
+    setVortSaving(true);
+    await upsertSetting("display_vort_message", vortMessage);
+    await upsertSetting("display_vort_title", vortTitle);
+    setVortSaving(false);
+    toast.success("הודעת היום עודכנה");
+  };
 
-  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
