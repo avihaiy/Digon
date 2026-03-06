@@ -260,6 +260,15 @@ export function ReceiptPreviewDialog({
               )}
               שתף קבלה
             </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleWhatsAppShare}
+              className="px-4"
+            >
+              <MessageCircle className="w-4 h-4 ml-2" />
+              וואטסאפ
+            </Button>
           </div>
           <Button
             variant="outline"

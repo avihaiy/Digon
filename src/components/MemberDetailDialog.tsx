@@ -31,7 +31,7 @@ import {
   PAYMENT_METHOD,
   ALIYA_TYPES,
 } from '@/lib/hebrew-utils';
-import { shareReceipt } from '@/lib/receipt-share';
+import { shareReceiptWithPdf } from '@/lib/receipt-share';
 import { toast } from 'sonner';
 import html2pdf from 'html2pdf.js';
 
