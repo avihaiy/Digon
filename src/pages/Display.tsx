@@ -1259,7 +1259,7 @@ export default function Display() {
       </main>
 
       {/* TICKER — מקבל נתונים מ-Display */}
-      <TickerBanner items={tickerItems} speed={tickerSpeed} />
+      {showTickerBanner && <TickerBanner items={tickerItems} speed={tickerSpeed} />}
 
       {/* CREDIT */}
       <div
