@@ -1241,6 +1241,62 @@ export default function ManageAds() {
         </CardContent>
       </Card>
 
+      {/* הגדרות תצוגה */}
+      <CollapsibleCard
+        title="הגדרות תצוגה"
+        icon={<Eye className="w-5 h-5 text-green-600" />}
+        subtitle="שליטה באלמנטים על המסך"
+        accentClass="border-green-200 bg-green-50/30"
+      >
+        <div className="pt-2 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm">הצג זמנים בכותרת</p>
+            <Switch checked={showZmanimHeader} onCheckedChange={toggleZmanimHeader} />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm">הצג ספירת העומר</p>
+            <Switch checked={showOmerCounter} onCheckedChange={toggleOmerCounter} />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm">הצג טיקר תחתון</p>
+            <Switch checked={showTickerBanner} onCheckedChange={toggleTickerBanner} />
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm">הצג דבר תורה</p>
+            <Switch checked={showVort} onCheckedChange={toggleVort} />
+          </div>
+        </div>
+      </CollapsibleCard>
+
+      {/* דבר תורה */}
+      <CollapsibleCard
+        title="דבר תורה / הודעת היום"
+        icon={<span className="text-xl">✡️</span>}
+        subtitle="עוקף את הפסוק האוטומטי"
+        accentClass="border-amber-300 bg-amber-50/30"
+      >
+        <div className="pt-2 space-y-3">
+          <Input
+            value={vortTitle}
+            onChange={(e) => setVortTitle(e.target.value)}
+            placeholder="כותרת (לדוגמה: מקור)"
+            className="h-12 text-base text-right"
+            dir="rtl"
+          />
+          <Textarea
+            value={vortMessage}
+            onChange={(e) => setVortMessage(e.target.value)}
+            placeholder="הודעת היום (השאר ריק לפסוק אוטומטי)"
+            rows={2}
+            className="text-base"
+            dir="rtl"
+          />
+          <Button onClick={saveVortMessage} disabled={vortSaving} className="w-full h-12 text-base">
+            {vortSaving ? "שומר..." : "שמור הודעת יום"}
+          </Button>
+        </div>
+      </CollapsibleCard>
+
       {/* רקע */}
       <CollapsibleCard
         title="רקע מסך תצוגה"
