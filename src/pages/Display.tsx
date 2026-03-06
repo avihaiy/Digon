@@ -278,6 +278,10 @@ export default function Display() {
             "display_slide_durations",
             "synagogue_name",
             "ticker_speed",
+            "show_zmanim_header",
+            "show_omer_counter",
+            "show_ticker_banner",
+            "show_vort_on_display",
           ]);
         return data;
       });
