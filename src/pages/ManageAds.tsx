@@ -1341,6 +1341,10 @@ export default function ManageAds() {
         accentClass="border-amber-300 bg-amber-50/30"
       >
         <div className="pt-2 space-y-3">
+          {/* Saving indicator */}
+          {vortSaving && (
+            <div className="text-xs text-muted-foreground text-center animate-pulse">שומר...</div>
+          )}
           {/* Predefined verses picker */}
           <div>
             <Label className="text-sm font-semibold mb-1 block">בחר פסוק מרשימה מוגדרת</Label>
@@ -1351,6 +1355,7 @@ export default function ManageAds() {
                 if (verse) {
                   setVortMessage(verse.text);
                   setVortTitle(verse.source);
+                  autoSaveVort(verse.text, verse.source);
                 }
               }}
             >
@@ -1400,7 +1405,11 @@ export default function ManageAds() {
             <Label className="text-sm font-semibold mb-1 block">כותרת / מקור</Label>
             <Input
               value={vortTitle}
-              onChange={(e) => setVortTitle(e.target.value)}
+              onChange={(e) => {
+                const newTitle = e.target.value;
+                setVortTitle(newTitle);
+                debouncedSaveVort(vortMessage, newTitle);
+              }}
               placeholder="כותרת (לדוגמה: מקור)"
               className="h-12 text-base text-right"
               dir="rtl"
@@ -1410,32 +1419,31 @@ export default function ManageAds() {
             <Label className="text-sm font-semibold mb-1 block">תוכן הפסוק / ההודעה</Label>
             <Textarea
               value={vortMessage}
-              onChange={(e) => setVortMessage(e.target.value)}
+              onChange={(e) => {
+                const newMsg = e.target.value;
+                setVortMessage(newMsg);
+                debouncedSaveVort(newMsg, vortTitle);
+              }}
               placeholder="הודעת היום (השאר ריק לפסוק אוטומטי)"
               rows={3}
               className="text-base"
               dir="rtl"
             />
           </div>
-          <div className="flex gap-2">
-            <Button onClick={saveVortMessage} disabled={vortSaving} className="flex-1 h-12 text-base">
-              {vortSaving ? "שומר..." : "💾 שמור הודעת יום"}
+          {(vortMessage || vortTitle) && (
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base"
+              onClick={async () => {
+                setVortMessage("");
+                setVortTitle("");
+                await autoSaveVort("", "");
+                toast.success("חזרה לפסוק אוטומטי");
+              }}
+            >
+              ♻️ אפס לפסוק אוטומטי
             </Button>
-            {(vortMessage || vortTitle) && (
-              <Button
-                variant="outline"
-                className="h-12 px-4 text-base"
-                onClick={() => {
-                  setVortMessage("");
-                  setVortTitle("");
-                  saveVortMessage();
-                  toast.success("חזרה לפסוק אוטומטי");
-                }}
-              >
-                ♻️ אפס
-              </Button>
-            )}
-          </div>
+          )}
         </div>
       </CollapsibleCard>
 
