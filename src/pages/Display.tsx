@@ -348,6 +348,7 @@ export default function Display() {
           if (payload.new?.key === "show_omer_counter") setShowOmerCounter(payload.new.value !== "false");
           if (payload.new?.key === "show_ticker_banner") setShowTickerBanner(payload.new.value !== "false");
           if (payload.new?.key === "show_vort_on_display") setShowVort(payload.new.value !== "false");
+          applyDisplayToggleSetting(payload.new?.key, payload.new?.value);
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => {
