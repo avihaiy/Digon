@@ -785,13 +785,8 @@ export default function ManageAds() {
     await upsertSetting("show_vort_on_display", c ? "true" : "false");
     toast.success(c ? "דבר תורה יוצג" : "דבר תורה הוסר");
   };
-  const saveVortMessage = async () => {
-    setVortSaving(true);
-    await upsertSetting("display_vort_message", vortMessage);
-    await upsertSetting("display_vort_title", vortTitle);
-    setVortSaving(false);
-    toast.success("הודעת היום עודכנה");
-  };
+
+
 
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
