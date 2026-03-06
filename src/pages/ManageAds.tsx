@@ -637,6 +637,7 @@ export default function ManageAds() {
   const [vortSaving, setVortSaving] = useState(false);
   const [sefariaCategory, setSefariaCategory] = useState("Pirkei_Avot");
   const [sefariaLoading, setSefariaLoading] = useState(false);
+  const [vortAutoRotate, setVortAutoRotate] = useState("off");
   const vortDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const PREDEFINED_VERSES = [
