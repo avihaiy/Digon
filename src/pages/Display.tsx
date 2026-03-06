@@ -1096,7 +1096,13 @@ export default function Display() {
             !roshChodesh && erevRoshChodesh ? { icon: "🌑", text: erevRoshChodesh } : null,
             todayHoliday ? { icon: "⭐", text: todayHoliday } : null,
             sefiratHaOmer ? { icon: "🌾", text: sefiratHaOmer } : null,
+            birkatHalevana ? { icon: "🌙", text: birkatHalevana } : null,
             parasha ? { icon: "📖", text: `פרשת ${parasha}` } : null,
+            ...(showZmanimHeader ? [
+              dailyZmanim.sunrise ? { icon: "☀️", text: `הנץ ${formatTimeOnly(dailyZmanim.sunrise)}` } : null,
+              dailyZmanim.sofZmanShmaGRA ? { icon: "📖", text: `סוף ק״ש ${formatTimeOnly(dailyZmanim.sofZmanShmaGRA)}` } : null,
+              dailyZmanim.sunset ? { icon: "🌆", text: `שקיעה ${formatTimeOnly(dailyZmanim.sunset)}` } : null,
+            ] : []),
           ]
             .filter(Boolean)
             .map((item, i) => (
