@@ -841,8 +841,10 @@ export default function Display() {
   const roshChodesh = getRoshChodesh(currentTime);
   const erevRoshChodesh = getErevRoshChodesh(currentTime);
   const todayHoliday = getTodayHolidayHebrew();
-  const sefiratHaOmer = getSefiratHaOmer(currentTime);
+  const sefiratHaOmer = showOmerCounter ? getSefiratHaOmer(currentTime) : null;
   const parasha = getCurrentParasha();
+  const birkatHalevana = getBirkatHalevana(currentTime);
+  const dailyZmanim = useMemo(() => getDailyZmanim("akko"), []);
 
   return (
     <div
