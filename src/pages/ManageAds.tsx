@@ -965,7 +965,64 @@ export default function ManageAds() {
               </CardContent>
             </Card>
 
-            {/* רקע */}
+            {/* הגדרות תצוגה */}
+            <Card className="border-green-200 bg-green-50/50">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Eye className="w-4 h-4 text-green-600" />
+                  <p className="font-semibold text-sm">הגדרות תצוגה</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">הצג זמנים בכותרת</p>
+                  <Switch checked={showZmanimHeader} onCheckedChange={toggleZmanimHeader} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">הצג ספירת העומר</p>
+                  <Switch checked={showOmerCounter} onCheckedChange={toggleOmerCounter} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">הצג טיקר תחתון</p>
+                  <Switch checked={showTickerBanner} onCheckedChange={toggleTickerBanner} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">הצג דבר תורה</p>
+                  <Switch checked={showVort} onCheckedChange={toggleVort} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* דבר תורה / הודעת יום */}
+            <Card className="border-amber-300 bg-amber-50/50">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">✡️</span>
+                  <div>
+                    <p className="font-semibold text-sm">דבר תורה / הודעת היום</p>
+                    <p className="text-xs text-muted-foreground">עוקף את הפסוק האוטומטי</p>
+                  </div>
+                </div>
+                <Input
+                  value={vortTitle}
+                  onChange={(e) => setVortTitle(e.target.value)}
+                  placeholder="כותרת (לדוגמה: מקור)"
+                  className="h-9 text-sm text-right"
+                  dir="rtl"
+                />
+                <Textarea
+                  value={vortMessage}
+                  onChange={(e) => setVortMessage(e.target.value)}
+                  placeholder="הודעת היום או פסוק (השאר ריק לפסוק אוטומטי)"
+                  rows={2}
+                  className="text-sm"
+                  dir="rtl"
+                />
+                <Button onClick={saveVortMessage} disabled={vortSaving} size="sm" className="w-full">
+                  {vortSaving ? "שומר..." : "שמור הודעת יום"}
+                </Button>
+              </CardContent>
+            </Card>
+
+
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-3">
