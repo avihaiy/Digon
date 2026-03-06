@@ -444,10 +444,12 @@ export default function Payments() {
         return;
       }
 
-      await shareReceipt(receipt);
+      await shareReceiptWithPdf(receipt);
       toast.success('הקבלה שותפה בהצלחה');
     } catch (error: any) {
-      if (error?.message === 'DOWNLOAD_FALLBACK') {
+      if (error?.message === 'GESTURE_ERROR') {
+        toast.info('ה-PDF מוכן! לחץ שוב לשיתוף');
+      } else if (error?.message === 'DOWNLOAD_FALLBACK') {
         toast.success('הקבלה הורדה כ-PDF');
       } else if (error?.name !== 'AbortError') {
         console.error('Share error:', error);
