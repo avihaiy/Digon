@@ -6,11 +6,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, X, FileDown, Loader2, Wifi, Share2 } from 'lucide-react';
+import { Printer, X, FileDown, Loader2, Wifi, Share2, MessageCircle } from 'lucide-react';
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
-import { shareReceipt } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareViaWhatsApp } from '@/lib/receipt-share';
 
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
@@ -84,10 +84,12 @@ export function ReceiptPreviewDialog({
   const handleSharePdf = async () => {
     setIsSharing(true);
     try {
-      await shareReceipt(receipt);
+      await shareReceiptWithPdf(receipt);
       toast.success('הקבלה שותפה בהצלחה');
     } catch (error: any) {
-      if (error?.message === 'DOWNLOAD_FALLBACK') {
+      if (error?.message === 'GESTURE_ERROR') {
+        toast.info('ה-PDF מוכן! לחץ שוב לשיתוף');
+      } else if (error?.message === 'DOWNLOAD_FALLBACK') {
         toast.success('הקבלה הורדה כ-PDF');
       } else if (error?.name !== 'AbortError') {
         console.error('Share error:', error);
@@ -96,6 +98,10 @@ export function ReceiptPreviewDialog({
     } finally {
       setIsSharing(false);
     }
+  };
+
+  const handleWhatsAppShare = () => {
+    shareViaWhatsApp(receipt, receipt.member?.phone);
   };
 
   return (
@@ -253,6 +259,15 @@ export function ReceiptPreviewDialog({
                 <Share2 className="w-4 h-4 ml-2" />
               )}
               שתף קבלה
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleWhatsAppShare}
+              className="px-4"
+            >
+              <MessageCircle className="w-4 h-4 ml-2" />
+              וואטסאפ
             </Button>
           </div>
           <Button

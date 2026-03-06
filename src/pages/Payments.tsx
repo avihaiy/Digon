@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
-import { shareReceipt } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareViaWhatsApp } from '@/lib/receipt-share';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -444,10 +444,12 @@ export default function Payments() {
         return;
       }
 
-      await shareReceipt(receipt);
+      await shareReceiptWithPdf(receipt);
       toast.success('הקבלה שותפה בהצלחה');
     } catch (error: any) {
-      if (error?.message === 'DOWNLOAD_FALLBACK') {
+      if (error?.message === 'GESTURE_ERROR') {
+        toast.info('ה-PDF מוכן! לחץ שוב לשיתוף');
+      } else if (error?.message === 'DOWNLOAD_FALLBACK') {
         toast.success('הקבלה הורדה כ-PDF');
       } else if (error?.name !== 'AbortError') {
         console.error('Share error:', error);
