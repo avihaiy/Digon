@@ -23,6 +23,7 @@ import HeichalDisplaySlide from "@/components/display/HeichalDisplaySlide";
 import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
 import TickerBanner from "@/components/display/TickerBanner";
+import TorahVortSlide from "@/components/display/TorahVortSlide";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
