@@ -232,6 +232,14 @@ export default function Display() {
     if (result?.speed) setTickerSpeed(result.speed);
   }, []);
 
+  const applyDisplayToggleSetting = useCallback((key?: string, value?: string) => {
+    if (!key) return;
+    if (key === "show_zmanim_header") setShowZmanimHeader(value !== "false");
+    if (key === "show_omer_counter") setShowOmerCounter(value !== "false");
+    if (key === "show_ticker_banner") setShowTickerBanner(value !== "false");
+    if (key === "show_vort_on_display") setShowVort(value !== "false");
+  }, []);
+
   // Wake Lock
   useEffect(() => {
     const requestWakeLock = async () => {
