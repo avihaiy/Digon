@@ -635,6 +635,56 @@ export default function ManageAds() {
   const [vortMessage, setVortMessage] = useState("");
   const [vortTitle, setVortTitle] = useState("");
   const [vortSaving, setVortSaving] = useState(false);
+  const [sefariaCategory, setSefariaCategory] = useState("Pirkei_Avot");
+  const [sefariaLoading, setSefariaLoading] = useState(false);
+
+  const PREDEFINED_VERSES = [
+    { text: "שִׁוִּיתִי ה׳ לְנֶגְדִּי תָמִיד", source: "תהלים ט״ז, ח׳" },
+    { text: "בְּכָל דְּרָכֶיךָ דָעֵהוּ וְהוּא יְיַשֵּׁר אֹרְחֹתֶיךָ", source: "משלי ג׳, ו׳" },
+    { text: "וְאָהַבְתָּ לְרֵעֲךָ כָּמוֹךָ", source: "ויקרא י״ט, י״ח" },
+    { text: "דַּע לִפְנֵי מִי אַתָּה עוֹמֵד", source: "ברכות כ״ח ע״ב" },
+    { text: "אִם אֵין אֲנִי לִי מִי לִי, וּכְשֶׁאֲנִי לְעַצְמִי מָה אֲנִי, וְאִם לֹא עַכְשָׁיו אֵימָתַי", source: "אבות א׳, י״ד" },
+    { text: "עֲשֵׂה רְצוֹנוֹ כִרְצוֹנְךָ כְּדֵי שֶׁיַּעֲשֶׂה רְצוֹנְךָ כִרְצוֹנוֹ", source: "אבות ב׳, ד׳" },
+    { text: "הֱוֵי מְקַבֵּל אֶת כָּל הָאָדָם בְּסֵבֶר פָּנִים יָפוֹת", source: "אבות א׳, ט״ו" },
+    { text: "כָּל יִשְׂרָאֵל עֲרֵבִים זֶה בָּזֶה", source: "שבועות ל״ט ע״א" },
+    { text: "הוּא הָיָה אוֹמֵר: אַל תִּסְתַּכֵּל בַּקַּנְקַן, אֶלָּא בְּמַה שֶּׁיֵּשׁ בּוֹ", source: "אבות ד׳, כ׳" },
+    { text: "אֵיזֶהוּ חָכָם — הַלּוֹמֵד מִכָּל אָדָם", source: "אבות ד׳, א׳" },
+    { text: "אֵיזֶהוּ גִבּוֹר — הַכּוֹבֵשׁ אֶת יִצְרוֹ", source: "אבות ד׳, א׳" },
+    { text: "אֵיזֶהוּ עָשִׁיר — הַשָּׂמֵחַ בְּחֶלְקוֹ", source: "אבות ד׳, א׳" },
+    { text: "רַבִּי טַרְפוֹן אוֹמֵר: לֹא עָלֶיךָ הַמְּלָאכָה לִגְמֹר, וְלֹא אַתָּה בֶן חוֹרִין לִבָּטֵל מִמֶּנָּה", source: "אבות ב׳, ט״ז" },
+    { text: "וְצִיּוֹן — הֲלֹא שָׁם נוֹלַד אִישׁ וְאִישׁ", source: "תהלים פ״ז, ה׳" },
+    { text: "עֵת לַעֲשׂוֹת לַה׳ הֵפֵרוּ תּוֹרָתֶךָ", source: "תהלים קי״ט, קכ״ו" },
+  ];
+
+  const loadFromSefaria = async () => {
+    setSefariaLoading(true);
+    try {
+      const SEFARIA_BOOKS: Record<string, { chapters: number; hebrewName: string }> = {
+        Pirkei_Avot: { chapters: 5, hebrewName: "פרקי אבות" },
+        Psalms: { chapters: 150, hebrewName: "תהלים" },
+        Proverbs: { chapters: 31, hebrewName: "משלי" },
+        Genesis: { chapters: 50, hebrewName: "בראשית" },
+        Deuteronomy: { chapters: 34, hebrewName: "דברים" },
+      };
+      const book = SEFARIA_BOOKS[sefariaCategory];
+      const chapter = Math.floor(Math.random() * book.chapters) + 1;
+      const ref = sefariaCategory === "Pirkei_Avot" ? `Pirkei_Avot.${chapter}` : `${sefariaCategory}.${chapter}`;
+      const res = await fetch(`https://www.sefaria.org/api/texts/${ref}?lang=he`);
+      const json = await res.json();
+      const verses: string[] = Array.isArray(json.he) ? json.he : [json.he];
+      if (verses.length === 0) throw new Error("No verses");
+      const verseIdx = Math.floor(Math.random() * verses.length) + 1;
+      const rawText = verses[verseIdx - 1] || verses[0];
+      // Strip HTML tags from Sefaria response
+      const cleanText = rawText.replace(/<[^>]*>/g, "").trim();
+      setVortMessage(cleanText);
+      setVortTitle(`${book.hebrewName} ${chapter}:${verseIdx}`);
+      toast.success("פסוק נטען מ-Sefaria!");
+    } catch {
+      toast.error("שגיאה בטעינה מ-Sefaria, נסה שוב");
+    }
+    setSefariaLoading(false);
+  };
 
   useEffect(() => {
     const fetchSettings = async () => {
