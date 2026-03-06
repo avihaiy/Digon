@@ -336,6 +336,10 @@ export default function Display() {
           if (payload.new?.key === "show_heichal_on_display") setShowHeichal(payload.new.value === "true");
           if (payload.new?.key === "synagogue_name") setSynagogueName(payload.new.value || "");
           if (payload.new?.key === "ticker_speed") setTickerSpeed(payload.new.value || "medium");
+          if (payload.new?.key === "show_zmanim_header") setShowZmanimHeader(payload.new.value !== "false");
+          if (payload.new?.key === "show_omer_counter") setShowOmerCounter(payload.new.value !== "false");
+          if (payload.new?.key === "show_ticker_banner") setShowTickerBanner(payload.new.value !== "false");
+          if (payload.new?.key === "show_vort_on_display") setShowVort(payload.new.value !== "false");
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => {
