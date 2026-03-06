@@ -708,32 +708,34 @@ export default function ManageAds() {
         .from("app_settings")
         .select("key, value")
         .in("key", [
-          "show_memorial_on_display",
-          "show_finance_on_display",
-          "display_background_url",
-          "show_heichal_on_display",
-          "synagogue_name",
-          "show_zmanim_header",
-          "show_omer_counter",
-          "show_ticker_banner",
-          "show_vort_on_display",
-          "display_vort_message",
-          "display_vort_title",
-        ]);
-      if (data) {
-        for (const s of data) {
-          if (s.key === "show_memorial_on_display") setShowMemorial(s.value !== "false");
-          if (s.key === "show_finance_on_display") setShowFinance(s.value === "true");
-          if (s.key === "display_background_url") setDisplayBgUrl(s.value || null);
-          if (s.key === "show_heichal_on_display") setShowHeichal(s.value === "true");
-          if (s.key === "synagogue_name") setSynagogueName(s.value || "");
-          if (s.key === "show_zmanim_header") setShowZmanimHeader(s.value !== "false");
-          if (s.key === "show_omer_counter") setShowOmerCounter(s.value !== "false");
-          if (s.key === "show_ticker_banner") setShowTickerBanner(s.value !== "false");
-          if (s.key === "show_vort_on_display") setShowVort(s.value !== "false");
-          if (s.key === "display_vort_message") setVortMessage(s.value || "");
-          if (s.key === "display_vort_title") setVortTitle(s.value || "");
-        }
+           "show_memorial_on_display",
+           "show_finance_on_display",
+           "display_background_url",
+           "show_heichal_on_display",
+           "synagogue_name",
+           "show_zmanim_header",
+           "show_omer_counter",
+           "show_ticker_banner",
+           "show_vort_on_display",
+           "display_vort_message",
+           "display_vort_title",
+           "vort_auto_rotate",
+         ]);
+       if (data) {
+         for (const s of data) {
+           if (s.key === "show_memorial_on_display") setShowMemorial(s.value !== "false");
+           if (s.key === "show_finance_on_display") setShowFinance(s.value === "true");
+           if (s.key === "display_background_url") setDisplayBgUrl(s.value || null);
+           if (s.key === "show_heichal_on_display") setShowHeichal(s.value === "true");
+           if (s.key === "synagogue_name") setSynagogueName(s.value || "");
+           if (s.key === "show_zmanim_header") setShowZmanimHeader(s.value !== "false");
+           if (s.key === "show_omer_counter") setShowOmerCounter(s.value !== "false");
+           if (s.key === "show_ticker_banner") setShowTickerBanner(s.value !== "false");
+           if (s.key === "show_vort_on_display") setShowVort(s.value !== "false");
+           if (s.key === "display_vort_message") setVortMessage(s.value || "");
+           if (s.key === "display_vort_title") setVortTitle(s.value || "");
+           if (s.key === "vort_auto_rotate") setVortAutoRotate(s.value || "off");
+         }
       }
     };
     fetchSettings();
