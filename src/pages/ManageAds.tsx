@@ -647,6 +647,12 @@ export default function ManageAds() {
           "display_background_url",
           "show_heichal_on_display",
           "synagogue_name",
+          "show_zmanim_header",
+          "show_omer_counter",
+          "show_ticker_banner",
+          "show_vort_on_display",
+          "display_vort_message",
+          "display_vort_title",
         ]);
       if (data) {
         for (const s of data) {
@@ -655,6 +661,12 @@ export default function ManageAds() {
           if (s.key === "display_background_url") setDisplayBgUrl(s.value || null);
           if (s.key === "show_heichal_on_display") setShowHeichal(s.value === "true");
           if (s.key === "synagogue_name") setSynagogueName(s.value || "");
+          if (s.key === "show_zmanim_header") setShowZmanimHeader(s.value !== "false");
+          if (s.key === "show_omer_counter") setShowOmerCounter(s.value !== "false");
+          if (s.key === "show_ticker_banner") setShowTickerBanner(s.value !== "false");
+          if (s.key === "show_vort_on_display") setShowVort(s.value !== "false");
+          if (s.key === "display_vort_message") setVortMessage(s.value || "");
+          if (s.key === "display_vort_title") setVortTitle(s.value || "");
         }
       }
     };
