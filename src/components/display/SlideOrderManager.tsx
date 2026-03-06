@@ -27,6 +27,7 @@ const DEFAULT_DURATIONS: Record<SlideId, number> = {
   memorial: 15,
   zmanim: 20,
   finance: 10,
+  vort: 12,
   announcements: 10,
 };
 
