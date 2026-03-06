@@ -762,6 +762,7 @@ export default function Display() {
     | { type: "memorial" }
     | { type: "zmanim" }
     | { type: "finance" }
+    | { type: "vort" }
     | { type: "announcement"; announcement: ScheduledAnnouncement };
 
   const orderedSlides = useMemo<Slide[]>(() => {
@@ -775,6 +776,8 @@ export default function Display() {
         result.push({ type: "zmanim" });
       } else if (id === "finance" && showFinance) {
         result.push({ type: "finance" });
+      } else if (id === "vort" && showVort) {
+        result.push({ type: "vort" });
       } else if (id === "announcements") {
         for (const a of validAnnouncements) {
           result.push({ type: "announcement", announcement: a });
@@ -782,7 +785,7 @@ export default function Display() {
       }
     }
     return result;
-  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, validAnnouncements]);
+  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, showVort, validAnnouncements]);
 
   const totalSlides = orderedSlides.length;
 
