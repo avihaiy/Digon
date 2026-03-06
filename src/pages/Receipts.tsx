@@ -60,7 +60,7 @@ import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
-import { shareReceipt, buildReceiptPdfFile, downloadPdfFile } from '@/lib/receipt-share';
+import { shareReceipt, shareReceiptWithPdf, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile } from '@/lib/receipt-share';
 
 export default function Receipts() {
   const queryClient = useQueryClient();
