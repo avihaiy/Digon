@@ -1349,6 +1349,38 @@ export default function ManageAds() {
           {vortSaving && (
             <div className="text-xs text-muted-foreground text-center animate-pulse">שומר...</div>
           )}
+
+          {/* Auto-rotation schedule */}
+          <div>
+            <Label className="text-sm font-semibold mb-1 block">🔄 החלפה אוטומטית</Label>
+            <Select
+              value={vortAutoRotate}
+              onValueChange={async (val) => {
+                setVortAutoRotate(val);
+                await upsertSetting("vort_auto_rotate", val);
+                toast.success(
+                  val === "off" ? "החלפה אוטומטית כבויה"
+                    : val === "daily" ? "הפסוק יתחלף כל יום"
+                    : "הפסוק יתחלף כל שבת"
+                );
+              }}
+            >
+              <SelectTrigger className="h-12 text-base" dir="rtl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent dir="rtl">
+                <SelectItem value="off">כבוי — ידני בלבד</SelectItem>
+                <SelectItem value="daily">כל יום — פסוק חדש כל בוקר</SelectItem>
+                <SelectItem value="shabbat">כל שבת — פסוק חדש לשבת</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              {vortAutoRotate === "daily" && "הפסוק מתחלף אוטומטית כל יום מהרשימה המוגדרת. הודעה ידנית עוקפת את זה."}
+              {vortAutoRotate === "shabbat" && "הפסוק מתחלף כל ערב שבת. הודעה ידנית עוקפת את זה."}
+              {vortAutoRotate === "off" && "הפסוק לא מתחלף לבד, רק כשתשנה ידנית."}
+            </p>
+          </div>
+
           {/* Predefined verses picker */}
           <div>
             <Label className="text-sm font-semibold mb-1 block">בחר פסוק מרשימה מוגדרת</Label>
@@ -1448,6 +1480,50 @@ export default function ManageAds() {
               ♻️ אפס לפסוק אוטומטי
             </Button>
           )}
+
+          {/* Live Preview */}
+          <div className="border-t pt-3">
+            <Label className="text-sm font-semibold mb-2 block">👁️ תצוגה מקדימה</Label>
+            <div
+              className="rounded-xl overflow-hidden"
+              style={{
+                background: "linear-gradient(135deg, #1a1508 0%, #2d2510 50%, #1a1508 100%)",
+                padding: "20px 16px",
+                textAlign: "center",
+                direction: "rtl",
+              }}
+            >
+              <div style={{ fontSize: "20px", marginBottom: "8px" }}>✡️</div>
+              <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(253,230,138,0.7)", letterSpacing: "0.05em", marginBottom: "10px" }}>
+                — דבר תורה —
+              </div>
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: "10px",
+                  background: "rgba(40,35,20,0.85)",
+                  border: "1.5px solid rgba(212,175,55,0.4)",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+                  marginBottom: "8px",
+                }}
+              >
+                <p style={{ fontSize: "14px", fontWeight: 800, color: "#FDE68A", lineHeight: 1.5 }}>
+                  ״{vortMessage || (() => {
+                    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+                    return PREDEFINED_VERSES[dayOfYear % PREDEFINED_VERSES.length].text;
+                  })()}״
+                </p>
+              </div>
+              <div style={{ fontSize: "10px", color: "rgba(245,158,11,0.6)", fontWeight: 600, fontStyle: "italic" }}>
+                ({vortTitle || (() => {
+                  if (vortMessage) return "הודעת היום";
+                  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+                  return PREDEFINED_VERSES[dayOfYear % PREDEFINED_VERSES.length].source;
+                })()})
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-1">כך ייראה על מסך התצוגה</p>
+          </div>
         </div>
       </CollapsibleCard>
 
