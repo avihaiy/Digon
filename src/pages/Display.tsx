@@ -232,6 +232,14 @@ export default function Display() {
     if (result?.speed) setTickerSpeed(result.speed);
   }, []);
 
+  const applyDisplayToggleSetting = useCallback((key?: string, value?: string) => {
+    if (!key) return;
+    if (key === "show_zmanim_header") setShowZmanimHeader(value !== "false");
+    if (key === "show_omer_counter") setShowOmerCounter(value !== "false");
+    if (key === "show_ticker_banner") setShowTickerBanner(value !== "false");
+    if (key === "show_vort_on_display") setShowVort(value !== "false");
+  }, []);
+
   // Wake Lock
   useEffect(() => {
     const requestWakeLock = async () => {
@@ -340,6 +348,7 @@ export default function Display() {
           if (payload.new?.key === "show_omer_counter") setShowOmerCounter(payload.new.value !== "false");
           if (payload.new?.key === "show_ticker_banner") setShowTickerBanner(payload.new.value !== "false");
           if (payload.new?.key === "show_vort_on_display") setShowVort(payload.new.value !== "false");
+          applyDisplayToggleSetting(payload.new?.key, payload.new?.value);
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => {
@@ -351,7 +360,33 @@ export default function Display() {
       clearInterval(tickerPollInterval);
       supabase.removeChannel(channel);
     };
-  }, [fetchTicker]);
+  }, [fetchTicker, applyDisplayToggleSetting]);
+
+  // Immediate cross-tab updates from admin page (without refresh)
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== "display_setting_update" || !event.newValue) return;
+      try {
+        const payload = JSON.parse(event.newValue) as { key?: string; value?: string };
+        applyDisplayToggleSetting(payload.key, payload.value);
+      } catch {
+        // ignore parse errors
+      }
+    };
+
+    const handleLocalEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ key?: string; value?: string }>;
+      applyDisplayToggleSetting(customEvent.detail?.key, customEvent.detail?.value);
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("display-setting-update", handleLocalEvent as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("display-setting-update", handleLocalEvent as EventListener);
+    };
+  }, [applyDisplayToggleSetting]);
 
   useEffect(() => {
     const fetchYahrzeits = async () => {
