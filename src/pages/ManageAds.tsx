@@ -635,6 +635,56 @@ export default function ManageAds() {
   const [vortMessage, setVortMessage] = useState("");
   const [vortTitle, setVortTitle] = useState("");
   const [vortSaving, setVortSaving] = useState(false);
+  const [sefariaCategory, setSefariaCategory] = useState("Pirkei_Avot");
+  const [sefariaLoading, setSefariaLoading] = useState(false);
+
+  const PREDEFINED_VERSES = [
+    { text: "שִׁוִּיתִי ה׳ לְנֶגְדִּי תָמִיד", source: "תהלים ט״ז, ח׳" },
+    { text: "בְּכָל דְּרָכֶיךָ דָעֵהוּ וְהוּא יְיַשֵּׁר אֹרְחֹתֶיךָ", source: "משלי ג׳, ו׳" },
+    { text: "וְאָהַבְתָּ לְרֵעֲךָ כָּמוֹךָ", source: "ויקרא י״ט, י״ח" },
+    { text: "דַּע לִפְנֵי מִי אַתָּה עוֹמֵד", source: "ברכות כ״ח ע״ב" },
+    { text: "אִם אֵין אֲנִי לִי מִי לִי, וּכְשֶׁאֲנִי לְעַצְמִי מָה אֲנִי, וְאִם לֹא עַכְשָׁיו אֵימָתַי", source: "אבות א׳, י״ד" },
+    { text: "עֲשֵׂה רְצוֹנוֹ כִרְצוֹנְךָ כְּדֵי שֶׁיַּעֲשֶׂה רְצוֹנְךָ כִרְצוֹנוֹ", source: "אבות ב׳, ד׳" },
+    { text: "הֱוֵי מְקַבֵּל אֶת כָּל הָאָדָם בְּסֵבֶר פָּנִים יָפוֹת", source: "אבות א׳, ט״ו" },
+    { text: "כָּל יִשְׂרָאֵל עֲרֵבִים זֶה בָּזֶה", source: "שבועות ל״ט ע״א" },
+    { text: "הוּא הָיָה אוֹמֵר: אַל תִּסְתַּכֵּל בַּקַּנְקַן, אֶלָּא בְּמַה שֶּׁיֵּשׁ בּוֹ", source: "אבות ד׳, כ׳" },
+    { text: "אֵיזֶהוּ חָכָם — הַלּוֹמֵד מִכָּל אָדָם", source: "אבות ד׳, א׳" },
+    { text: "אֵיזֶהוּ גִבּוֹר — הַכּוֹבֵשׁ אֶת יִצְרוֹ", source: "אבות ד׳, א׳" },
+    { text: "אֵיזֶהוּ עָשִׁיר — הַשָּׂמֵחַ בְּחֶלְקוֹ", source: "אבות ד׳, א׳" },
+    { text: "רַבִּי טַרְפוֹן אוֹמֵר: לֹא עָלֶיךָ הַמְּלָאכָה לִגְמֹר, וְלֹא אַתָּה בֶן חוֹרִין לִבָּטֵל מִמֶּנָּה", source: "אבות ב׳, ט״ז" },
+    { text: "וְצִיּוֹן — הֲלֹא שָׁם נוֹלַד אִישׁ וְאִישׁ", source: "תהלים פ״ז, ה׳" },
+    { text: "עֵת לַעֲשׂוֹת לַה׳ הֵפֵרוּ תּוֹרָתֶךָ", source: "תהלים קי״ט, קכ״ו" },
+  ];
+
+  const loadFromSefaria = async () => {
+    setSefariaLoading(true);
+    try {
+      const SEFARIA_BOOKS: Record<string, { chapters: number; hebrewName: string }> = {
+        Pirkei_Avot: { chapters: 5, hebrewName: "פרקי אבות" },
+        Psalms: { chapters: 150, hebrewName: "תהלים" },
+        Proverbs: { chapters: 31, hebrewName: "משלי" },
+        Genesis: { chapters: 50, hebrewName: "בראשית" },
+        Deuteronomy: { chapters: 34, hebrewName: "דברים" },
+      };
+      const book = SEFARIA_BOOKS[sefariaCategory];
+      const chapter = Math.floor(Math.random() * book.chapters) + 1;
+      const ref = sefariaCategory === "Pirkei_Avot" ? `Pirkei_Avot.${chapter}` : `${sefariaCategory}.${chapter}`;
+      const res = await fetch(`https://www.sefaria.org/api/texts/${ref}?lang=he`);
+      const json = await res.json();
+      const verses: string[] = Array.isArray(json.he) ? json.he : [json.he];
+      if (verses.length === 0) throw new Error("No verses");
+      const verseIdx = Math.floor(Math.random() * verses.length) + 1;
+      const rawText = verses[verseIdx - 1] || verses[0];
+      // Strip HTML tags from Sefaria response
+      const cleanText = rawText.replace(/<[^>]*>/g, "").trim();
+      setVortMessage(cleanText);
+      setVortTitle(`${book.hebrewName} ${chapter}:${verseIdx}`);
+      toast.success("פסוק נטען מ-Sefaria!");
+    } catch {
+      toast.error("שגיאה בטעינה מ-Sefaria, נסה שוב");
+    }
+    setSefariaLoading(false);
+  };
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -1272,28 +1322,105 @@ export default function ManageAds() {
       <CollapsibleCard
         title="דבר תורה / הודעת היום"
         icon={<span className="text-xl">✡️</span>}
-        subtitle="עוקף את הפסוק האוטומטי"
+        subtitle="בחר פסוק מרשימה, טען מ-Sefaria, או כתוב ידנית"
         accentClass="border-amber-300 bg-amber-50/30"
       >
         <div className="pt-2 space-y-3">
-          <Input
-            value={vortTitle}
-            onChange={(e) => setVortTitle(e.target.value)}
-            placeholder="כותרת (לדוגמה: מקור)"
-            className="h-12 text-base text-right"
-            dir="rtl"
-          />
-          <Textarea
-            value={vortMessage}
-            onChange={(e) => setVortMessage(e.target.value)}
-            placeholder="הודעת היום (השאר ריק לפסוק אוטומטי)"
-            rows={2}
-            className="text-base"
-            dir="rtl"
-          />
-          <Button onClick={saveVortMessage} disabled={vortSaving} className="w-full h-12 text-base">
-            {vortSaving ? "שומר..." : "שמור הודעת יום"}
-          </Button>
+          {/* Predefined verses picker */}
+          <div>
+            <Label className="text-sm font-semibold mb-1 block">בחר פסוק מרשימה מוגדרת</Label>
+            <Select
+              value=""
+              onValueChange={(val) => {
+                const verse = PREDEFINED_VERSES.find((v) => v.text === val);
+                if (verse) {
+                  setVortMessage(verse.text);
+                  setVortTitle(verse.source);
+                }
+              }}
+            >
+              <SelectTrigger className="h-12 text-base text-right" dir="rtl">
+                <SelectValue placeholder="בחר פסוק..." />
+              </SelectTrigger>
+              <SelectContent dir="rtl" className="max-h-64">
+                {PREDEFINED_VERSES.map((v, i) => (
+                  <SelectItem key={i} value={v.text} className="text-right py-2">
+                    <span className="block text-sm font-medium">{v.text.slice(0, 50)}{v.text.length > 50 ? "..." : ""}</span>
+                    <span className="block text-xs text-muted-foreground">{v.source}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Sefaria loader */}
+          <div>
+            <Label className="text-sm font-semibold mb-1 block">טען פסוק אקראי מ-Sefaria</Label>
+            <div className="flex gap-2">
+              <Select value={sefariaCategory} onValueChange={setSefariaCategory}>
+                <SelectTrigger className="h-12 text-base flex-1" dir="rtl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  <SelectItem value="Pirkei_Avot">פרקי אבות</SelectItem>
+                  <SelectItem value="Psalms">תהלים</SelectItem>
+                  <SelectItem value="Proverbs">משלי</SelectItem>
+                  <SelectItem value="Genesis">בראשית</SelectItem>
+                  <SelectItem value="Deuteronomy">דברים</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                className="h-12 px-4 text-base shrink-0"
+                onClick={loadFromSefaria}
+                disabled={sefariaLoading}
+              >
+                {sefariaLoading ? "טוען..." : "🔄 טען"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Manual input */}
+          <div className="border-t pt-3">
+            <Label className="text-sm font-semibold mb-1 block">כותרת / מקור</Label>
+            <Input
+              value={vortTitle}
+              onChange={(e) => setVortTitle(e.target.value)}
+              placeholder="כותרת (לדוגמה: מקור)"
+              className="h-12 text-base text-right"
+              dir="rtl"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-semibold mb-1 block">תוכן הפסוק / ההודעה</Label>
+            <Textarea
+              value={vortMessage}
+              onChange={(e) => setVortMessage(e.target.value)}
+              placeholder="הודעת היום (השאר ריק לפסוק אוטומטי)"
+              rows={3}
+              className="text-base"
+              dir="rtl"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={saveVortMessage} disabled={vortSaving} className="flex-1 h-12 text-base">
+              {vortSaving ? "שומר..." : "💾 שמור הודעת יום"}
+            </Button>
+            {(vortMessage || vortTitle) && (
+              <Button
+                variant="outline"
+                className="h-12 px-4 text-base"
+                onClick={() => {
+                  setVortMessage("");
+                  setVortTitle("");
+                  saveVortMessage();
+                  toast.success("חזרה לפסוק אוטומטי");
+                }}
+              >
+                ♻️ אפס
+              </Button>
+            )}
+          </div>
         </div>
       </CollapsibleCard>
 
