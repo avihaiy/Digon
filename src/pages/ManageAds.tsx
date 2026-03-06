@@ -637,6 +637,7 @@ export default function ManageAds() {
   const [vortSaving, setVortSaving] = useState(false);
   const [sefariaCategory, setSefariaCategory] = useState("Pirkei_Avot");
   const [sefariaLoading, setSefariaLoading] = useState(false);
+  const vortDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const PREDEFINED_VERSES = [
     { text: "שִׁוִּיתִי ה׳ לְנֶגְדִּי תָמִיד", source: "תהלים ט״ז, ח׳" },
@@ -655,6 +656,20 @@ export default function ManageAds() {
     { text: "וְצִיּוֹן — הֲלֹא שָׁם נוֹלַד אִישׁ וְאִישׁ", source: "תהלים פ״ז, ה׳" },
     { text: "עֵת לַעֲשׂוֹת לַה׳ הֵפֵרוּ תּוֹרָתֶךָ", source: "תהלים קי״ט, קכ״ו" },
   ];
+
+  // Auto-save vort with debounce for typed changes, instant for selections
+  const autoSaveVort = async (message: string, title: string) => {
+    setVortSaving(true);
+    await upsertSetting("display_vort_message", message);
+    await upsertSetting("display_vort_title", title);
+    setVortSaving(false);
+    toast.success("דבר תורה עודכן ✓");
+  };
+
+  const debouncedSaveVort = (message: string, title: string) => {
+    if (vortDebounceRef.current) clearTimeout(vortDebounceRef.current);
+    vortDebounceRef.current = setTimeout(() => autoSaveVort(message, title), 800);
+  };
 
   const loadFromSefaria = async () => {
     setSefariaLoading(true);
@@ -675,11 +690,11 @@ export default function ManageAds() {
       if (verses.length === 0) throw new Error("No verses");
       const verseIdx = Math.floor(Math.random() * verses.length) + 1;
       const rawText = verses[verseIdx - 1] || verses[0];
-      // Strip HTML tags from Sefaria response
       const cleanText = rawText.replace(/<[^>]*>/g, "").trim();
+      const newTitle = `${book.hebrewName} ${chapter}:${verseIdx}`;
       setVortMessage(cleanText);
-      setVortTitle(`${book.hebrewName} ${chapter}:${verseIdx}`);
-      toast.success("פסוק נטען מ-Sefaria!");
+      setVortTitle(newTitle);
+      await autoSaveVort(cleanText, newTitle);
     } catch {
       toast.error("שגיאה בטעינה מ-Sefaria, נסה שוב");
     }
