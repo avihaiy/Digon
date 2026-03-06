@@ -196,11 +196,12 @@ export default function Display() {
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
-  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]>([
+  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements" | "vort")[]>([
     "heichal",
     "memorial",
     "zmanim",
     "finance",
+    "vort",
     "announcements",
   ]);
   const [slideDurations, setSlideDurations] = useState<Record<string, number>>({
@@ -208,8 +209,13 @@ export default function Display() {
     memorial: 15,
     zmanim: 20,
     finance: 10,
+    vort: 12,
     announcements: 10,
   });
+  const [showZmanimHeader, setShowZmanimHeader] = useState(true);
+  const [showOmerCounter, setShowOmerCounter] = useState(true);
+  const [showTickerBanner, setShowTickerBanner] = useState(true);
+  const [showVort, setShowVort] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
