@@ -628,6 +628,13 @@ export default function ManageAds() {
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
   const [bgUploading, setBgUploading] = useState(false);
   const bgFileInputRef = useRef<HTMLInputElement>(null);
+  const [showZmanimHeader, setShowZmanimHeader] = useState(true);
+  const [showOmerCounter, setShowOmerCounter] = useState(true);
+  const [showTickerBanner, setShowTickerBanner] = useState(true);
+  const [showVort, setShowVort] = useState(true);
+  const [vortMessage, setVortMessage] = useState("");
+  const [vortTitle, setVortTitle] = useState("");
+  const [vortSaving, setVortSaving] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
