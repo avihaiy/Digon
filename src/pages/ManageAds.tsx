@@ -1063,22 +1063,28 @@ export default function ManageAds() {
                 </div>
                 <Input
                   value={vortTitle}
-                  onChange={(e) => setVortTitle(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setVortTitle(v);
+                    debouncedSaveVort(vortMessage, v);
+                  }}
                   placeholder="כותרת (לדוגמה: מקור)"
                   className="h-9 text-sm text-right"
                   dir="rtl"
                 />
                 <Textarea
                   value={vortMessage}
-                  onChange={(e) => setVortMessage(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setVortMessage(v);
+                    debouncedSaveVort(v, vortTitle);
+                  }}
                   placeholder="הודעת היום או פסוק (השאר ריק לפסוק אוטומטי)"
                   rows={2}
                   className="text-sm"
                   dir="rtl"
                 />
-                <Button onClick={saveVortMessage} disabled={vortSaving} size="sm" className="w-full">
-                  {vortSaving ? "שומר..." : "שמור הודעת יום"}
-                </Button>
+                {vortSaving && <p className="text-xs text-muted-foreground text-center animate-pulse">שומר...</p>}
               </CardContent>
             </Card>
 
