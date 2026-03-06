@@ -243,9 +243,7 @@ export default function Receipts() {
       await shareReceipt(receipt);
       toast.success('הקבלה שותפה בהצלחה');
     } catch (error: any) {
-      if (error?.message === 'GESTURE_ERROR') {
-        toast.error('מוכן לשיתוף: לחץ שוב על כפתור השיתוף כדי לשלוח את ה-PDF');
-      } else if (error?.message === 'DOWNLOAD_FALLBACK') {
+      if (error?.message === 'DOWNLOAD_FALLBACK') {
         toast.success('המכשיר לא תומך בשיתוף קבצים, הקבלה הורדה כ-PDF');
       } else if (error?.name !== 'AbortError') {
         console.error('Share error:', error);

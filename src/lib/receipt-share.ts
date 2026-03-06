@@ -1,9 +1,6 @@
 import html2pdf from 'html2pdf.js';
 import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
 
-// Cache for pre-built PDF files (to satisfy user-gesture requirement on mobile)
-const shareFileCache: Record<string, File> = {};
-
 export async function buildReceiptPdfFile(receipt: any): Promise<File> {
   const el = document.createElement('div');
   el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:11px;line-height:1.3;width:80mm;min-height:120mm;padding:3mm;font-weight:700;color:#000;background:#fff;";
@@ -63,47 +60,68 @@ export function downloadPdfFile(file: File) {
 }
 
 function getShareText(receipt: any): string {
-  return `קבלה מס׳ ${receipt.receipt_number} | ${receipt.member?.full_name || ''}\nתודה, בית כנסת ברית שלום עכו`;
+  return [
+    `🧾 קבלה מס׳ ${receipt.receipt_number}`,
+    `👤 ${receipt.member?.full_name || ''}`,
+    `💰 סכום: ${formatCurrency(Number(receipt.total_amount))}`,
+    `📅 תאריך: ${formatDate(receipt.created_at)}`,
+    `${receipt.description ? `📝 עבור: ${receipt.description}` : ''}`,
+    ``,
+    `תודה רבה! 🙏`,
+    `בית כנסת "ברית שלום" עכו`,
+    `טלפון: 050-5768723`,
+  ].filter(Boolean).join('\n');
 }
 
+/**
+ * Share receipt - mobile-friendly approach:
+ * 1. Try text-only share first (works reliably on all mobile platforms)
+ * 2. If text share not supported, fall back to PDF download
+ */
 export async function shareReceipt(receipt: any): Promise<void> {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
+  const shareText = getShareText(receipt);
 
-  // Check cache first (second tap after gesture error)
-  const cachedFile = shareFileCache[cacheKey];
-  if (cachedFile && navigator.share && navigator.canShare?.({ files: [cachedFile] })) {
-    await navigator.share({
-      files: [cachedFile],
-      text: getShareText(receipt),
-    });
-    delete shareFileCache[cacheKey];
-    return;
-  }
-
-  const file = await buildReceiptPdfFile(receipt);
-  const canShareFiles = !!(navigator.share && navigator.canShare?.({ files: [file] }));
-
-  if (canShareFiles) {
+  // Try navigator.share with text only (no files - works reliably on mobile)
+  if (navigator.share) {
     try {
       await navigator.share({
-        files: [file],
-        text: getShareText(receipt),
+        title: `קבלה מס׳ ${receipt.receipt_number}`,
+        text: shareText,
       });
       return;
     } catch (error: any) {
-      const isGestureError =
-        error?.name === 'NotAllowedError' ||
-        String(error?.message || '').toLowerCase().includes('not allowed by the user agent');
-
-      if (isGestureError) {
-        shareFileCache[cacheKey] = file;
-        throw new Error('GESTURE_ERROR');
+      // User cancelled - don't treat as error
+      if (error?.name === 'AbortError') {
+        throw error;
       }
-      throw error;
+      // If share failed for other reason, fall through to download
+      console.warn('Text share failed, falling back to download:', error);
     }
   }
 
-  // Fallback: download
+  // Fallback: generate and download PDF
+  const file = await buildReceiptPdfFile(receipt);
+  downloadPdfFile(file);
+  throw new Error('DOWNLOAD_FALLBACK');
+}
+
+/**
+ * Share receipt with PDF file attached.
+ * Use this only from contexts where you already have the file pre-built.
+ */
+export async function shareReceiptWithFile(receipt: any, file: File): Promise<void> {
+  const shareText = getShareText(receipt);
+  
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: `קבלה מס׳ ${receipt.receipt_number}`,
+      text: shareText,
+    });
+    return;
+  }
+
+  // Fallback
   downloadPdfFile(file);
   throw new Error('DOWNLOAD_FALLBACK');
 }

@@ -481,9 +481,7 @@ export function MemberDetailDialog({
                                 await shareReceipt(receiptWithMember);
                                 toast.success('הקבלה שותפה');
                               } catch (error: any) {
-                                if (error?.message === 'GESTURE_ERROR') {
-                                  toast.error('לחץ שוב לשיתוף');
-                                } else if (error?.message === 'DOWNLOAD_FALLBACK') {
+                                if (error?.message === 'DOWNLOAD_FALLBACK') {
                                   toast.success('הקבלה הורדה');
                                 } else if (error?.name !== 'AbortError') {
                                   toast.error('שגיאה בשיתוף');
