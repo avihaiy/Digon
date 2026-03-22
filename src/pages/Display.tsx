@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchWithCache, getCacheData } from "@/lib/display-cache";
 import { HDate, months, gematriya, HebrewCalendar, flags } from "@hebcal/core";
 import {
   getMashivHaruach,
@@ -9,9 +8,6 @@ import {
   getBirkatHashanim,
   getSefiratHaOmer,
   getCurrentParasha,
-  getBirkatHalevana,
-  getDailyZmanim,
-  formatTimeOnly,
 } from "@/lib/hebrew-utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Maximize, Lock, Unlock } from "lucide-react";
@@ -23,7 +19,6 @@ import HeichalDisplaySlide from "@/components/display/HeichalDisplaySlide";
 import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
 import TickerBanner from "@/components/display/TickerBanner";
-import TorahVortSlide from "@/components/display/TorahVortSlide";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
@@ -196,12 +191,11 @@ export default function Display() {
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
-  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements" | "vort")[]>([
+  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]>([
     "heichal",
     "memorial",
     "zmanim",
     "finance",
-    "vort",
     "announcements",
   ]);
   const [slideDurations, setSlideDurations] = useState<Record<string, number>>({
@@ -209,35 +203,19 @@ export default function Display() {
     memorial: 15,
     zmanim: 20,
     finance: 10,
-    vort: 12,
     announcements: 10,
   });
-  const [showZmanimHeader, setShowZmanimHeader] = useState(true);
-  const [showOmerCounter, setShowOmerCounter] = useState(true);
-  const [showTickerBanner, setShowTickerBanner] = useState(true);
-  const [showVort, setShowVort] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   // פונקציה לטעינת טיקר
   const fetchTicker = useCallback(async () => {
-    const { data: result } = await fetchWithCache('ticker', async () => {
-      const [{ data: td }, { data: sd }] = await Promise.all([
-        supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
-        supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
-      ]);
-      return { items: td, speed: sd?.value };
-    });
-    if (result?.items) setTickerItems(result.items);
-    if (result?.speed) setTickerSpeed(result.speed);
-  }, []);
-
-  const applyDisplayToggleSetting = useCallback((key?: string, value?: string) => {
-    if (!key) return;
-    if (key === "show_zmanim_header") setShowZmanimHeader(value !== "false");
-    if (key === "show_omer_counter") setShowOmerCounter(value !== "false");
-    if (key === "show_ticker_banner") setShowTickerBanner(value !== "false");
-    if (key === "show_vort_on_display") setShowVort(value !== "false");
+    const [{ data: td }, { data: sd }] = await Promise.all([
+      supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
+      supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
+    ]);
+    if (td) setTickerItems(td);
+    if (sd?.value) setTickerSpeed(sd.value);
   }, []);
 
   // Wake Lock
@@ -271,28 +249,21 @@ export default function Display() {
   // Settings + ticker setup
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await fetchWithCache('display-settings', async () => {
-        const { data } = await supabase
-          .from("app_settings")
-          .select("key, value")
-          .in("key", [
-            "display_lock_code",
-            "show_memorial_on_display",
-            "memorial_show_week_before",
-            "show_finance_on_display",
-            "display_background_url",
-            "show_heichal_on_display",
-            "display_slide_order",
-            "display_slide_durations",
-            "synagogue_name",
-            "ticker_speed",
-            "show_zmanim_header",
-            "show_omer_counter",
-            "show_ticker_banner",
-            "show_vort_on_display",
-          ]);
-        return data;
-      });
+      const { data } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .in("key", [
+          "display_lock_code",
+          "show_memorial_on_display",
+          "memorial_show_week_before",
+          "show_finance_on_display",
+          "display_background_url",
+          "show_heichal_on_display",
+          "display_slide_order",
+          "display_slide_durations",
+          "synagogue_name",
+          "ticker_speed",
+        ]);
       if (data) {
         for (const setting of data) {
           if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
@@ -303,10 +274,6 @@ export default function Display() {
           if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
-          if (setting.key === "show_zmanim_header") setShowZmanimHeader(setting.value !== "false");
-          if (setting.key === "show_omer_counter") setShowOmerCounter(setting.value !== "false");
-          if (setting.key === "show_ticker_banner") setShowTickerBanner(setting.value !== "false");
-          if (setting.key === "show_vort_on_display") setShowVort(setting.value !== "false");
           if (setting.key === "display_slide_durations" && setting.value) {
             try {
               setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
@@ -315,13 +282,14 @@ export default function Display() {
           if (setting.key === "display_slide_order" && setting.value) {
             try {
               const parsed = JSON.parse(setting.value);
-              const allTypes = ["heichal", "memorial", "zmanim", "finance", "vort", "announcements"];
+              const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
               const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-              setSlideOrder(merged as typeof slideOrder);
+              setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
             } catch {}
           }
         }
       }
+      // טען טיקר
       await fetchTicker();
     };
 
@@ -344,11 +312,6 @@ export default function Display() {
           if (payload.new?.key === "show_heichal_on_display") setShowHeichal(payload.new.value === "true");
           if (payload.new?.key === "synagogue_name") setSynagogueName(payload.new.value || "");
           if (payload.new?.key === "ticker_speed") setTickerSpeed(payload.new.value || "medium");
-          if (payload.new?.key === "show_zmanim_header") setShowZmanimHeader(payload.new.value !== "false");
-          if (payload.new?.key === "show_omer_counter") setShowOmerCounter(payload.new.value !== "false");
-          if (payload.new?.key === "show_ticker_banner") setShowTickerBanner(payload.new.value !== "false");
-          if (payload.new?.key === "show_vort_on_display") setShowVort(payload.new.value !== "false");
-          applyDisplayToggleSetting(payload.new?.key, payload.new?.value);
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => {
@@ -360,33 +323,7 @@ export default function Display() {
       clearInterval(tickerPollInterval);
       supabase.removeChannel(channel);
     };
-  }, [fetchTicker, applyDisplayToggleSetting]);
-
-  // Immediate cross-tab updates from admin page (without refresh)
-  useEffect(() => {
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key !== "display_setting_update" || !event.newValue) return;
-      try {
-        const payload = JSON.parse(event.newValue) as { key?: string; value?: string };
-        applyDisplayToggleSetting(payload.key, payload.value);
-      } catch {
-        // ignore parse errors
-      }
-    };
-
-    const handleLocalEvent = (event: Event) => {
-      const customEvent = event as CustomEvent<{ key?: string; value?: string }>;
-      applyDisplayToggleSetting(customEvent.detail?.key, customEvent.detail?.value);
-    };
-
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener("display-setting-update", handleLocalEvent as EventListener);
-
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("display-setting-update", handleLocalEvent as EventListener);
-    };
-  }, [applyDisplayToggleSetting]);
+  }, [fetchTicker]);
 
   useEffect(() => {
     const fetchYahrzeits = async () => {
@@ -399,20 +336,16 @@ export default function Display() {
           datePairs.push({ day: futureDate.getDate(), month: futureDate.getMonth() });
         }
       }
-      const { data: memData } = await fetchWithCache('memorial-names', async () => {
-        const { data, error } = await supabase
-          .from("memorial_names")
-          .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
-          .eq("is_active", true);
-        if (error) throw error;
-        return data;
-      });
-      if (memData) {
-        const matched = memData.filter((p: any) =>
+      const { data, error } = await supabase
+        .from("memorial_names")
+        .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
+        .eq("is_active", true);
+      if (!error && data) {
+        const matched = data.filter((p) =>
           datePairs.some((dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month),
         );
         setMemorialPeople(
-          matched.map((p: any) => {
+          matched.map((p) => {
             const matchingPair = datePairs.find(
               (dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month,
             );
@@ -450,45 +383,16 @@ export default function Display() {
     },
   });
 
-  const requestFullscreenSafe = useCallback(async () => {
-    const el = containerRef.current;
-    const doc = document as Document & {
-      webkitFullscreenElement?: Element | null;
-      msFullscreenElement?: Element | null;
-    };
-
-    if (!el || doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
-      return true;
-    }
-
-    const target = el as HTMLElement & {
-      webkitRequestFullscreen?: () => Promise<void> | void;
-      msRequestFullscreen?: () => Promise<void> | void;
-    };
-
+  const enterFullscreen = useCallback(async () => {
     try {
-      if (target.requestFullscreen) {
-        await target.requestFullscreen();
-      } else if (target.webkitRequestFullscreen) {
-        await target.webkitRequestFullscreen();
-      } else if (target.msRequestFullscreen) {
-        await target.msRequestFullscreen();
-      } else {
-        return false;
+      if (containerRef.current) {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
       }
-
-      setIsFullscreen(true);
-      return true;
     } catch (err) {
       console.error("Fullscreen error:", err);
-      return false;
     }
   }, []);
-
-  const enterFullscreen = useCallback(async () => {
-    const success = await requestFullscreenSafe();
-    setShowFullscreenPrompt(!success && !document.fullscreenElement);
-  }, [requestFullscreenSafe]);
 
   const exitFullscreen = useCallback(async () => {
     if (!isLocked) {
@@ -528,121 +432,6 @@ export default function Display() {
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
-
-  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
-  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
-  const [fullscreenAttempts, setFullscreenAttempts] = useState(0);
-
-  // Auto lock + auto fullscreen + interaction fallback
-  useEffect(() => {
-    setIsLocked(true);
-    setShowControls(false);
-
-    const attemptAuto = async () => {
-      const success = await requestFullscreenSafe();
-      if (!success && !document.fullscreenElement) {
-        setShowFullscreenPrompt(true);
-      }
-    };
-
-    const timer = setTimeout(attemptAuto, 300);
-
-    const handleFirstInteraction = () => {
-      if (!document.fullscreenElement) {
-        void enterFullscreen();
-      }
-    };
-
-    document.addEventListener("pointerdown", handleFirstInteraction, { once: true, passive: true });
-    document.addEventListener("keydown", handleFirstInteraction, { once: true });
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("pointerdown", handleFirstInteraction);
-      document.removeEventListener("keydown", handleFirstInteraction);
-    };
-  }, [enterFullscreen, requestFullscreenSafe]);
-
-  const handleFullscreenGesture = useCallback((event?: { preventDefault?: () => void; stopPropagation?: () => void }) => {
-    event?.preventDefault?.();
-    event?.stopPropagation?.();
-
-    const doc = document as Document & {
-      webkitFullscreenElement?: Element | null;
-      msFullscreenElement?: Element | null;
-      fullscreenEnabled?: boolean;
-      webkitFullscreenEnabled?: boolean;
-    };
-
-    // Already in fullscreen
-    if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement) {
-      setShowFullscreenPrompt(false);
-      setFullscreenError(null);
-      setIsFullscreen(true);
-      return;
-    }
-
-    // Check if fullscreen is supported at all
-    const isEnabled = doc.fullscreenEnabled ?? doc.webkitFullscreenEnabled ?? false;
-    if (!isEnabled) {
-      const isIframe = window.self !== window.top;
-      if (isIframe) {
-        setFullscreenError("מסך מלא לא זמין בתוך iframe. פתח את הדף בחלון חדש (לחץ על הקישור למטה).");
-      } else {
-        setFullscreenError("הדפדפן שלך לא תומך במסך מלא. נסה לפתוח בכרום או בהתקנה כ-PWA.");
-      }
-      return;
-    }
-
-    const el = containerRef.current as
-      | (HTMLElement & {
-          webkitRequestFullscreen?: () => Promise<void> | void;
-          msRequestFullscreen?: () => Promise<void> | void;
-        })
-      | null;
-
-    const fallbackEl = document.documentElement as HTMLElement & {
-      webkitRequestFullscreen?: () => Promise<void> | void;
-      msRequestFullscreen?: () => Promise<void> | void;
-    };
-
-    const target = el ?? fallbackEl;
-    const requestFn =
-      target.requestFullscreen?.bind(target) ??
-      target.webkitRequestFullscreen?.bind(target) ??
-      target.msRequestFullscreen?.bind(target);
-
-    if (!requestFn) {
-      setFullscreenError("מסך מלא לא נתמך במכשיר זה.");
-      return;
-    }
-
-    setFullscreenAttempts(prev => prev + 1);
-
-    try {
-      Promise.resolve(requestFn())
-        .then(() => {
-          setIsFullscreen(true);
-          setShowFullscreenPrompt(false);
-          setFullscreenError(null);
-        })
-        .catch((err: Error) => {
-          console.error("Fullscreen error:", err);
-          if (err.message?.includes("not allowed") || err.message?.includes("gesture")) {
-            setFullscreenError("לחיצה לא זוהתה. נסה ללחוץ שוב או פתח בחלון חדש.");
-          } else {
-            setFullscreenError(`שגיאה: ${err.message}`);
-          }
-        });
-    } catch (err) {
-      console.error("Fullscreen error:", err);
-      setFullscreenError("שגיאה בפתיחת מסך מלא.");
-    }
-  }, []);
-
-  const goFullscreen = useCallback(() => {
-    handleFullscreenGesture();
-  }, [handleFullscreenGesture]);
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
@@ -696,27 +485,19 @@ export default function Display() {
   useEffect(() => {
     const pollInterval = setInterval(
       async () => {
-        if (!navigator.onLine) return; // skip polling when offline
-        const { data: settingsData } = await fetchWithCache('display-settings-poll', async () => {
-          const { data } = await supabase
-            .from("app_settings")
-            .select("key, value")
-            .in("key", [
-              "display_lock_code",
-              "show_memorial_on_display",
-              "memorial_show_week_before",
-              "show_finance_on_display",
-              "display_background_url",
-              "show_heichal_on_display",
-              "display_slide_order",
-              "display_slide_durations",
-              "show_zmanim_header",
-              "show_omer_counter",
-              "show_ticker_banner",
-              "show_vort_on_display",
-            ]);
-          return data;
-        });
+        const { data: settingsData } = await supabase
+          .from("app_settings")
+          .select("key, value")
+          .in("key", [
+            "display_lock_code",
+            "show_memorial_on_display",
+            "memorial_show_week_before",
+            "show_finance_on_display",
+            "display_background_url",
+            "show_heichal_on_display",
+            "display_slide_order",
+            "display_slide_durations",
+          ]);
         if (settingsData) {
           for (const setting of settingsData) {
             if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
@@ -725,16 +506,12 @@ export default function Display() {
             if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
             if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
             if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
-            if (setting.key === "show_zmanim_header") setShowZmanimHeader(setting.value !== "false");
-            if (setting.key === "show_omer_counter") setShowOmerCounter(setting.value !== "false");
-            if (setting.key === "show_ticker_banner") setShowTickerBanner(setting.value !== "false");
-            if (setting.key === "show_vort_on_display") setShowVort(setting.value !== "false");
             if (setting.key === "display_slide_order" && setting.value) {
               try {
                 const parsed = JSON.parse(setting.value);
-                const allTypes = ["heichal", "memorial", "zmanim", "finance", "vort", "announcements"];
+                const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
                 const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-                setSlideOrder(merged as typeof slideOrder);
+                setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
               } catch {}
             }
             if (setting.key === "display_slide_durations" && setting.value) {
@@ -744,16 +521,12 @@ export default function Display() {
             }
           }
         }
-        const { data: adsResult } = await fetchWithCache('scheduled-announcements', async () => {
-          const { data, error } = await supabase
-            .from("scheduled_announcements")
-            .select("*")
-            .eq("is_active", true)
-            .order("priority", { ascending: false });
-          if (error) throw error;
-          return data;
-        });
-        if (adsResult) setAnnouncements(adsResult as ScheduledAnnouncement[]);
+        const { data: adsData, error: adsError } = await supabase
+          .from("scheduled_announcements")
+          .select("*")
+          .eq("is_active", true)
+          .order("priority", { ascending: false });
+        if (!adsError && adsData) setAnnouncements(adsData as ScheduledAnnouncement[]);
       },
       3 * 60 * 1000,
     );
@@ -767,16 +540,12 @@ export default function Display() {
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
-      const { data: result } = await fetchWithCache('scheduled-announcements', async () => {
-        const { data, error } = await supabase
-          .from("scheduled_announcements")
-          .select("*")
-          .eq("is_active", true)
-          .order("priority", { ascending: false });
-        if (error) throw error;
-        return data;
-      });
-      if (result) setAnnouncements(result as ScheduledAnnouncement[]);
+      const { data, error } = await supabase
+        .from("scheduled_announcements")
+        .select("*")
+        .eq("is_active", true)
+        .order("priority", { ascending: false });
+      if (!error && data) setAnnouncements(data as ScheduledAnnouncement[]);
     };
     fetchAnnouncements();
     const channel = supabase
@@ -805,7 +574,6 @@ export default function Display() {
     | { type: "memorial" }
     | { type: "zmanim" }
     | { type: "finance" }
-    | { type: "vort" }
     | { type: "announcement"; announcement: ScheduledAnnouncement };
 
   const orderedSlides = useMemo<Slide[]>(() => {
@@ -819,8 +587,6 @@ export default function Display() {
         result.push({ type: "zmanim" });
       } else if (id === "finance" && showFinance) {
         result.push({ type: "finance" });
-      } else if (id === "vort" && showVort) {
-        result.push({ type: "vort" });
       } else if (id === "announcements") {
         for (const a of validAnnouncements) {
           result.push({ type: "announcement", announcement: a });
@@ -828,7 +594,7 @@ export default function Display() {
       }
     }
     return result;
-  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, showVort, validAnnouncements]);
+  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, validAnnouncements]);
 
   const totalSlides = orderedSlides.length;
 
@@ -866,11 +632,9 @@ export default function Display() {
           ? STYLE_CONFIGS.modern_dark
           : currentSlideType === "finance"
             ? STYLE_CONFIGS.modern_dark
-            : currentSlideType === "vort"
-              ? STYLE_CONFIGS.modern_dark
-              : isPrayerAd
-                ? STYLE_CONFIGS.royal_blue
-                : currentAnnouncement
+            : isPrayerAd
+              ? STYLE_CONFIGS.royal_blue
+              : currentAnnouncement
                 ? STYLE_CONFIGS[currentAnnouncement.style]
                 : STYLE_CONFIGS.traditional_gold;
 
@@ -886,10 +650,8 @@ export default function Display() {
   const roshChodesh = getRoshChodesh(currentTime);
   const erevRoshChodesh = getErevRoshChodesh(currentTime);
   const todayHoliday = getTodayHolidayHebrew();
-  const sefiratHaOmer = showOmerCounter ? getSefiratHaOmer(currentTime) : null;
+  const sefiratHaOmer = getSefiratHaOmer(currentTime);
   const parasha = getCurrentParasha();
-  const birkatHalevana = getBirkatHalevana(currentTime);
-  const dailyZmanim = useMemo(() => getDailyZmanim("akko"), []);
 
   return (
     <div
@@ -915,40 +677,6 @@ export default function Display() {
     >
       {displayBgUrl && <div className="absolute inset-0 bg-black/50 z-0" />}
 
-      {/* Fullscreen prompt overlay for Chrome */}
-      {showFullscreenPrompt && (
-        <button
-          type="button"
-          className="absolute inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer border-none outline-none"
-          style={{ WebkitTapHighlightColor: "transparent" }}
-          onPointerDown={(e) => handleFullscreenGesture(e)}
-          onTouchStart={(e) => handleFullscreenGesture(e)}
-          onClick={(e) => handleFullscreenGesture(e)}
-        >
-          <div className="text-center text-white pointer-events-none">
-            <Maximize className="w-16 h-16 mx-auto mb-4 animate-pulse" />
-            <p className="text-2xl font-bold">לחץ כאן למסך מלא</p>
-            {fullscreenError && (
-              <p className="mt-4 text-lg text-red-400 max-w-md mx-auto">{fullscreenError}</p>
-            )}
-            {fullscreenAttempts > 0 && !fullscreenError && (
-              <p className="mt-4 text-sm text-white/60">ניסיון {fullscreenAttempts}...</p>
-            )}
-            {(fullscreenError?.includes("iframe") || fullscreenError?.includes("חלון חדש")) && (
-              <a
-                href={window.location.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-block px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg text-white text-lg pointer-events-auto"
-                onClick={(e) => e.stopPropagation()}
-              >
-                פתח בחלון חדש ←
-              </a>
-            )}
-          </div>
-        </button>
-      )}
-
       {/* Fullscreen Controls */}
       <AnimatePresence>
         {(!isFullscreen || (showControls && !isLocked)) && (
@@ -960,11 +688,7 @@ export default function Display() {
           >
             {!isFullscreen ? (
               <button
-                onPointerDown={(e) => handleFullscreenGesture(e)}
-                onClick={(e) => handleFullscreenGesture(e)}
-                onTouchStart={(e) => {
-                  handleFullscreenGesture(e);
-                }}
+                onClick={enterFullscreen}
                 className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
                 title="מסך מלא"
               >
@@ -984,11 +708,6 @@ export default function Display() {
                 ) : (
                   <button
                     onClick={() => setIsLocked(true)}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setIsLocked(true);
-                    }}
                     className={`p-3 rounded-full backdrop-blur-sm transition-colors bg-black/20 hover:bg-black/30 ${styleConfig.text}`}
                     title="נעל מסך"
                   >
@@ -998,11 +717,6 @@ export default function Display() {
                 {!isLocked && (
                   <button
                     onClick={exitFullscreen}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      exitFullscreen();
-                    }}
                     className={`p-3 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 transition-colors ${styleConfig.text}`}
                     title="יציאה ממסך מלא"
                   >
@@ -1141,13 +855,7 @@ export default function Display() {
             !roshChodesh && erevRoshChodesh ? { icon: "🌑", text: erevRoshChodesh } : null,
             todayHoliday ? { icon: "⭐", text: todayHoliday } : null,
             sefiratHaOmer ? { icon: "🌾", text: sefiratHaOmer } : null,
-            birkatHalevana ? { icon: "🌙", text: birkatHalevana } : null,
             parasha ? { icon: "📖", text: `פרשת ${parasha}` } : null,
-            ...(showZmanimHeader ? [
-              dailyZmanim.sunrise ? { icon: "☀️", text: `הנץ ${formatTimeOnly(dailyZmanim.sunrise)}` } : null,
-              dailyZmanim.sofZmanShmaGRA ? { icon: "📖", text: `סוף ק״ש ${formatTimeOnly(dailyZmanim.sofZmanShmaGRA)}` } : null,
-              dailyZmanim.sunset ? { icon: "🌆", text: `שקיעה ${formatTimeOnly(dailyZmanim.sunset)}` } : null,
-            ] : []),
           ]
             .filter(Boolean)
             .map((item, i) => (
@@ -1205,10 +913,6 @@ export default function Display() {
               <div key="finance" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
                 <FinanceDisplaySlide textClass={styleConfig.text} accentClass={styleConfig.accent} />
               </div>
-            ) : currentSlideType === "vort" ? (
-              <div key="vort" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-                <TorahVortSlide />
-              </div>
             ) : currentAnnouncement ? (
               isPrayerTimesAnnouncement(currentAnnouncement.title) ? (
                 (() => {
@@ -1225,24 +929,54 @@ export default function Display() {
                     return (
                       <motion.div
                         key={currentAnnouncement.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
                         transition={{ duration: 0.8, ease: "easeInOut" }}
-                        className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "clamp(16px, 3vw, 48px)",
+                        }}
                       >
-                        <h1
-                          className="text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight text-white"
-                          style={{ textShadow: "0 3px 20px rgba(0,0,0,0.9)" }}
+                        <div
+                          style={{
+                            width: "100%",
+                            minHeight: "60%",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                          }}
                         >
-                          {currentAnnouncement.title}
-                        </h1>
-                        <p
-                          className="text-[3vh] md:text-[4vh] leading-relaxed text-white/85 whitespace-pre-line"
-                          style={{ textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}
-                        >
-                          {currentAnnouncement.content}
-                        </p>
+                          <h1
+                            style={{
+                              fontSize: "clamp(28px, 6vw, 96px)",
+                              fontWeight: 800,
+                              lineHeight: 1.15,
+                              marginBottom: "clamp(16px, 3vh, 40px)",
+                              color: "white",
+                              textShadow: "0 3px 24px rgba(0,0,0,0.9)",
+                            }}
+                          >
+                            {currentAnnouncement.title}
+                          </h1>
+                          <p
+                            style={{
+                              fontSize: "clamp(18px, 3.5vw, 56px)",
+                              lineHeight: 1.6,
+                              color: "rgba(255,255,255,0.88)",
+                              whiteSpace: "pre-line",
+                              textShadow: "0 2px 12px rgba(0,0,0,0.8)",
+                            }}
+                          >
+                            {currentAnnouncement.content}
+                          </p>
+                        </div>
                       </motion.div>
                     );
                   }
@@ -1254,41 +988,83 @@ export default function Display() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.8, ease: "easeInOut" }}
-                  className="absolute inset-0 flex items-center justify-center p-[2vh]"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "clamp(8px, 1.5vh, 24px)",
+                  }}
                 >
                   <img
                     src={currentAnnouncement.image_url}
                     alt={currentAnnouncement.title}
-                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      borderRadius: "clamp(8px, 1vw, 20px)",
+                      boxShadow: "0 8px 48px rgba(0,0,0,0.5)",
+                    }}
                   />
                 </motion.div>
               ) : (
                 <motion.div
                   key={currentAnnouncement.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.8, ease: "easeInOut" }}
-                  className="text-center max-w-[85vw] flex flex-col items-center p-[4vw]"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "clamp(16px, 3vw, 48px)",
+                  }}
                 >
                   <div
-                    className="rounded-3xl px-[5vw] py-[4vh] shadow-2xl"
                     style={{
-                      background: "rgba(245, 230, 190, 0.50)",
-                      backdropFilter: "blur(10px)",
-                      border: "1.5px solid rgba(160, 110, 40, 0.5)",
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6)",
+                      width: "100%",
+                      maxWidth: "100%",
+                      minHeight: "60%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "clamp(16px, 2vw, 32px)",
+                      padding: "clamp(24px, 4vh, 64px) clamp(24px, 5vw, 80px)",
+                      background: "rgba(245, 230, 190, 0.55)",
+                      backdropFilter: "blur(12px)",
+                      border: "1.5px solid rgba(160, 110, 40, 0.45)",
+                      boxShadow: "0 12px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.65)",
+                      textAlign: "center",
                     }}
                   >
                     <h1
-                      className="text-[6vh] md:text-[8vh] font-bold mb-[2vh] leading-tight text-amber-950"
-                      style={{ textShadow: "0 2px 8px rgba(160,100,0,0.3)" }}
+                      style={{
+                        fontSize: "clamp(28px, 6vw, 96px)",
+                        fontWeight: 800,
+                        lineHeight: 1.15,
+                        marginBottom: "clamp(16px, 3vh, 40px)",
+                        color: "#431407",
+                        textShadow: "0 2px 12px rgba(160,100,0,0.3)",
+                        letterSpacing: "-0.01em",
+                      }}
                     >
                       {currentAnnouncement.title}
                     </h1>
                     <p
-                      className="text-[3vh] md:text-[4vh] leading-relaxed text-amber-800 whitespace-pre-line"
-                      style={{ textShadow: "0 1px 4px rgba(160,100,0,0.2)" }}
+                      style={{
+                        fontSize: "clamp(18px, 3.5vw, 56px)",
+                        lineHeight: 1.6,
+                        color: "#92400e",
+                        whiteSpace: "pre-line",
+                        textShadow: "0 1px 6px rgba(160,100,0,0.2)",
+                        maxWidth: "90%",
+                      }}
                     >
                       {currentAnnouncement.content}
                     </p>
@@ -1301,7 +1077,7 @@ export default function Display() {
       </main>
 
       {/* TICKER — מקבל נתונים מ-Display */}
-      {showTickerBanner && <TickerBanner items={tickerItems} speed={tickerSpeed} />}
+      <TickerBanner items={tickerItems} speed={tickerSpeed} />
 
       {/* CREDIT */}
       <div
