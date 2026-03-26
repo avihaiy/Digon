@@ -244,7 +244,7 @@ export default function Display() {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [isLocked]);
 
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Settings + ticker setup
   useEffect(() => {
@@ -991,10 +991,6 @@ export default function Display() {
                   style={{
                     position: "absolute",
                     inset: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "clamp(8px, 1.5vh, 24px)",
                   }}
                 >
                   <img
@@ -1003,9 +999,7 @@ export default function Display() {
                     style={{
                       width: "100%",
                       height: "100%",
-                      objectFit: "contain",
-                      borderRadius: "clamp(8px, 1vw, 20px)",
-                      boxShadow: "0 8px 48px rgba(0,0,0,0.5)",
+                      objectFit: "cover",
                     }}
                   />
                 </motion.div>
