@@ -573,7 +573,10 @@ function AnnouncementForm({
         {!isPrayerTimesTitle(formData.title) && (
           <div className={`p-3 rounded-xl border-2 ${STYLE_PREVIEWS[formData.style]}`}>
             <p className="font-bold text-sm">{formData.title || "כותרת לדוגמה"}</p>
-            <p className="text-xs opacity-90">{formData.content || "תוכן המודעה"}</p>
+            <p className="text-xs opacity-90" style={{
+              fontSize: formData.font_size ? `${Math.min(formData.font_size / 4, 20)}px` : undefined,
+              color: formData.font_color || undefined,
+            }}>{formData.content || "תוכן המודעה"}</p>
           </div>
         )}
       </div>
