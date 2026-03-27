@@ -450,6 +450,57 @@ function AnnouncementForm({
           />
         </div>
       )}
+      {/* Font Size & Color Controls */}
+      {!isPrayerTimesTitle(formData.title) && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className={`flex items-center gap-1 ${isMobile ? "text-base" : "text-sm"}`}>
+              <span className="text-sm">🔤</span>
+              גודל טקסט
+            </Label>
+            <Select
+              value={formData.font_size ? String(formData.font_size) : "default"}
+              onValueChange={(v) => setFormData({ ...formData, font_size: v === "default" ? null : parseInt(v) })}
+            >
+              <SelectTrigger className={inputH}>
+                <SelectValue placeholder="ברירת מחדל" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">ברירת מחדל</SelectItem>
+                <SelectItem value="24">קטן (24px)</SelectItem>
+                <SelectItem value="32">בינוני (32px)</SelectItem>
+                <SelectItem value="48">גדול (48px)</SelectItem>
+                <SelectItem value="64">גדול מאוד (64px)</SelectItem>
+                <SelectItem value="80">ענק (80px)</SelectItem>
+                <SelectItem value="96">מקסימלי (96px)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className={`flex items-center gap-1 ${isMobile ? "text-base" : "text-sm"}`}>
+              <span className="text-sm">🎨</span>
+              צבע טקסט
+            </Label>
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={formData.font_color || "#92400e"}
+                onChange={(e) => setFormData({ ...formData, font_color: e.target.value })}
+                className={`${isMobile ? "w-12 h-12" : "w-9 h-9"} rounded-lg border cursor-pointer p-0.5`}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={`${isMobile ? "h-12 text-base" : "h-9 text-sm"} flex-1`}
+                onClick={() => setFormData({ ...formData, font_color: null })}
+              >
+                ברירת מחדל
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="space-y-1.5">
         <Label className={`flex items-center gap-2 ${isMobile ? "text-base" : "text-sm"}`}>
           <Calendar className="w-4 h-4" />
