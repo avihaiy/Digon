@@ -34,6 +34,8 @@ interface ScheduledAnnouncement {
   is_active: boolean;
   priority: number;
   image_url: string | null;
+  font_size: number | null;
+  font_color: string | null;
 }
 
 interface MemorialPerson {
@@ -967,9 +969,9 @@ export default function Display() {
                           </h1>
                           <p
                             style={{
-                              fontSize: "clamp(18px, 3.5vw, 56px)",
+                              fontSize: currentAnnouncement.font_size ? `${currentAnnouncement.font_size}px` : "clamp(18px, 3.5vw, 56px)",
                               lineHeight: 1.6,
-                              color: "rgba(255,255,255,0.88)",
+                              color: currentAnnouncement.font_color || "rgba(255,255,255,0.88)",
                               whiteSpace: "pre-line",
                               textShadow: "0 2px 12px rgba(0,0,0,0.8)",
                             }}
@@ -1052,9 +1054,9 @@ export default function Display() {
                     </h1>
                     <p
                       style={{
-                        fontSize: "clamp(18px, 3.5vw, 56px)",
+                        fontSize: currentAnnouncement.font_size ? `${currentAnnouncement.font_size}px` : "clamp(18px, 3.5vw, 56px)",
                         lineHeight: 1.6,
-                        color: "#92400e",
+                        color: currentAnnouncement.font_color || "#92400e",
                         whiteSpace: "pre-line",
                         textShadow: "0 1px 6px rgba(160,100,0,0.2)",
                         maxWidth: "90%",
