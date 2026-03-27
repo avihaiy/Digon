@@ -879,6 +879,8 @@ export default function ManageAds() {
         priority: data.priority,
         image_url: imageUrl,
         duration_seconds: data.duration_seconds,
+        font_size: data.font_size,
+        font_color: data.font_color,
       };
       if (data.id) {
         const { error } = await supabase.from("scheduled_announcements").update(payload).eq("id", data.id);
@@ -931,6 +933,8 @@ export default function ManageAds() {
       priority: a.priority,
       image_url: a.image_url,
       duration_seconds: a.duration_seconds ?? 10,
+      font_size: a.font_size,
+      font_color: a.font_color,
     });
     setImagePreview(a.image_url);
     setImageFile(null);
