@@ -51,6 +51,8 @@ interface ScheduledAnnouncement {
   priority: number;
   image_url: string | null;
   duration_seconds: number | null;
+  font_size: number | null;
+  font_color: string | null;
   created_at: string;
 }
 interface TickerItem {
@@ -88,6 +90,8 @@ const defaultFormData = {
   priority: 0,
   image_url: null as string | null,
   duration_seconds: 10,
+  font_size: null as number | null,
+  font_color: null as string | null,
 };
 
 function isPrayerTimesTitle(t: string) {
