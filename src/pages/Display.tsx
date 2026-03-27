@@ -34,6 +34,8 @@ interface ScheduledAnnouncement {
   is_active: boolean;
   priority: number;
   image_url: string | null;
+  font_size: number | null;
+  font_color: string | null;
 }
 
 interface MemorialPerson {
