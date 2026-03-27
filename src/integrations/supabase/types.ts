@@ -824,6 +824,8 @@ export type Database = {
           day_types: string[]
           duration_seconds: number | null
           end_time: string
+          font_color: string | null
+          font_size: number | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -840,6 +842,8 @@ export type Database = {
           day_types?: string[]
           duration_seconds?: number | null
           end_time?: string
+          font_color?: string | null
+          font_size?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -856,6 +860,8 @@ export type Database = {
           day_types?: string[]
           duration_seconds?: number | null
           end_time?: string
+          font_color?: string | null
+          font_size?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
