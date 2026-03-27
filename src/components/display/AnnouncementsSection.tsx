@@ -42,7 +42,7 @@ export function AnnouncementsSection({ announcements, scrollInterval = 5000 }: A
 
   return (
     <div className="bg-white/90 rounded-xl p-5 border-2 border-amber-600 shadow-lg flex-1 flex flex-col">
-      <h2 className="text-2xl font-bold text-center text-amber-800 mb-4 bg-amber-100 py-2 rounded-lg border border-amber-300">
+      <h2 className="text-4xl font-bold text-center text-amber-800 mb-4 bg-amber-100 py-3 rounded-lg border border-amber-300">
         הודעות
       </h2>
       
