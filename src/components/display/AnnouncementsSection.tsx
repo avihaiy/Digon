@@ -57,7 +57,7 @@ export function AnnouncementsSection({ announcements, scrollInterval = 5000 }: A
                   animate={{ opacity: 1, y: 0 }}
                   exit={shouldScroll ? { opacity: 0, y: -20 } : undefined}
                   transition={{ duration: 0.4, delay: idx * 0.1 }}
-                  className="text-lg text-slate-700 py-3 px-4 border-b border-dotted border-amber-300 last:border-0 bg-amber-50/50 rounded-lg"
+                  className="text-3xl font-bold text-slate-700 py-4 px-5 border-b border-dotted border-amber-300 last:border-0 bg-amber-50/50 rounded-lg leading-relaxed"
                 >
                   {ann.content}
                 </motion.div>
