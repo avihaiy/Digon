@@ -556,6 +556,18 @@ export default function Expenses() {
                 </Select>
               </div>
 
+              {/* Show custom description when "אחר" is selected */}
+              {categories.find(c => c.id === formData.category_id)?.name === 'אחר' && (
+                <div className="space-y-2">
+                  <Label>פירוט ההוצאה *</Label>
+                  <Input
+                    value={formData.supplier}
+                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    placeholder="כתוב את סוג ההוצאה..."
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>ספק</Label>
                 <Input
