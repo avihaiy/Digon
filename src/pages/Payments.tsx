@@ -771,6 +771,19 @@ export default function Payments() {
                         <span>{formatShortDate(payment.created_at)}</span>
                         <span className="hidden sm:inline">•</span>
                         <span className="hidden sm:inline">{PAYMENT_METHOD[payment.method as keyof typeof PAYMENT_METHOD]}</span>
+                        {payment.payment_type === 'hall' && (
+                          <>
+                            <span>•</span>
+                            <Badge variant="outline" className="text-xs h-5">
+                              {(payment as any).hall_event_type === 'simcha' ? '🎉 שמחה' : '🕯️ אזכרה'} — אולם
+                            </Badge>
+                            {(payment as any).total_installments > 1 && (
+                              <span className="text-xs">
+                                (תשלום {(payment as any).installment_number}/{(payment as any).total_installments})
+                              </span>
+                            )}
+                          </>
+                        )}
                         {payment.reference && (
                           <>
                             <span className="hidden sm:inline">•</span>
