@@ -19,6 +19,7 @@ import HeichalDisplaySlide from "@/components/display/HeichalDisplaySlide";
 import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
 import TickerBanner from "@/components/display/TickerBanner";
+import OmerDisplaySlide from "@/components/display/OmerDisplaySlide";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
@@ -190,12 +191,14 @@ export default function Display() {
   const [tickerSpeed, setTickerSpeed] = useState("medium");
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
+  const [showOmer, setShowOmer] = useState(true);
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
-  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]>([
+  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements" | "omer")[]>([
     "heichal",
     "memorial",
+    "omer",
     "zmanim",
     "finance",
     "announcements",
@@ -203,6 +206,7 @@ export default function Display() {
   const [slideDurations, setSlideDurations] = useState<Record<string, number>>({
     heichal: 10,
     memorial: 15,
+    omer: 12,
     zmanim: 20,
     finance: 10,
     announcements: 10,
@@ -259,6 +263,7 @@ export default function Display() {
           "show_memorial_on_display",
           "memorial_show_week_before",
           "show_finance_on_display",
+          "show_omer_on_display",
           "display_background_url",
           "show_heichal_on_display",
           "display_slide_order",
