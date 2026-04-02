@@ -71,15 +71,15 @@ function getOmerBracha(dayNum: number): string {
 
   const dayWord = dayNum === 1 ? 'יוֹם אֶחָד' : `${hebrewNum} יָמִים`;
   
-  let countText = `הַיּוֹם ${dayWord} לָעֹמֶר`;
+  let countText = `הַיּוֹם ${dayWord} בָּעֹמֶר`;
   
   if (weeks > 0 && days === 0) {
     const weekWord = weeks === 1 ? 'שָׁבוּעַ אֶחָד' : `${HEBREW_NUMBERS[weeks]} שָׁבוּעוֹת`;
-    countText = `הַיּוֹם ${dayWord} לָעֹמֶר, שֶׁהֵם ${weekWord}`;
+    countText = `הַיּוֹם ${dayWord} בָּעֹמֶר, שֶׁהֵם ${weekWord}`;
   } else if (weeks > 0 && days > 0) {
     const weekWord = weeks === 1 ? 'שָׁבוּעַ אֶחָד' : `${HEBREW_NUMBERS[weeks]} שָׁבוּעוֹת`;
     const dayRemWord = days === 1 ? 'יוֹם אֶחָד' : `${HEBREW_NUMBERS[days]} יָמִים`;
-    countText = `הַיּוֹם ${dayWord} לָעֹמֶר, שֶׁהֵם ${weekWord} וְ${dayRemWord}`;
+    countText = `הַיּוֹם ${dayWord} בָּעֹמֶר, שֶׁהֵם ${weekWord} וְ${dayRemWord}`;
   }
 
   return `בָּרוּךְ אַתָּה יְיָ אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל סְפִירַת הָעֹמֶר.\n${countText}.`;
