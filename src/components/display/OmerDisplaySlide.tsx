@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { getSefiratHaOmer } from '@/lib/hebrew-utils';
+import omerBg from '@/assets/omer-bg.jpg';
 
 const HEBREW_NUMBERS: Record<number, string> = {
   1: 'א', 2: 'ב', 3: 'ג', 4: 'ד', 5: 'ה', 6: 'ו', 7: 'ז',
@@ -139,7 +140,8 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #1a0533 0%, #0d1b3e 40%, #1a0533 100%)',
+        background: `url(${omerBg}) center/cover no-repeat`,
+        backgroundColor: '#1a0533',
         overflow: 'hidden',
       }}
       dir="rtl"
