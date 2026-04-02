@@ -85,14 +85,24 @@ function getOmerBracha(dayNum: number): string {
   return `בָּרוּךְ אַתָּה יְיָ אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל סְפִירַת הָעֹמֶר.\n${countText}.`;
 }
 
-export default function OmerDisplaySlide() {
-  const omerData = useMemo(() => {
-    const now = new Date();
-    const omerText = getSefiratHaOmer(now);
-    if (!omerText) return null;
+interface OmerDisplaySlideProps {
+  previewDay?: number | null;
+}
 
-    const match = omerText.match(/יום (\d+)/);
-    const dayNum = match ? parseInt(match[1]) : null;
+export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps = {}) {
+  const omerData = useMemo(() => {
+    let dayNum: number | null = null;
+
+    if (previewDay && previewDay >= 1 && previewDay <= 49) {
+      dayNum = previewDay;
+    } else {
+      const now = new Date();
+      const omerText = getSefiratHaOmer(now);
+      if (!omerText) return null;
+      const match = omerText.match(/יום (\d+)/);
+      dayNum = match ? parseInt(match[1]) : null;
+    }
+
     if (!dayNum) return null;
 
     const weeks = Math.floor(dayNum / 7);
@@ -110,7 +120,7 @@ export default function OmerDisplaySlide() {
     const bracha = getOmerBracha(dayNum);
 
     return { dayNum, hebrewNum, weeks, days, weeksText, sefira, bracha };
-  }, []);
+  }, [previewDay]);
 
   if (!omerData) return null;
 

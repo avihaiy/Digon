@@ -35,6 +35,7 @@ import {
 import MemorialManager from "@/components/display/MemorialManager";
 import PrayerTimesEditor from "@/components/display/PrayerTimesEditor";
 import SlideOrderManager from "@/components/display/SlideOrderManager";
+import OmerDisplaySlide from "@/components/display/OmerDisplaySlide";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
@@ -688,6 +689,8 @@ export default function ManageAds() {
   const bgFileInputRef = useRef<HTMLInputElement>(null);
   const [showZmanimHeader, setShowZmanimHeader] = useState(true);
   const [showOmerCounter, setShowOmerCounter] = useState(true);
+  const [omerPreviewOpen, setOmerPreviewOpen] = useState(false);
+  const [omerPreviewDay, setOmerPreviewDay] = useState(1);
   const [showTickerBanner, setShowTickerBanner] = useState(true);
   const [showVort, setShowVort] = useState(true);
   const [vortMessage, setVortMessage] = useState("");
@@ -1113,7 +1116,12 @@ export default function ManageAds() {
                   <Switch checked={showZmanimHeader} onCheckedChange={toggleZmanimHeader} />
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm">הצג ספירת העומר</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm">הצג ספירת העומר</p>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setOmerPreviewOpen(true)}>
+                      <Eye className="w-3 h-3 ml-1" />תצוגה מקדימה
+                    </Button>
+                  </div>
                   <Switch checked={showOmerCounter} onCheckedChange={toggleOmerCounter} />
                 </div>
                 <div className="flex items-center justify-between">
@@ -1396,7 +1404,12 @@ export default function ManageAds() {
             <Switch checked={showZmanimHeader} onCheckedChange={toggleZmanimHeader} />
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-sm">הצג ספירת העומר</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm">הצג ספירת העומר</p>
+              <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setOmerPreviewOpen(true)}>
+                <Eye className="w-3 h-3 ml-1" />תצוגה מקדימה
+              </Button>
+            </div>
             <Switch checked={showOmerCounter} onCheckedChange={toggleOmerCounter} />
           </div>
           <div className="flex items-center justify-between">
@@ -1761,6 +1774,27 @@ export default function ManageAds() {
           </div>
         </div>
       )}
+
+      {/* Omer Preview Dialog */}
+      <Dialog open={omerPreviewOpen} onOpenChange={setOmerPreviewOpen}>
+        <DialogContent className="max-w-3xl p-0 overflow-hidden" style={{ aspectRatio: '16/9' }}>
+          <div className="absolute top-2 right-2 z-50 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1.5">
+            <label className="text-white text-xs">יום:</label>
+            <input
+              type="range"
+              min={1}
+              max={49}
+              value={omerPreviewDay}
+              onChange={(e) => setOmerPreviewDay(parseInt(e.target.value))}
+              className="w-24"
+            />
+            <span className="text-white text-xs font-mono w-6 text-center">{omerPreviewDay}</span>
+          </div>
+          <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '400px' }}>
+            <OmerDisplaySlide previewDay={omerPreviewDay} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
