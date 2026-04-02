@@ -516,6 +516,7 @@ export default function Display() {
             if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
             if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
             if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+            if (setting.key === "show_omer_on_display") setShowOmer(setting.value !== "false");
             if (setting.key === "display_slide_order" && setting.value) {
               try {
                 const parsed = JSON.parse(setting.value);
