@@ -290,9 +290,9 @@ export default function Display() {
           if (setting.key === "display_slide_order" && setting.value) {
             try {
               const parsed = JSON.parse(setting.value);
-              const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
+              const allTypes = ["heichal", "memorial", "omer", "zmanim", "finance", "announcements"];
               const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-              setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
+              setSlideOrder(merged as ("heichal" | "memorial" | "omer" | "zmanim" | "finance" | "announcements")[]);
             } catch {}
           }
         }
@@ -520,9 +520,9 @@ export default function Display() {
             if (setting.key === "display_slide_order" && setting.value) {
               try {
                 const parsed = JSON.parse(setting.value);
-                const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
+                const allTypes = ["heichal", "memorial", "omer", "zmanim", "finance", "announcements"];
                 const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-                setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
+                setSlideOrder(merged as ("heichal" | "memorial" | "omer" | "zmanim" | "finance" | "announcements")[]);
               } catch {}
             }
             if (setting.key === "display_slide_durations" && setting.value) {
