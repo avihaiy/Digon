@@ -923,6 +923,10 @@ export default function Display() {
                   accentClass={styleConfig.accent}
                 />
               </div>
+            ) : currentSlideType === "omer" ? (
+              <div key="omer" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+                <OmerDisplaySlide />
+              </div>
             ) : currentSlideType === "zmanim" ? (
               <div key="zmanim" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
                 <ZmanimDisplaySlide />
