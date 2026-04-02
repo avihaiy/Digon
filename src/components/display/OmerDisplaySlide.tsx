@@ -158,8 +158,8 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
           animate={{ opacity: i < omerData.dayNum ? 0.6 : 0.1 }}
           style={{
             position: 'absolute',
-            width: 'clamp(4px, 0.5vw, 8px)',
-            height: 'clamp(4px, 0.5vw, 8px)',
+            width: 'clamp(4px, 0.6vmin, 10px)',
+            height: 'clamp(4px, 0.6vmin, 10px)',
             borderRadius: '50%',
             background: i < omerData.dayNum ? '#FFD700' : '#334',
             top: `${10 + Math.random() * 80}%`,
@@ -173,13 +173,13 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
         initial={{ y: -20 }}
         animate={{ y: 0 }}
         style={{
-          fontSize: 'clamp(28px, 5vh, 64px)',
+          fontSize: 'clamp(24px, 4.5vmin, 64px)',
           fontWeight: 800,
           color: '#FFD700',
           textShadow: '0 2px 20px rgba(255,215,0,0.4), 0 4px 40px rgba(255,215,0,0.2)',
           letterSpacing: '0.05em',
           zIndex: 1,
-          marginBottom: 'clamp(8px, 1.5vh, 16px)',
+          marginBottom: 'clamp(4px, 1vmin, 16px)',
         }}
       >
         🌾 ספירת העומר 🌾
@@ -191,7 +191,7 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 200 }}
         style={{
-          fontSize: 'clamp(80px, 18vh, 200px)',
+          fontSize: 'clamp(60px, 15vmin, 200px)',
           fontWeight: 900,
           color: '#FFFFFF',
           textShadow: '0 4px 30px rgba(255,215,0,0.5), 0 0 60px rgba(147,112,219,0.3)',
@@ -208,11 +208,11 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
         style={{
-          fontSize: 'clamp(20px, 4vh, 48px)',
+          fontSize: 'clamp(18px, 3.5vmin, 48px)',
           color: 'rgba(255,255,255,0.9)',
           fontWeight: 600,
           zIndex: 1,
-          marginTop: 'clamp(4px, 1vh, 12px)',
+          marginTop: 'clamp(2px, 0.8vmin, 12px)',
           textShadow: '0 2px 12px rgba(0,0,0,0.5)',
         }}
       >
@@ -226,7 +226,7 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
           style={{
-            fontSize: 'clamp(16px, 3vh, 36px)',
+            fontSize: 'clamp(14px, 2.5vmin, 36px)',
             color: 'rgba(255,215,0,0.85)',
             fontWeight: 500,
             zIndex: 1,
@@ -244,9 +244,9 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
           style={{
-            marginTop: 'clamp(12px, 2vh, 24px)',
-            padding: 'clamp(8px, 1.5vh, 16px) clamp(20px, 3vw, 40px)',
-            borderRadius: 'clamp(8px, 1vw, 16px)',
+            marginTop: 'clamp(8px, 1.5vmin, 24px)',
+            padding: 'clamp(6px, 1.2vmin, 16px) clamp(16px, 2.5vmin, 40px)',
+            borderRadius: 'clamp(6px, 0.8vmin, 16px)',
             background: 'rgba(255,255,255,0.08)',
             border: '1px solid rgba(255,215,0,0.25)',
             backdropFilter: 'blur(8px)',
@@ -254,7 +254,7 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
           }}
         >
           <p style={{
-            fontSize: 'clamp(18px, 3.5vh, 40px)',
+            fontSize: 'clamp(16px, 3vmin, 40px)',
             color: omerData.sefira.color,
             fontWeight: 700,
             textShadow: `0 2px 12px ${omerData.sefira.color}40`,
@@ -270,9 +270,9 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9 }}
         style={{
-          marginTop: 'clamp(12px, 2vh, 24px)',
-          padding: 'clamp(8px, 1.2vh, 14px) clamp(16px, 2.5vw, 36px)',
-          borderRadius: 'clamp(8px, 1vw, 16px)',
+          marginTop: 'clamp(8px, 1.5vmin, 24px)',
+          padding: 'clamp(6px, 1vmin, 14px) clamp(12px, 2vmin, 36px)',
+          borderRadius: 'clamp(6px, 0.8vmin, 16px)',
           background: 'rgba(255,215,0,0.06)',
           border: '1px solid rgba(255,215,0,0.15)',
           backdropFilter: 'blur(8px)',
@@ -282,7 +282,7 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
         }}
       >
         <p style={{
-          fontSize: 'clamp(14px, 2.2vh, 28px)',
+          fontSize: 'clamp(12px, 2vmin, 28px)',
           color: 'rgba(255,255,255,0.85)',
           fontWeight: 500,
           lineHeight: 1.8,
@@ -298,14 +298,14 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
         transition={{ delay: 0.9 }}
         style={{
           position: 'absolute',
-          bottom: 'clamp(16px, 3vh, 40px)',
+          bottom: 'clamp(12px, 2.5vmin, 40px)',
           width: '80%',
-          maxWidth: '600px',
+          maxWidth: 'clamp(300px, 50vw, 700px)',
           zIndex: 1,
         }}
       >
         <div style={{
-          height: 'clamp(6px, 1vh, 12px)',
+          height: 'clamp(4px, 0.8vmin, 12px)',
           borderRadius: '999px',
           background: 'rgba(255,255,255,0.1)',
           overflow: 'hidden',
@@ -326,8 +326,8 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          marginTop: 'clamp(2px, 0.3vh, 4px)',
-          fontSize: 'clamp(10px, 1.5vh, 16px)',
+          marginTop: 'clamp(2px, 0.3vmin, 4px)',
+          fontSize: 'clamp(9px, 1.3vmin, 16px)',
           color: 'rgba(255,255,255,0.4)',
         }}>
           <span>פסח</span>
