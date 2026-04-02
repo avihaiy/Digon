@@ -35,6 +35,7 @@ import {
 import MemorialManager from "@/components/display/MemorialManager";
 import PrayerTimesEditor from "@/components/display/PrayerTimesEditor";
 import SlideOrderManager from "@/components/display/SlideOrderManager";
+import OmerDisplaySlide from "@/components/display/OmerDisplaySlide";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
