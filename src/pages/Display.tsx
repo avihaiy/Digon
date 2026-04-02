@@ -585,7 +585,10 @@ export default function Display() {
     | { type: "memorial" }
     | { type: "zmanim" }
     | { type: "finance" }
+    | { type: "omer" }
     | { type: "announcement"; announcement: ScheduledAnnouncement };
+
+  const omerActive = useMemo(() => !!getSefiratHaOmer(currentTime), [currentTime]);
 
   const orderedSlides = useMemo<Slide[]>(() => {
     const result: Slide[] = [];
@@ -594,6 +597,8 @@ export default function Display() {
         result.push({ type: "heichal" });
       } else if (id === "memorial" && showMemorial && memorialPeople.length > 0) {
         result.push({ type: "memorial" });
+      } else if (id === "omer" && showOmer && omerActive) {
+        result.push({ type: "omer" });
       } else if (id === "zmanim") {
         result.push({ type: "zmanim" });
       } else if (id === "finance" && showFinance) {
