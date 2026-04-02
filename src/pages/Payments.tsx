@@ -185,6 +185,9 @@ export default function Payments() {
         return editingPayment;
       } else {
         // Create new payment
+        const isHall = paymentCategory === 'hall';
+        const groupId = isHall ? crypto.randomUUID() : null;
+        
         const { data: payment, error: paymentError } = await supabase
           .from('payments')
           .insert({
@@ -196,8 +199,13 @@ export default function Payments() {
             status: 'confirmed',
             notes: formData.notes || null,
             aliya_id: formData.aliya_id || null,
-            payment_type: formData.aliya_id ? 'aliya' : 'donation',
-          })
+            payment_type: isHall ? 'hall' : (formData.aliya_id ? 'aliya' : 'donation'),
+            hall_event_type: isHall ? hallEventType : null,
+            total_installments: isHall ? Number(totalInstallments) : null,
+            installment_number: isHall ? Number(installmentNumber) : null,
+            installment_total_amount: isHall ? Number(installmentTotalAmount || formData.amount) : null,
+            installment_group_id: groupId,
+          } as any)
           .select()
           .single();
 
