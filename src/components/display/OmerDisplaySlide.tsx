@@ -65,19 +65,6 @@ const SEFIROT: Record<number, { name: string; color: string }> = {
   49: { name: 'מלכות שבמלכות', color: '#4169E1' },
 };
 
-function getOmerDay(date: Date): number | null {
-  const { HDate } = require('@hebcal/core');
-  const hdate = new HDate(date);
-  const month = hdate.getMonth();
-  const day = hdate.getDate();
-  
-  let omerDay = 0;
-  if (month === 1 && day >= 16) omerDay = day - 15;
-  else if (month === 2) omerDay = 15 + day;
-  else if (month === 3 && day <= 5) omerDay = 44 + day;
-  
-  return (omerDay >= 1 && omerDay <= 49) ? omerDay : null;
-}
 
 export default function OmerDisplaySlide() {
   const omerData = useMemo(() => {
