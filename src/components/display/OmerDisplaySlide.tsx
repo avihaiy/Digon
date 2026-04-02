@@ -254,7 +254,34 @@ export default function OmerDisplaySlide() {
         </motion.div>
       )}
 
-      {/* Progress bar */}
+      {/* Bracha */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9 }}
+        style={{
+          marginTop: 'clamp(12px, 2vh, 24px)',
+          padding: 'clamp(8px, 1.2vh, 14px) clamp(16px, 2.5vw, 36px)',
+          borderRadius: 'clamp(8px, 1vw, 16px)',
+          background: 'rgba(255,215,0,0.06)',
+          border: '1px solid rgba(255,215,0,0.15)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 1,
+          maxWidth: '90%',
+          textAlign: 'center',
+        }}
+      >
+        <p style={{
+          fontSize: 'clamp(14px, 2.2vh, 28px)',
+          color: 'rgba(255,255,255,0.85)',
+          fontWeight: 500,
+          lineHeight: 1.8,
+          whiteSpace: 'pre-line',
+          direction: 'rtl',
+        }}>
+          {omerData.bracha}
+        </p>
+      </motion.div>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
