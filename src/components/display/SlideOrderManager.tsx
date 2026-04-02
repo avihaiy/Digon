@@ -6,25 +6,26 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { GripVertical, ArrowUp, ArrowDown, Layers, Timer } from "lucide-react";
 
-export type SlideId = "heichal" | "memorial" | "zmanim" | "finance" | "vort" | "announcements";
+export type SlideId = "heichal" | "memorial" | "zmanim" | "finance" | "vort" | "announcements" | "omer";
 
 const SLIDE_LABELS: Record<SlideId, { label: string; emoji: string; desc: string }> = {
   heichal: { label: "היכל ה'", emoji: "🕍", desc: "תמונת היכל" },
   memorial: { label: "אשכבות", emoji: "🕯️", desc: "יארצייט היום" },
+  omer: { label: "ספירת העומר", emoji: "🌾", desc: "מונה אוטומטי לעומר" },
   zmanim: { label: "זמני היום", emoji: "🕐", desc: "זמני הלכה יומיים" },
   finance: { label: "מצב כספי", emoji: "💰", desc: "הכנסות והוצאות" },
   vort: { label: "דבר תורה", emoji: "✡️", desc: "פסוק או הודעת יום" },
   announcements: { label: "מודעות", emoji: "📢", desc: "הודעות ומודעות" },
 };
 
-const DEFAULT_ORDER: SlideId[] = ["heichal", "memorial", "zmanim", "finance", "vort", "announcements"];
+const DEFAULT_ORDER: SlideId[] = ["heichal", "memorial", "omer", "zmanim", "finance", "vort", "announcements"];
 const ORDER_KEY = "display_slide_order";
 const DURATIONS_KEY = "display_slide_durations";
 
-// ברירת מחדל שניות לכל סליייד
 const DEFAULT_DURATIONS: Record<SlideId, number> = {
   heichal: 10,
   memorial: 15,
+  omer: 12,
   zmanim: 20,
   finance: 10,
   vort: 12,

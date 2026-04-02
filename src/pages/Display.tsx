@@ -19,6 +19,7 @@ import HeichalDisplaySlide from "@/components/display/HeichalDisplaySlide";
 import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
 import TickerBanner from "@/components/display/TickerBanner";
+import OmerDisplaySlide from "@/components/display/OmerDisplaySlide";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
@@ -190,12 +191,14 @@ export default function Display() {
   const [tickerSpeed, setTickerSpeed] = useState("medium");
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
+  const [showOmer, setShowOmer] = useState(true);
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
-  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]>([
+  const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements" | "omer")[]>([
     "heichal",
     "memorial",
+    "omer",
     "zmanim",
     "finance",
     "announcements",
@@ -203,6 +206,7 @@ export default function Display() {
   const [slideDurations, setSlideDurations] = useState<Record<string, number>>({
     heichal: 10,
     memorial: 15,
+    omer: 12,
     zmanim: 20,
     finance: 10,
     announcements: 10,
@@ -259,6 +263,7 @@ export default function Display() {
           "show_memorial_on_display",
           "memorial_show_week_before",
           "show_finance_on_display",
+          "show_omer_counter",
           "display_background_url",
           "show_heichal_on_display",
           "display_slide_order",
@@ -274,6 +279,7 @@ export default function Display() {
           if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
           if (setting.key === "display_background_url" && setting.value) setDisplayBgUrl(setting.value);
           if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+          if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
           if (setting.key === "display_slide_durations" && setting.value) {
@@ -284,9 +290,9 @@ export default function Display() {
           if (setting.key === "display_slide_order" && setting.value) {
             try {
               const parsed = JSON.parse(setting.value);
-              const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
+              const allTypes = ["heichal", "memorial", "omer", "zmanim", "finance", "announcements"];
               const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-              setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
+              setSlideOrder(merged as ("heichal" | "memorial" | "omer" | "zmanim" | "finance" | "announcements")[]);
             } catch {}
           }
         }
@@ -312,6 +318,7 @@ export default function Display() {
           if (payload.new?.key === "show_finance_on_display") setShowFinance(payload.new.value === "true");
           if (payload.new?.key === "display_background_url") setDisplayBgUrl(payload.new.value || null);
           if (payload.new?.key === "show_heichal_on_display") setShowHeichal(payload.new.value === "true");
+          if (payload.new?.key === "show_omer_counter") setShowOmer(payload.new.value !== "false");
           if (payload.new?.key === "synagogue_name") setSynagogueName(payload.new.value || "");
           if (payload.new?.key === "ticker_speed") setTickerSpeed(payload.new.value || "medium");
         },
@@ -495,6 +502,7 @@ export default function Display() {
             "show_memorial_on_display",
             "memorial_show_week_before",
             "show_finance_on_display",
+            "show_omer_counter",
             "display_background_url",
             "show_heichal_on_display",
             "display_slide_order",
@@ -508,12 +516,13 @@ export default function Display() {
             if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
             if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
             if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+            if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
             if (setting.key === "display_slide_order" && setting.value) {
               try {
                 const parsed = JSON.parse(setting.value);
-                const allTypes = ["heichal", "memorial", "zmanim", "finance", "announcements"];
+                const allTypes = ["heichal", "memorial", "omer", "zmanim", "finance", "announcements"];
                 const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-                setSlideOrder(merged as ("heichal" | "memorial" | "zmanim" | "finance" | "announcements")[]);
+                setSlideOrder(merged as ("heichal" | "memorial" | "omer" | "zmanim" | "finance" | "announcements")[]);
               } catch {}
             }
             if (setting.key === "display_slide_durations" && setting.value) {
@@ -576,7 +585,10 @@ export default function Display() {
     | { type: "memorial" }
     | { type: "zmanim" }
     | { type: "finance" }
+    | { type: "omer" }
     | { type: "announcement"; announcement: ScheduledAnnouncement };
+
+  const omerActive = useMemo(() => !!getSefiratHaOmer(currentTime), [currentTime]);
 
   const orderedSlides = useMemo<Slide[]>(() => {
     const result: Slide[] = [];
@@ -585,6 +597,8 @@ export default function Display() {
         result.push({ type: "heichal" });
       } else if (id === "memorial" && showMemorial && memorialPeople.length > 0) {
         result.push({ type: "memorial" });
+      } else if (id === "omer" && showOmer && omerActive) {
+        result.push({ type: "omer" });
       } else if (id === "zmanim") {
         result.push({ type: "zmanim" });
       } else if (id === "finance" && showFinance) {
@@ -596,7 +610,7 @@ export default function Display() {
       }
     }
     return result;
-  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, validAnnouncements]);
+  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, showOmer, omerActive, validAnnouncements]);
 
   const totalSlides = orderedSlides.length;
 
@@ -634,11 +648,13 @@ export default function Display() {
           ? STYLE_CONFIGS.modern_dark
           : currentSlideType === "finance"
             ? STYLE_CONFIGS.modern_dark
-            : isPrayerAd
-              ? STYLE_CONFIGS.royal_blue
-              : currentAnnouncement
-                ? STYLE_CONFIGS[currentAnnouncement.style]
-                : STYLE_CONFIGS.traditional_gold;
+            : currentSlideType === "omer"
+              ? STYLE_CONFIGS.modern_dark
+              : isPrayerAd
+                ? STYLE_CONFIGS.royal_blue
+                : currentAnnouncement
+                  ? STYLE_CONFIGS[currentAnnouncement.style]
+                  : STYLE_CONFIGS.traditional_gold;
 
   const timeString = currentTime.toLocaleTimeString("he-IL", {
     hour: "2-digit",
@@ -906,6 +922,10 @@ export default function Display() {
                   textClass={styleConfig.text}
                   accentClass={styleConfig.accent}
                 />
+              </div>
+            ) : currentSlideType === "omer" ? (
+              <div key="omer" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+                <OmerDisplaySlide />
               </div>
             ) : currentSlideType === "zmanim" ? (
               <div key="zmanim" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
