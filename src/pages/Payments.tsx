@@ -73,6 +73,8 @@ import {
 } from '@/lib/hebrew-utils';
 
 type FilterType = 'all' | 'pending' | 'confirmed' | 'bit' | 'cash' | 'check' | 'bank_transfer' | 'this_month';
+type PaymentCategory = 'regular' | 'hall';
+type HallEventType = 'simcha' | 'azkara';
 
 export default function Payments() {
   const { user } = useAuth();
@@ -87,6 +89,11 @@ export default function Payments() {
   const [editingPayment, setEditingPayment] = useState<any>(null);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
   const [occasionType, setOccasionType] = useState<OccasionType>('parasha');
+  const [paymentCategory, setPaymentCategory] = useState<PaymentCategory>('regular');
+  const [hallEventType, setHallEventType] = useState<HallEventType>('simcha');
+  const [totalInstallments, setTotalInstallments] = useState('1');
+  const [installmentNumber, setInstallmentNumber] = useState('1');
+  const [installmentTotalAmount, setInstallmentTotalAmount] = useState('');
 
   const [formData, setFormData] = useState({
     member_id: '',
