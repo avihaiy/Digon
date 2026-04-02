@@ -212,10 +212,15 @@ export default function Payments() {
         if (paymentError) throw paymentError;
 
         // Get aliya details for receipt description
-        let receiptDescription = occasionType === 'parasha' 
-          ? `תשלום - פרשת ${formData.occasion}` 
-          : `תשלום - ${formData.occasion}`;
-        
+        let receiptDescription = '';
+        if (paymentCategory === 'hall') {
+          const eventLabel = hallEventType === 'simcha' ? 'שמחה' : 'אזכרה';
+          receiptDescription = `תשלום אולם - ${eventLabel} — תשלום ${installmentNumber} מתוך ${totalInstallments}`;
+        } else if (occasionType === 'parasha') {
+          receiptDescription = `תשלום - פרשת ${formData.occasion}`;
+        } else {
+          receiptDescription = `תשלום - ${formData.occasion}`;
+        }
         if (formData.aliya_id) {
           const selectedAliya = unpaidAliyot?.find((a: any) => a.id === formData.aliya_id);
           if (selectedAliya) {
