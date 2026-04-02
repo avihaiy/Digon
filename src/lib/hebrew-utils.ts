@@ -416,12 +416,15 @@ export function getErevRoshChodesh(date: Date = new Date()): string | null {
 // Counted from the night of 16 Nisan (after sunset on 15 Nisan) for 49 days
 // The Omer is always counted at night (Ma'ariv), so after sunset we use the next Hebrew day
 export function getSefiratHaOmer(date: Date = new Date()): string | null {
-  // After sunset (~18:30 in Israel), the Hebrew day advances
-  // Use a simple heuristic: after 18:00 local time, use tomorrow's Hebrew date
-  const hour = date.getHours();
+  // After sunset in Israel, the Hebrew day advances
+  // Use Israel timezone to get the correct local hour
+  const israelTime = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+  const israelHour = israelTime.getHours();
+  const israelMinutes = israelHour * 60 + israelTime.getMinutes();
+  
   let hdate = new HDate(date);
-  if (hour >= 18) {
-    // Advance to next Hebrew day (sunset has passed)
+  // After ~18:15 Israel time (approximate sunset), advance to next Hebrew day
+  if (israelMinutes >= 18 * 60 + 15) {
     hdate = new HDate(hdate.abs() + 1);
   }
   
