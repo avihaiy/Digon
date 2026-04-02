@@ -64,9 +64,28 @@ const SEFIROT: Record<number, { name: string; color: string }> = {
   48: { name: 'יסוד שבמלכות', color: '#9370DB' },
   49: { name: 'מלכות שבמלכות', color: '#4169E1' },
 };
+function getOmerBracha(dayNum: number): string {
+  const hebrewNum = HEBREW_NUMBERS[dayNum];
+  const weeks = Math.floor(dayNum / 7);
+  const days = dayNum % 7;
+
+  const dayWord = dayNum === 1 ? 'יוֹם אֶחָד' : `${hebrewNum} יָמִים`;
+  
+  let countText = `הַיּוֹם ${dayWord} לָעֹמֶר`;
+  
+  if (weeks > 0 && days === 0) {
+    const weekWord = weeks === 1 ? 'שָׁבוּעַ אֶחָד' : `${HEBREW_NUMBERS[weeks]} שָׁבוּעוֹת`;
+    countText = `הַיּוֹם ${dayWord} לָעֹמֶר, שֶׁהֵם ${weekWord}`;
+  } else if (weeks > 0 && days > 0) {
+    const weekWord = weeks === 1 ? 'שָׁבוּעַ אֶחָד' : `${HEBREW_NUMBERS[weeks]} שָׁבוּעוֹת`;
+    const dayRemWord = days === 1 ? 'יוֹם אֶחָד' : `${HEBREW_NUMBERS[days]} יָמִים`;
+    countText = `הַיּוֹם ${dayWord} לָעֹמֶר, שֶׁהֵם ${weekWord} וְ${dayRemWord}`;
+  }
+
+  return `בָּרוּךְ אַתָּה יְיָ אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל סְפִירַת הָעֹמֶר.\n${countText}.`;
+}
 
 
-export default function OmerDisplaySlide() {
   const omerData = useMemo(() => {
     const now = new Date();
     const omerText = getSefiratHaOmer(now);
