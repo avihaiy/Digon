@@ -263,7 +263,7 @@ export default function Display() {
           "show_memorial_on_display",
           "memorial_show_week_before",
           "show_finance_on_display",
-          "show_omer_on_display",
+          "show_omer_counter",
           "display_background_url",
           "show_heichal_on_display",
           "display_slide_order",
@@ -279,7 +279,7 @@ export default function Display() {
           if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
           if (setting.key === "display_background_url" && setting.value) setDisplayBgUrl(setting.value);
           if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
-          if (setting.key === "show_omer_on_display") setShowOmer(setting.value !== "false");
+          if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
           if (setting.key === "display_slide_durations" && setting.value) {
@@ -318,7 +318,7 @@ export default function Display() {
           if (payload.new?.key === "show_finance_on_display") setShowFinance(payload.new.value === "true");
           if (payload.new?.key === "display_background_url") setDisplayBgUrl(payload.new.value || null);
           if (payload.new?.key === "show_heichal_on_display") setShowHeichal(payload.new.value === "true");
-          if (payload.new?.key === "show_omer_on_display") setShowOmer(payload.new.value !== "false");
+          if (payload.new?.key === "show_omer_counter") setShowOmer(payload.new.value !== "false");
           if (payload.new?.key === "synagogue_name") setSynagogueName(payload.new.value || "");
           if (payload.new?.key === "ticker_speed") setTickerSpeed(payload.new.value || "medium");
         },
@@ -502,7 +502,7 @@ export default function Display() {
             "show_memorial_on_display",
             "memorial_show_week_before",
             "show_finance_on_display",
-            "show_omer_on_display",
+            "show_omer_counter",
             "display_background_url",
             "show_heichal_on_display",
             "display_slide_order",
@@ -516,7 +516,7 @@ export default function Display() {
             if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
             if (setting.key === "display_background_url") setDisplayBgUrl(setting.value || null);
             if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
-            if (setting.key === "show_omer_on_display") setShowOmer(setting.value !== "false");
+            if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
             if (setting.key === "display_slide_order" && setting.value) {
               try {
                 const parsed = JSON.parse(setting.value);
