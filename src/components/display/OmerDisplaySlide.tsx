@@ -85,8 +85,7 @@ function getOmerBracha(dayNum: number): string {
   return `בָּרוּךְ אַתָּה יְיָ אֱלֹהֵינוּ מֶלֶךְ הָעוֹלָם, אֲשֶׁר קִדְּשָׁנוּ בְּמִצְוֹתָיו וְצִוָּנוּ עַל סְפִירַת הָעֹמֶר.\n${countText}.`;
 }
 
-
-  const omerData = useMemo(() => {
+export default function OmerDisplaySlide() {
     const now = new Date();
     const omerText = getSefiratHaOmer(now);
     if (!omerText) return null;
