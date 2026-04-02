@@ -216,7 +216,7 @@ export default function OmerDisplaySlide({ previewDay }: OmerDisplaySlideProps =
           textShadow: '0 2px 12px rgba(0,0,0,0.5)',
         }}
       >
-        היום {omerData.dayNum === 1 ? 'יום אחד' : `${omerData.hebrewNum} ימים`} לעומר
+        היום {omerData.dayNum === 1 ? 'יום אחד' : `${omerData.hebrewNum} ימים`} בעומר
       </motion.p>
 
       {/* Weeks breakdown */}
