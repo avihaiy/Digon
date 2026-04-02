@@ -610,7 +610,7 @@ export default function Display() {
       }
     }
     return result;
-  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, validAnnouncements]);
+  }, [slideOrder, showHeichal, showMemorial, memorialPeople, showFinance, showOmer, omerActive, validAnnouncements]);
 
   const totalSlides = orderedSlides.length;
 
