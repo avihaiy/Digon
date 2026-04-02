@@ -73,6 +73,8 @@ import {
 } from '@/lib/hebrew-utils';
 
 type FilterType = 'all' | 'pending' | 'confirmed' | 'bit' | 'cash' | 'check' | 'bank_transfer' | 'this_month';
+type PaymentCategory = 'regular' | 'hall';
+type HallEventType = 'simcha' | 'azkara';
 
 export default function Payments() {
   const { user } = useAuth();
@@ -87,6 +89,11 @@ export default function Payments() {
   const [editingPayment, setEditingPayment] = useState<any>(null);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
   const [occasionType, setOccasionType] = useState<OccasionType>('parasha');
+  const [paymentCategory, setPaymentCategory] = useState<PaymentCategory>('regular');
+  const [hallEventType, setHallEventType] = useState<HallEventType>('simcha');
+  const [totalInstallments, setTotalInstallments] = useState('1');
+  const [installmentNumber, setInstallmentNumber] = useState('1');
+  const [installmentTotalAmount, setInstallmentTotalAmount] = useState('');
 
   const [formData, setFormData] = useState({
     member_id: '',
@@ -178,6 +185,9 @@ export default function Payments() {
         return editingPayment;
       } else {
         // Create new payment
+        const isHall = paymentCategory === 'hall';
+        const groupId = isHall ? crypto.randomUUID() : null;
+        
         const { data: payment, error: paymentError } = await supabase
           .from('payments')
           .insert({
@@ -189,18 +199,28 @@ export default function Payments() {
             status: 'confirmed',
             notes: formData.notes || null,
             aliya_id: formData.aliya_id || null,
-            payment_type: formData.aliya_id ? 'aliya' : 'donation',
-          })
+            payment_type: isHall ? 'hall' : (formData.aliya_id ? 'aliya' : 'donation'),
+            hall_event_type: isHall ? hallEventType : null,
+            total_installments: isHall ? Number(totalInstallments) : null,
+            installment_number: isHall ? Number(installmentNumber) : null,
+            installment_total_amount: isHall ? Number(installmentTotalAmount || formData.amount) : null,
+            installment_group_id: groupId,
+          } as any)
           .select()
           .single();
 
         if (paymentError) throw paymentError;
 
         // Get aliya details for receipt description
-        let receiptDescription = occasionType === 'parasha' 
-          ? `תשלום - פרשת ${formData.occasion}` 
-          : `תשלום - ${formData.occasion}`;
-        
+        let receiptDescription = '';
+        if (paymentCategory === 'hall') {
+          const eventLabel = hallEventType === 'simcha' ? 'שמחה' : 'אזכרה';
+          receiptDescription = `תשלום אולם - ${eventLabel} — תשלום ${installmentNumber} מתוך ${totalInstallments}`;
+        } else if (occasionType === 'parasha') {
+          receiptDescription = `תשלום - פרשת ${formData.occasion}`;
+        } else {
+          receiptDescription = `תשלום - ${formData.occasion}`;
+        }
         if (formData.aliya_id) {
           const selectedAliya = unpaidAliyot?.find((a: any) => a.id === formData.aliya_id);
           if (selectedAliya) {
@@ -339,6 +359,11 @@ export default function Payments() {
     setFormData({ member_id: '', amount: '', reference: '', notes: '', occasion: getCurrentParasha(), aliya_id: '' });
     setPaymentMethod('cash');
     setOccasionType('parasha');
+    setPaymentCategory('regular');
+    setHallEventType('simcha');
+    setTotalInstallments('1');
+    setInstallmentNumber('1');
+    setInstallmentTotalAmount('');
   };
 
   const handleEditPayment = (payment: any) => {
@@ -746,6 +771,19 @@ export default function Payments() {
                         <span>{formatShortDate(payment.created_at)}</span>
                         <span className="hidden sm:inline">•</span>
                         <span className="hidden sm:inline">{PAYMENT_METHOD[payment.method as keyof typeof PAYMENT_METHOD]}</span>
+                        {payment.payment_type === 'hall' && (
+                          <>
+                            <span>•</span>
+                            <Badge variant="outline" className="text-xs h-5">
+                              {(payment as any).hall_event_type === 'simcha' ? '🎉 שמחה' : '🕯️ אזכרה'} — אולם
+                            </Badge>
+                            {(payment as any).total_installments > 1 && (
+                              <span className="text-xs">
+                                (תשלום {(payment as any).installment_number}/{(payment as any).total_installments})
+                              </span>
+                            )}
+                          </>
+                        )}
                         {payment.reference && (
                           <>
                             <span className="hidden sm:inline">•</span>
@@ -849,6 +887,129 @@ export default function Payments() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 pb-20">
+            {/* Payment Category Selection */}
+            {!editingPayment && (
+              <div className="space-y-2">
+                <Label>סוג תשלום</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentCategory('regular')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-2 ${
+                      paymentCategory === 'regular'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    תשלום רגיל
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentCategory('hall')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-2 ${
+                      paymentCategory === 'hall'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Building2 className="w-4 h-4" />
+                    תשלום אולם
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Hall Event Type */}
+            {paymentCategory === 'hall' && (
+              <div className="space-y-3 p-4 rounded-xl bg-muted/50 border border-border">
+                <Label className="font-semibold">סוג אירוע באולם</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setHallEventType('simcha')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                      hallEventType === 'simcha'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    🎉 שמחה
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHallEventType('azkara')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                      hallEventType === 'azkara'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    🕯️ אזכרה
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">סכום כולל לכל התשלומים</Label>
+                    <Input
+                      type="number"
+                      value={installmentTotalAmount}
+                      onChange={(e) => {
+                        setInstallmentTotalAmount(e.target.value);
+                        const total = Number(totalInstallments) || 1;
+                        if (e.target.value) {
+                          setFormData(prev => ({ ...prev, amount: String(Math.round(Number(e.target.value) / total)) }));
+                        }
+                      }}
+                      placeholder="סכום כולל"
+                      dir="ltr"
+                      className="text-left"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">מספר תשלומים</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="36"
+                      value={totalInstallments}
+                      onChange={(e) => {
+                        setTotalInstallments(e.target.value);
+                        const total = Number(e.target.value) || 1;
+                        if (installmentTotalAmount) {
+                          setFormData(prev => ({ ...prev, amount: String(Math.round(Number(installmentTotalAmount) / total)) }));
+                        }
+                      }}
+                      dir="ltr"
+                      className="text-left"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">תשלום מספר</Label>
+                  <Select value={installmentNumber} onValueChange={setInstallmentNumber}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: Number(totalInstallments) || 1 }, (_, i) => (
+                        <SelectItem key={i + 1} value={String(i + 1)}>
+                          תשלום {i + 1} מתוך {totalInstallments}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {installmentTotalAmount && Number(totalInstallments) > 1 && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    סכום לתשלום: {formatCurrency(Math.round(Number(installmentTotalAmount) / Number(totalInstallments)))} × {totalInstallments} תשלומים = {formatCurrency(Number(installmentTotalAmount))}
+                  </p>
+                )}
+              </div>
+            )}
             {/* Link to Aliya (optional) */}
             {!editingPayment && unpaidAliyot && unpaidAliyot.length > 0 && (
               <div className="space-y-2">

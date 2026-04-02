@@ -650,7 +650,11 @@ export type Database = {
           aliya_id: string | null
           amount: number
           created_at: string | null
+          hall_event_type: string | null
           id: string
+          installment_group_id: string | null
+          installment_number: number | null
+          installment_total_amount: number | null
           member_id: string
           method: Database["public"]["Enums"]["payment_method"]
           notes: string | null
@@ -659,13 +663,18 @@ export type Database = {
           received_by: string | null
           reference: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
+          total_installments: number | null
           unit_price: number | null
         }
         Insert: {
           aliya_id?: string | null
           amount: number
           created_at?: string | null
+          hall_event_type?: string | null
           id?: string
+          installment_group_id?: string | null
+          installment_number?: number | null
+          installment_total_amount?: number | null
           member_id: string
           method: Database["public"]["Enums"]["payment_method"]
           notes?: string | null
@@ -674,13 +683,18 @@ export type Database = {
           received_by?: string | null
           reference?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          total_installments?: number | null
           unit_price?: number | null
         }
         Update: {
           aliya_id?: string | null
           amount?: number
           created_at?: string | null
+          hall_event_type?: string | null
           id?: string
+          installment_group_id?: string | null
+          installment_number?: number | null
+          installment_total_amount?: number | null
           member_id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           notes?: string | null
@@ -689,6 +703,7 @@ export type Database = {
           received_by?: string | null
           reference?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          total_installments?: number | null
           unit_price?: number | null
         }
         Relationships: [
