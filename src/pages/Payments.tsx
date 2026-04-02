@@ -346,6 +346,11 @@ export default function Payments() {
     setFormData({ member_id: '', amount: '', reference: '', notes: '', occasion: getCurrentParasha(), aliya_id: '' });
     setPaymentMethod('cash');
     setOccasionType('parasha');
+    setPaymentCategory('regular');
+    setHallEventType('simcha');
+    setTotalInstallments('1');
+    setInstallmentNumber('1');
+    setInstallmentTotalAmount('');
   };
 
   const handleEditPayment = (payment: any) => {
