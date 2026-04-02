@@ -1116,7 +1116,12 @@ export default function ManageAds() {
                   <Switch checked={showZmanimHeader} onCheckedChange={toggleZmanimHeader} />
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm">הצג ספירת העומר</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm">הצג ספירת העומר</p>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setOmerPreviewOpen(true)}>
+                      <Eye className="w-3 h-3 ml-1" />תצוגה מקדימה
+                    </Button>
+                  </div>
                   <Switch checked={showOmerCounter} onCheckedChange={toggleOmerCounter} />
                 </div>
                 <div className="flex items-center justify-between">
@@ -1399,7 +1404,12 @@ export default function ManageAds() {
             <Switch checked={showZmanimHeader} onCheckedChange={toggleZmanimHeader} />
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-sm">הצג ספירת העומר</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm">הצג ספירת העומר</p>
+              <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setOmerPreviewOpen(true)}>
+                <Eye className="w-3 h-3 ml-1" />תצוגה מקדימה
+              </Button>
+            </div>
             <Switch checked={showOmerCounter} onCheckedChange={toggleOmerCounter} />
           </div>
           <div className="flex items-center justify-between">
