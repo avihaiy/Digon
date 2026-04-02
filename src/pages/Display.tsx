@@ -648,11 +648,13 @@ export default function Display() {
           ? STYLE_CONFIGS.modern_dark
           : currentSlideType === "finance"
             ? STYLE_CONFIGS.modern_dark
-            : isPrayerAd
-              ? STYLE_CONFIGS.royal_blue
-              : currentAnnouncement
-                ? STYLE_CONFIGS[currentAnnouncement.style]
-                : STYLE_CONFIGS.traditional_gold;
+            : currentSlideType === "omer"
+              ? STYLE_CONFIGS.modern_dark
+              : isPrayerAd
+                ? STYLE_CONFIGS.royal_blue
+                : currentAnnouncement
+                  ? STYLE_CONFIGS[currentAnnouncement.style]
+                  : STYLE_CONFIGS.traditional_gold;
 
   const timeString = currentTime.toLocaleTimeString("he-IL", {
     hour: "2-digit",
