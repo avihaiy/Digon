@@ -874,6 +874,129 @@ export default function Payments() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 pb-20">
+            {/* Payment Category Selection */}
+            {!editingPayment && (
+              <div className="space-y-2">
+                <Label>סוג תשלום</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentCategory('regular')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-2 ${
+                      paymentCategory === 'regular'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    תשלום רגיל
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentCategory('hall')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-2 ${
+                      paymentCategory === 'hall'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Building2 className="w-4 h-4" />
+                    תשלום אולם
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Hall Event Type */}
+            {paymentCategory === 'hall' && (
+              <div className="space-y-3 p-4 rounded-xl bg-muted/50 border border-border">
+                <Label className="font-semibold">סוג אירוע באולם</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setHallEventType('simcha')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                      hallEventType === 'simcha'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    🎉 שמחה
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHallEventType('azkara')}
+                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                      hallEventType === 'azkara'
+                        ? 'border-primary bg-primary/5 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    🕯️ אזכרה
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">סכום כולל לכל התשלומים</Label>
+                    <Input
+                      type="number"
+                      value={installmentTotalAmount}
+                      onChange={(e) => {
+                        setInstallmentTotalAmount(e.target.value);
+                        const total = Number(totalInstallments) || 1;
+                        if (e.target.value) {
+                          setFormData(prev => ({ ...prev, amount: String(Math.round(Number(e.target.value) / total)) }));
+                        }
+                      }}
+                      placeholder="סכום כולל"
+                      dir="ltr"
+                      className="text-left"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">מספר תשלומים</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="36"
+                      value={totalInstallments}
+                      onChange={(e) => {
+                        setTotalInstallments(e.target.value);
+                        const total = Number(e.target.value) || 1;
+                        if (installmentTotalAmount) {
+                          setFormData(prev => ({ ...prev, amount: String(Math.round(Number(installmentTotalAmount) / total)) }));
+                        }
+                      }}
+                      dir="ltr"
+                      className="text-left"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">תשלום מספר</Label>
+                  <Select value={installmentNumber} onValueChange={setInstallmentNumber}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: Number(totalInstallments) || 1 }, (_, i) => (
+                        <SelectItem key={i + 1} value={String(i + 1)}>
+                          תשלום {i + 1} מתוך {totalInstallments}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {installmentTotalAmount && Number(totalInstallments) > 1 && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    סכום לתשלום: {formatCurrency(Math.round(Number(installmentTotalAmount) / Number(totalInstallments)))} × {totalInstallments} תשלומים = {formatCurrency(Number(installmentTotalAmount))}
+                  </p>
+                )}
+              </div>
+            )}
             {/* Link to Aliya (optional) */}
             {!editingPayment && unpaidAliyot && unpaidAliyot.length > 0 && (
               <div className="space-y-2">
