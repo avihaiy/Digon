@@ -86,11 +86,11 @@ function getOmerBracha(dayNum: number): string {
 }
 
 export default function OmerDisplaySlide() {
+  const omerData = useMemo(() => {
     const now = new Date();
     const omerText = getSefiratHaOmer(now);
     if (!omerText) return null;
 
-    // Extract day number from the text
     const match = omerText.match(/יום (\d+)/);
     const dayNum = match ? parseInt(match[1]) : null;
     if (!dayNum) return null;
@@ -107,7 +107,9 @@ export default function OmerDisplaySlide() {
       weeksText = `שהם ${weeks === 1 ? 'שבוע אחד' : `${HEBREW_NUMBERS[weeks]} שבועות`} ו${days === 1 ? 'יום אחד' : `${HEBREW_NUMBERS[days]} ימים`}`;
     }
 
-    return { dayNum, hebrewNum, weeks, days, weeksText, sefira };
+    const bracha = getOmerBracha(dayNum);
+
+    return { dayNum, hebrewNum, weeks, days, weeksText, sefira, bracha };
   }, []);
 
   if (!omerData) return null;
