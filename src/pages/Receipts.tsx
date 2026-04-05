@@ -78,7 +78,13 @@ export default function Receipts() {
     description: '',
     parasha: '',
   });
-  
+
+  // Pre-build PDFs in background for instant sharing
+  useEffect(() => {
+    if (receipts?.length) {
+      prebuildReceiptPdfs(receipts.slice(0, 10)); // Pre-build first 10
+    }
+  }, [receipts]);
 
   // Fetch receipts
   const { data: receipts, isLoading } = useQuery({
