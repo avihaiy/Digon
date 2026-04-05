@@ -67,6 +67,12 @@ export function prebuildReceiptPdf(receipt: any): void {
   }
 }
 
+/** Check if PDF is already cached */
+export function isReceiptPdfCached(receipt: any): boolean {
+  const cacheKey = receipt.id || String(receipt.receipt_number);
+  return pdfCache.has(cacheKey);
+}
+
 export function downloadPdfFile(file: File) {
   const url = URL.createObjectURL(file);
   const a = document.createElement('a');
@@ -90,114 +96,123 @@ function getShareText(receipt: any): string {
   ].filter(Boolean).join('\n');
 }
 
-/**
- * Detect iOS (iPhone/iPad/iPod)
- */
-function isIOS(): boolean {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function cleanPhoneNumber(phoneNumber: string): string {
+  let clean = phoneNumber.replace(/[\s\-()]/g, '');
+  if (clean.startsWith('0')) clean = '972' + clean.substring(1);
+  if (!clean.startsWith('+') && !clean.startsWith('972')) clean = '972' + clean;
+  clean = clean.replace('+', '');
+  return clean;
 }
 
 /**
- * Share receipt - works reliably on both iOS and Android.
- * Strategy:
- * 1. If PDF is already cached → share with file (works within gesture)
- * 2. If PDF not cached → share text only, build PDF in background for next time
- * 3. Fallback: download PDF
+ * Share receipt with PDF file + text.
  * 
- * Returns: 'shared' | 'text_only' | 'downloaded'
+ * Strategy (optimized for iOS + Android):
+ * 1. If PDF cached → native share with file + text (works in gesture)
+ * 2. If PDF not cached → build it, then try native share
+ * 3. If native file share fails → open WhatsApp with text + download PDF separately
+ * 4. Last resort → download PDF
+ * 
+ * Returns: 'shared_with_file' | 'shared_text' | 'whatsapp_text' | 'downloaded'
  */
-export async function shareReceiptWithPdf(receipt: any): Promise<string> {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
-  const cachedFile = pdfCache.get(cacheKey);
+export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): Promise<string> {
   const shareText = getShareText(receipt);
 
-  // Strategy 1: PDF is cached - try sharing with file immediately (within user gesture)
-  if (cachedFile && navigator.share) {
+  // Build or get cached PDF
+  const file = await buildReceiptPdfFile(receipt);
+
+  // Try native share with file + text (works on both iOS and Android)
+  if (navigator.share) {
     try {
-      const canShareFiles = navigator.canShare?.({ files: [cachedFile] });
+      const canShareFiles = navigator.canShare?.({ files: [file] });
       if (canShareFiles) {
         await navigator.share({
-          files: [cachedFile],
+          files: [file],
           title: `קבלה מס׳ ${receipt.receipt_number}`,
           text: shareText,
         });
-        return 'shared';
+        return 'shared_with_file';
       }
     } catch (error: any) {
       if (error?.name === 'AbortError') throw error;
-      // File share failed - continue to text fallback
-      console.warn('File share failed, trying text:', error);
+      console.warn('File share failed:', error);
+      
+      // On gesture error, try text-only share
+      try {
+        await navigator.share({
+          title: `קבלה מס׳ ${receipt.receipt_number}`,
+          text: shareText,
+        });
+        // Also download the PDF so user has it
+        downloadPdfFile(file);
+        return 'shared_text';
+      } catch (textError: any) {
+        if (textError?.name === 'AbortError') throw textError;
+        console.warn('Text share also failed:', textError);
+      }
     }
   }
 
-  // Strategy 2: Share text (reliable on all platforms), build PDF in background
-  if (navigator.share) {
-    // Start building PDF in background for next share attempt
-    if (!cachedFile) {
-      buildReceiptPdfFile(receipt).catch(() => {});
-    }
-
-    try {
-      await navigator.share({
-        title: `קבלה מס׳ ${receipt.receipt_number}`,
-        text: shareText,
-      });
-      return 'text_only';
-    } catch (error: any) {
-      if (error?.name === 'AbortError') throw error;
-      console.warn('Text share failed:', error);
-    }
+  // Fallback: Open WhatsApp directly with text + download PDF
+  const phone = phoneNumber || receipt.member?.phone;
+  if (phone) {
+    const clean = cleanPhoneNumber(phone);
+    const encoded = encodeURIComponent(shareText);
+    window.open(`https://wa.me/${clean}?text=${encoded}`, '_blank');
+  } else {
+    const encoded = encodeURIComponent(shareText);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
   }
-
-  // Strategy 3: Build/use PDF and download
-  const file = cachedFile || await buildReceiptPdfFile(receipt);
   downloadPdfFile(file);
-  return 'downloaded';
+  return 'whatsapp_text';
 }
 
 /**
- * Share receipt as text only (most reliable cross-platform)
+ * Share receipt as text only
  */
 export async function shareReceipt(receipt: any): Promise<void> {
   const shareText = getShareText(receipt);
 
   if (navigator.share) {
-    try {
-      await navigator.share({
-        title: `קבלה מס׳ ${receipt.receipt_number}`,
-        text: shareText,
-      });
-      return;
-    } catch (error: any) {
-      if (error?.name === 'AbortError') throw error;
-    }
+    await navigator.share({
+      title: `קבלה מס׳ ${receipt.receipt_number}`,
+      text: shareText,
+    });
+    return;
   }
 
   // Fallback: copy to clipboard
-  try {
-    await navigator.clipboard.writeText(shareText);
-  } catch {
-    // Last resort: download as PDF
-    const file = await buildReceiptPdfFile(receipt);
-    downloadPdfFile(file);
-    throw new Error('DOWNLOAD_FALLBACK');
-  }
+  await navigator.clipboard.writeText(shareText);
 }
 
 /**
- * Open WhatsApp with receipt text. Phone number optional.
+ * Open WhatsApp with receipt text + PDF file.
+ * Since WhatsApp web API doesn't support file attachments,
+ * we download the PDF and open WhatsApp with text.
  */
-export function shareViaWhatsApp(receipt: any, phoneNumber?: string): void {
+export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Promise<void> {
   const text = getShareText(receipt);
   const encoded = encodeURIComponent(text);
-  
+
+  // Try native share with file targeting WhatsApp first
+  try {
+    const file = await buildReceiptPdfFile(receipt);
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: `קבלה מס׳ ${receipt.receipt_number}`,
+        text: text,
+      });
+      return;
+    }
+  } catch (error: any) {
+    if (error?.name === 'AbortError') return;
+    console.warn('WhatsApp file share failed, falling back to link:', error);
+  }
+
+  // Fallback: open WhatsApp link with text
   if (phoneNumber) {
-    // Clean phone number (remove spaces, dashes, leading 0)
-    let clean = phoneNumber.replace(/[\s\-()]/g, '');
-    if (clean.startsWith('0')) clean = '972' + clean.substring(1);
-    if (!clean.startsWith('+') && !clean.startsWith('972')) clean = '972' + clean;
-    clean = clean.replace('+', '');
+    const clean = cleanPhoneNumber(phoneNumber);
     window.open(`https://wa.me/${clean}?text=${encoded}`, '_blank');
   } else {
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
