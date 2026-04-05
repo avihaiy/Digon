@@ -469,14 +469,12 @@ export default function Payments() {
         return;
       }
 
-      await shareReceiptWithPdf(receipt);
-      toast.success('הקבלה שותפה בהצלחה');
+      const result = await shareReceiptWithPdf(receipt);
+      if (result === 'shared') toast.success('הקבלה שותפה עם PDF');
+      else if (result === 'text_only') toast.success('הקבלה שותפה בהצלחה');
+      else if (result === 'downloaded') toast.success('הקבלה הורדה כ-PDF');
     } catch (error: any) {
-      if (error?.message === 'GESTURE_ERROR') {
-        toast.info('ה-PDF מוכן! לחץ שוב לשיתוף');
-      } else if (error?.message === 'DOWNLOAD_FALLBACK') {
-        toast.success('הקבלה הורדה כ-PDF');
-      } else if (error?.name !== 'AbortError') {
+      if (error?.name !== 'AbortError') {
         console.error('Share error:', error);
         toast.error('שגיאה בשיתוף הקבלה');
       }
