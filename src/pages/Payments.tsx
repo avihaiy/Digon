@@ -98,6 +98,7 @@ export default function Payments() {
   const [totalInstallments, setTotalInstallments] = useState('1');
   const [installmentNumber, setInstallmentNumber] = useState('1');
   const [installmentTotalAmount, setInstallmentTotalAmount] = useState('');
+  const [memberComboOpen, setMemberComboOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     member_id: '',
