@@ -86,26 +86,38 @@ async function buildReceiptImageFile(receipt: any): Promise<File> {
       jsPDF: { unit: 'mm', format: [80, 120], orientation: 'portrait' as const },
     };
 
-    // html2pdf's toContainer().toCanvas() pipeline returns the worker, 
-    // we need to access the canvas from the worker's prop
-    const worker = html2pdf().set(opt).from(el);
-    const workerWithCanvas = await worker.toContainer().toCanvas();
-    const canvas: HTMLCanvasElement = (workerWithCanvas as any).prop?.canvas 
-      || (workerWithCanvas as any).canvas
-      || document.querySelector('.html2pdf__container canvas');
+    const worker = html2pdf().set(opt).from(el).toCanvas();
+    const canvas: HTMLCanvasElement | undefined = await (worker as any).get('canvas');
 
-    if (!canvas || typeof canvas.toBlob !== 'function') {
-      // Fallback: just build PDF instead
-      const pdfFile = await buildReceiptPdfFile(receipt);
-      return pdfFile;
+    if (!canvas) {
+      return await buildReceiptPdfFile(receipt);
     }
-    
+
     const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (b) => b ? resolve(b) : reject(new Error('Canvas to blob failed')),
-        'image/jpeg',
-        0.95
-      );
+      if (typeof canvas.toBlob === 'function') {
+        canvas.toBlob(
+          (b) => b ? resolve(b) : reject(new Error('Canvas to blob failed')),
+          'image/jpeg',
+          0.95
+        );
+        return;
+      }
+
+      try {
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const [meta, base64 = ''] = dataUrl.split(',');
+        const mime = meta.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        resolve(new Blob([bytes], { type: mime }));
+      } catch (error) {
+        reject(error instanceof Error ? error : new Error('Canvas export failed'));
+      }
     });
 
     const fileName = `receipt-${receipt.receipt_number}.jpg`;
@@ -116,8 +128,7 @@ async function buildReceiptImageFile(receipt: any): Promise<File> {
     if (document.body.contains(el)) {
       document.body.removeChild(el);
     }
-    // Clean up any leftover html2pdf containers
-    document.querySelectorAll('.html2pdf__container').forEach(c => c.remove());
+    document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
   }
 }
 
