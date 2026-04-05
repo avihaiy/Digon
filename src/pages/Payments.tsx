@@ -476,6 +476,7 @@ export default function Payments() {
 
       const result = await shareReceiptWithPdf(receipt);
       if (result === 'shared_with_file') toast.success('הקבלה שותפה בהצלחה');
+      else if (result === 'shared_with_file_clipboard') toast.success('הקבלה שותפה! הטקסט הועתק - הדבק בצ׳אט');
       else if (result === 'whatsapp_with_download') toast.success('הקבלה הורדה ונשלחה לווצאפ');
     } catch (error: any) {
       if (error?.name !== 'AbortError') {
