@@ -178,7 +178,7 @@ export default function Dashboard() {
           <Link to="/payments?action=add" className="col-span-1">
             <Button className="btn-gold gap-2 w-full">
               <CreditCard className="w-4 h-4" />
-              <span>תשלום</span>
+              <span>קבל תשלום</span>
             </Button>
           </Link>
           <Link to="/expense-reports" className="col-span-1">
