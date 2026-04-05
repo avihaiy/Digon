@@ -480,6 +480,7 @@ export function MemberDetailDialog({
                                 const receiptWithMember = { ...r, member: { full_name: memberName } };
                                 const result = await shareReceiptWithPdf(receiptWithMember);
                                 if (result === 'shared_with_file') toast.success('הקבלה שותפה');
+                                else if (result === 'shared_with_file_clipboard') toast.success('הקבלה שותפה! הטקסט הועתק - הדבק בצ׳אט');
                                 else if (result === 'whatsapp_with_download') toast.success('הקבלה הורדה ונשלחה');
                               } catch (error: any) {
                                 if (error?.name !== 'AbortError') {
