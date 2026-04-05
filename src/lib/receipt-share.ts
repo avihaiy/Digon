@@ -251,16 +251,16 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
     }
   }
 
-  // Fallback: Open WhatsApp with text + download file
+  // Fallback: Open WhatsApp directly with text + download file
   const phone = phoneNumber || receipt.member?.phone;
   const encoded = encodeURIComponent(shareText);
-  if (phone) {
-    const clean = cleanPhoneNumber(phone);
-    window.open(`https://wa.me/${clean}?text=${encoded}`, '_blank');
-  } else {
-    window.open(`https://wa.me/?text=${encoded}`, '_blank');
-  }
+  const waUrl = phone 
+    ? `https://api.whatsapp.com/send?phone=${cleanPhoneNumber(phone)}&text=${encoded}`
+    : `https://api.whatsapp.com/send?text=${encoded}`;
+  
+  // Use location.href for better mobile app detection (window.open opens browser tab)
   downloadPdfFile(file);
+  window.location.href = waUrl;
   return 'whatsapp_with_download';
 }
 
@@ -301,12 +301,10 @@ export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Prom
     }
   }
 
-  // Fallback: wa.me link
+  // Fallback: open WhatsApp directly
   const encoded = encodeURIComponent(text);
-  if (phoneNumber) {
-    const clean = cleanPhoneNumber(phoneNumber);
-    window.open(`https://wa.me/${clean}?text=${encoded}`, '_blank');
-  } else {
-    window.open(`https://wa.me/?text=${encoded}`, '_blank');
-  }
+  const waUrl = phoneNumber
+    ? `https://api.whatsapp.com/send?phone=${cleanPhoneNumber(phoneNumber)}&text=${encoded}`
+    : `https://api.whatsapp.com/send?text=${encoded}`;
+  window.location.href = waUrl;
 }
