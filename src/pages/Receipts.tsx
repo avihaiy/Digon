@@ -247,9 +247,8 @@ export default function Receipts() {
   const handleShareReceipt = async (receipt: any) => {
     try {
       const result = await shareReceiptWithPdf(receipt);
-      if (result === 'shared') toast.success('הקבלה שותפה עם PDF');
-      else if (result === 'text_only') toast.success('הקבלה שותפה בהצלחה');
-      else if (result === 'downloaded') toast.success('הקבלה הורדה כ-PDF');
+      if (result === 'shared_with_file') toast.success('הקבלה שותפה בהצלחה');
+      else if (result === 'whatsapp_with_download') toast.success('הקבלה הורדה ונשלחה לווצאפ');
     } catch (error: any) {
       if (error?.name !== 'AbortError') {
         console.error('Share error:', error);
