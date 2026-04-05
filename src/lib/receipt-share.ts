@@ -199,22 +199,31 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
   // Get the file (image from cache, or build one)
   const file = await getShareFile(receipt);
 
-  // Try native share with file + text
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+
+  // Try native share with file
   if (navigator.share) {
     const canShareFiles = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
 
     if (canShareFiles) {
       try {
+        // On iOS, WhatsApp ignores the text param when files are included.
+        // Copy text to clipboard first so user can paste it in the chat.
+        if (isIOS) {
+          try { await navigator.clipboard.writeText(shareText); } catch {}
+        }
+
         await navigator.share({
           files: [file],
           title: `קבלה מס׳ ${receipt.receipt_number}`,
-          text: shareText,
+          text: shareText, // Works on Android; ignored on iOS WhatsApp
         });
-        return 'shared_with_file';
+
+        return isIOS ? 'shared_with_file_clipboard' : 'shared_with_file';
       } catch (error: any) {
         if (error?.name === 'AbortError') throw error;
         console.warn('File share failed:', error);
-        // Don't fall back to text-only - try WhatsApp link instead
       }
     }
   }
