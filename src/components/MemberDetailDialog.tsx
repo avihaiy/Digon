@@ -479,9 +479,8 @@ export function MemberDetailDialog({
                               try {
                                 const receiptWithMember = { ...r, member: { full_name: memberName } };
                                 const result = await shareReceiptWithPdf(receiptWithMember);
-                                if (result === 'shared') toast.success('הקבלה שותפה עם PDF');
-                                else if (result === 'text_only') toast.success('הקבלה שותפה');
-                                else if (result === 'downloaded') toast.success('הקבלה הורדה');
+                                if (result === 'shared_with_file') toast.success('הקבלה שותפה');
+                                else if (result === 'whatsapp_with_download') toast.success('הקבלה הורדה ונשלחה');
                               } catch (error: any) {
                                 if (error?.name !== 'AbortError') {
                                   toast.error('שגיאה בשיתוף');

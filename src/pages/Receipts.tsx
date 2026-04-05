@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -60,7 +60,7 @@ import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
-import { shareReceiptWithPdf, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs } from '@/lib/receipt-share';
 
 export default function Receipts() {
   const queryClient = useQueryClient();
@@ -78,7 +78,6 @@ export default function Receipts() {
     description: '',
     parasha: '',
   });
-  
 
   // Fetch receipts
   const { data: receipts, isLoading } = useQuery({
@@ -97,6 +96,13 @@ export default function Receipts() {
       return data || [];
     },
   });
+
+  // Pre-build PDFs in background for instant sharing
+  useEffect(() => {
+    if (receipts?.length) {
+      prebuildReceiptPdfs(receipts.slice(0, 10));
+    }
+  }, [receipts]);
 
   // Fetch members for dropdown
   const { data: members } = useQuery({
@@ -241,9 +247,8 @@ export default function Receipts() {
   const handleShareReceipt = async (receipt: any) => {
     try {
       const result = await shareReceiptWithPdf(receipt);
-      if (result === 'shared') toast.success('הקבלה שותפה עם PDF');
-      else if (result === 'text_only') toast.success('הקבלה שותפה בהצלחה');
-      else if (result === 'downloaded') toast.success('הקבלה הורדה כ-PDF');
+      if (result === 'shared_with_file') toast.success('הקבלה שותפה בהצלחה');
+      else if (result === 'whatsapp_with_download') toast.success('הקבלה הורדה ונשלחה לווצאפ');
     } catch (error: any) {
       if (error?.name !== 'AbortError') {
         console.error('Share error:', error);
