@@ -175,17 +175,23 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link to="/payments?action=add">
+            <Button className="btn-gold gap-2">
+              <CreditCard className="w-4 h-4" />
+              תשלום
+            </Button>
+          </Link>
+          <Link to="/expense-reports">
+            <Button variant="outline" className="gap-2">
+              <PieChart className="w-4 h-4" />
+              דו"ח הכנסות/הוצאות
+              <ArrowLeft className="w-4 h-4 flip-icon" />
+            </Button>
+          </Link>
           <Link to="/display-finance" target="_blank">
             <Button variant="outline" className="gap-2">
               <Monitor className="w-4 h-4" />
               מסך תצוגה
-            </Button>
-          </Link>
-          <Link to="/expense-reports">
-            <Button className="btn-gold gap-2">
-              <PieChart className="w-4 h-4" />
-              דו"ח הכנסות/הוצאות
-              <ArrowLeft className="w-4 h-4 flip-icon" />
             </Button>
           </Link>
         </div>
