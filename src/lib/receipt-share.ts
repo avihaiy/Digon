@@ -3,15 +3,11 @@ import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
 
 // Global cache for pre-built PDF files
 const pdfCache = new Map<string, File>();
+// Cache for image files (faster to generate, better for sharing)
+const imageCache = new Map<string, File>();
 
-export async function buildReceiptPdfFile(receipt: any): Promise<File> {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
-  const cached = pdfCache.get(cacheKey);
-  if (cached) return cached;
-
-  const el = document.createElement('div');
-  el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:11px;line-height:1.3;width:80mm;min-height:120mm;padding:3mm;font-weight:700;color:#000;background:#fff;";
-  el.innerHTML = `
+function getReceiptHtml(receipt: any): string {
+  return `
     <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
     <div style="text-align:center;margin-bottom:2mm">
       <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
@@ -36,7 +32,21 @@ export async function buildReceiptPdfFile(receipt: any): Promise<File> {
       <p style="font-size:10px;font-weight:800">טלפון: 050-5768723</p>
     </div>
   `;
+}
 
+function createReceiptElement(receipt: any): HTMLDivElement {
+  const el = document.createElement('div');
+  el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:11px;line-height:1.3;width:80mm;min-height:120mm;padding:3mm;font-weight:700;color:#000;background:#fff;";
+  el.innerHTML = getReceiptHtml(receipt);
+  return el;
+}
+
+export async function buildReceiptPdfFile(receipt: any): Promise<File> {
+  const cacheKey = receipt.id || String(receipt.receipt_number);
+  const cached = pdfCache.get(cacheKey);
+  if (cached) return cached;
+
+  const el = createReceiptElement(receipt);
   document.body.appendChild(el);
 
   try {
@@ -59,26 +69,70 @@ export async function buildReceiptPdfFile(receipt: any): Promise<File> {
   }
 }
 
-/** Pre-build PDF in background so it's ready for instant sharing */
-export function prebuildReceiptPdf(receipt: any): void {
+/** Build a JPEG image of the receipt (much faster than PDF, better for sharing) */
+async function buildReceiptImageFile(receipt: any): Promise<File> {
   const cacheKey = receipt.id || String(receipt.receipt_number);
-  if (!pdfCache.has(cacheKey)) {
-    buildReceiptPdfFile(receipt).catch(() => {});
+  const cached = imageCache.get(cacheKey);
+  if (cached) return cached;
+
+  const el = createReceiptElement(receipt);
+  document.body.appendChild(el);
+
+  try {
+    // Use html2canvas directly for speed
+    const { default: html2canvas } = await import('html2pdf.js').then(async (mod) => {
+      // html2pdf bundles html2canvas - we use it via html2pdf's pipeline
+      return { default: null };
+    });
+
+    // Use html2pdf but output as image blob instead of PDF
+    const opt = {
+      margin: 0,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: 'mm', format: [80, 120], orientation: 'portrait' as const },
+    };
+
+    // Get canvas from html2pdf pipeline
+    const canvas: HTMLCanvasElement = await html2pdf().set(opt).from(el).toCanvas();
+    
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (b) => b ? resolve(b) : reject(new Error('Canvas to blob failed')),
+        'image/jpeg',
+        0.95
+      );
+    });
+
+    const fileName = `receipt-${receipt.receipt_number}.jpg`;
+    const file = new File([blob], fileName, { type: 'image/jpeg' });
+    imageCache.set(cacheKey, file);
+    return file;
+  } finally {
+    if (document.body.contains(el)) {
+      document.body.removeChild(el);
+    }
   }
 }
 
-/** Pre-build PDFs for a list of receipts (call when receipts load) */
+/** Pre-build receipt image in background */
+export function prebuildReceiptPdf(receipt: any): void {
+  const cacheKey = receipt.id || String(receipt.receipt_number);
+  if (!imageCache.has(cacheKey)) {
+    buildReceiptImageFile(receipt).catch(() => {});
+  }
+}
+
+/** Pre-build images for a list of receipts */
 export function prebuildReceiptPdfs(receipts: any[]): void {
-  // Stagger builds to avoid blocking UI
   receipts.forEach((receipt, i) => {
-    setTimeout(() => prebuildReceiptPdf(receipt), i * 200);
+    setTimeout(() => prebuildReceiptPdf(receipt), i * 300);
   });
 }
 
-/** Check if PDF is already cached */
 export function isReceiptPdfCached(receipt: any): boolean {
   const cacheKey = receipt.id || String(receipt.receipt_number);
-  return pdfCache.has(cacheKey);
+  return imageCache.has(cacheKey) || pdfCache.has(cacheKey);
 }
 
 export function downloadPdfFile(file: File) {
@@ -113,28 +167,39 @@ function cleanPhoneNumber(phoneNumber: string): string {
 }
 
 /**
- * Share receipt: PDF file + text via native share (WhatsApp, etc.)
- * Works on iOS and Android.
+ * Get the best available file for sharing (image preferred, PDF fallback)
+ */
+async function getShareFile(receipt: any): Promise<File> {
+  const cacheKey = receipt.id || String(receipt.receipt_number);
+  
+  // Prefer cached image (faster, better compatibility)
+  const cachedImage = imageCache.get(cacheKey);
+  if (cachedImage) return cachedImage;
+  
+  // Try cached PDF
+  const cachedPdf = pdfCache.get(cacheKey);
+  if (cachedPdf) return cachedPdf;
+  
+  // Build image (faster than PDF)
+  return await buildReceiptImageFile(receipt);
+}
+
+/**
+ * Share receipt with file (image/PDF) + text.
+ * Optimized for iOS and Android WhatsApp sharing.
  * 
- * Flow:
- * 1. Get cached PDF (should be pre-built) or build it
- * 2. Use navigator.share with file + text → user picks WhatsApp → sends both
- * 3. If file share not supported → open wa.me link with text + download PDF
+ * Uses images instead of PDFs for faster generation and better mobile compatibility.
+ * Images don't have the gesture-timeout issue that PDFs have on iOS.
  * 
  * Returns: 'shared_with_file' | 'whatsapp_with_download' | 'downloaded'
  */
 export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): Promise<string> {
   const shareText = getShareText(receipt);
-  const cacheKey = receipt.id || String(receipt.receipt_number);
 
-  // Get cached PDF or build it
-  let file = pdfCache.get(cacheKey);
-  if (!file) {
-    file = await buildReceiptPdfFile(receipt);
-  }
+  // Get the file (image from cache, or build one)
+  const file = await getShareFile(receipt);
 
   // Try native share with file + text
-  // On mobile this opens share sheet → user picks WhatsApp → sends file + text
   if (navigator.share) {
     const canShareFiles = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
 
@@ -148,27 +213,13 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
         return 'shared_with_file';
       } catch (error: any) {
         if (error?.name === 'AbortError') throw error;
-
-        // Gesture error on iOS - file was built async outside gesture
-        // Try text-only share as fallback
-        console.warn('File share failed (gesture?):', error);
+        console.warn('File share failed:', error);
+        // Don't fall back to text-only - try WhatsApp link instead
       }
-    }
-
-    // Fallback: text-only native share
-    try {
-      await navigator.share({
-        title: `קבלה מס׳ ${receipt.receipt_number}`,
-        text: shareText,
-      });
-      return 'shared_with_file'; // Still counts as shared
-    } catch (error: any) {
-      if (error?.name === 'AbortError') throw error;
-      console.warn('Text share failed:', error);
     }
   }
 
-  // Last fallback: open WhatsApp link + download PDF
+  // Fallback: Open WhatsApp with text + download file
   const phone = phoneNumber || receipt.member?.phone;
   const encoded = encodeURIComponent(shareText);
   if (phone) {
@@ -186,28 +237,22 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
  */
 export async function shareReceipt(receipt: any): Promise<void> {
   const shareText = getShareText(receipt);
-
   if (navigator.share) {
-    await navigator.share({
-      title: `קבלה מס׳ ${receipt.receipt_number}`,
-      text: shareText,
-    });
+    await navigator.share({ title: `קבלה מס׳ ${receipt.receipt_number}`, text: shareText });
     return;
   }
-
   await navigator.clipboard.writeText(shareText);
 }
 
 /**
- * Share via WhatsApp - tries native share with file first,
- * falls back to wa.me link with text.
+ * Share via WhatsApp with file + text
  */
 export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Promise<void> {
   const text = getShareText(receipt);
   const cacheKey = receipt.id || String(receipt.receipt_number);
-  const file = pdfCache.get(cacheKey);
+  const file = imageCache.get(cacheKey) || pdfCache.get(cacheKey);
 
-  // If we have a cached file, try native share (user picks WhatsApp from sheet)
+  // Try native share with file (user picks WhatsApp)
   if (file && navigator.share) {
     try {
       const canShareFiles = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
@@ -221,11 +266,10 @@ export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Prom
       }
     } catch (error: any) {
       if (error?.name === 'AbortError') return;
-      console.warn('WhatsApp file share failed:', error);
     }
   }
 
-  // Fallback: wa.me link with text only
+  // Fallback: wa.me link
   const encoded = encodeURIComponent(text);
   if (phoneNumber) {
     const clean = cleanPhoneNumber(phoneNumber);
