@@ -91,7 +91,73 @@ function getShareText(receipt: any): string {
 }
 
 /**
- * Share receipt text only (works reliably on all mobile platforms)
+ * Detect iOS (iPhone/iPad/iPod)
+ */
+function isIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
+ * Share receipt - works reliably on both iOS and Android.
+ * Strategy:
+ * 1. If PDF is already cached → share with file (works within gesture)
+ * 2. If PDF not cached → share text only, build PDF in background for next time
+ * 3. Fallback: download PDF
+ * 
+ * Returns: 'shared' | 'text_only' | 'downloaded'
+ */
+export async function shareReceiptWithPdf(receipt: any): Promise<string> {
+  const cacheKey = receipt.id || String(receipt.receipt_number);
+  const cachedFile = pdfCache.get(cacheKey);
+  const shareText = getShareText(receipt);
+
+  // Strategy 1: PDF is cached - try sharing with file immediately (within user gesture)
+  if (cachedFile && navigator.share) {
+    try {
+      const canShareFiles = navigator.canShare?.({ files: [cachedFile] });
+      if (canShareFiles) {
+        await navigator.share({
+          files: [cachedFile],
+          title: `קבלה מס׳ ${receipt.receipt_number}`,
+          text: shareText,
+        });
+        return 'shared';
+      }
+    } catch (error: any) {
+      if (error?.name === 'AbortError') throw error;
+      // File share failed - continue to text fallback
+      console.warn('File share failed, trying text:', error);
+    }
+  }
+
+  // Strategy 2: Share text (reliable on all platforms), build PDF in background
+  if (navigator.share) {
+    // Start building PDF in background for next share attempt
+    if (!cachedFile) {
+      buildReceiptPdfFile(receipt).catch(() => {});
+    }
+
+    try {
+      await navigator.share({
+        title: `קבלה מס׳ ${receipt.receipt_number}`,
+        text: shareText,
+      });
+      return 'text_only';
+    } catch (error: any) {
+      if (error?.name === 'AbortError') throw error;
+      console.warn('Text share failed:', error);
+    }
+  }
+
+  // Strategy 3: Build/use PDF and download
+  const file = cachedFile || await buildReceiptPdfFile(receipt);
+  downloadPdfFile(file);
+  return 'downloaded';
+}
+
+/**
+ * Share receipt as text only (most reliable cross-platform)
  */
 export async function shareReceipt(receipt: any): Promise<void> {
   const shareText = getShareText(receipt);
@@ -105,65 +171,18 @@ export async function shareReceipt(receipt: any): Promise<void> {
       return;
     } catch (error: any) {
       if (error?.name === 'AbortError') throw error;
-      console.warn('Text share failed, falling back to download:', error);
     }
   }
 
-  const file = await buildReceiptPdfFile(receipt);
-  downloadPdfFile(file);
-  throw new Error('DOWNLOAD_FALLBACK');
-}
-
-/**
- * Share receipt with PDF file via WhatsApp / native share.
- * Two-step approach for mobile gesture compliance:
- * - First call: builds PDF, caches it, shares from cache
- * - If gesture fails: returns 'RETRY' so UI can prompt user to tap again
- */
-export async function shareReceiptWithPdf(receipt: any): Promise<void> {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
-  let file = pdfCache.get(cacheKey);
-
-  // If not cached, build it (this is async and may break gesture on first tap)
-  if (!file) {
-    file = await buildReceiptPdfFile(receipt);
-    // file is now cached by buildReceiptPdfFile
+  // Fallback: copy to clipboard
+  try {
+    await navigator.clipboard.writeText(shareText);
+  } catch {
+    // Last resort: download as PDF
+    const file = await buildReceiptPdfFile(receipt);
+    downloadPdfFile(file);
+    throw new Error('DOWNLOAD_FALLBACK');
   }
-
-  const shareText = getShareText(receipt);
-
-  // Try native share with file (works on Android & iOS if within gesture)
-  if (navigator.share) {
-    const canShareFiles = navigator.canShare?.({ files: [file] });
-    
-    if (canShareFiles) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: `קבלה מס׳ ${receipt.receipt_number}`,
-          text: shareText,
-        });
-        pdfCache.delete(cacheKey); // Clear cache after successful share
-        return;
-      } catch (error: any) {
-        if (error?.name === 'AbortError') throw error;
-        
-        // Gesture error - file is cached, prompt retry
-        const isGestureError =
-          error?.name === 'NotAllowedError' ||
-          String(error?.message || '').toLowerCase().includes('not allowed');
-        
-        if (isGestureError) {
-          throw new Error('GESTURE_ERROR');
-        }
-        console.warn('File share failed:', error);
-      }
-    }
-  }
-
-  // Fallback: download PDF
-  downloadPdfFile(file);
-  throw new Error('DOWNLOAD_FALLBACK');
 }
 
 /**
