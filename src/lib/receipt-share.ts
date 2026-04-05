@@ -184,60 +184,66 @@ function cleanPhoneNumber(phoneNumber: string): string {
 }
 
 /**
- * Get the best available file for sharing (image preferred, PDF fallback)
+ * Get the best file for sharing based on platform
+ * iOS: PDF (better for document sharing)
+ * Android: Image (better compatibility with share sheet)
  */
 async function getShareFile(receipt: any): Promise<File> {
   const cacheKey = receipt.id || String(receipt.receipt_number);
-  
-  // Prefer cached image (faster, better compatibility)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isIOS) {
+    // iOS: prefer PDF
+    const cachedPdf = pdfCache.get(cacheKey);
+    if (cachedPdf) return cachedPdf;
+    return await buildReceiptPdfFile(receipt);
+  }
+
+  // Android/other: prefer image
   const cachedImage = imageCache.get(cacheKey);
   if (cachedImage) return cachedImage;
-  
-  // Try cached PDF
   const cachedPdf = pdfCache.get(cacheKey);
   if (cachedPdf) return cachedPdf;
-  
-  // Build image (faster than PDF)
   return await buildReceiptImageFile(receipt);
 }
 
 /**
- * Share receipt with file (image/PDF) + text.
- * Optimized for iOS and Android WhatsApp sharing.
+ * Share receipt with file + text.
  * 
- * Uses images instead of PDFs for faster generation and better mobile compatibility.
- * Images don't have the gesture-timeout issue that PDFs have on iOS.
+ * iOS: Sends PDF only via share sheet, copies text to clipboard automatically.
+ * Android: Sends file + text together via share sheet.
+ * Fallback: Opens WhatsApp with text + downloads file.
  * 
- * Returns: 'shared_with_file' | 'whatsapp_with_download' | 'downloaded'
+ * Returns: 'shared_with_file' | 'shared_with_file_clipboard' | 'whatsapp_with_download'
  */
 export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): Promise<string> {
   const shareText = getShareText(receipt);
-
-  // Get the file (image from cache, or build one)
   const file = await getShareFile(receipt);
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isAndroid = /Android/.test(navigator.userAgent);
 
-  // Try native share with file
   if (navigator.share) {
     const canShareFiles = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
 
     if (canShareFiles) {
       try {
-        // On iOS, WhatsApp ignores the text param when files are included.
-        // Copy text to clipboard first so user can paste it in the chat.
         if (isIOS) {
+          // iOS: copy text to clipboard, share PDF only (WhatsApp ignores text with files)
           try { await navigator.clipboard.writeText(shareText); } catch {}
+          await navigator.share({
+            files: [file],
+            title: `קבלה מס׳ ${receipt.receipt_number}`,
+          });
+          return 'shared_with_file_clipboard';
+        } else {
+          // Android: share file + text together
+          await navigator.share({
+            files: [file],
+            title: `קבלה מס׳ ${receipt.receipt_number}`,
+            text: shareText,
+          });
+          return 'shared_with_file';
         }
-
-        await navigator.share({
-          files: [file],
-          title: `קבלה מס׳ ${receipt.receipt_number}`,
-          text: shareText, // Works on Android; ignored on iOS WhatsApp
-        });
-
-        return isIOS ? 'shared_with_file_clipboard' : 'shared_with_file';
       } catch (error: any) {
         if (error?.name === 'AbortError') throw error;
         console.warn('File share failed:', error);
