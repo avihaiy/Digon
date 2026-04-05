@@ -1063,21 +1063,45 @@ export default function Payments() {
 
             <div className="space-y-2">
               <Label>בחר חבר *</Label>
-              <Select
-                value={formData.member_id}
-                onValueChange={(value) => setFormData({ ...formData, member_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר חבר" />
-                </SelectTrigger>
-                <SelectContent>
-                  {members?.map((member: any) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between font-normal"
+                  >
+                    {formData.member_id
+                      ? members?.find((m: any) => m.id === formData.member_id)?.full_name || 'בחר חבר'
+                      : 'בחר חבר'}
+                    <ChevronsUpDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="חפש חבר..." />
+                    <CommandList>
+                      <CommandEmpty>לא נמצא חבר</CommandEmpty>
+                      <CommandGroup>
+                        {members?.map((member: any) => (
+                          <CommandItem
+                            key={member.id}
+                            value={member.full_name}
+                            onSelect={() => setFormData({ ...formData, member_id: member.id })}
+                          >
+                            <Check
+                              className={cn(
+                                "ml-2 h-4 w-4",
+                                formData.member_id === member.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {member.full_name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
