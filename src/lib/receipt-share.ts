@@ -79,13 +79,6 @@ async function buildReceiptImageFile(receipt: any): Promise<File> {
   document.body.appendChild(el);
 
   try {
-    // Use html2canvas directly for speed
-    const { default: html2canvas } = await import('html2pdf.js').then(async (mod) => {
-      // html2pdf bundles html2canvas - we use it via html2pdf's pipeline
-      return { default: null };
-    });
-
-    // Use html2pdf but output as image blob instead of PDF
     const opt = {
       margin: 0,
       image: { type: 'jpeg', quality: 0.95 },
@@ -93,8 +86,19 @@ async function buildReceiptImageFile(receipt: any): Promise<File> {
       jsPDF: { unit: 'mm', format: [80, 120], orientation: 'portrait' as const },
     };
 
-    // Get canvas from html2pdf pipeline
-    const canvas: HTMLCanvasElement = await html2pdf().set(opt).from(el).toCanvas();
+    // html2pdf's toContainer().toCanvas() pipeline returns the worker, 
+    // we need to access the canvas from the worker's prop
+    const worker = html2pdf().set(opt).from(el);
+    const workerWithCanvas = await worker.toContainer().toCanvas();
+    const canvas: HTMLCanvasElement = (workerWithCanvas as any).prop?.canvas 
+      || (workerWithCanvas as any).canvas
+      || document.querySelector('.html2pdf__container canvas');
+
+    if (!canvas || typeof canvas.toBlob !== 'function') {
+      // Fallback: just build PDF instead
+      const pdfFile = await buildReceiptPdfFile(receipt);
+      return pdfFile;
+    }
     
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -112,6 +116,8 @@ async function buildReceiptImageFile(receipt: any): Promise<File> {
     if (document.body.contains(el)) {
       document.body.removeChild(el);
     }
+    // Clean up any leftover html2pdf containers
+    document.querySelectorAll('.html2pdf__container').forEach(c => c.remove());
   }
 }
 
