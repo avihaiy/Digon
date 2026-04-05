@@ -174,24 +174,23 @@ export default function Dashboard() {
             שבת פרשת {parasha} • {formatDate(nextShabbat)} • {getHebrewDate(nextShabbat)}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link to="/payments?action=add">
-            <Button className="btn-gold gap-2">
+        <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex">
+          <Link to="/payments?action=add" className="col-span-1">
+            <Button className="btn-gold gap-2 w-full">
               <CreditCard className="w-4 h-4" />
-              תשלום
+              <span>תשלום</span>
             </Button>
           </Link>
-          <Link to="/expense-reports">
-            <Button variant="outline" className="gap-2">
-              <PieChart className="w-4 h-4" />
-              דו"ח הכנסות/הוצאות
-              <ArrowLeft className="w-4 h-4 flip-icon" />
+          <Link to="/expense-reports" className="col-span-1">
+            <Button variant="outline" className="gap-1 w-full text-xs md:text-sm">
+              <PieChart className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">דו"ח</span>
             </Button>
           </Link>
-          <Link to="/display-finance" target="_blank">
-            <Button variant="outline" className="gap-2">
-              <Monitor className="w-4 h-4" />
-              מסך תצוגה
+          <Link to="/display-finance" target="_blank" className="col-span-1">
+            <Button variant="outline" className="gap-1 w-full text-xs md:text-sm">
+              <Monitor className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">תצוגה</span>
             </Button>
           </Link>
         </div>
