@@ -98,6 +98,7 @@ export default function Payments() {
   const [totalInstallments, setTotalInstallments] = useState('1');
   const [installmentNumber, setInstallmentNumber] = useState('1');
   const [installmentTotalAmount, setInstallmentTotalAmount] = useState('');
+  const [memberComboOpen, setMemberComboOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     member_id: '',
@@ -1063,30 +1064,34 @@ export default function Payments() {
 
             <div className="space-y-2">
               <Label>בחר חבר *</Label>
-              <Popover>
+              <Popover open={memberComboOpen} onOpenChange={setMemberComboOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     role="combobox"
+                    aria-expanded={memberComboOpen}
                     className="w-full justify-between font-normal"
                   >
                     {formData.member_id
                       ? members?.find((m: any) => m.id === formData.member_id)?.full_name || 'בחר חבר'
-                      : 'בחר חבר'}
+                      : 'חפש ובחר חבר...'}
                     <ChevronsUpDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="חפש חבר..." />
-                    <CommandList>
+                    <CommandInput placeholder="הקלד שם חבר לחיפוש..." className="text-right" />
+                    <CommandList className="max-h-[200px]">
                       <CommandEmpty>לא נמצא חבר</CommandEmpty>
                       <CommandGroup>
                         {members?.map((member: any) => (
                           <CommandItem
                             key={member.id}
                             value={member.full_name}
-                            onSelect={() => setFormData({ ...formData, member_id: member.id })}
+                            onSelect={() => {
+                              setFormData({ ...formData, member_id: member.id });
+                              setMemberComboOpen(false);
+                            }}
                           >
                             <Check
                               className={cn(
