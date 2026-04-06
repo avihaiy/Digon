@@ -391,45 +391,47 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
   return 'whatsapp_with_download';
 }
 
-export async function shareReceipt(receipt: any): Promise<void> {
+export async function shareReceipt(receipt: any): Promise<string> {
   const shareText = getShareText(receipt);
   const file = await getShareFile(receipt);
 
   if (canUseNativeShare()) {
-    try {
-      const shareData: ShareData = {
-        title: `קבלה מס׳ ${receipt.receipt_number}`,
-        text: shareText,
-      };
+    // Try sharing with file attached
+    if (canShareFile(file)) {
+      try {
+        const shareData: ShareData = {
+          title: `קבלה מס׳ ${receipt.receipt_number}`,
+          files: [file],
+        };
 
-      if (canShareFile(file)) {
-        shareData.files = [file];
         if (isIOSDevice()) {
-          delete shareData.text;
+          // iOS: copy text to clipboard since WhatsApp ignores text with files
           await copyTextToClipboard(shareText);
+        } else {
+          shareData.text = shareText;
         }
-      }
 
-      await navigator.share(shareData);
-      return;
-    } catch (error: any) {
-      if (error?.name === 'AbortError') throw error;
-      console.warn('General share with file failed, retrying text-only:', error);
+        await navigator.share(shareData);
+        return isIOSDevice() ? 'shared_with_file_clipboard' : 'shared_with_file';
+      } catch (error: any) {
+        if (error?.name === 'AbortError') throw error;
+        console.warn('Share with file failed, falling back:', error);
+      }
     }
 
-    // Fallback: native share text-only + download the file separately
+    // Fallback: text-only native share
     try {
-      downloadPdfFile(file);
       await navigator.share({ title: `קבלה מס׳ ${receipt.receipt_number}`, text: shareText });
-      return;
+      return 'shared_text_only';
     } catch (error: any) {
       if (error?.name === 'AbortError') throw error;
     }
   }
 
-  // No native share at all – download file + copy text
+  // Desktop / no native share: open WhatsApp web with text + download file
   downloadPdfFile(file);
-  await copyTextToClipboard(shareText);
+  openWhatsAppDirect(shareText);
+  return 'whatsapp_with_download';
 }
 
 export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Promise<void> {
