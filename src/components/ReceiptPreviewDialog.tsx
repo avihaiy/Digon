@@ -10,7 +10,7 @@ import { Printer, X, FileDown, Loader2, Wifi, MessageCircle } from 'lucide-react
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
-import { prebuildReceiptPdf, shareReceiptWithPdf, shareViaWhatsApp } from '@/lib/receipt-share';
+import { prebuildReceiptPdf, shareReceiptWithPdf } from '@/lib/receipt-share';
 
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
