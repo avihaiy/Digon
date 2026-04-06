@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import { Printer, X, FileDown, Loader2, Wifi, Share2, MessageCircle } from 'luci
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
-import { shareReceiptWithPdf, shareViaWhatsApp } from '@/lib/receipt-share';
+import { prebuildReceiptPdf, shareReceiptWithPdf, shareViaWhatsApp } from '@/lib/receipt-share';
 
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
@@ -33,6 +33,11 @@ export function ReceiptPreviewDialog({
   const [isPrinting, setIsPrinting] = useState(false);
   const [isRemotePrinting, setIsRemotePrinting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+
+  useEffect(() => {
+    if (!open || !receipt) return;
+    prebuildReceiptPdf(receipt);
+  }, [open, receipt]);
 
   if (!receipt) return null;
 
@@ -98,8 +103,18 @@ export function ReceiptPreviewDialog({
     }
   };
 
-  const handleWhatsAppShare = () => {
-    shareViaWhatsApp(receipt, receipt.member?.phone);
+  const handleWhatsAppShare = async () => {
+    setIsSharing(true);
+    try {
+      await shareViaWhatsApp(receipt, receipt.member?.phone);
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        console.error('WhatsApp share error:', error);
+        toast.error('שגיאה בשיתוף לווצאפ');
+      }
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   return (
@@ -262,9 +277,14 @@ export function ReceiptPreviewDialog({
               size="sm"
               variant="secondary"
               onClick={handleWhatsAppShare}
+              disabled={isSharing}
               className="px-4"
             >
-              <MessageCircle className="w-4 h-4 ml-2" />
+              {isSharing ? (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              ) : (
+                <MessageCircle className="w-4 h-4 ml-2" />
+              )}
               וואטסאפ
             </Button>
           </div>
