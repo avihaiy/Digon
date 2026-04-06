@@ -347,8 +347,9 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
   const wasCached = isReceiptPdfCached(receipt);
   const file = await getShareFile(receipt);
   const fileType = file.type.includes('pdf') ? 'PDF' : 'JPEG';
+  const nativeFileShareSupported = canShareFile(file);
 
-  if (canShareFile(file)) {
+  if (canUseNativeShare()) {
     try {
       if (isIOS) {
         const copied = await copyTextToClipboard(shareText);
@@ -357,7 +358,7 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
           title: `קבלה מס׳ ${receipt.receipt_number}`,
         });
         const result = copied ? 'shared_with_file_clipboard' : 'shared_with_file';
-        debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'native_share_ios', fileType, cached: wasCached, result });
+        debugLog({ receiptNumber: receipt.receipt_number, platform, method: nativeFileShareSupported ? 'native_share_ios' : 'native_share_ios_forced', fileType, cached: wasCached, result });
         return result;
       }
 
@@ -366,15 +367,15 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
         title: `קבלה מס׳ ${receipt.receipt_number}`,
         text: shareText,
       });
-      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'native_share', fileType, cached: wasCached, result: 'shared_with_file' });
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: nativeFileShareSupported ? 'native_share' : 'native_share_forced', fileType, cached: wasCached, result: 'shared_with_file' });
       return 'shared_with_file';
     } catch (error: any) {
       if (error?.name === 'AbortError') {
-        debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'native_share', fileType, cached: wasCached, result: 'aborted' });
+        debugLog({ receiptNumber: receipt.receipt_number, platform, method: nativeFileShareSupported ? 'native_share' : 'native_share_forced', fileType, cached: wasCached, result: 'aborted' });
         throw error;
       }
       console.warn('File share failed:', error);
-      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'native_share', fileType, cached: wasCached, result: `failed: ${error?.message}` });
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: nativeFileShareSupported ? 'native_share' : 'native_share_forced', fileType, cached: wasCached, result: `failed: ${error?.message || 'unknown'}` });
     }
   }
 
@@ -404,10 +405,12 @@ export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Prom
   const isIOS = isIOSDevice();
   const platform = isIOS ? 'iOS' : isMobileDevice() ? 'Android' : 'Desktop';
   const phone = phoneNumber || receipt.member?.phone;
-  const file = getCachedShareFile(receipt);
-  const fileType = file ? (file.type.includes('pdf') ? 'PDF' : 'JPEG') : 'none';
+  const cachedFile = getCachedShareFile(receipt);
+  const file = cachedFile || await getShareFile(receipt);
+  const fileType = file.type.includes('pdf') ? 'PDF' : 'JPEG';
+  const nativeFileShareSupported = canShareFile(file);
 
-  if (file && canShareFile(file)) {
+  if (canUseNativeShare()) {
     try {
       if (isIOS) {
         await copyTextToClipboard(text);
@@ -422,15 +425,15 @@ export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Prom
           text,
         });
       }
-      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_native_share', fileType, cached: true, result: 'success' });
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: nativeFileShareSupported ? 'wa_native_share' : 'wa_native_share_forced', fileType, cached: Boolean(cachedFile), result: 'success' });
       return;
     } catch (error: any) {
       if (error?.name === 'AbortError') {
-        debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_native_share', fileType, cached: true, result: 'aborted' });
+        debugLog({ receiptNumber: receipt.receipt_number, platform, method: nativeFileShareSupported ? 'wa_native_share' : 'wa_native_share_forced', fileType, cached: Boolean(cachedFile), result: 'aborted' });
         return;
       }
       console.warn('WhatsApp native share failed:', error);
-      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_native_share', fileType, cached: true, result: `failed: ${error?.message}` });
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: nativeFileShareSupported ? 'wa_native_share' : 'wa_native_share_forced', fileType, cached: Boolean(cachedFile), result: `failed: ${error?.message || 'unknown'}` });
     }
   }
 
@@ -438,12 +441,7 @@ export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Prom
     await copyTextToClipboard(text);
   }
 
-  if (file) {
-    downloadPdfFile(file);
-  } else {
-    prebuildReceiptPdf(receipt);
-  }
-
+  downloadPdfFile(file);
   openWhatsAppDirect(text, phone);
-  debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_direct_link', fileType, cached: !!file, result: 'whatsapp_direct' });
+  debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_direct_link', fileType, cached: Boolean(cachedFile), result: 'download_then_whatsapp_text' });
 }
