@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
-import { shareReceiptWithPdf, shareViaWhatsApp } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp } from '@/lib/receipt-share';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
