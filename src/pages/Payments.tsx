@@ -866,8 +866,11 @@ export default function Payments() {
                                 payment: { method: payment.method },
                               };
                               try {
-                                await shareReceipt(receipt);
-                                toast.success('הקבלה שותפה / הועתקה ללוח');
+                                const result = await shareReceipt(receipt);
+                                if (result === 'shared_with_file') toast.success('הקבלה שותפה עם קובץ');
+                                else if (result === 'shared_with_file_clipboard') toast.success('הקבלה שותפה! הטקסט הועתק - הדבק בצ׳אט');
+                                else if (result === 'whatsapp_with_download') toast.success('הקבלה הורדה ונשלחה לווצאפ');
+                                else toast.success('הקבלה שותפה בהצלחה');
                               } catch (error: any) {
                                 if (error?.name !== 'AbortError') {
                                   console.error('General share error:', error);
