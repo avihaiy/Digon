@@ -60,7 +60,7 @@ import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
-import { shareReceiptWithPdf, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs } from '@/lib/receipt-share';
 import { ShareDebugPanel } from '@/components/ShareDebugPanel';
 
 export default function Receipts() {
@@ -646,8 +646,8 @@ export default function Receipts() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleWhatsApp(receipt)}
-                      title="שלח בוואטסאפ"
+                      onClick={() => handleShareReceipt(receipt)}
+                      title="שתף לווצאפ"
                       className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
                     >
                       <MessageCircle className="w-4 h-4" />
@@ -655,8 +655,18 @@ export default function Receipts() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleShareReceipt(receipt)}
-                      title="שתף קבלה כ-PDF"
+                      onClick={async () => {
+                        try {
+                          await shareReceipt(receipt);
+                          toast.success('הקבלה שותפה / הועתקה ללוח');
+                        } catch (error: any) {
+                          if (error?.name !== 'AbortError') {
+                            console.error('General share error:', error);
+                            toast.error('שגיאה בשיתוף');
+                          }
+                        }
+                      }}
+                      title="שתף כללי"
                       className="h-8 w-8 p-0"
                     >
                       <Share2 className="w-4 h-4" />

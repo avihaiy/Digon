@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
-import { shareReceiptWithPdf, shareViaWhatsApp } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp } from '@/lib/receipt-share';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,6 +60,7 @@ import {
   Building2,
   FileCheck,
   Share2,
+  MessageCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -837,20 +838,49 @@ export default function Payments() {
                         </Button>
                       )}
                       {payment.receipt?.[0]?.receipt_number && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSharePaymentReceipt(payment)}
-                          disabled={sharingPaymentId === payment.id}
-                          title="שתף קבלה"
-                          className="h-8 w-8 p-0"
-                        >
-                          {sharingPaymentId === payment.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSharePaymentReceipt(payment)}
+                            disabled={sharingPaymentId === payment.id}
+                            title="שתף לווצאפ"
+                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                          >
+                            {sharingPaymentId === payment.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <MessageCircle className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              const receipt = {
+                                receipt_number: payment.receipt?.[0]?.receipt_number,
+                                total_amount: payment.amount,
+                                created_at: payment.created_at,
+                                description: payment.notes || payment.payment_type,
+                                member: payment.member,
+                                payment: { method: payment.method },
+                              };
+                              try {
+                                await shareReceipt(receipt);
+                                toast.success('הקבלה שותפה / הועתקה ללוח');
+                              } catch (error: any) {
+                                if (error?.name !== 'AbortError') {
+                                  console.error('General share error:', error);
+                                  toast.error('שגיאה בשיתוף');
+                                }
+                              }
+                            }}
+                            title="שתף כללי"
+                            className="h-8 w-8 p-0"
+                          >
                             <Share2 className="w-4 h-4" />
-                          )}
-                        </Button>
+                          </Button>
+                        </>
                       )}
                       <Button
                         size="sm"
