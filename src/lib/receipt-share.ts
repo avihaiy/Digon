@@ -1,10 +1,67 @@
 import html2pdf from 'html2pdf.js';
 import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
 
-// Global cache for pre-built PDF files
 const pdfCache = new Map<string, File>();
-// Cache for image files (faster to generate, better for sharing)
 const imageCache = new Map<string, File>();
+
+function getReceiptCacheKey(receipt: any): string {
+  return receipt.id || String(receipt.receipt_number);
+}
+
+function isIOSDevice(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+function isMobileDevice(): boolean {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function canUseNativeShare(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+}
+
+function canShareFile(file: File): boolean {
+  if (!canUseNativeShare()) {
+    return false;
+  }
+
+  if (typeof navigator.canShare !== 'function') {
+    return true;
+  }
+
+  try {
+    return navigator.canShare({ files: [file] });
+  } catch {
+    return false;
+  }
+}
+
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (!navigator.clipboard?.writeText) {
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearHtml2PdfArtifacts(): void {
+  document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
+}
+
+function getCachedShareFile(receipt: any): File | undefined {
+  const cacheKey = getReceiptCacheKey(receipt);
+
+  if (isIOSDevice()) {
+    return pdfCache.get(cacheKey) || imageCache.get(cacheKey);
+  }
+
+  return imageCache.get(cacheKey) || pdfCache.get(cacheKey);
+}
 
 function getReceiptHtml(receipt: any): string {
   return `
@@ -42,7 +99,7 @@ function createReceiptElement(receipt: any): HTMLDivElement {
 }
 
 export async function buildReceiptPdfFile(receipt: any): Promise<File> {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
+  const cacheKey = getReceiptCacheKey(receipt);
   const cached = pdfCache.get(cacheKey);
   if (cached) return cached;
 
@@ -66,12 +123,12 @@ export async function buildReceiptPdfFile(receipt: any): Promise<File> {
     if (document.body.contains(el)) {
       document.body.removeChild(el);
     }
+    clearHtml2PdfArtifacts();
   }
 }
 
-/** Build a JPEG image of the receipt (much faster than PDF, better for sharing) */
 async function buildReceiptImageFile(receipt: any): Promise<File> {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
+  const cacheKey = getReceiptCacheKey(receipt);
   const cached = imageCache.get(cacheKey);
   if (cached) return cached;
 
@@ -98,7 +155,7 @@ async function buildReceiptImageFile(receipt: any): Promise<File> {
         canvas.toBlob(
           (b) => b ? resolve(b) : reject(new Error('Canvas to blob failed')),
           'image/jpeg',
-          0.95
+          0.95,
         );
         return;
       }
@@ -128,19 +185,25 @@ async function buildReceiptImageFile(receipt: any): Promise<File> {
     if (document.body.contains(el)) {
       document.body.removeChild(el);
     }
-    document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
+    clearHtml2PdfArtifacts();
   }
 }
 
-/** Pre-build receipt image in background */
 export function prebuildReceiptPdf(receipt: any): void {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
+  const cacheKey = getReceiptCacheKey(receipt);
+
+  if (isIOSDevice()) {
+    if (!pdfCache.has(cacheKey)) {
+      buildReceiptPdfFile(receipt).catch(() => {});
+    }
+    return;
+  }
+
   if (!imageCache.has(cacheKey)) {
     buildReceiptImageFile(receipt).catch(() => {});
   }
 }
 
-/** Pre-build images for a list of receipts */
 export function prebuildReceiptPdfs(receipts: any[]): void {
   receipts.forEach((receipt, i) => {
     setTimeout(() => prebuildReceiptPdf(receipt), i * 300);
@@ -148,7 +211,7 @@ export function prebuildReceiptPdfs(receipts: any[]): void {
 }
 
 export function isReceiptPdfCached(receipt: any): boolean {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
+  const cacheKey = getReceiptCacheKey(receipt);
   return imageCache.has(cacheKey) || pdfCache.has(cacheKey);
 }
 
@@ -157,7 +220,9 @@ export function downloadPdfFile(file: File) {
   const a = document.createElement('a');
   a.href = url;
   a.download = file.name;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
@@ -168,105 +233,125 @@ function getShareText(receipt: any): string {
     `💰 סכום: ${formatCurrency(Number(receipt.total_amount))}`,
     `📅 תאריך: ${formatDate(receipt.created_at)}`,
     `${receipt.description ? `📝 עבור: ${receipt.description}` : ''}`,
-    ``,
-    `תודה רבה! 🙏`,
-    `בית כנסת "ברית שלום" עכו`,
-    `טלפון: 050-5768723`,
+    '',
+    'תודה רבה! 🙏',
+    'בית כנסת "ברית שלום" עכו',
+    'טלפון: 050-5768723',
   ].filter(Boolean).join('\n');
 }
 
 function cleanPhoneNumber(phoneNumber: string): string {
   let clean = phoneNumber.replace(/[\s\-()]/g, '');
-  if (clean.startsWith('0')) clean = '972' + clean.substring(1);
-  if (!clean.startsWith('+') && !clean.startsWith('972')) clean = '972' + clean;
+  if (clean.startsWith('0')) clean = `972${clean.substring(1)}`;
+  if (!clean.startsWith('+') && !clean.startsWith('972')) clean = `972${clean}`;
   clean = clean.replace('+', '');
   return clean;
 }
 
-/**
- * Get the best file for sharing based on platform
- * iOS: PDF (better for document sharing)
- * Android: Image (better compatibility with share sheet)
- */
-async function getShareFile(receipt: any): Promise<File> {
-  const cacheKey = receipt.id || String(receipt.receipt_number);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+function getWhatsAppUrl(text: string, phoneNumber?: string, useAppScheme = false): string {
+  const encoded = encodeURIComponent(text);
+  const query = phoneNumber
+    ? `phone=${cleanPhoneNumber(phoneNumber)}&text=${encoded}`
+    : `text=${encoded}`;
 
-  if (isIOS) {
-    // iOS: prefer PDF
-    const cachedPdf = pdfCache.get(cacheKey);
-    if (cachedPdf) return cachedPdf;
+  return useAppScheme ? `whatsapp://send?${query}` : `https://api.whatsapp.com/send?${query}`;
+}
+
+function openWhatsAppDirect(text: string, phoneNumber?: string): void {
+  const webUrl = getWhatsAppUrl(text, phoneNumber);
+
+  if (!isMobileDevice()) {
+    window.open(webUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  const appUrl = getWhatsAppUrl(text, phoneNumber, true);
+  let switchedToApp = false;
+
+  const cleanup = () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('pagehide', handlePageHide);
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      switchedToApp = true;
+      cleanup();
+    }
+  };
+
+  const handlePageHide = () => {
+    switchedToApp = true;
+    cleanup();
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', handlePageHide, { once: true });
+  window.location.href = appUrl;
+
+  window.setTimeout(() => {
+    cleanup();
+
+    if (!switchedToApp) {
+      window.location.href = webUrl;
+    }
+  }, 1200);
+}
+
+async function getShareFile(receipt: any): Promise<File> {
+  const cachedFile = getCachedShareFile(receipt);
+  if (cachedFile) {
+    return cachedFile;
+  }
+
+  if (isIOSDevice()) {
     return await buildReceiptPdfFile(receipt);
   }
 
-  // Android/other: prefer image
-  const cachedImage = imageCache.get(cacheKey);
-  if (cachedImage) return cachedImage;
-  const cachedPdf = pdfCache.get(cacheKey);
-  if (cachedPdf) return cachedPdf;
   return await buildReceiptImageFile(receipt);
 }
 
-/**
- * Share receipt with file + text.
- * 
- * iOS: Sends PDF only via share sheet, copies text to clipboard automatically.
- * Android: Sends file + text together via share sheet.
- * Fallback: Opens WhatsApp with text + downloads file.
- * 
- * Returns: 'shared_with_file' | 'shared_with_file_clipboard' | 'whatsapp_with_download'
- */
 export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): Promise<string> {
   const shareText = getShareText(receipt);
+  const isIOS = isIOSDevice();
   const file = await getShareFile(receipt);
 
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-  if (navigator.share) {
-    const canShareFiles = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
-
-    if (canShareFiles) {
-      try {
-        if (isIOS) {
-          // iOS: copy text to clipboard, share PDF only (WhatsApp ignores text with files)
-          try { await navigator.clipboard.writeText(shareText); } catch {}
-          await navigator.share({
-            files: [file],
-            title: `קבלה מס׳ ${receipt.receipt_number}`,
-          });
-          return 'shared_with_file_clipboard';
-        } else {
-          // Android: share file + text together
-          await navigator.share({
-            files: [file],
-            title: `קבלה מס׳ ${receipt.receipt_number}`,
-            text: shareText,
-          });
-          return 'shared_with_file';
-        }
-      } catch (error: any) {
-        if (error?.name === 'AbortError') throw error;
-        console.warn('File share failed:', error);
+  if (canShareFile(file)) {
+    try {
+      if (isIOS) {
+        const copied = await copyTextToClipboard(shareText);
+        await navigator.share({
+          files: [file],
+          title: `קבלה מס׳ ${receipt.receipt_number}`,
+        });
+        return copied ? 'shared_with_file_clipboard' : 'shared_with_file';
       }
+
+      await navigator.share({
+        files: [file],
+        title: `קבלה מס׳ ${receipt.receipt_number}`,
+        text: shareText,
+      });
+      return 'shared_with_file';
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        throw error;
+      }
+      console.warn('File share failed:', error);
     }
   }
 
-  // Fallback: Open WhatsApp directly with text + download file
   const phone = phoneNumber || receipt.member?.phone;
-  const encoded = encodeURIComponent(shareText);
-  const waUrl = phone 
-    ? `https://api.whatsapp.com/send?phone=${cleanPhoneNumber(phone)}&text=${encoded}`
-    : `https://api.whatsapp.com/send?text=${encoded}`;
-  
-  // Use location.href for better mobile app detection (window.open opens browser tab)
+
+  if (isIOS) {
+    await copyTextToClipboard(shareText);
+  }
+
   downloadPdfFile(file);
-  window.location.href = waUrl;
+  openWhatsAppDirect(shareText, phone);
   return 'whatsapp_with_download';
 }
 
-/**
- * Share receipt text only
- */
 export async function shareReceipt(receipt: any): Promise<void> {
   const shareText = getShareText(receipt);
   if (navigator.share) {
@@ -276,35 +361,45 @@ export async function shareReceipt(receipt: any): Promise<void> {
   await navigator.clipboard.writeText(shareText);
 }
 
-/**
- * Share via WhatsApp with file + text
- */
 export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Promise<void> {
   const text = getShareText(receipt);
-  const cacheKey = receipt.id || String(receipt.receipt_number);
-  const file = imageCache.get(cacheKey) || pdfCache.get(cacheKey);
+  const isIOS = isIOSDevice();
+  const phone = phoneNumber || receipt.member?.phone;
+  const file = getCachedShareFile(receipt);
 
-  // Try native share with file (user picks WhatsApp)
-  if (file && navigator.share) {
+  if (file && canShareFile(file)) {
     try {
-      const canShareFiles = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
-      if (canShareFiles) {
+      if (isIOS) {
+        await copyTextToClipboard(text);
         await navigator.share({
           files: [file],
           title: `קבלה מס׳ ${receipt.receipt_number}`,
-          text: text,
         });
+      } else {
+        await navigator.share({
+          files: [file],
+          title: `קבלה מס׳ ${receipt.receipt_number}`,
+          text,
+        });
+      }
+      return;
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
         return;
       }
-    } catch (error: any) {
-      if (error?.name === 'AbortError') return;
+      console.warn('WhatsApp native share failed:', error);
     }
   }
 
-  // Fallback: open WhatsApp directly
-  const encoded = encodeURIComponent(text);
-  const waUrl = phoneNumber
-    ? `https://api.whatsapp.com/send?phone=${cleanPhoneNumber(phoneNumber)}&text=${encoded}`
-    : `https://api.whatsapp.com/send?text=${encoded}`;
-  window.location.href = waUrl;
+  if (isIOS) {
+    await copyTextToClipboard(text);
+  }
+
+  if (file) {
+    downloadPdfFile(file);
+  } else {
+    prebuildReceiptPdf(receipt);
+  }
+
+  openWhatsAppDirect(text, phone);
 }
