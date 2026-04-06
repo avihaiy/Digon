@@ -393,44 +393,48 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
 
 export async function shareReceipt(receipt: any): Promise<string> {
   const shareText = getShareText(receipt);
+  const isIOS = isIOSDevice();
+  const platform = isIOS ? 'iOS' : isMobileDevice() ? 'Android' : 'Desktop';
+  const wasCached = isReceiptPdfCached(receipt);
   const file = await getShareFile(receipt);
+  const fileType = file.type.includes('pdf') ? 'PDF' : 'JPEG';
 
   if (canUseNativeShare()) {
-    // Try sharing with file attached
-    if (canShareFile(file)) {
-      try {
-        const shareData: ShareData = {
-          title: `קבלה מס׳ ${receipt.receipt_number}`,
-          files: [file],
-        };
-
-        if (isIOSDevice()) {
-          // iOS: copy text to clipboard since WhatsApp ignores text with files
-          await copyTextToClipboard(shareText);
-        } else {
-          shareData.text = shareText;
-        }
-
-        await navigator.share(shareData);
-        return isIOSDevice() ? 'shared_with_file_clipboard' : 'shared_with_file';
-      } catch (error: any) {
-        if (error?.name === 'AbortError') throw error;
-        console.warn('Share with file failed, falling back:', error);
-      }
-    }
-
-    // Fallback: text-only native share
     try {
-      await navigator.share({ title: `קבלה מס׳ ${receipt.receipt_number}`, text: shareText });
-      return 'shared_text_only';
+      if (isIOS) {
+        const copied = await copyTextToClipboard(shareText);
+        await navigator.share({
+          files: [file],
+          title: `קבלה מס׳ ${receipt.receipt_number}`,
+        });
+        debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'general_share_ios', fileType, cached: wasCached, result: copied ? 'shared_with_file_clipboard' : 'shared_with_file' });
+        return copied ? 'shared_with_file_clipboard' : 'shared_with_file';
+      }
+
+      await navigator.share({
+        files: [file],
+        title: `קבלה מס׳ ${receipt.receipt_number}`,
+        text: shareText,
+      });
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'general_share', fileType, cached: wasCached, result: 'shared_with_file' });
+      return 'shared_with_file';
     } catch (error: any) {
-      if (error?.name === 'AbortError') throw error;
+      if (error?.name === 'AbortError') {
+        debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'general_share', fileType, cached: wasCached, result: 'aborted' });
+        throw error;
+      }
+      console.warn('General share with file failed:', error);
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'general_share', fileType, cached: wasCached, result: `failed: ${error?.message || 'unknown'}` });
     }
   }
 
-  // Desktop / no native share: open WhatsApp web with text + download file
+  // Fallback: download file + open WhatsApp
+  if (isIOS) {
+    await copyTextToClipboard(shareText);
+  }
   downloadPdfFile(file);
   openWhatsAppDirect(shareText);
+  debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'general_share_fallback', fileType, cached: wasCached, result: 'whatsapp_with_download' });
   return 'whatsapp_with_download';
 }
 
