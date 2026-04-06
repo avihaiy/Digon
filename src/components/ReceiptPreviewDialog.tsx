@@ -86,10 +86,10 @@ export function ReceiptPreviewDialog({
     }
   };
 
-  const handleSharePdf = async () => {
+  const handleSmartShare = async () => {
     setIsSharing(true);
     try {
-      const result = await shareReceiptWithPdf(receipt);
+      const result = await shareReceiptWithPdf(receipt, receipt.member?.phone);
       if (result === 'shared_with_file') toast.success('הקבלה שותפה בהצלחה');
       else if (result === 'shared_with_file_clipboard') toast.success('הקבלה שותפה! הטקסט הועתק - הדבק בצ׳אט');
       else if (result === 'whatsapp_with_download') toast.success('הקבלה הורדה ונשלחה לווצאפ');
@@ -97,20 +97,6 @@ export function ReceiptPreviewDialog({
       if (error?.name !== 'AbortError') {
         console.error('Share error:', error);
         toast.error('שגיאה בשיתוף הקבלה');
-      }
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
-  const handleWhatsAppShare = async () => {
-    setIsSharing(true);
-    try {
-      await shareViaWhatsApp(receipt, receipt.member?.phone);
-    } catch (error: any) {
-      if (error?.name !== 'AbortError') {
-        console.error('WhatsApp share error:', error);
-        toast.error('שגיאה בשיתוף לווצאפ');
       }
     } finally {
       setIsSharing(false);
