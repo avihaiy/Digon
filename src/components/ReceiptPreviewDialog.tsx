@@ -286,6 +286,7 @@ export function ReceiptPreviewDialog({
                 <Share2 className="w-4 h-4 ml-2" />
               )}
               שתף
+            </Button>
           </div>
           <Button
             variant="outline"
