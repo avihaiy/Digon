@@ -393,10 +393,39 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
 
 export async function shareReceipt(receipt: any): Promise<void> {
   const shareText = getShareText(receipt);
-  if (navigator.share) {
-    await navigator.share({ title: `קבלה מס׳ ${receipt.receipt_number}`, text: shareText });
-    return;
+  const file = await getShareFile(receipt);
+
+  if (canUseNativeShare()) {
+    try {
+      const shareData: ShareData = {
+        title: `קבלה מס׳ ${receipt.receipt_number}`,
+        text: shareText,
+      };
+
+      if (canShareFile(file)) {
+        shareData.files = [file];
+        if (isIOSDevice()) {
+          delete shareData.text;
+          await copyTextToClipboard(shareText);
+        }
+      }
+
+      await navigator.share(shareData);
+      return;
+    } catch (error: any) {
+      if (error?.name === 'AbortError') throw error;
+      console.warn('General share with file failed, retrying text-only:', error);
+    }
+
+    // Fallback: text-only native share
+    try {
+      await navigator.share({ title: `קבלה מס׳ ${receipt.receipt_number}`, text: shareText });
+      return;
+    } catch (error: any) {
+      if (error?.name === 'AbortError') throw error;
+    }
   }
+
   await navigator.clipboard.writeText(shareText);
 }
 
