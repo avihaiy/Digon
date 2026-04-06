@@ -417,8 +417,9 @@ export async function shareReceipt(receipt: any): Promise<void> {
       console.warn('General share with file failed, retrying text-only:', error);
     }
 
-    // Fallback: text-only native share
+    // Fallback: native share text-only + download the file separately
     try {
+      downloadPdfFile(file);
       await navigator.share({ title: `קבלה מס׳ ${receipt.receipt_number}`, text: shareText });
       return;
     } catch (error: any) {
@@ -426,7 +427,9 @@ export async function shareReceipt(receipt: any): Promise<void> {
     }
   }
 
-  await navigator.clipboard.writeText(shareText);
+  // No native share at all – download file + copy text
+  downloadPdfFile(file);
+  await copyTextToClipboard(shareText);
 }
 
 export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Promise<void> {
