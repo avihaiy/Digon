@@ -6,11 +6,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, X, FileDown, Loader2, Wifi, MessageCircle } from 'lucide-react';
+import { Printer, X, FileDown, Loader2, Wifi, Share2, MessageCircle } from 'lucide-react';
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from '@/lib/hebrew-utils';
 import { silentPrintReceipt } from '@/lib/thermal-print';
 import { remotePrintReceipt } from '@/lib/remote-print';
-import { prebuildReceiptPdf, shareReceiptWithPdf } from '@/lib/receipt-share';
+import { prebuildReceiptPdf, shareReceiptWithPdf, shareReceipt } from '@/lib/receipt-share';
 
 import html2pdf from 'html2pdf.js';
 import { toast } from 'sonner';
@@ -33,6 +33,7 @@ export function ReceiptPreviewDialog({
   const [isPrinting, setIsPrinting] = useState(false);
   const [isRemotePrinting, setIsRemotePrinting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isGeneralSharing, setIsGeneralSharing] = useState(false);
 
   useEffect(() => {
     if (!open || !receipt) return;
@@ -259,6 +260,32 @@ export function ReceiptPreviewDialog({
               )}
               שתף לווצאפ
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                setIsGeneralSharing(true);
+                try {
+                  await shareReceipt(receipt);
+                  toast.success('הקבלה שותפה / הועתקה ללוח');
+                } catch (error: any) {
+                  if (error?.name !== 'AbortError') {
+                    console.error('General share error:', error);
+                    toast.error('שגיאה בשיתוף');
+                  }
+                } finally {
+                  setIsGeneralSharing(false);
+                }
+              }}
+              disabled={isGeneralSharing}
+              className="px-4"
+            >
+              {isGeneralSharing ? (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              ) : (
+                <Share2 className="w-4 h-4 ml-2" />
+              )}
+              שתף
           </div>
           <Button
             variant="outline"
