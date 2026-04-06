@@ -248,21 +248,7 @@ export function ReceiptPreviewDialog({
             <Button
               size="sm"
               variant="secondary"
-              onClick={handleSharePdf}
-              disabled={isSharing}
-              className="px-4"
-            >
-              {isSharing ? (
-                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-              ) : (
-                <Share2 className="w-4 h-4 ml-2" />
-              )}
-              שתף קבלה
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={handleWhatsAppShare}
+              onClick={handleSmartShare}
               disabled={isSharing}
               className="px-4"
             >
@@ -271,7 +257,7 @@ export function ReceiptPreviewDialog({
               ) : (
                 <MessageCircle className="w-4 h-4 ml-2" />
               )}
-              וואטסאפ
+              שתף לווצאפ
             </Button>
           </div>
           <Button
