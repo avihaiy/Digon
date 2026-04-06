@@ -61,6 +61,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { shareReceiptWithPdf, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs } from '@/lib/receipt-share';
+import { ShareDebugPanel } from '@/components/ShareDebugPanel';
 
 export default function Receipts() {
   const queryClient = useQueryClient();
@@ -816,6 +817,7 @@ export default function Receipts() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ShareDebugPanel />
     </div>
   );
 }

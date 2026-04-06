@@ -4,6 +4,35 @@ import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
 const pdfCache = new Map<string, File>();
 const imageCache = new Map<string, File>();
 
+// Debug log for share attempts
+export interface ShareDebugEntry {
+  timestamp: string;
+  receiptNumber: string | number;
+  platform: string;
+  method: string;
+  fileType: string;
+  cached: boolean;
+  result: string;
+}
+
+const shareDebugLog: ShareDebugEntry[] = [];
+const MAX_DEBUG_LOG = 20;
+
+function debugLog(entry: Omit<ShareDebugEntry, 'timestamp'>): void {
+  const full: ShareDebugEntry = { ...entry, timestamp: new Date().toLocaleTimeString('he-IL') };
+  shareDebugLog.unshift(full);
+  if (shareDebugLog.length > MAX_DEBUG_LOG) shareDebugLog.pop();
+  console.log(`[ShareDebug] ${full.timestamp} | #${full.receiptNumber} | ${full.platform} | ${full.method} | ${full.fileType} | cached=${full.cached} | ${full.result}`);
+}
+
+export function getShareDebugLog(): ShareDebugEntry[] {
+  return [...shareDebugLog];
+}
+
+export function clearShareDebugLog(): void {
+  shareDebugLog.length = 0;
+}
+
 function getReceiptCacheKey(receipt: any): string {
   return receipt.id || String(receipt.receipt_number);
 }
@@ -314,7 +343,10 @@ async function getShareFile(receipt: any): Promise<File> {
 export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): Promise<string> {
   const shareText = getShareText(receipt);
   const isIOS = isIOSDevice();
+  const platform = isIOS ? 'iOS' : isMobileDevice() ? 'Android' : 'Desktop';
+  const wasCached = isReceiptPdfCached(receipt);
   const file = await getShareFile(receipt);
+  const fileType = file.type.includes('pdf') ? 'PDF' : 'JPEG';
 
   if (canShareFile(file)) {
     try {
@@ -324,7 +356,9 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
           files: [file],
           title: `קבלה מס׳ ${receipt.receipt_number}`,
         });
-        return copied ? 'shared_with_file_clipboard' : 'shared_with_file';
+        const result = copied ? 'shared_with_file_clipboard' : 'shared_with_file';
+        debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'native_share_ios', fileType, cached: wasCached, result });
+        return result;
       }
 
       await navigator.share({
@@ -332,12 +366,15 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
         title: `קבלה מס׳ ${receipt.receipt_number}`,
         text: shareText,
       });
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'native_share', fileType, cached: wasCached, result: 'shared_with_file' });
       return 'shared_with_file';
     } catch (error: any) {
       if (error?.name === 'AbortError') {
+        debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'native_share', fileType, cached: wasCached, result: 'aborted' });
         throw error;
       }
       console.warn('File share failed:', error);
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'native_share', fileType, cached: wasCached, result: `failed: ${error?.message}` });
     }
   }
 
@@ -349,6 +386,7 @@ export async function shareReceiptWithPdf(receipt: any, phoneNumber?: string): P
 
   downloadPdfFile(file);
   openWhatsAppDirect(shareText, phone);
+  debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'whatsapp_direct', fileType, cached: wasCached, result: 'whatsapp_with_download' });
   return 'whatsapp_with_download';
 }
 
@@ -364,8 +402,10 @@ export async function shareReceipt(receipt: any): Promise<void> {
 export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Promise<void> {
   const text = getShareText(receipt);
   const isIOS = isIOSDevice();
+  const platform = isIOS ? 'iOS' : isMobileDevice() ? 'Android' : 'Desktop';
   const phone = phoneNumber || receipt.member?.phone;
   const file = getCachedShareFile(receipt);
+  const fileType = file ? (file.type.includes('pdf') ? 'PDF' : 'JPEG') : 'none';
 
   if (file && canShareFile(file)) {
     try {
@@ -382,12 +422,15 @@ export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Prom
           text,
         });
       }
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_native_share', fileType, cached: true, result: 'success' });
       return;
     } catch (error: any) {
       if (error?.name === 'AbortError') {
+        debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_native_share', fileType, cached: true, result: 'aborted' });
         return;
       }
       console.warn('WhatsApp native share failed:', error);
+      debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_native_share', fileType, cached: true, result: `failed: ${error?.message}` });
     }
   }
 
@@ -402,4 +445,5 @@ export async function shareViaWhatsApp(receipt: any, phoneNumber?: string): Prom
   }
 
   openWhatsAppDirect(text, phone);
+  debugLog({ receiptNumber: receipt.receipt_number, platform, method: 'wa_direct_link', fileType, cached: !!file, result: 'whatsapp_direct' });
 }
