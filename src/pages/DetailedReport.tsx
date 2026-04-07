@@ -241,9 +241,6 @@ export default function DetailedReport() {
       </body>
       </html>
     `;
-      </body>
-      </html>
-    `;
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
