@@ -124,6 +124,23 @@ export function MemberDetailDialog({
     enabled: !!memberId && open,
   });
 
+  // Fetch charge payment history
+  const chargeIds = charges?.map((c: any) => c.id) || [];
+  const { data: chargePayments } = useQuery({
+    queryKey: ['charge-payments', memberId, chargeIds],
+    queryFn: async () => {
+      if (chargeIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('charge_payments' as any)
+        .select('*')
+        .in('charge_id', chargeIds)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!memberId && open && chargeIds.length > 0,
+  });
+
   // Add charge mutation
   const addChargeMutation = useMutation({
     mutationFn: async ({ amount, description, date }: { amount: number; description: string; date: string }) => {
@@ -149,7 +166,7 @@ export function MemberDetailDialog({
     onError: () => toast.error('שגיאה בהוספת חיוב'),
   });
 
-  // Pay charge mutation (reduce remaining_balance)
+  // Pay charge mutation (reduce remaining_balance + log)
   const payChargeMutation = useMutation({
     mutationFn: async ({ chargeId, paymentAmount }: { chargeId: string; paymentAmount: number }) => {
       const charge = charges?.find((c: any) => c.id === chargeId);
@@ -160,9 +177,15 @@ export function MemberDetailDialog({
         .update({ remaining_balance: newBalance } as any)
         .eq('id', chargeId);
       if (error) throw error;
+      // Log the manual payment
+      const { error: logError } = await supabase
+        .from('charge_payments' as any)
+        .insert({ charge_id: chargeId, amount: paymentAmount } as any);
+      if (logError) console.warn('Could not log charge payment:', logError);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['charge-payments', memberId] });
       setPayChargeId(null);
       setPayAmount('');
       toast.success('התשלום נרשם בהצלחה');
