@@ -62,9 +62,8 @@ export default function DetailedReport() {
 
   const totalAmount = useMemo(() => payments.reduce((sum, p) => sum + Number(p.amount), 0), [payments]);
 
-  // Grouped data by member
+  // Grouped data by member (always computed for export)
   const groupedData = useMemo(() => {
-    if (!groupByMember) return null;
     const groups: Record<string, { name: string; payments: typeof payments; total: number }> = {};
     payments.forEach(p => {
       const name = (p as any).members?.full_name || 'לא ידוע';
@@ -73,7 +72,7 @@ export default function DetailedReport() {
       groups[name].total += Number(p.amount);
     });
     return Object.values(groups).sort((a, b) => b.total - a.total);
-  }, [payments, groupByMember]);
+  }, [payments]);
 
   const handleExportCSV = () => {
     const headers = ['שם', 'סוג תשלום', 'אמצעי תשלום', 'סכום', 'תאריך', 'הערות'];
