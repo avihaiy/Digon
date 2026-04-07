@@ -9,7 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, FileSpreadsheet, ClipboardList } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { FileText, FileSpreadsheet, ClipboardList, Users } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths, parseISO } from 'date-fns';
 
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
@@ -36,6 +37,7 @@ export default function DetailedReport() {
   const [startDate, setStartDate] = useState(format(startOfMonth(subMonths(today, 1)), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
   const [typeFilter, setTypeFilter] = useState('all');
+  const [groupByMember, setGroupByMember] = useState(false);
 
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ['detailed-report', startDate, endDate, typeFilter],
@@ -59,6 +61,19 @@ export default function DetailedReport() {
   });
 
   const totalAmount = useMemo(() => payments.reduce((sum, p) => sum + Number(p.amount), 0), [payments]);
+
+  // Grouped data by member
+  const groupedData = useMemo(() => {
+    if (!groupByMember) return null;
+    const groups: Record<string, { name: string; payments: typeof payments; total: number }> = {};
+    payments.forEach(p => {
+      const name = (p as any).members?.full_name || 'לא ידוע';
+      if (!groups[name]) groups[name] = { name, payments: [], total: 0 };
+      groups[name].payments.push(p);
+      groups[name].total += Number(p.amount);
+    });
+    return Object.values(groups).sort((a, b) => b.total - a.total);
+  }, [payments, groupByMember]);
 
   const handleExportCSV = () => {
     const headers = ['שם', 'סוג תשלום', 'אמצעי תשלום', 'סכום', 'תאריך', 'הערות'];
@@ -233,6 +248,14 @@ export default function DetailedReport() {
                 </SelectContent>
               </Select>
             </div>
+            {/* Group by member toggle */}
+            <div className="flex items-center gap-2 col-span-2 sm:col-span-3 pt-1">
+              <Switch checked={groupByMember} onCheckedChange={setGroupByMember} id="group-toggle" />
+              <Label htmlFor="group-toggle" className="text-xs flex items-center gap-1 cursor-pointer">
+                <Users className="w-3.5 h-3.5" />
+                קיבוץ לפי חבר
+              </Label>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -253,7 +276,7 @@ export default function DetailedReport() {
         </Card>
       </div>
 
-      {/* Content - Mobile cards / Desktop table */}
+      {/* Content */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
@@ -262,21 +285,73 @@ export default function DetailedReport() {
             </div>
           ) : payments.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">אין תשלומים בתקופה זו</div>
+          ) : groupByMember && groupedData ? (
+            /* Grouped by member view */
+            <div>
+              {groupedData.map((group) => (
+                <div key={group.name} className="border-b border-border last:border-b-0">
+                  {/* Group header */}
+                  <div className="px-4 py-3 bg-muted/40 flex items-center justify-between sticky top-0">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-bold text-sm">{group.name}</span>
+                      <Badge variant="secondary" className="text-xs">{group.payments.length} תשלומים</Badge>
+                    </div>
+                    <span className="font-bold text-sm font-mono">{formatCurrency(group.total)}</span>
+                  </div>
+                  {/* Group items - mobile */}
+                  <div className="sm:hidden">
+                    {group.payments.map((p, i) => (
+                      <MobilePaymentCard key={p.id} payment={p} index={i} />
+                    ))}
+                  </div>
+                  {/* Group items - desktop */}
+                  <div className="hidden sm:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-right">סוג</TableHead>
+                          <TableHead className="text-right">אמצעי</TableHead>
+                          <TableHead className="text-right">סכום</TableHead>
+                          <TableHead className="text-right">תאריך</TableHead>
+                          <TableHead className="text-right">הערות</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {group.payments.map((p) => (
+                          <TableRow key={p.id}>
+                            <TableCell>{PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type}</TableCell>
+                            <TableCell>{METHOD_LABELS[p.method] || p.method}</TableCell>
+                            <TableCell className="font-mono">{formatCurrency(Number(p.amount))}</TableCell>
+                            <TableCell>{format(new Date(p.created_at!), 'dd/MM/yyyy')}</TableCell>
+                            <TableCell className="max-w-[150px] truncate">{p.notes || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ))}
+              {/* Grand total */}
+              <div className="p-4 bg-muted/50 flex items-center justify-between font-bold text-sm">
+                <span>סה״כ כללי ({groupedData.length} חברים, {payments.length} רשומות)</span>
+                <span className="font-mono">{formatCurrency(totalAmount)}</span>
+              </div>
+            </div>
           ) : (
+            /* Flat list view */
             <>
-              {/* Mobile: Card layout */}
+              {/* Mobile */}
               <div className="sm:hidden">
                 {payments.map((p, i) => (
                   <MobilePaymentCard key={p.id} payment={p} index={i} />
                 ))}
-                {/* Mobile total */}
                 <div className="p-4 bg-muted/50 flex items-center justify-between font-bold text-sm">
                   <span>סה״כ ({payments.length} רשומות)</span>
                   <span className="font-mono">{formatCurrency(totalAmount)}</span>
                 </div>
               </div>
-
-              {/* Desktop: Table layout */}
+              {/* Desktop */}
               <div className="hidden sm:block overflow-x-auto">
                 <Table>
                   <TableHeader>
