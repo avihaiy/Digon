@@ -697,10 +697,27 @@ export function MemberDetailDialog({
                               <p className="text-xs text-muted-foreground">{formatShortDate(c.charge_date)}</p>
                               <div className="flex gap-3 mt-1 text-xs">
                                 <span>סכום: {formatCurrency(Number(c.amount))}</span>
+                                <span>שולם: {formatCurrency(Number(c.amount) - Number(c.remaining_balance))}</span>
                                 <span className={Number(c.remaining_balance) > 0 ? 'text-destructive font-bold' : 'text-green-600 font-bold'}>
                                   יתרה: {formatCurrency(Number(c.remaining_balance))}
                                 </span>
                               </div>
+                              {/* Payment history for this charge */}
+                              {(() => {
+                                const history = chargePayments?.filter((cp: any) => cp.charge_id === c.id) || [];
+                                if (history.length === 0) return null;
+                                return (
+                                  <div className="mt-2 pt-1.5 border-t border-border/50 space-y-0.5">
+                                    <p className="text-[10px] font-semibold text-muted-foreground">היסטוריית תשלומים:</p>
+                                    {history.map((cp: any) => (
+                                      <div key={cp.id} className="flex justify-between text-[10px] text-muted-foreground">
+                                        <span>{formatShortDate(cp.created_at)}</span>
+                                        <span className="font-medium">{formatCurrency(Number(cp.amount))}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <div className="flex items-center gap-1">
                               {Number(c.remaining_balance) > 0 && (
