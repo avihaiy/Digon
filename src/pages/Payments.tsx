@@ -1152,51 +1152,77 @@ export default function Payments() {
               </div>
             )}
 
+            {/* Member Selection */}
             <div className="space-y-2">
-              <Label>בחר חבר *</Label>
-              <Popover open={memberComboOpen} onOpenChange={setMemberComboOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={memberComboOpen}
-                    className="w-full justify-between font-normal"
+              <div className="flex items-center justify-between">
+                <Label>{useCustomName ? 'שם המזמין *' : 'בחר חבר *'}</Label>
+                {paymentCategory === 'hall' && !editingPayment && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseCustomName(!useCustomName);
+                      setFormData(prev => ({ ...prev, member_id: '' }));
+                      setCustomName('');
+                    }}
+                    className="text-xs text-primary hover:underline"
                   >
-                    {formData.member_id
-                      ? members?.find((m: any) => m.id === formData.member_id)?.full_name || 'בחר חבר'
-                      : 'חפש ובחר חבר...'}
-                    <ChevronsUpDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="הקלד שם חבר לחיפוש..." className="text-right" />
-                    <CommandList className="max-h-[200px]">
-                      <CommandEmpty>לא נמצא חבר</CommandEmpty>
-                      <CommandGroup>
-                        {members?.map((member: any) => (
-                          <CommandItem
-                            key={member.id}
-                            value={member.full_name}
-                            onSelect={() => {
-                              setFormData({ ...formData, member_id: member.id });
-                              setMemberComboOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "ml-2 h-4 w-4",
-                                formData.member_id === member.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {member.full_name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                    {useCustomName ? 'בחר מרשימת חברים' : 'הקלד שם חופשי'}
+                  </button>
+                )}
+              </div>
+              
+              {useCustomName ? (
+                <Input
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="הקלד שם מלא..."
+                  className="text-right"
+                />
+              ) : (
+                <Popover open={memberComboOpen} onOpenChange={setMemberComboOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={memberComboOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {formData.member_id
+                        ? members?.find((m: any) => m.id === formData.member_id)?.full_name || 'בחר חבר'
+                        : 'חפש ובחר חבר...'}
+                      <ChevronsUpDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="הקלד שם חבר לחיפוש..." className="text-right" />
+                      <CommandList className="max-h-[200px]">
+                        <CommandEmpty>לא נמצא חבר</CommandEmpty>
+                        <CommandGroup>
+                          {members?.map((member: any) => (
+                            <CommandItem
+                              key={member.id}
+                              value={member.full_name}
+                              onSelect={() => {
+                                setFormData({ ...formData, member_id: member.id });
+                                setMemberComboOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "ml-2 h-4 w-4",
+                                  formData.member_id === member.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {member.full_name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
 
             <div className="space-y-2">
