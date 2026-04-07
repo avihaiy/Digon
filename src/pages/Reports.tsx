@@ -79,10 +79,6 @@ export default function Reports() {
         .select('id', { count: 'exact' })
         .eq('active', true);
 
-      // Aliyot stats
-      const { data: aliyotData } = await supabase
-        .from('aliyot')
-        .select('status, price');
 
       // Calculate stats
       const thisMonthTotal = thisMonthPayments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
@@ -119,20 +115,11 @@ export default function Reports() {
         });
       }
 
-      // Aliyot breakdown
-      const paidAliyot = aliyotData?.filter(a => a.status === 'paid').length || 0;
-      const pendingAliyot = aliyotData?.filter(a => a.status === 'pending').length || 0;
-      const waivedAliyot = aliyotData?.filter(a => a.status === 'waived').length || 0;
-
       return {
         thisMonthTotal,
         lastMonthTotal,
         monthlyChange: Number(monthlyChange),
         membersCount: membersCount || 0,
-        totalAliyot: aliyotData?.length || 0,
-        paidAliyot,
-        pendingAliyot,
-        waivedAliyot,
         bitPayments,
         cashPayments,
         monthlyData,
@@ -153,11 +140,6 @@ export default function Reports() {
     { name: 'תרומות', value: stats?.typeBreakdown?.donation || 0, color: '#06b6d4' },
   ];
 
-  const aliyotStatusData = [
-    { name: 'שולם', value: stats?.paidAliyot || 0, color: '#22c55e' },
-    { name: 'ממתין', value: stats?.pendingAliyot || 0, color: '#eab308' },
-    { name: 'וויתור', value: stats?.waivedAliyot || 0, color: '#94a3b8' },
-  ];
 
   const handleExportExcel = () => {
     // Create CSV content
@@ -206,9 +188,6 @@ export default function Reports() {
       <div className="flex flex-wrap gap-2">
         {[
           { key: 'all', label: 'הכל' },
-          { key: 'aliya', label: 'עליות' },
-          { key: 'ashkava', label: 'אשכבות' },
-          { key: 'yearly_bracha', label: 'ברכות שנה' },
           { key: 'donation', label: 'תרומות' },
         ].map(f => (
           <Button
