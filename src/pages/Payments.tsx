@@ -100,6 +100,8 @@ export default function Payments() {
   const [installmentNumber, setInstallmentNumber] = useState('1');
   const [installmentTotalAmount, setInstallmentTotalAmount] = useState('');
   const [memberComboOpen, setMemberComboOpen] = useState(false);
+  const [useCustomName, setUseCustomName] = useState(false);
+  const [customName, setCustomName] = useState('');
 
   const [formData, setFormData] = useState({
     member_id: '',
@@ -370,6 +372,8 @@ export default function Payments() {
     setTotalInstallments('1');
     setInstallmentNumber('1');
     setInstallmentTotalAmount('');
+    setUseCustomName(false);
+    setCustomName('');
   };
 
   const handleEditPayment = (payment: any) => {
@@ -407,8 +411,61 @@ export default function Payments() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If using custom name for hall, create a member first
+    if (useCustomName && paymentCategory === 'hall') {
+      if (!customName.trim()) {
+        toast.error('יש להזין שם');
+        return;
+      }
+      if (!formData.amount || Number(formData.amount) <= 0) {
+        toast.error('יש להזין סכום תקין');
+        return;
+      }
+      if (paymentMethod === 'bit' && !formData.reference) {
+        toast.error('יש להזין מספר אסמכתא מביט');
+        return;
+      }
+      if (paymentMethod === 'check' && !formData.reference) {
+        toast.error('יש להזין מספר צ׳ק');
+        return;
+      }
+      if (paymentMethod === 'bank_transfer' && !formData.reference) {
+        toast.error('יש להזין מספר אסמכתא להעברה');
+        return;
+      }
+      
+      // Check if member with this name already exists
+      const { data: existing } = await supabase
+        .from('members')
+        .select('id')
+        .eq('full_name', customName.trim())
+        .maybeSingle();
+      
+      if (existing) {
+        setFormData(prev => ({ ...prev, member_id: existing.id }));
+        // Wait for state to settle, then submit
+        setTimeout(() => savePayment.mutate(), 50);
+      } else {
+        // Create new member
+        const { data: newMember, error } = await supabase
+          .from('members')
+          .insert({ full_name: customName.trim(), active: false, notes: 'נוצר אוטומטית - שכירות אולם' })
+          .select('id')
+          .single();
+        
+        if (error) {
+          toast.error('שגיאה ביצירת רשומת לקוח', { description: error.message });
+          return;
+        }
+        setFormData(prev => ({ ...prev, member_id: newMember.id }));
+        setTimeout(() => savePayment.mutate(), 50);
+      }
+      return;
+    }
+    
     if (!formData.member_id) {
       toast.error('יש לבחור חבר');
       return;
@@ -1095,51 +1152,77 @@ export default function Payments() {
               </div>
             )}
 
+            {/* Member Selection */}
             <div className="space-y-2">
-              <Label>בחר חבר *</Label>
-              <Popover open={memberComboOpen} onOpenChange={setMemberComboOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={memberComboOpen}
-                    className="w-full justify-between font-normal"
+              <div className="flex items-center justify-between">
+                <Label>{useCustomName ? 'שם המזמין *' : 'בחר חבר *'}</Label>
+                {paymentCategory === 'hall' && !editingPayment && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseCustomName(!useCustomName);
+                      setFormData(prev => ({ ...prev, member_id: '' }));
+                      setCustomName('');
+                    }}
+                    className="text-xs text-primary hover:underline"
                   >
-                    {formData.member_id
-                      ? members?.find((m: any) => m.id === formData.member_id)?.full_name || 'בחר חבר'
-                      : 'חפש ובחר חבר...'}
-                    <ChevronsUpDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="הקלד שם חבר לחיפוש..." className="text-right" />
-                    <CommandList className="max-h-[200px]">
-                      <CommandEmpty>לא נמצא חבר</CommandEmpty>
-                      <CommandGroup>
-                        {members?.map((member: any) => (
-                          <CommandItem
-                            key={member.id}
-                            value={member.full_name}
-                            onSelect={() => {
-                              setFormData({ ...formData, member_id: member.id });
-                              setMemberComboOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "ml-2 h-4 w-4",
-                                formData.member_id === member.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {member.full_name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                    {useCustomName ? 'בחר מרשימת חברים' : 'הקלד שם חופשי'}
+                  </button>
+                )}
+              </div>
+              
+              {useCustomName ? (
+                <Input
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="הקלד שם מלא..."
+                  className="text-right"
+                />
+              ) : (
+                <Popover open={memberComboOpen} onOpenChange={setMemberComboOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={memberComboOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {formData.member_id
+                        ? members?.find((m: any) => m.id === formData.member_id)?.full_name || 'בחר חבר'
+                        : 'חפש ובחר חבר...'}
+                      <ChevronsUpDown className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="הקלד שם חבר לחיפוש..." className="text-right" />
+                      <CommandList className="max-h-[200px]">
+                        <CommandEmpty>לא נמצא חבר</CommandEmpty>
+                        <CommandGroup>
+                          {members?.map((member: any) => (
+                            <CommandItem
+                              key={member.id}
+                              value={member.full_name}
+                              onSelect={() => {
+                                setFormData({ ...formData, member_id: member.id });
+                                setMemberComboOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "ml-2 h-4 w-4",
+                                  formData.member_id === member.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {member.full_name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
 
             <div className="space-y-2">
