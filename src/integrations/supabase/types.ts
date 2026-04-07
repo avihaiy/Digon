@@ -532,6 +532,50 @@ export type Database = {
         }
         Relationships: []
       }
+      member_charges: {
+        Row: {
+          amount: number
+          charge_date: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          member_id: string
+          remaining_balance: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          charge_date?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          member_id: string
+          remaining_balance: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          charge_date?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          member_id?: string
+          remaining_balance?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_charges_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           active: boolean | null

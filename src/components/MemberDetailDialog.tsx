@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   User,
   Phone,
@@ -24,6 +25,10 @@ import {
   CheckCircle2,
   Clock,
   FileDown,
+  Wallet,
+  Plus,
+  Trash2,
+  Minus,
 } from 'lucide-react';
 import {
   formatCurrency,
@@ -48,9 +53,16 @@ export function MemberDetailDialog({
   open,
   onOpenChange,
 }: MemberDetailDialogProps) {
+  const queryClient = useQueryClient();
   const [isSharingText, setIsSharingText] = useState(false);
   const [isSharingPdf, setIsSharingPdf] = useState(false);
-  const [activeTab, setActiveTab] = useState<'summary' | 'payments' | 'aliyot' | 'receipts'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'payments' | 'aliyot' | 'receipts' | 'ledger'>('summary');
+  const [showAddCharge, setShowAddCharge] = useState(false);
+  const [newChargeAmount, setNewChargeAmount] = useState('');
+  const [newChargeDesc, setNewChargeDesc] = useState('');
+  const [newChargeDate, setNewChargeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [payChargeId, setPayChargeId] = useState<string | null>(null);
+  const [payAmount, setPayAmount] = useState('');
 
   // Fetch payments with receipt descriptions
   const { data: payments, isLoading: loadingPayments } = useQuery({
@@ -97,15 +109,93 @@ export function MemberDetailDialog({
     enabled: !!memberId && open,
   });
 
+  // Fetch member charges (ledger)
+  const { data: charges, isLoading: loadingCharges } = useQuery({
+    queryKey: ['member-charges', memberId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('member_charges' as any)
+        .select('*')
+        .eq('member_id', memberId!)
+        .order('charge_date', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!memberId && open,
+  });
+
+  // Add charge mutation
+  const addChargeMutation = useMutation({
+    mutationFn: async ({ amount, description, date }: { amount: number; description: string; date: string }) => {
+      const { error } = await supabase
+        .from('member_charges' as any)
+        .insert({
+          member_id: memberId,
+          amount,
+          remaining_balance: amount,
+          description,
+          charge_date: date,
+        } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      setNewChargeAmount('');
+      setNewChargeDesc('');
+      setNewChargeDate(new Date().toISOString().split('T')[0]);
+      setShowAddCharge(false);
+      toast.success('החיוב נוסף בהצלחה');
+    },
+    onError: () => toast.error('שגיאה בהוספת חיוב'),
+  });
+
+  // Pay charge mutation (reduce remaining_balance)
+  const payChargeMutation = useMutation({
+    mutationFn: async ({ chargeId, paymentAmount }: { chargeId: string; paymentAmount: number }) => {
+      const charge = charges?.find((c: any) => c.id === chargeId);
+      if (!charge) throw new Error('Charge not found');
+      const newBalance = Math.max(0, Number(charge.remaining_balance) - paymentAmount);
+      const { error } = await supabase
+        .from('member_charges' as any)
+        .update({ remaining_balance: newBalance } as any)
+        .eq('id', chargeId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      setPayChargeId(null);
+      setPayAmount('');
+      toast.success('התשלום נרשם בהצלחה');
+    },
+    onError: () => toast.error('שגיאה ברישום תשלום'),
+  });
+
+  // Delete charge mutation
+  const deleteChargeMutation = useMutation({
+    mutationFn: async (chargeId: string) => {
+      const { error } = await supabase
+        .from('member_charges' as any)
+        .delete()
+        .eq('id', chargeId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      toast.success('החיוב נמחק');
+    },
+    onError: () => toast.error('שגיאה במחיקת חיוב'),
+  });
+
   const pendingPayments = payments?.filter(p => p.status === 'pending') || [];
   const confirmedPayments = payments?.filter(p => p.status === 'confirmed') || [];
   const totalDebt = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const pendingAliyot = aliyot?.filter(a => a.status === 'pending') || [];
   const aliyotDebt = pendingAliyot.reduce((sum, a) => sum + Number(a.price || 0), 0);
-  const totalOwed = totalDebt + aliyotDebt;
+  const chargesDebt = charges?.reduce((sum: number, c: any) => sum + Number(c.remaining_balance || 0), 0) || 0;
+  const totalOwed = totalDebt + aliyotDebt + chargesDebt;
 
-  const isLoading = loadingPayments || loadingAliyot || loadingReceipts;
+  const isLoading = loadingPayments || loadingAliyot || loadingReceipts || loadingCharges;
 
   const handleShareText = async () => {
     setIsSharingText(true);
@@ -253,6 +343,7 @@ export function MemberDetailDialog({
 
   const tabs = [
     { key: 'summary' as const, label: 'סיכום', icon: AlertCircle },
+    { key: 'ledger' as const, label: 'כרטיסיה', icon: Wallet },
     { key: 'payments' as const, label: 'תשלומים', icon: CreditCard },
     { key: 'aliyot' as const, label: 'עליות', icon: BookOpen },
     { key: 'receipts' as const, label: 'קבלות', icon: Receipt },
@@ -493,6 +584,164 @@ export function MemberDetailDialog({
                           </Button>
                         </div>
                       </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Ledger Tab */}
+              {activeTab === 'ledger' && (
+                <div className="space-y-3">
+                  {/* Total charges debt */}
+                  {chargesDebt > 0 && (
+                    <Card className="border-2 border-destructive/30 bg-destructive/5">
+                      <CardContent className="p-3 text-center">
+                        <p className="text-xs text-muted-foreground">יתרת חוב כרטיסיה</p>
+                        <p className="text-2xl font-black text-destructive">{formatCurrency(chargesDebt)}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Add Charge Button */}
+                  {!showAddCharge ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
+                      onClick={() => setShowAddCharge(true)}
+                    >
+                      <Plus className="w-4 h-4" />
+                      הוסף חיוב
+                    </Button>
+                  ) : (
+                    <Card>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="סכום"
+                            value={newChargeAmount}
+                            onChange={e => setNewChargeAmount(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Input
+                            type="date"
+                            value={newChargeDate}
+                            onChange={e => setNewChargeDate(e.target.value)}
+                            className="flex-1"
+                          />
+                        </div>
+                        <Input
+                          placeholder="תיאור (אופציונלי)"
+                          value={newChargeDesc}
+                          onChange={e => setNewChargeDesc(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            disabled={!newChargeAmount || Number(newChargeAmount) <= 0 || addChargeMutation.isPending}
+                            onClick={() => addChargeMutation.mutate({
+                              amount: Number(newChargeAmount),
+                              description: newChargeDesc,
+                              date: newChargeDate,
+                            })}
+                          >
+                            {addChargeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'הוסף'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowAddCharge(false)}
+                          >
+                            ביטול
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Charges List */}
+                  {charges?.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-6">אין חיובים בכרטיסיה</p>
+                  ) : (
+                    charges?.map((c: any) => (
+                      <Card key={c.id} className={`border ${Number(c.remaining_balance) === 0 ? 'border-green-500/30 bg-green-50/50 dark:bg-green-950/20' : 'border-border'}`}>
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-sm">{c.description || 'חיוב'}</p>
+                              <p className="text-xs text-muted-foreground">{formatShortDate(c.charge_date)}</p>
+                              <div className="flex gap-3 mt-1 text-xs">
+                                <span>סכום: {formatCurrency(Number(c.amount))}</span>
+                                <span className={Number(c.remaining_balance) > 0 ? 'text-destructive font-bold' : 'text-green-600 font-bold'}>
+                                  יתרה: {formatCurrency(Number(c.remaining_balance))}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {Number(c.remaining_balance) > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setPayChargeId(c.id);
+                                    setPayAmount(String(c.remaining_balance));
+                                  }}
+                                  title="רשום תשלום"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => {
+                                  if (confirm('למחוק את החיוב?')) {
+                                    deleteChargeMutation.mutate(c.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Pay form for this charge */}
+                          {payChargeId === c.id && (
+                            <div className="mt-2 pt-2 border-t border-border flex gap-2 items-center">
+                              <Input
+                                type="number"
+                                placeholder="סכום תשלום"
+                                value={payAmount}
+                                onChange={e => setPayAmount(e.target.value)}
+                                className="flex-1 h-8 text-sm"
+                              />
+                              <Button
+                                size="sm"
+                                className="h-8"
+                                disabled={!payAmount || Number(payAmount) <= 0 || payChargeMutation.isPending}
+                                onClick={() => payChargeMutation.mutate({
+                                  chargeId: c.id,
+                                  paymentAmount: Number(payAmount),
+                                })}
+                              >
+                                {payChargeMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'שלם'}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8"
+                                onClick={() => setPayChargeId(null)}
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
                     ))
                   )}
                 </div>
