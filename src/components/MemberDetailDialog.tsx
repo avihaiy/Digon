@@ -686,6 +686,155 @@ export function MemberDetailDialog({
                     </Card>
                   )}
 
+                  {/* Share Ledger Buttons */}
+                  {charges && charges.length > 0 && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 gap-2"
+                        disabled={isSharingLedgerText}
+                        onClick={async () => {
+                          setIsSharingLedgerText(true);
+                          try {
+                            const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
+                            const paidCharges = charges.filter((c: any) => Number(c.remaining_balance) === 0);
+                            const lines = [
+                              `📋 כרטיסיית חוב - ${memberName}`,
+                              `בית כנסת "ברית שלום" עכו`,
+                              `────────────────`,
+                              `💰 יתרת חוב: ${formatCurrency(chargesDebt)}`,
+                            ];
+                            if (openCharges.length > 0) {
+                              lines.push('', '📌 חיובים פתוחים:');
+                              openCharges.forEach((c: any) => {
+                                const paid = Number(c.amount) - Number(c.remaining_balance);
+                                lines.push(`  • ${c.description || 'חיוב'} (${formatShortDate(c.charge_date)}) - סכום: ${formatCurrency(Number(c.amount))}${paid > 0 ? `, שולם: ${formatCurrency(paid)}` : ''}, יתרה: ${formatCurrency(Number(c.remaining_balance))}`);
+                              });
+                            }
+                            if (paidCharges.length > 0) {
+                              lines.push('', '✅ חיובים ששולמו:');
+                              paidCharges.forEach((c: any) => {
+                                lines.push(`  • ${c.description || 'חיוב'} (${formatShortDate(c.charge_date)}) - ${formatCurrency(Number(c.amount))}`);
+                              });
+                            }
+                            lines.push('', 'תודה, בית כנסת ברית שלום עכו');
+                            const text = lines.join('\n');
+                            if (navigator.share) {
+                              await navigator.share({ text });
+                              toast.success('הכרטיסיה שותפה');
+                            } else {
+                              await navigator.clipboard.writeText(text);
+                              toast.success('הטקסט הועתק ללוח');
+                            }
+                          } catch (e: any) {
+                            if (e?.name !== 'AbortError') toast.error('שגיאה בשיתוף');
+                          } finally {
+                            setIsSharingLedgerText(false);
+                          }
+                        }}
+                      >
+                        {isSharingLedgerText ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                        שתף הודעה
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 gap-2"
+                        disabled={isSharingLedgerPdf}
+                        onClick={async () => {
+                          setIsSharingLedgerPdf(true);
+                          try {
+                            const el = document.createElement('div');
+                            el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;";
+                            const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
+                            const paidCharges = charges.filter((c: any) => Number(c.remaining_balance) === 0);
+                            let html = `
+                              <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
+                              <div style="text-align:center;margin-bottom:3mm">
+                                <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
+                                <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
+                              </div>
+                              <div style="border-top:2px solid #000;margin:2mm 0"></div>
+                              <div style="text-align:center;margin-bottom:3mm">
+                                <div style="font-size:13px;font-weight:900">כרטיסיית חוב - ${memberName}</div>
+                              </div>
+                              <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${chargesDebt > 0 ? '#c00' : '#090'}">
+                                יתרת חוב: ${formatCurrency(chargesDebt)}
+                              </div>
+                              <div style="border-top:2px dashed #000;margin:2mm 0"></div>
+                            `;
+                            if (openCharges.length > 0) {
+                              html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>';
+                              openCharges.forEach((c: any) => {
+                                const paid = Number(c.amount) - Number(c.remaining_balance);
+                                html += `<div style="font-size:10px;font-weight:700;padding:1mm 0;border-bottom:1px dotted #ccc">
+                                  <div style="display:flex;justify-content:space-between"><span>${c.description || 'חיוב'}</span><span>${formatShortDate(c.charge_date)}</span></div>
+                                  <div style="display:flex;justify-content:space-between;font-size:9px;color:#555"><span>סכום: ${formatCurrency(Number(c.amount))}${paid > 0 ? ` | שולם: ${formatCurrency(paid)}` : ''}</span><span style="font-weight:900;color:${Number(c.remaining_balance) > 0 ? '#c00' : '#090'}">יתרה: ${formatCurrency(Number(c.remaining_balance))}</span></div>
+                                </div>`;
+                                // Add payment history
+                                const history = chargePayments?.filter((cp: any) => cp.charge_id === c.id) || [];
+                                if (history.length > 0) {
+                                  history.forEach((cp: any) => {
+                                    html += `<div style="font-size:8px;color:#777;padding:0.3mm 3mm">← ${formatShortDate(cp.created_at)} - ${formatCurrency(Number(cp.amount))}</div>`;
+                                  });
+                                }
+                              });
+                              html += '<div style="border-top:1px dashed #999;margin:2mm 0"></div>';
+                            }
+                            if (paidCharges.length > 0) {
+                              html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">חיובים ששולמו:</div>';
+                              paidCharges.forEach((c: any) => {
+                                html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555"><span>${c.description || 'חיוב'} (${formatShortDate(c.charge_date)})</span><span>${formatCurrency(Number(c.amount))}</span></div>`;
+                              });
+                            }
+                            html += `<div style="text-align:center;margin-top:3mm"><div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div><div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div></div>`;
+                            el.innerHTML = html;
+                            document.body.appendChild(el);
+                            try {
+                              const opt = {
+                                margin: 0,
+                                image: { type: 'jpeg', quality: 0.98 },
+                                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                                jsPDF: { unit: 'mm', format: [80, 200], orientation: 'portrait' as const },
+                              };
+                              const pdfBlob: Blob = await html2pdf().set(opt).from(el).toPdf().output('blob');
+                              const fileName = `ledger-${memberName.replace(/\s+/g, '-')}.pdf`;
+                              const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                              if (navigator.share && navigator.canShare?.({ files: [file] })) {
+                                await navigator.share({
+                                  files: [file],
+                                  text: `כרטיסיית חוב - ${memberName}\nיתרה: ${formatCurrency(chargesDebt)}\nבית כנסת ברית שלום עכו`,
+                                });
+                                toast.success('הכרטיסיה שותפה כ-PDF');
+                              } else {
+                                const url = URL.createObjectURL(pdfBlob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = fileName;
+                                a.click();
+                                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                                toast.success('הכרטיסיה הורדה כ-PDF');
+                              }
+                            } finally {
+                              if (document.body.contains(el)) document.body.removeChild(el);
+                            }
+                          } catch (e: any) {
+                            if (e?.name !== 'AbortError') {
+                              console.error('Ledger PDF error:', e);
+                              toast.error('שגיאה בשיתוף');
+                            }
+                          } finally {
+                            setIsSharingLedgerPdf(false);
+                          }
+                        }}
+                      >
+                        {isSharingLedgerPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                        שתף PDF
+                      </Button>
+                    </div>
+                  )}
+
                   {/* Charges List */}
                   {charges?.length === 0 ? (
                     <p className="text-center text-muted-foreground py-6">אין חיובים בכרטיסיה</p>
