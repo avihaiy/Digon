@@ -20,7 +20,7 @@ import {
 import {
   Calendar,
   Users,
-  BookOpen,
+  
   CreditCard,
   Receipt,
   BarChart3,
