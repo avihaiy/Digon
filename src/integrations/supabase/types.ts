@@ -288,6 +288,45 @@ export type Database = {
           },
         ]
       }
+      charge_payments: {
+        Row: {
+          amount: number
+          charge_id: string
+          created_at: string
+          id: string
+          payment_id: string | null
+        }
+        Insert: {
+          amount: number
+          charge_id: string
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+        }
+        Update: {
+          amount?: number
+          charge_id?: string
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "charge_payments_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "member_charges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "charge_payments_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           available_quantity: number
