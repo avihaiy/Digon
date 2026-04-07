@@ -109,15 +109,93 @@ export function MemberDetailDialog({
     enabled: !!memberId && open,
   });
 
+  // Fetch member charges (ledger)
+  const { data: charges, isLoading: loadingCharges } = useQuery({
+    queryKey: ['member-charges', memberId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('member_charges' as any)
+        .select('*')
+        .eq('member_id', memberId!)
+        .order('charge_date', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!memberId && open,
+  });
+
+  // Add charge mutation
+  const addChargeMutation = useMutation({
+    mutationFn: async ({ amount, description, date }: { amount: number; description: string; date: string }) => {
+      const { error } = await supabase
+        .from('member_charges' as any)
+        .insert({
+          member_id: memberId,
+          amount,
+          remaining_balance: amount,
+          description,
+          charge_date: date,
+        } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      setNewChargeAmount('');
+      setNewChargeDesc('');
+      setNewChargeDate(new Date().toISOString().split('T')[0]);
+      setShowAddCharge(false);
+      toast.success('החיוב נוסף בהצלחה');
+    },
+    onError: () => toast.error('שגיאה בהוספת חיוב'),
+  });
+
+  // Pay charge mutation (reduce remaining_balance)
+  const payChargeMutation = useMutation({
+    mutationFn: async ({ chargeId, paymentAmount }: { chargeId: string; paymentAmount: number }) => {
+      const charge = charges?.find((c: any) => c.id === chargeId);
+      if (!charge) throw new Error('Charge not found');
+      const newBalance = Math.max(0, Number(charge.remaining_balance) - paymentAmount);
+      const { error } = await supabase
+        .from('member_charges' as any)
+        .update({ remaining_balance: newBalance } as any)
+        .eq('id', chargeId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      setPayChargeId(null);
+      setPayAmount('');
+      toast.success('התשלום נרשם בהצלחה');
+    },
+    onError: () => toast.error('שגיאה ברישום תשלום'),
+  });
+
+  // Delete charge mutation
+  const deleteChargeMutation = useMutation({
+    mutationFn: async (chargeId: string) => {
+      const { error } = await supabase
+        .from('member_charges' as any)
+        .delete()
+        .eq('id', chargeId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      toast.success('החיוב נמחק');
+    },
+    onError: () => toast.error('שגיאה במחיקת חיוב'),
+  });
+
   const pendingPayments = payments?.filter(p => p.status === 'pending') || [];
   const confirmedPayments = payments?.filter(p => p.status === 'confirmed') || [];
   const totalDebt = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const pendingAliyot = aliyot?.filter(a => a.status === 'pending') || [];
   const aliyotDebt = pendingAliyot.reduce((sum, a) => sum + Number(a.price || 0), 0);
-  const totalOwed = totalDebt + aliyotDebt;
+  const chargesDebt = charges?.reduce((sum: number, c: any) => sum + Number(c.remaining_balance || 0), 0) || 0;
+  const totalOwed = totalDebt + aliyotDebt + chargesDebt;
 
-  const isLoading = loadingPayments || loadingAliyot || loadingReceipts;
+  const isLoading = loadingPayments || loadingAliyot || loadingReceipts || loadingCharges;
 
   const handleShareText = async () => {
     setIsSharingText(true);
