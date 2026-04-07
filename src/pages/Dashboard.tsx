@@ -120,21 +120,6 @@ export default function Dashboard() {
     },
   });
 
-  // Fetch upcoming Shabbat aliyot
-  const { data: upcomingAliyot, isLoading: aliyotLoading } = useQuery({
-    queryKey: ['upcoming-aliyot', nextShabbat.toISOString().split('T')[0]],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('aliyot')
-        .select(`
-          *,
-          member:members(full_name)
-        `)
-        .eq('shabbat_date', nextShabbat.toISOString().split('T')[0])
-        .order('created_at');
-      return data || [];
-    },
-  });
 
   // Fetch recent payments
   const { data: recentPayments, isLoading: paymentsLoading } = useQuery({
@@ -154,7 +139,6 @@ export default function Dashboard() {
 
   const quickActions = [
     { label: 'הוסף חבר', icon: Users, href: '/members?action=add', variant: 'secondary' as const },
-    { label: 'הוסף עלייה', icon: BookOpen, href: '/aliyot?action=add', variant: 'secondary' as const },
     { label: 'קבל תשלום', icon: CreditCard, href: '/payments?action=add', variant: 'secondary' as const },
     { label: 'דו"ח כספי', icon: PieChart, href: '/expense-reports', variant: 'primary' as const },
   ];
@@ -360,19 +344,12 @@ export default function Dashboard() {
       </Card>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <StatsCard
           title="חברים פעילים"
           value={stats?.totalMembers || 0}
           icon={Users}
           loading={statsLoading}
-        />
-        <StatsCard
-          title="עליות השבוע"
-          value={stats?.totalAliyot || 0}
-          icon={BookOpen}
-          loading={statsLoading}
-          alert={stats?.pendingAliyot}
         />
         <StatsCard
           title="סה״כ הכנסות"
