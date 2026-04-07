@@ -343,6 +343,7 @@ export function MemberDetailDialog({
 
   const tabs = [
     { key: 'summary' as const, label: 'סיכום', icon: AlertCircle },
+    { key: 'ledger' as const, label: 'כרטיסיה', icon: Wallet },
     { key: 'payments' as const, label: 'תשלומים', icon: CreditCard },
     { key: 'aliyot' as const, label: 'עליות', icon: BookOpen },
     { key: 'receipts' as const, label: 'קבלות', icon: Receipt },
