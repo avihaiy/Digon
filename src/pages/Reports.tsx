@@ -9,7 +9,7 @@ import {
   TrendingUp,
   TrendingDown,
   Users,
-  BookOpen,
+  
   CreditCard,
   Download,
   FileSpreadsheet,

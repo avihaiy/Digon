@@ -27,7 +27,7 @@ import {
   Users,
   DollarSign,
   Bell,
-  BookOpen,
+  
   Plus,
   Edit,
   Trash2,
