@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FileText, FileSpreadsheet, ClipboardList } from 'lucide-react';
@@ -157,44 +158,72 @@ export default function DetailedReport() {
     }
   };
 
+  // Mobile card view for each payment
+  const MobilePaymentCard = ({ payment, index }: { payment: any; index: number }) => (
+    <div className="p-4 border-b border-border last:border-b-0">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground bg-muted rounded-full w-6 h-6 flex items-center justify-center">{index + 1}</span>
+          <span className="font-medium text-sm">{payment.members?.full_name || '-'}</span>
+        </div>
+        <span className="font-bold text-sm font-mono">{formatCurrency(Number(payment.amount))}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <Badge variant="secondary" className="text-xs">
+          {PAYMENT_TYPE_LABELS[payment.payment_type] || payment.payment_type}
+        </Badge>
+        <Badge variant="outline" className="text-xs">
+          {METHOD_LABELS[payment.method] || payment.method}
+        </Badge>
+        <span className="text-muted-foreground">
+          {format(new Date(payment.created_at!), 'dd/MM/yyyy')}
+        </span>
+      </div>
+      {payment.notes && (
+        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{payment.notes}</p>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-6 animate-fade-up" dir="rtl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <ClipboardList className="w-6 h-6" />
+    <div className="space-y-4 sm:space-y-6 animate-fade-up" dir="rtl">
+      {/* Header */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 sm:w-6 sm:h-6" />
             דוח מפורט
           </h1>
-          <p className="text-muted-foreground text-sm">רשימת תשלומים עם שמות וסכומים</p>
+          <div className="flex gap-2">
+            <Button onClick={handleExportCSV} variant="outline" size="sm" className="gap-1 h-9 px-3">
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="hidden sm:inline">Excel</span>
+            </Button>
+            <Button onClick={handleExportPDF} variant="outline" size="sm" className="gap-1 h-9 px-3">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleExportCSV} variant="outline" size="sm" className="gap-2">
-            <FileSpreadsheet className="w-4 h-4" />
-            Excel
-          </Button>
-          <Button onClick={handleExportPDF} variant="outline" size="sm" className="gap-2">
-            <FileText className="w-4 h-4" />
-            PDF
-          </Button>
-        </div>
+        <p className="text-muted-foreground text-xs sm:text-sm">רשימת תשלומים עם שמות וסכומים</p>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardContent className="pt-4">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="space-y-2 flex-1">
-              <Label>מתאריך</Label>
-              <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} dir="ltr" />
+        <CardContent className="pt-4 pb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">מתאריך</Label>
+              <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} dir="ltr" className="h-9 text-sm" />
             </div>
-            <div className="space-y-2 flex-1">
-              <Label>עד תאריך</Label>
-              <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} dir="ltr" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">עד תאריך</Label>
+              <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} dir="ltr" className="h-9 text-sm" />
             </div>
-            <div className="space-y-2 flex-1">
-              <Label>סוג תשלום</Label>
+            <div className="space-y-1.5 col-span-2 sm:col-span-1">
+              <Label className="text-xs">סוג תשלום</Label>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,59 +238,74 @@ export default function DetailedReport() {
       </Card>
 
       {/* Summary */}
-      <div className="flex items-center gap-4">
-        <Card className="flex-1">
-          <CardContent className="p-4 flex items-center justify-between">
-            <span className="text-muted-foreground">סה״כ</span>
-            <span className="text-xl font-bold">{isLoading ? '...' : formatCurrency(totalAmount)}</span>
+      <div className="grid grid-cols-2 gap-3">
+        <Card>
+          <CardContent className="p-3 sm:p-4 flex items-center justify-between">
+            <span className="text-muted-foreground text-xs sm:text-sm">סה״כ</span>
+            <span className="text-base sm:text-xl font-bold">{isLoading ? '...' : formatCurrency(totalAmount)}</span>
           </CardContent>
         </Card>
-        <Card className="flex-1">
-          <CardContent className="p-4 flex items-center justify-between">
-            <span className="text-muted-foreground">רשומות</span>
-            <span className="text-xl font-bold">{isLoading ? '...' : payments.length}</span>
+        <Card>
+          <CardContent className="p-3 sm:p-4 flex items-center justify-between">
+            <span className="text-muted-foreground text-xs sm:text-sm">רשומות</span>
+            <span className="text-base sm:text-xl font-bold">{isLoading ? '...' : payments.length}</span>
           </CardContent>
         </Card>
       </div>
 
-      {/* Table */}
+      {/* Content - Mobile cards / Desktop table */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-4 space-y-2">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 sm:h-10 w-full" />)}
             </div>
           ) : payments.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">אין תשלומים בתקופה זו</div>
+            <div className="p-8 text-center text-muted-foreground text-sm">אין תשלומים בתקופה זו</div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-right">#</TableHead>
-                    <TableHead className="text-right">שם</TableHead>
-                    <TableHead className="text-right">סוג</TableHead>
-                    <TableHead className="text-right">אמצעי</TableHead>
-                    <TableHead className="text-right">סכום</TableHead>
-                    <TableHead className="text-right">תאריך</TableHead>
-                    <TableHead className="text-right">הערות</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payments.map((p, i) => (
-                    <TableRow key={p.id}>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell className="font-medium">{(p as any).members?.full_name || '-'}</TableCell>
-                      <TableCell>{PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type}</TableCell>
-                      <TableCell>{METHOD_LABELS[p.method] || p.method}</TableCell>
-                      <TableCell className="font-mono">{formatCurrency(Number(p.amount))}</TableCell>
-                      <TableCell>{format(new Date(p.created_at!), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{p.notes || '-'}</TableCell>
+            <>
+              {/* Mobile: Card layout */}
+              <div className="sm:hidden">
+                {payments.map((p, i) => (
+                  <MobilePaymentCard key={p.id} payment={p} index={i} />
+                ))}
+                {/* Mobile total */}
+                <div className="p-4 bg-muted/50 flex items-center justify-between font-bold text-sm">
+                  <span>סה״כ ({payments.length} רשומות)</span>
+                  <span className="font-mono">{formatCurrency(totalAmount)}</span>
+                </div>
+              </div>
+
+              {/* Desktop: Table layout */}
+              <div className="hidden sm:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">#</TableHead>
+                      <TableHead className="text-right">שם</TableHead>
+                      <TableHead className="text-right">סוג</TableHead>
+                      <TableHead className="text-right">אמצעי</TableHead>
+                      <TableHead className="text-right">סכום</TableHead>
+                      <TableHead className="text-right">תאריך</TableHead>
+                      <TableHead className="text-right">הערות</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {payments.map((p, i) => (
+                      <TableRow key={p.id}>
+                        <TableCell>{i + 1}</TableCell>
+                        <TableCell className="font-medium">{(p as any).members?.full_name || '-'}</TableCell>
+                        <TableCell>{PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type}</TableCell>
+                        <TableCell>{METHOD_LABELS[p.method] || p.method}</TableCell>
+                        <TableCell className="font-mono">{formatCurrency(Number(p.amount))}</TableCell>
+                        <TableCell>{format(new Date(p.created_at!), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell className="max-w-[150px] truncate">{p.notes || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
