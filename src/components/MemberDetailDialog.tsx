@@ -744,6 +744,8 @@ export function MemberDetailDialog({
                       </Card>
                     ))
                   )}
+                </div>
+              )}
             </>
           )}
         </div>
