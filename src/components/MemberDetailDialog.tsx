@@ -588,6 +588,162 @@ export function MemberDetailDialog({
                   )}
                 </div>
               )}
+
+              {/* Ledger Tab */}
+              {activeTab === 'ledger' && (
+                <div className="space-y-3">
+                  {/* Total charges debt */}
+                  {chargesDebt > 0 && (
+                    <Card className="border-2 border-destructive/30 bg-destructive/5">
+                      <CardContent className="p-3 text-center">
+                        <p className="text-xs text-muted-foreground">יתרת חוב כרטיסיה</p>
+                        <p className="text-2xl font-black text-destructive">{formatCurrency(chargesDebt)}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Add Charge Button */}
+                  {!showAddCharge ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
+                      onClick={() => setShowAddCharge(true)}
+                    >
+                      <Plus className="w-4 h-4" />
+                      הוסף חיוב
+                    </Button>
+                  ) : (
+                    <Card>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="סכום"
+                            value={newChargeAmount}
+                            onChange={e => setNewChargeAmount(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Input
+                            type="date"
+                            value={newChargeDate}
+                            onChange={e => setNewChargeDate(e.target.value)}
+                            className="flex-1"
+                          />
+                        </div>
+                        <Input
+                          placeholder="תיאור (אופציונלי)"
+                          value={newChargeDesc}
+                          onChange={e => setNewChargeDesc(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            disabled={!newChargeAmount || Number(newChargeAmount) <= 0 || addChargeMutation.isPending}
+                            onClick={() => addChargeMutation.mutate({
+                              amount: Number(newChargeAmount),
+                              description: newChargeDesc,
+                              date: newChargeDate,
+                            })}
+                          >
+                            {addChargeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'הוסף'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowAddCharge(false)}
+                          >
+                            ביטול
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Charges List */}
+                  {charges?.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-6">אין חיובים בכרטיסיה</p>
+                  ) : (
+                    charges?.map((c: any) => (
+                      <Card key={c.id} className={`border ${Number(c.remaining_balance) === 0 ? 'border-green-500/30 bg-green-50/50 dark:bg-green-950/20' : 'border-border'}`}>
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-sm">{c.description || 'חיוב'}</p>
+                              <p className="text-xs text-muted-foreground">{formatShortDate(c.charge_date)}</p>
+                              <div className="flex gap-3 mt-1 text-xs">
+                                <span>סכום: {formatCurrency(Number(c.amount))}</span>
+                                <span className={Number(c.remaining_balance) > 0 ? 'text-destructive font-bold' : 'text-green-600 font-bold'}>
+                                  יתרה: {formatCurrency(Number(c.remaining_balance))}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {Number(c.remaining_balance) > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setPayChargeId(c.id);
+                                    setPayAmount(String(c.remaining_balance));
+                                  }}
+                                  title="רשום תשלום"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => {
+                                  if (confirm('למחוק את החיוב?')) {
+                                    deleteChargeMutation.mutate(c.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Pay form for this charge */}
+                          {payChargeId === c.id && (
+                            <div className="mt-2 pt-2 border-t border-border flex gap-2 items-center">
+                              <Input
+                                type="number"
+                                placeholder="סכום תשלום"
+                                value={payAmount}
+                                onChange={e => setPayAmount(e.target.value)}
+                                className="flex-1 h-8 text-sm"
+                              />
+                              <Button
+                                size="sm"
+                                className="h-8"
+                                disabled={!payAmount || Number(payAmount) <= 0 || payChargeMutation.isPending}
+                                onClick={() => payChargeMutation.mutate({
+                                  chargeId: c.id,
+                                  paymentAmount: Number(payAmount),
+                                })}
+                              >
+                                {payChargeMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'שלם'}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8"
+                                onClick={() => setPayChargeId(null)}
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
             </>
           )}
         </div>
