@@ -63,6 +63,8 @@ export function MemberDetailDialog({
   const [newChargeDate, setNewChargeDate] = useState(new Date().toISOString().split('T')[0]);
   const [payChargeId, setPayChargeId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState('');
+  const [isSharingLedgerText, setIsSharingLedgerText] = useState(false);
+  const [isSharingLedgerPdf, setIsSharingLedgerPdf] = useState(false);
 
   // Fetch payments with receipt descriptions
   const { data: payments, isLoading: loadingPayments } = useQuery({
