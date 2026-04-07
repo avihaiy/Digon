@@ -246,37 +246,6 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            {isLoading ? (
-              <Skeleton className="h-20 w-full" />
-            ) : (
-              <>
-                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center mb-2">
-                  <BookOpen className="w-5 h-5 text-accent-foreground" />
-                </div>
-                <p className="text-2xl font-bold">{stats?.totalAliyot}</p>
-                <p className="text-sm text-muted-foreground">סה״כ עליות</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            {isLoading ? (
-              <Skeleton className="h-20 w-full" />
-            ) : (
-              <>
-                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center mb-2">
-                  <Calendar className="w-5 h-5 text-warning" />
-                </div>
-                <p className="text-2xl font-bold">{stats?.pendingAliyot}</p>
-                <p className="text-sm text-muted-foreground">ממתינים לתשלום</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {/* Charts */}
