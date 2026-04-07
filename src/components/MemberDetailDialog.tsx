@@ -19,7 +19,7 @@ import {
   AlertCircle,
   CreditCard,
   Receipt,
-  BookOpen,
+  
   Share2,
   Loader2,
   CheckCircle2,
@@ -34,7 +34,7 @@ import {
   formatCurrency,
   formatShortDate,
   PAYMENT_METHOD,
-  ALIYA_TYPES,
+  
 } from '@/lib/hebrew-utils';
 import { shareReceiptWithPdf } from '@/lib/receipt-share';
 import { toast } from 'sonner';
