@@ -75,27 +75,49 @@ export default function DetailedReport() {
   }, [payments]);
 
   const handleExportCSV = () => {
-    const headers = ['שם', 'סוג תשלום', 'אמצעי תשלום', 'סכום', 'תאריך', 'הערות'];
-    const rows = payments.map(p => [
-      (p as any).members?.full_name || '-',
-      PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type,
-      METHOD_LABELS[p.method] || p.method,
-      p.amount,
-      format(new Date(p.created_at!), 'dd/MM/yyyy'),
-      p.notes || '',
-    ]);
+    let csvContent: string;
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
-      '',
-      `"סה״כ","","","${totalAmount}","",""`,
-    ].join('\n');
+    if (groupByMember) {
+      const headers = ['שם חבר', 'סוג תשלום', 'אמצעי תשלום', 'סכום', 'תאריך', 'הערות'];
+      const lines = [headers.join(',')];
+      groupedData.forEach(group => {
+        group.payments.forEach(p => {
+          lines.push([
+            group.name,
+            PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type,
+            METHOD_LABELS[p.method] || p.method,
+            p.amount,
+            format(new Date(p.created_at!), 'dd/MM/yyyy'),
+            p.notes || '',
+          ].map(cell => `"${cell}"`).join(','));
+        });
+        lines.push(`"סה״כ ${group.name}","","","${group.total}","",""`);
+        lines.push('');
+      });
+      lines.push(`"סה״כ כללי","","","${totalAmount}","",""`);
+      csvContent = lines.join('\n');
+    } else {
+      const headers = ['שם', 'סוג תשלום', 'אמצעי תשלום', 'סכום', 'תאריך', 'הערות'];
+      const rows = payments.map(p => [
+        (p as any).members?.full_name || '-',
+        PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type,
+        METHOD_LABELS[p.method] || p.method,
+        p.amount,
+        format(new Date(p.created_at!), 'dd/MM/yyyy'),
+        p.notes || '',
+      ]);
+      csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+        '',
+        `"סה״כ","","","${totalAmount}","",""`,
+      ].join('\n');
+    }
 
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `דוח_מפורט_${startDate}_${endDate}.csv`;
+    link.download = `דוח_מפורט_${groupByMember ? 'מקובץ_' : ''}${startDate}_${endDate}.csv`;
     link.click();
   };
 
