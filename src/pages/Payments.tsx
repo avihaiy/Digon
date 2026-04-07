@@ -56,7 +56,7 @@ import {
   Receipt,
   Edit,
   Trash2,
-  BookOpen,
+  
   Building2,
   FileCheck,
   Share2,
