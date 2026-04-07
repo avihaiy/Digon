@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import {
   Users,
-  BookOpen,
   CreditCard,
   Receipt,
   TrendingUp,
@@ -18,7 +17,7 @@ import {
   PieChart,
   Monitor,
 } from 'lucide-react';
-import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate, ALIYA_STATUS } from '@/lib/hebrew-utils';
+import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate } from '@/lib/hebrew-utils';
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -34,16 +33,14 @@ export default function Dashboard() {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       
-      const [membersRes, aliyotRes, paymentsRes, receiptsRes, expensesRes, budgetExpensesRes] = await Promise.all([
+      const [membersRes, paymentsRes, receiptsRes, expensesRes, budgetExpensesRes] = await Promise.all([
         supabase.from('members').select('id', { count: 'exact' }).eq('active', true),
-        supabase.from('aliyot').select('id, status, price'),
         supabase.from('payments').select('id, amount, status, created_at').eq('status', 'confirmed'),
         supabase.from('receipts').select('id, total_amount'),
         supabase.from('expenses').select('amount, expense_date'),
         supabase.from('budget_transactions').select('amount, transaction_date, type'),
       ]);
 
-      const pendingAliyot = aliyotRes.data?.filter(a => a.status === 'pending') || [];
       const totalPayments = paymentsRes.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
       
       // This month calculations
@@ -68,8 +65,6 @@ export default function Dashboard() {
 
       return {
         totalMembers: membersRes.count || 0,
-        totalAliyot: aliyotRes.data?.length || 0,
-        pendingAliyot: pendingAliyot.length,
         totalPayments,
         totalReceipts: receiptsRes.data?.length || 0,
         thisMonthIncome,
