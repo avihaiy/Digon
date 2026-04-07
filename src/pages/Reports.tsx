@@ -373,33 +373,6 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        {/* Aliyot Status */}
-        <Card className="glass-card lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">סטטוס עליות</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-32 w-full" />
-            ) : (
-              <div className="flex flex-wrap justify-center gap-8">
-                {aliyotStatusData.map((item) => (
-                  <div key={item.name} className="text-center">
-                    <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2"
-                      style={{ background: `${item.color}20` }}
-                    >
-                      <span className="text-2xl font-bold" style={{ color: item.color }}>
-                        {item.value}
-                      </span>
-                    </div>
-                    <p className="font-medium">{item.name}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
