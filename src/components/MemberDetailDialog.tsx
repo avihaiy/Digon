@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   User,
   Phone,
@@ -24,6 +25,10 @@ import {
   CheckCircle2,
   Clock,
   FileDown,
+  Wallet,
+  Plus,
+  Trash2,
+  Minus,
 } from 'lucide-react';
 import {
   formatCurrency,
@@ -48,9 +53,16 @@ export function MemberDetailDialog({
   open,
   onOpenChange,
 }: MemberDetailDialogProps) {
+  const queryClient = useQueryClient();
   const [isSharingText, setIsSharingText] = useState(false);
   const [isSharingPdf, setIsSharingPdf] = useState(false);
-  const [activeTab, setActiveTab] = useState<'summary' | 'payments' | 'aliyot' | 'receipts'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'payments' | 'aliyot' | 'receipts' | 'ledger'>('summary');
+  const [showAddCharge, setShowAddCharge] = useState(false);
+  const [newChargeAmount, setNewChargeAmount] = useState('');
+  const [newChargeDesc, setNewChargeDesc] = useState('');
+  const [newChargeDate, setNewChargeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [payChargeId, setPayChargeId] = useState<string | null>(null);
+  const [payAmount, setPayAmount] = useState('');
 
   // Fetch payments with receipt descriptions
   const { data: payments, isLoading: loadingPayments } = useQuery({
