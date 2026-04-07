@@ -51,7 +51,6 @@ interface AppLayoutProps {
 const navItems = [
   { href: '/', icon: Home, label: 'לוח בקרה' },
   { href: '/members', icon: Users, label: 'חברים' },
-  { href: '/aliyot', icon: BookOpen, label: 'עליות' },
   { href: '/payments', icon: CreditCard, label: 'תשלומים' },
   { href: '/receipts', icon: Receipt, label: 'קבלות' },
   { href: '/budget', icon: Wallet, label: 'תקציב' },

@@ -13,7 +13,7 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import FridayDashboard from "@/pages/FridayDashboard";
 import Members from "@/pages/Members";
-import Aliyot from "@/pages/Aliyot";
+
 import Payments from "@/pages/Payments";
 import Receipts from "@/pages/Receipts";
 import Reports from "@/pages/Reports";
