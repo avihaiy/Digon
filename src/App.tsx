@@ -22,6 +22,7 @@ import Budget from "@/pages/Budget";
 import Equipment from "@/pages/Equipment";
 import Expenses from "@/pages/Expenses";
 import ExpenseReports from "@/pages/ExpenseReports";
+import DetailedReport from "@/pages/DetailedReport";
 import Admin from "@/pages/Admin";
 import AdminMobile from "@/pages/AdminMobile";
 import Backups from "@/pages/Backups";
@@ -97,6 +98,7 @@ const AnimatedRoutes = () => {
         <Route path="/equipment" element={<ProtectedRoute><PageTransition><Equipment /></PageTransition></ProtectedRoute>} />
         <Route path="/expenses" element={<ProtectedRoute><PageTransition><Expenses /></PageTransition></ProtectedRoute>} />
         <Route path="/expense-reports" element={<ProtectedRoute><PageTransition><ExpenseReports /></PageTransition></ProtectedRoute>} />
+        <Route path="/detailed-report" element={<ProtectedRoute><PageTransition><DetailedReport /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
         <Route path="/backups" element={<ProtectedRoute><PageTransition><Backups /></PageTransition></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><PageTransition><SettingsPage /></PageTransition></ProtectedRoute>} />
