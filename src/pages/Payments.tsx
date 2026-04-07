@@ -411,8 +411,61 @@ export default function Payments() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If using custom name for hall, create a member first
+    if (useCustomName && paymentCategory === 'hall') {
+      if (!customName.trim()) {
+        toast.error('יש להזין שם');
+        return;
+      }
+      if (!formData.amount || Number(formData.amount) <= 0) {
+        toast.error('יש להזין סכום תקין');
+        return;
+      }
+      if (paymentMethod === 'bit' && !formData.reference) {
+        toast.error('יש להזין מספר אסמכתא מביט');
+        return;
+      }
+      if (paymentMethod === 'check' && !formData.reference) {
+        toast.error('יש להזין מספר צ׳ק');
+        return;
+      }
+      if (paymentMethod === 'bank_transfer' && !formData.reference) {
+        toast.error('יש להזין מספר אסמכתא להעברה');
+        return;
+      }
+      
+      // Check if member with this name already exists
+      const { data: existing } = await supabase
+        .from('members')
+        .select('id')
+        .eq('full_name', customName.trim())
+        .maybeSingle();
+      
+      if (existing) {
+        setFormData(prev => ({ ...prev, member_id: existing.id }));
+        // Wait for state to settle, then submit
+        setTimeout(() => savePayment.mutate(), 50);
+      } else {
+        // Create new member
+        const { data: newMember, error } = await supabase
+          .from('members')
+          .insert({ full_name: customName.trim(), active: false, notes: 'נוצר אוטומטית - שכירות אולם' })
+          .select('id')
+          .single();
+        
+        if (error) {
+          toast.error('שגיאה ביצירת רשומת לקוח', { description: error.message });
+          return;
+        }
+        setFormData(prev => ({ ...prev, member_id: newMember.id }));
+        setTimeout(() => savePayment.mutate(), 50);
+      }
+      return;
+    }
+    
     if (!formData.member_id) {
       toast.error('יש לבחור חבר');
       return;
