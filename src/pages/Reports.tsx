@@ -134,7 +134,6 @@ export default function Reports() {
   ];
 
   const typeBreakdownData = [
-    { name: 'עליות', value: stats?.typeBreakdown?.aliya || 0, color: 'hsl(var(--primary))' },
     { name: 'אשכבות', value: stats?.typeBreakdown?.ashkava || 0, color: '#f59e0b' },
     { name: 'ברכות שנה', value: stats?.typeBreakdown?.yearly_bracha || 0, color: '#8b5cf6' },
     { name: 'תרומות', value: stats?.typeBreakdown?.donation || 0, color: '#06b6d4' },
