@@ -372,6 +372,8 @@ export default function Payments() {
     setTotalInstallments('1');
     setInstallmentNumber('1');
     setInstallmentTotalAmount('');
+    setUseCustomName(false);
+    setCustomName('');
   };
 
   const handleEditPayment = (payment: any) => {
