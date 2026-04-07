@@ -56,7 +56,7 @@ import {
   Receipt,
   Edit,
   Trash2,
-  BookOpen,
+  
   Building2,
   FileCheck,
   Share2,
@@ -73,7 +73,6 @@ import {
   PARASHA_LIST,
   HOLIDAY_LIST,
   OCCASION_TYPES,
-  ALIYA_TYPES,
   type OccasionType,
 } from '@/lib/hebrew-utils';
 
@@ -109,7 +108,6 @@ export default function Payments() {
     reference: '',
     notes: '',
     occasion: getCurrentParasha(),
-    aliya_id: '',
   });
 
   // Fetch payments
@@ -145,23 +143,6 @@ export default function Payments() {
     },
   });
 
-  // Fetch unpaid aliyot for linking
-  const { data: unpaidAliyot } = useQuery({
-    queryKey: ['unpaid-aliyot'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('aliyot')
-        .select(`
-          *,
-          member:members(id, full_name)
-        `)
-        .in('status', ['pending', 'waived'])
-        .order('shabbat_date', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    },
-  });
 
   // Create/Update payment
   const savePayment = useMutation({
@@ -206,8 +187,8 @@ export default function Payments() {
             received_by: user?.id,
             status: 'confirmed',
             notes: formData.notes || null,
-            aliya_id: formData.aliya_id || null,
-            payment_type: isHall ? 'hall' : (formData.aliya_id ? 'aliya' : 'donation'),
+            aliya_id: null,
+            payment_type: isHall ? 'hall' : 'donation',
             hall_event_type: isHall ? hallEventType : null,
             total_installments: isHall ? Number(totalInstallments) : null,
             installment_number: isHall ? Number(installmentNumber) : null,
@@ -229,13 +210,6 @@ export default function Payments() {
         } else {
           receiptDescription = `תשלום - ${formData.occasion}`;
         }
-        if (formData.aliya_id) {
-          const selectedAliya = unpaidAliyot?.find((a: any) => a.id === formData.aliya_id);
-          if (selectedAliya) {
-            const aliyaTypeName = ALIYA_TYPES[selectedAliya.aliya_type as keyof typeof ALIYA_TYPES] || selectedAliya.aliya_type;
-            receiptDescription = `תשלום עלייה - ${aliyaTypeName} - פרשת ${selectedAliya.parasha}`;
-          }
-        }
 
         const { data: receiptData, error: receiptError } = await supabase.from('receipts').insert({
           member_id: formData.member_id,
@@ -246,13 +220,6 @@ export default function Payments() {
 
         if (receiptError) throw receiptError;
 
-        // Update aliya status to paid if linked
-        if (formData.aliya_id) {
-          await supabase
-            .from('aliyot')
-            .update({ status: 'paid' })
-            .eq('id', formData.aliya_id);
-        }
 
         // Send receipt via email
         if (receiptData) {
@@ -272,8 +239,6 @@ export default function Payments() {
       toast.success(editingPayment ? 'התשלום עודכן בהצלחה' : 'התשלום נקלט והקבלה הונפקה');
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['receipts'] });
-      queryClient.invalidateQueries({ queryKey: ['unpaid-aliyot'] });
-      queryClient.invalidateQueries({ queryKey: ['aliyot'] });
       handleCloseDialog();
 
       // Auto-print receipt for new payments
@@ -364,7 +329,7 @@ export default function Payments() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingPayment(null);
-    setFormData({ member_id: '', amount: '', reference: '', notes: '', occasion: getCurrentParasha(), aliya_id: '' });
+    setFormData({ member_id: '', amount: '', reference: '', notes: '', occasion: getCurrentParasha() });
     setPaymentMethod('cash');
     setOccasionType('parasha');
     setPaymentCategory('regular');
@@ -384,32 +349,12 @@ export default function Payments() {
       reference: payment.reference || '',
       notes: payment.notes || '',
       occasion: getCurrentParasha(),
-      aliya_id: payment.aliya_id || '',
     });
     setPaymentMethod(payment.method);
     setOccasionType('parasha');
     setDialogOpen(true);
   };
 
-  // Handle aliya selection - auto-fill member and amount
-  const handleAliyaSelect = (aliyaId: string) => {
-    if (!aliyaId) {
-      setFormData({ ...formData, aliya_id: '' });
-      return;
-    }
-    
-    const selectedAliya = unpaidAliyot?.find((a: any) => a.id === aliyaId);
-    if (selectedAliya) {
-      setFormData({
-        ...formData,
-        aliya_id: aliyaId,
-        member_id: selectedAliya.member?.id || formData.member_id,
-        amount: selectedAliya.price ? String(selectedAliya.price) : formData.amount,
-        occasion: selectedAliya.parasha || formData.occasion,
-      });
-      setOccasionType('parasha');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1099,54 +1044,6 @@ export default function Payments() {
                 {installmentTotalAmount && Number(totalInstallments) > 1 && (
                   <p className="text-xs text-muted-foreground text-center">
                     סכום לתשלום: {formatCurrency(Math.round(Number(installmentTotalAmount) / Number(totalInstallments)))} × {totalInstallments} תשלומים = {formatCurrency(Number(installmentTotalAmount))}
-                  </p>
-                )}
-              </div>
-            )}
-            {/* Link to Aliya (optional) */}
-            {!editingPayment && unpaidAliyot && unpaidAliyot.length > 0 && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  קשר לעלייה (אופציונלי)
-                </Label>
-                <Select
-                  value={formData.aliya_id || "none"}
-                  onValueChange={(value) => handleAliyaSelect(value === "none" ? "" : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="בחר עלייה לקישור" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-60">
-                    <SelectItem value="none">ללא קישור לעלייה</SelectItem>
-                    {unpaidAliyot.map((aliya: any) => (
-                      <SelectItem key={aliya.id} value={aliya.id}>
-                        <span className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {ALIYA_TYPES[aliya.aliya_type as keyof typeof ALIYA_TYPES]}
-                          </span>
-                          <span className="text-muted-foreground">•</span>
-                          <span>{aliya.parasha}</span>
-                          {aliya.member?.full_name && (
-                            <>
-                              <span className="text-muted-foreground">•</span>
-                              <span className="text-muted-foreground">{aliya.member.full_name}</span>
-                            </>
-                          )}
-                          {aliya.price > 0 && (
-                            <>
-                              <span className="text-muted-foreground">•</span>
-                              <span className="font-medium">{formatCurrency(aliya.price)}</span>
-                            </>
-                          )}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formData.aliya_id && (
-                  <p className="text-xs text-muted-foreground">
-                    בחירת עלייה תמלא אוטומטית את החבר, הסכום והפרשה
                   </p>
                 )}
               </div>

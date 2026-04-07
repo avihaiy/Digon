@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import {
   Users,
-  BookOpen,
   CreditCard,
   Receipt,
   TrendingUp,
@@ -18,7 +17,7 @@ import {
   PieChart,
   Monitor,
 } from 'lucide-react';
-import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate, ALIYA_STATUS } from '@/lib/hebrew-utils';
+import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate } from '@/lib/hebrew-utils';
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -34,16 +33,14 @@ export default function Dashboard() {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       
-      const [membersRes, aliyotRes, paymentsRes, receiptsRes, expensesRes, budgetExpensesRes] = await Promise.all([
+      const [membersRes, paymentsRes, receiptsRes, expensesRes, budgetExpensesRes] = await Promise.all([
         supabase.from('members').select('id', { count: 'exact' }).eq('active', true),
-        supabase.from('aliyot').select('id, status, price'),
         supabase.from('payments').select('id, amount, status, created_at').eq('status', 'confirmed'),
         supabase.from('receipts').select('id, total_amount'),
         supabase.from('expenses').select('amount, expense_date'),
         supabase.from('budget_transactions').select('amount, transaction_date, type'),
       ]);
 
-      const pendingAliyot = aliyotRes.data?.filter(a => a.status === 'pending') || [];
       const totalPayments = paymentsRes.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
       
       // This month calculations
@@ -68,8 +65,6 @@ export default function Dashboard() {
 
       return {
         totalMembers: membersRes.count || 0,
-        totalAliyot: aliyotRes.data?.length || 0,
-        pendingAliyot: pendingAliyot.length,
         totalPayments,
         totalReceipts: receiptsRes.data?.length || 0,
         thisMonthIncome,
@@ -125,21 +120,6 @@ export default function Dashboard() {
     },
   });
 
-  // Fetch upcoming Shabbat aliyot
-  const { data: upcomingAliyot, isLoading: aliyotLoading } = useQuery({
-    queryKey: ['upcoming-aliyot', nextShabbat.toISOString().split('T')[0]],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('aliyot')
-        .select(`
-          *,
-          member:members(full_name)
-        `)
-        .eq('shabbat_date', nextShabbat.toISOString().split('T')[0])
-        .order('created_at');
-      return data || [];
-    },
-  });
 
   // Fetch recent payments
   const { data: recentPayments, isLoading: paymentsLoading } = useQuery({
@@ -159,7 +139,6 @@ export default function Dashboard() {
 
   const quickActions = [
     { label: 'הוסף חבר', icon: Users, href: '/members?action=add', variant: 'secondary' as const },
-    { label: 'הוסף עלייה', icon: BookOpen, href: '/aliyot?action=add', variant: 'secondary' as const },
     { label: 'קבל תשלום', icon: CreditCard, href: '/payments?action=add', variant: 'secondary' as const },
     { label: 'דו"ח כספי', icon: PieChart, href: '/expense-reports', variant: 'primary' as const },
   ];
@@ -365,19 +344,12 @@ export default function Dashboard() {
       </Card>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <StatsCard
           title="חברים פעילים"
           value={stats?.totalMembers || 0}
           icon={Users}
           loading={statsLoading}
-        />
-        <StatsCard
-          title="עליות השבוע"
-          value={stats?.totalAliyot || 0}
-          icon={BookOpen}
-          loading={statsLoading}
-          alert={stats?.pendingAliyot}
         />
         <StatsCard
           title="סה״כ הכנסות"
@@ -406,74 +378,9 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Upcoming Shabbat Aliyot */}
-        <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="text-lg font-semibold">עליות לשבת הקרובה</CardTitle>
-            <Link to="/aliyot">
-              <Button variant="ghost" size="sm">
-                הצג הכל
-                <ArrowLeft className="w-4 h-4 mr-1 flip-icon" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {aliyotLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : upcomingAliyot?.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>אין עליות מתוכננות לשבת הקרובה</p>
-                <Link to="/aliyot?action=add">
-                  <Button variant="outline" className="mt-4">
-                    הוסף עלייה
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {upcomingAliyot?.slice(0, 5).map((aliya: any) => (
-                  <div
-                    key={aliya.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 table-row-hover"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="font-medium">
-                        {aliya.aliya_type}
-                      </Badge>
-                      <span className="font-medium">
-                        {aliya.member?.full_name || 'לא משויך'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground">
-                        {formatCurrency(Number(aliya.price))}
-                      </span>
-                      <Badge
-                        className={
-                          aliya.status === 'paid'
-                            ? 'status-paid'
-                            : aliya.status === 'waived'
-                            ? 'status-waived'
-                            : 'status-pending'
-                        }
-                      >
-                        {ALIYA_STATUS[aliya.status as keyof typeof ALIYA_STATUS]}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
+      {/* Recent Activity */}
+      <div className="grid gap-6">
         {/* Recent Payments */}
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between pb-4">

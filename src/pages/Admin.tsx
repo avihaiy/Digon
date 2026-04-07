@@ -27,7 +27,7 @@ import {
   Users,
   DollarSign,
   Bell,
-  BookOpen,
+  
   Plus,
   Edit,
   Trash2,
@@ -122,16 +122,14 @@ export default function Admin() {
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [members, payments, aliyot, receipts] = await Promise.all([
+      const [members, payments, receipts] = await Promise.all([
         supabase.from("members").select("id", { count: "exact" }).eq("active", true),
         supabase.from("payments").select("amount").eq("status", "confirmed"),
-        supabase.from("aliyot").select("id", { count: "exact" }),
         supabase.from("receipts").select("id", { count: "exact" }),
       ]);
       return {
         activeMembers: members.count || 0,
         totalIncome: payments.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0,
-        totalAliyot: aliyot.count || 0,
         totalReceipts: receipts.count || 0,
       };
     },
@@ -455,7 +453,6 @@ export default function Admin() {
                   value: formatCurrency(stats?.totalIncome || 0),
                   label: "סה״כ הכנסות",
                 },
-                { icon: BookOpen, color: "purple", value: stats?.totalAliyot || 0, label: "עליות לתורה" },
                 { icon: Bell, color: "amber", value: stats?.totalReceipts || 0, label: "קבלות" },
               ].map((item, i) => (
                 <Card key={i}>

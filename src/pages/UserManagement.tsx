@@ -822,7 +822,7 @@ export default function UserManagement() {
                   <SelectItem value="gabai">
                     <div className="flex items-center gap-2">
                       <UserCog className="w-4 h-4" />
-                      גבאי - ניהול חברים, עליות ותשלומים
+                      גבאי - ניהול חברים ותשלומים
                     </div>
                   </SelectItem>
                   <SelectItem value="viewer">

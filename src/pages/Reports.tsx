@@ -9,7 +9,7 @@ import {
   TrendingUp,
   TrendingDown,
   Users,
-  BookOpen,
+  
   CreditCard,
   Download,
   FileSpreadsheet,
@@ -79,10 +79,6 @@ export default function Reports() {
         .select('id', { count: 'exact' })
         .eq('active', true);
 
-      // Aliyot stats
-      const { data: aliyotData } = await supabase
-        .from('aliyot')
-        .select('status, price');
 
       // Calculate stats
       const thisMonthTotal = thisMonthPayments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
@@ -119,20 +115,11 @@ export default function Reports() {
         });
       }
 
-      // Aliyot breakdown
-      const paidAliyot = aliyotData?.filter(a => a.status === 'paid').length || 0;
-      const pendingAliyot = aliyotData?.filter(a => a.status === 'pending').length || 0;
-      const waivedAliyot = aliyotData?.filter(a => a.status === 'waived').length || 0;
-
       return {
         thisMonthTotal,
         lastMonthTotal,
         monthlyChange: Number(monthlyChange),
         membersCount: membersCount || 0,
-        totalAliyot: aliyotData?.length || 0,
-        paidAliyot,
-        pendingAliyot,
-        waivedAliyot,
         bitPayments,
         cashPayments,
         monthlyData,
@@ -147,17 +134,11 @@ export default function Reports() {
   ];
 
   const typeBreakdownData = [
-    { name: 'עליות', value: stats?.typeBreakdown?.aliya || 0, color: 'hsl(var(--primary))' },
     { name: 'אשכבות', value: stats?.typeBreakdown?.ashkava || 0, color: '#f59e0b' },
     { name: 'ברכות שנה', value: stats?.typeBreakdown?.yearly_bracha || 0, color: '#8b5cf6' },
     { name: 'תרומות', value: stats?.typeBreakdown?.donation || 0, color: '#06b6d4' },
   ];
 
-  const aliyotStatusData = [
-    { name: 'שולם', value: stats?.paidAliyot || 0, color: '#22c55e' },
-    { name: 'ממתין', value: stats?.pendingAliyot || 0, color: '#eab308' },
-    { name: 'וויתור', value: stats?.waivedAliyot || 0, color: '#94a3b8' },
-  ];
 
   const handleExportExcel = () => {
     // Create CSV content
@@ -206,9 +187,6 @@ export default function Reports() {
       <div className="flex flex-wrap gap-2">
         {[
           { key: 'all', label: 'הכל' },
-          { key: 'aliya', label: 'עליות' },
-          { key: 'ashkava', label: 'אשכבות' },
-          { key: 'yearly_bracha', label: 'ברכות שנה' },
           { key: 'donation', label: 'תרומות' },
         ].map(f => (
           <Button
@@ -267,37 +245,6 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            {isLoading ? (
-              <Skeleton className="h-20 w-full" />
-            ) : (
-              <>
-                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center mb-2">
-                  <BookOpen className="w-5 h-5 text-accent-foreground" />
-                </div>
-                <p className="text-2xl font-bold">{stats?.totalAliyot}</p>
-                <p className="text-sm text-muted-foreground">סה״כ עליות</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            {isLoading ? (
-              <Skeleton className="h-20 w-full" />
-            ) : (
-              <>
-                <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center mb-2">
-                  <Calendar className="w-5 h-5 text-warning" />
-                </div>
-                <p className="text-2xl font-bold">{stats?.pendingAliyot}</p>
-                <p className="text-sm text-muted-foreground">ממתינים לתשלום</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {/* Charts */}
@@ -425,33 +372,6 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        {/* Aliyot Status */}
-        <Card className="glass-card lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">סטטוס עליות</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-32 w-full" />
-            ) : (
-              <div className="flex flex-wrap justify-center gap-8">
-                {aliyotStatusData.map((item) => (
-                  <div key={item.name} className="text-center">
-                    <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2"
-                      style={{ background: `${item.color}20` }}
-                    >
-                      <span className="text-2xl font-bold" style={{ color: item.color }}>
-                        {item.value}
-                      </span>
-                    </div>
-                    <p className="font-medium">{item.name}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

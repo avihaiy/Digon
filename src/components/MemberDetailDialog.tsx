@@ -19,7 +19,7 @@ import {
   AlertCircle,
   CreditCard,
   Receipt,
-  BookOpen,
+  
   Share2,
   Loader2,
   CheckCircle2,
@@ -34,7 +34,7 @@ import {
   formatCurrency,
   formatShortDate,
   PAYMENT_METHOD,
-  ALIYA_TYPES,
+  
 } from '@/lib/hebrew-utils';
 import { shareReceiptWithPdf } from '@/lib/receipt-share';
 import { toast } from 'sonner';
@@ -56,7 +56,7 @@ export function MemberDetailDialog({
   const queryClient = useQueryClient();
   const [isSharingText, setIsSharingText] = useState(false);
   const [isSharingPdf, setIsSharingPdf] = useState(false);
-  const [activeTab, setActiveTab] = useState<'summary' | 'payments' | 'aliyot' | 'receipts' | 'ledger'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'payments' | 'receipts' | 'ledger'>('summary');
   const [showAddCharge, setShowAddCharge] = useState(false);
   const [newChargeAmount, setNewChargeAmount] = useState('');
   const [newChargeDesc, setNewChargeDesc] = useState('');
@@ -81,20 +81,6 @@ export function MemberDetailDialog({
     enabled: !!memberId && open,
   });
 
-  // Fetch aliyot
-  const { data: aliyot, isLoading: loadingAliyot } = useQuery({
-    queryKey: ['member-aliyot', memberId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('aliyot')
-        .select('*')
-        .eq('member_id', memberId!)
-        .order('shabbat_date', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!memberId && open,
-  });
 
   // Fetch receipts
   const { data: receipts, isLoading: loadingReceipts } = useQuery({
@@ -215,12 +201,10 @@ export function MemberDetailDialog({
   const confirmedPayments = payments?.filter(p => p.status === 'confirmed') || [];
   const totalDebt = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const pendingAliyot = aliyot?.filter(a => a.status === 'pending') || [];
-  const aliyotDebt = pendingAliyot.reduce((sum, a) => sum + Number(a.price || 0), 0);
   const chargesDebt = charges?.reduce((sum: number, c: any) => sum + Number(c.remaining_balance || 0), 0) || 0;
-  const totalOwed = totalDebt + aliyotDebt + chargesDebt;
+  const totalOwed = totalDebt + chargesDebt;
 
-  const isLoading = loadingPayments || loadingAliyot || loadingReceipts || loadingCharges;
+  const isLoading = loadingPayments || loadingReceipts || loadingCharges;
 
   const handleShareText = async () => {
     setIsSharingText(true);
@@ -240,13 +224,6 @@ export function MemberDetailDialog({
         });
       }
 
-      if (pendingAliyot.length > 0) {
-        lines.push(``, `📖 עליות ממתינות (${pendingAliyot.length}):`);
-        pendingAliyot.forEach(a => {
-          const typeName = ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type;
-          lines.push(`  • ${typeName} - פרשת ${a.parasha} - ${formatCurrency(Number(a.price || 0))}`);
-        });
-      }
 
       lines.push(``, `תודה, בית כנסת ברית שלום עכו`);
 
@@ -302,17 +279,6 @@ export function MemberDetailDialog({
         html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
       }
 
-      if (pendingAliyot.length > 0) {
-        html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">עליות ממתינות:</div>`;
-        pendingAliyot.forEach(a => {
-          const typeName = ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type;
-          html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-            <span>${typeName} - פרשת ${a.parasha}</span>
-            <span>${formatCurrency(Number(a.price || 0))}</span>
-          </div>`;
-        });
-        html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
-      }
 
       html += `
         <div style="text-align:center;margin-top:3mm">
@@ -370,7 +336,6 @@ export function MemberDetailDialog({
     { key: 'summary' as const, label: 'סיכום', icon: AlertCircle },
     { key: 'ledger' as const, label: 'כרטיסיה', icon: Wallet },
     { key: 'payments' as const, label: 'תשלומים', icon: CreditCard },
-    { key: 'aliyot' as const, label: 'עליות', icon: BookOpen },
     { key: 'receipts' as const, label: 'קבלות', icon: Receipt },
   ];
 
@@ -449,28 +414,6 @@ export function MemberDetailDialog({
                     </div>
                   )}
 
-                  {pendingAliyot.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-bold mb-2 flex items-center gap-1.5">
-                        <BookOpen className="w-4 h-4" />
-                        עליות ממתינות ({pendingAliyot.length})
-                      </h4>
-                      <div className="space-y-1">
-                        {pendingAliyot.map(a => {
-                          const typeName = ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type;
-                          return (
-                            <div key={a.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/50 border border-border">
-                              <div className="min-w-0 flex-1">
-                                <p className="font-medium text-sm">{typeName}</p>
-                                <p className="text-xs text-muted-foreground">פרשת {a.parasha} • {formatShortDate(a.shabbat_date)}</p>
-                              </div>
-                              <span className="font-bold mr-2">{formatCurrency(Number(a.price || 0))}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Quick Stats */}
                   <div className="grid grid-cols-2 gap-2">
@@ -542,34 +485,6 @@ export function MemberDetailDialog({
                 </div>
               )}
 
-              {/* Aliyot Tab */}
-              {activeTab === 'aliyot' && (
-                <div className="space-y-2">
-                  {aliyot?.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">אין עליות</p>
-                  ) : (
-                    aliyot?.map(a => (
-                      <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div>
-                          <p className="font-medium text-sm">
-                            {ALIYA_TYPES[a.aliya_type as keyof typeof ALIYA_TYPES] || a.aliya_type}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{a.parasha} • {formatShortDate(a.shabbat_date)}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold">{formatCurrency(Number(a.price || 0))}</span>
-                          <Badge
-                            variant={a.status === 'paid' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {a.status === 'paid' ? 'שולם' : a.status === 'waived' ? 'ויתור' : 'ממתין'}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
 
               {/* Receipts Tab */}
               {activeTab === 'receipts' && (
