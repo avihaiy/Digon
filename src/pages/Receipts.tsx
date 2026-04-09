@@ -43,7 +43,16 @@ import {
   FileSpreadsheet,
   Wifi,
   Share2,
+  MoreVertical,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCurrency, formatShortDate, formatDate, getHebrewDate, PARASHA_LIST } from '@/lib/hebrew-utils';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
