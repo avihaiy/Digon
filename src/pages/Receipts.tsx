@@ -14,16 +14,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -60,6 +50,7 @@ import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
+import { DeleteCodeDialog } from '@/components/DeleteCodeDialog';
 import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs } from '@/lib/receipt-share';
 import { ShareDebugPanel } from '@/components/ShareDebugPanel';
 
@@ -806,30 +797,15 @@ export default function Receipts() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteReceiptId} onOpenChange={(open) => !open && setDeleteReceiptId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת קבלה</AlertDialogTitle>
-            <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק קבלה זו? פעולה זו לא ניתן לבטלה.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row-reverse gap-2">
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteReceiptId && deleteReceipt.mutate(deleteReceiptId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteReceipt.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                'מחק'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Confirmation Dialog with Code Protection */}
+      <DeleteCodeDialog
+        open={!!deleteReceiptId}
+        onOpenChange={(open) => !open && setDeleteReceiptId(null)}
+        title="מחיקת קבלה"
+        description="האם אתה בטוח שברצונך למחוק קבלה זו? פעולה זו לא ניתן לבטלה."
+        onConfirm={() => deleteReceiptId && deleteReceipt.mutate(deleteReceiptId)}
+        isPending={deleteReceipt.isPending}
+      />
       <ShareDebugPanel />
     </div>
   );
