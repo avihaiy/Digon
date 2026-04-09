@@ -10,7 +10,7 @@ import {
   getCurrentParasha,
 } from "@/lib/hebrew-utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Maximize, Lock, Unlock } from "lucide-react";
+import { Maximize, Lock, Unlock, MonitorSmartphone } from "lucide-react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import MemorialDisplaySlide from "@/components/display/MemorialDisplaySlide";
@@ -213,6 +213,7 @@ export default function Display() {
   });
   const containerRef = useRef<HTMLDivElement>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const [wakeLockActive, setWakeLockActive] = useState(false);
 
   // פונקציה לטעינת טיקר
   const fetchTicker = useCallback(async () => {
@@ -232,6 +233,8 @@ export default function Display() {
           wakeLockRef.current = await (
             navigator as Navigator & { wakeLock: { request: (type: string) => Promise<WakeLockSentinel> } }
           ).wakeLock.request("screen");
+          setWakeLockActive(true);
+          wakeLockRef.current.addEventListener("release", () => setWakeLockActive(false));
           console.log("Wake lock acquired - screen will stay on");
         } catch (e) {
           console.log("Wake lock failed:", e);
