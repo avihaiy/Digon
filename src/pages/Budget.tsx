@@ -131,12 +131,27 @@ export default function Budget() {
   // Create/Update transaction
   const saveTransactionMutation = useMutation({
     mutationFn: async (data: typeof formData & { id?: string }) => {
+      // If custom category typed, create it first
+      let categoryId = data.category_id || null;
+      if (!categoryId && data.custom_category?.trim()) {
+        const { data: newCat, error: catErr } = await supabase
+          .from('budget_categories')
+          .insert({
+            name: data.custom_category.trim(),
+            type: data.type,
+          })
+          .select('id')
+          .single();
+        if (catErr) throw catErr;
+        categoryId = newCat.id;
+      }
+
       if (data.id) {
         const { error } = await supabase
           .from('budget_transactions')
           .update({
             type: data.type,
-            category_id: data.category_id || null,
+            category_id: categoryId,
             amount: Number(data.amount),
             description: data.description || null,
             reference: data.reference || null,
@@ -149,7 +164,7 @@ export default function Budget() {
           .from('budget_transactions')
           .insert({
             type: data.type,
-            category_id: data.category_id || null,
+            category_id: categoryId,
             amount: Number(data.amount),
             description: data.description || null,
             reference: data.reference || null,
@@ -160,6 +175,7 @@ export default function Budget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['budget-categories'] });
       toast.success(editingTransaction ? 'התנועה עודכנה בהצלחה' : 'התנועה נוספה בהצלחה');
       closeDialog();
     },
@@ -214,6 +230,7 @@ export default function Budget() {
     setFormData({
       type,
       category_id: '',
+      custom_category: '',
       amount: '',
       description: '',
       reference: '',
@@ -227,6 +244,7 @@ export default function Budget() {
     setFormData({
       type: transaction.type,
       category_id: transaction.category_id || '',
+      custom_category: '',
       amount: String(transaction.amount),
       description: transaction.description || '',
       reference: transaction.reference || '',
@@ -241,6 +259,7 @@ export default function Budget() {
     setFormData({
       type: 'income',
       category_id: '',
+      custom_category: '',
       amount: '',
       description: '',
       reference: '',
