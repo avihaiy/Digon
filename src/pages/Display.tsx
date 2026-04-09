@@ -10,7 +10,7 @@ import {
   getCurrentParasha,
 } from "@/lib/hebrew-utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Maximize, Lock, Unlock } from "lucide-react";
+import { Maximize, Lock, Unlock, MonitorSmartphone } from "lucide-react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import MemorialDisplaySlide from "@/components/display/MemorialDisplaySlide";
@@ -213,6 +213,7 @@ export default function Display() {
   });
   const containerRef = useRef<HTMLDivElement>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const [wakeLockActive, setWakeLockActive] = useState(false);
 
   // פונקציה לטעינת טיקר
   const fetchTicker = useCallback(async () => {
@@ -232,6 +233,8 @@ export default function Display() {
           wakeLockRef.current = await (
             navigator as Navigator & { wakeLock: { request: (type: string) => Promise<WakeLockSentinel> } }
           ).wakeLock.request("screen");
+          setWakeLockActive(true);
+          wakeLockRef.current.addEventListener("release", () => setWakeLockActive(false));
           console.log("Wake lock acquired - screen will stay on");
         } catch (e) {
           console.log("Wake lock failed:", e);
@@ -696,6 +699,15 @@ export default function Display() {
       onTouchStart={resetControlsTimeout}
     >
       {displayBgUrl && <div className="absolute inset-0 bg-black/50 z-0" />}
+
+      {/* Wake Lock Indicator */}
+      <div className="absolute bottom-3 left-3 z-50">
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-sm text-xs font-medium transition-colors ${wakeLockActive ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+          <MonitorSmartphone className="w-3.5 h-3.5" />
+          <span>{wakeLockActive ? 'מסך פעיל' : 'מסך רגיל'}</span>
+          <span className={`w-1.5 h-1.5 rounded-full ${wakeLockActive ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
+        </div>
+      </div>
 
       {/* Fullscreen Controls */}
       <AnimatePresence>
