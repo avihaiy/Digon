@@ -80,6 +80,7 @@ export default function Budget() {
   const [formData, setFormData] = useState({
     type: 'income' as TransactionType,
     category_id: '',
+    custom_category: '',
     amount: '',
     description: '',
     reference: '',
@@ -130,12 +131,27 @@ export default function Budget() {
   // Create/Update transaction
   const saveTransactionMutation = useMutation({
     mutationFn: async (data: typeof formData & { id?: string }) => {
+      // If custom category typed, create it first
+      let categoryId = data.category_id || null;
+      if (!categoryId && data.custom_category?.trim()) {
+        const { data: newCat, error: catErr } = await supabase
+          .from('budget_categories')
+          .insert({
+            name: data.custom_category.trim(),
+            type: data.type,
+          })
+          .select('id')
+          .single();
+        if (catErr) throw catErr;
+        categoryId = newCat.id;
+      }
+
       if (data.id) {
         const { error } = await supabase
           .from('budget_transactions')
           .update({
             type: data.type,
-            category_id: data.category_id || null,
+            category_id: categoryId,
             amount: Number(data.amount),
             description: data.description || null,
             reference: data.reference || null,
@@ -148,7 +164,7 @@ export default function Budget() {
           .from('budget_transactions')
           .insert({
             type: data.type,
-            category_id: data.category_id || null,
+            category_id: categoryId,
             amount: Number(data.amount),
             description: data.description || null,
             reference: data.reference || null,
@@ -159,6 +175,7 @@ export default function Budget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['budget-categories'] });
       toast.success(editingTransaction ? 'התנועה עודכנה בהצלחה' : 'התנועה נוספה בהצלחה');
       closeDialog();
     },
@@ -213,6 +230,7 @@ export default function Budget() {
     setFormData({
       type,
       category_id: '',
+      custom_category: '',
       amount: '',
       description: '',
       reference: '',
@@ -226,6 +244,7 @@ export default function Budget() {
     setFormData({
       type: transaction.type,
       category_id: transaction.category_id || '',
+      custom_category: '',
       amount: String(transaction.amount),
       description: transaction.description || '',
       reference: transaction.reference || '',
@@ -240,6 +259,7 @@ export default function Budget() {
     setFormData({
       type: 'income',
       category_id: '',
+      custom_category: '',
       amount: '',
       description: '',
       reference: '',
@@ -539,18 +559,31 @@ export default function Budget() {
               </div>
             </div>
 
-            <div>
+            <div className="relative">
               <label className="text-sm font-medium mb-2 block">קטגוריה</label>
-              <Select value={formData.category_id} onValueChange={(v) => setFormData({ ...formData, category_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר קטגוריה" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                placeholder="בחר או הקלד קטגוריה..."
+                value={
+                  formData.category_id
+                    ? filteredCategories.find(c => c.id === formData.category_id)?.name || formData.custom_category
+                    : formData.custom_category
+                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const match = filteredCategories.find(c => c.name === val);
+                  setFormData({
+                    ...formData,
+                    category_id: match ? match.id : '',
+                    custom_category: val,
+                  });
+                }}
+                list={`category-list-${formData.type}`}
+              />
+              <datalist id={`category-list-${formData.type}`}>
+                {filteredCategories.map((cat) => (
+                  <option key={cat.id} value={cat.name} />
+                ))}
+              </datalist>
             </div>
 
             <div>
