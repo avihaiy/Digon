@@ -224,31 +224,33 @@ export default function Display() {
     if (sd?.value) setTickerSpeed(sd.value);
   }, []);
 
-  // Wake Lock
+  // Wake Lock - always keep screen on in display mode
   useEffect(() => {
     const requestWakeLock = async () => {
-      if (isLocked && "wakeLock" in navigator) {
+      if ("wakeLock" in navigator) {
         try {
           wakeLockRef.current = await (
             navigator as Navigator & { wakeLock: { request: (type: string) => Promise<WakeLockSentinel> } }
           ).wakeLock.request("screen");
+          console.log("Wake lock acquired - screen will stay on");
         } catch (e) {
           console.log("Wake lock failed:", e);
         }
-      } else if (!isLocked && wakeLockRef.current) {
-        try {
-          await wakeLockRef.current.release();
-          wakeLockRef.current = null;
-        } catch (e) {}
       }
     };
     requestWakeLock();
     const handleVisibility = () => {
-      if (document.visibilityState === "visible" && isLocked) requestWakeLock();
+      if (document.visibilityState === "visible") requestWakeLock();
     };
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [isLocked]);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
+        wakeLockRef.current = null;
+      }
+    };
+  }, []);
 
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
