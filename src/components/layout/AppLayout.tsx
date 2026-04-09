@@ -91,8 +91,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 right-0 z-50 w-64 bg-sidebar transform transition-transform duration-300 lg:translate-x-0 lg:static',
-          sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+          'fixed inset-y-0 right-0 z-50 w-64 bg-sidebar lg:translate-x-0 lg:static',
+          'transition-all duration-300 ease-out',
+          sidebarOpen 
+            ? 'translate-x-0 opacity-100 shadow-2xl' 
+            : 'translate-x-full opacity-0 lg:opacity-100 lg:shadow-none'
         )}
       >
         <div className="flex flex-col h-full">
@@ -230,12 +233,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </aside>
 
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 lg:hidden transition-opacity duration-300",
+          sidebarOpen 
+            ? "bg-black/50 opacity-100 pointer-events-auto" 
+            : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setSidebarOpen(false)}
+      />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
