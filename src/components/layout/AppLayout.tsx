@@ -79,6 +79,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
   );
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
 
+  const triggerHaptic = () => {
+    if (navigator.vibrate) {
+      navigator.vibrate(10);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/login');
