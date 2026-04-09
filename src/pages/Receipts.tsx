@@ -583,10 +583,11 @@ export default function Receipts() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {filteredReceipts?.map((receipt: any) => (
+              {filteredReceipts?.map((receipt: any, index: number) => (
                 <div
                   key={receipt.id}
-                  className="flex flex-col p-4 gap-3 table-row-hover"
+                  className="flex flex-col p-4 gap-3 table-row-hover animate-fade-in"
+                  style={{ animationDelay: `${Math.min(index * 50, 500)}ms`, animationFillMode: 'backwards' }}
                 >
                   {/* Top row: Receipt info */}
                   <div className="flex items-start gap-3">
