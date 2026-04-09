@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { FileText, FileSpreadsheet, ClipboardList, Users } from 'lucide-react';
+import { FileText, FileSpreadsheet, ClipboardList, Users, TrendingUp, TrendingDown } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths, parseISO } from 'date-fns';
 
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
@@ -29,95 +29,178 @@ const METHOD_LABELS: Record<string, string> = {
   bank_transfer: 'העברה בנקאית',
 };
 
+const RECORD_TYPE_LABELS: Record<string, string> = {
+  all: 'הכל',
+  payments: 'תשלומים (הכנסות)',
+  expenses: 'הוצאות',
+  budget_income: 'הכנסות תקציב',
+  budget_expense: 'הוצאות תקציב',
+};
+
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 0 }).format(amount);
+
+interface UnifiedRecord {
+  id: string;
+  name: string;
+  type: string;
+  typeLabel: string;
+  method: string;
+  amount: number;
+  date: string;
+  notes: string;
+  recordKind: 'income' | 'expense';
+}
 
 export default function DetailedReport() {
   const today = new Date();
   const [startDate, setStartDate] = useState(format(startOfMonth(subMonths(today, 1)), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
   const [typeFilter, setTypeFilter] = useState('all');
+  const [recordTypeFilter, setRecordTypeFilter] = useState('all');
   const [groupByMember, setGroupByMember] = useState(false);
 
-  const { data: payments = [], isLoading } = useQuery({
-    queryKey: ['detailed-report', startDate, endDate, typeFilter],
+  const { data: allRecords = [], isLoading } = useQuery({
+    queryKey: ['detailed-report-unified', startDate, endDate, typeFilter, recordTypeFilter],
     queryFn: async () => {
-      let query = supabase
-        .from('payments')
-        .select('id, amount, method, created_at, payment_type, notes, member_id, members(full_name)')
-        .eq('status', 'confirmed')
-        .gte('created_at', startDate)
-        .lte('created_at', endDate + 'T23:59:59')
-        .order('created_at', { ascending: false });
+      const records: UnifiedRecord[] = [];
 
-      if (typeFilter !== 'all') {
-        query = query.eq('payment_type', typeFilter);
+      // Fetch payments (income)
+      if (recordTypeFilter === 'all' || recordTypeFilter === 'payments') {
+        let query = supabase
+          .from('payments')
+          .select('id, amount, method, created_at, payment_type, notes, member_id, members(full_name)')
+          .eq('status', 'confirmed')
+          .gte('created_at', startDate)
+          .lte('created_at', endDate + 'T23:59:59')
+          .order('created_at', { ascending: false });
+
+        if (typeFilter !== 'all') {
+          query = query.eq('payment_type', typeFilter);
+        }
+
+        const { data } = await query;
+        (data || []).forEach(p => {
+          records.push({
+            id: p.id,
+            name: (p as any).members?.full_name || 'לא ידוע',
+            type: p.payment_type,
+            typeLabel: PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type,
+            method: METHOD_LABELS[p.method] || p.method,
+            amount: Number(p.amount),
+            date: p.created_at!,
+            notes: p.notes || '',
+            recordKind: 'income',
+          });
+        });
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      // Fetch expenses
+      if (recordTypeFilter === 'all' || recordTypeFilter === 'expenses') {
+        const { data: expData } = await supabase
+          .from('expenses')
+          .select('id, amount, expense_date, notes, supplier, category_id, expense_categories(name)')
+          .gte('expense_date', startDate)
+          .lte('expense_date', endDate)
+          .order('expense_date', { ascending: false });
+
+        (expData || []).forEach(e => {
+          records.push({
+            id: e.id,
+            name: e.supplier || 'ספק לא ידוע',
+            type: 'expense',
+            typeLabel: (e as any).expense_categories?.name || 'הוצאה',
+            method: '-',
+            amount: Number(e.amount),
+            date: e.expense_date,
+            notes: e.notes || '',
+            recordKind: 'expense',
+          });
+        });
+      }
+
+      // Fetch budget transactions
+      if (recordTypeFilter === 'all' || recordTypeFilter === 'budget_income' || recordTypeFilter === 'budget_expense') {
+        let btQuery = supabase
+          .from('budget_transactions')
+          .select('id, amount, transaction_date, type, description, reference, category_id, budget_categories(name)')
+          .gte('transaction_date', startDate)
+          .lte('transaction_date', endDate)
+          .order('transaction_date', { ascending: false });
+
+        if (recordTypeFilter === 'budget_income') {
+          btQuery = btQuery.eq('type', 'income');
+        } else if (recordTypeFilter === 'budget_expense') {
+          btQuery = btQuery.eq('type', 'expense');
+        }
+
+        const { data: btData } = await btQuery;
+        (btData || []).forEach(b => {
+          records.push({
+            id: b.id,
+            name: b.description || ((b as any).budget_categories?.name || (b.type === 'income' ? 'הכנסה' : 'הוצאה')),
+            type: b.type,
+            typeLabel: (b as any).budget_categories?.name || (b.type === 'income' ? 'הכנסת תקציב' : 'הוצאת תקציב'),
+            method: b.reference || '-',
+            amount: Number(b.amount),
+            date: b.transaction_date,
+            notes: b.description || '',
+            recordKind: b.type === 'income' ? 'income' : 'expense',
+          });
+        });
+      }
+
+      // Sort by date descending
+      records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return records;
     },
   });
 
-  const totalAmount = useMemo(() => payments.reduce((sum, p) => sum + Number(p.amount), 0), [payments]);
+  const totalIncome = useMemo(() => allRecords.filter(r => r.recordKind === 'income').reduce((s, r) => s + r.amount, 0), [allRecords]);
+  const totalExpenses = useMemo(() => allRecords.filter(r => r.recordKind === 'expense').reduce((s, r) => s + r.amount, 0), [allRecords]);
+  const totalBalance = totalIncome - totalExpenses;
 
-  // Grouped data by member (always computed for export)
   const groupedData = useMemo(() => {
-    const groups: Record<string, { name: string; payments: typeof payments; total: number }> = {};
-    payments.forEach(p => {
-      const name = (p as any).members?.full_name || 'לא ידוע';
-      if (!groups[name]) groups[name] = { name, payments: [], total: 0 };
-      groups[name].payments.push(p);
-      groups[name].total += Number(p.amount);
+    const groups: Record<string, { name: string; records: UnifiedRecord[]; totalIncome: number; totalExpenses: number }> = {};
+    allRecords.forEach(r => {
+      if (!groups[r.name]) groups[r.name] = { name: r.name, records: [], totalIncome: 0, totalExpenses: 0 };
+      groups[r.name].records.push(r);
+      if (r.recordKind === 'income') groups[r.name].totalIncome += r.amount;
+      else groups[r.name].totalExpenses += r.amount;
     });
-    return Object.values(groups).sort((a, b) => b.total - a.total);
-  }, [payments]);
+    return Object.values(groups).sort((a, b) => (b.totalIncome - b.totalExpenses) - (a.totalIncome - a.totalExpenses));
+  }, [allRecords]);
+
+  const formatDate = (d: string) => {
+    try { return format(new Date(d), 'dd/MM/yyyy'); } catch { return d; }
+  };
 
   const handleExportCSV = () => {
-    let csvContent: string;
+    const headers = ['שם', 'סוג', 'קטגוריה', 'אמצעי/אסמכתא', 'סכום', 'הכנסה/הוצאה', 'תאריך', 'הערות'];
+    const rows = allRecords.map(r => [
+      r.name,
+      r.recordKind === 'income' ? 'הכנסה' : 'הוצאה',
+      r.typeLabel,
+      r.method,
+      r.amount,
+      r.recordKind === 'income' ? 'הכנסה' : 'הוצאה',
+      formatDate(r.date),
+      r.notes,
+    ]);
 
-    if (groupByMember) {
-      const headers = ['שם חבר', 'סוג תשלום', 'אמצעי תשלום', 'סכום', 'תאריך', 'הערות'];
-      const lines = [headers.join(',')];
-      groupedData.forEach(group => {
-        group.payments.forEach(p => {
-          lines.push([
-            group.name,
-            PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type,
-            METHOD_LABELS[p.method] || p.method,
-            p.amount,
-            format(new Date(p.created_at!), 'dd/MM/yyyy'),
-            p.notes || '',
-          ].map(cell => `"${cell}"`).join(','));
-        });
-        lines.push(`"סה״כ ${group.name}","","","${group.total}","",""`);
-        lines.push('');
-      });
-      lines.push(`"סה״כ כללי","","","${totalAmount}","",""`);
-      csvContent = lines.join('\n');
-    } else {
-      const headers = ['שם', 'סוג תשלום', 'אמצעי תשלום', 'סכום', 'תאריך', 'הערות'];
-      const rows = payments.map(p => [
-        (p as any).members?.full_name || '-',
-        PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type,
-        METHOD_LABELS[p.method] || p.method,
-        p.amount,
-        format(new Date(p.created_at!), 'dd/MM/yyyy'),
-        p.notes || '',
-      ]);
-      csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
-        '',
-        `"סה״כ","","","${totalAmount}","",""`,
-      ].join('\n');
-    }
+    const lines = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+      '',
+      `"סה״כ הכנסות","","","","${totalIncome}","","",""`,
+      `"סה״כ הוצאות","","","","${totalExpenses}","","",""`,
+      `"יתרה","","","","${totalBalance}","","",""`,
+    ];
 
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `דוח_מפורט_${groupByMember ? 'מקובץ_' : ''}${startDate}_${endDate}.csv`;
+    link.download = `דוח_מפורט_${startDate}_${endDate}.csv`;
     link.click();
   };
 
@@ -125,154 +208,87 @@ export default function DetailedReport() {
     const styles = `
       body { font-family: Arial, sans-serif; padding: 20px; direction: rtl; }
       h1 { text-align: center; margin-bottom: 5px; }
-      h2 { margin-top: 25px; margin-bottom: 5px; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
       .subtitle { text-align: center; color: #666; margin-bottom: 20px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; }
+      .summary { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
+      .summary-item { text-align: center; padding: 10px 20px; border-radius: 8px; }
+      .income-bg { background: #e8f5e9; }
+      .expense-bg { background: #fce4ec; }
+      .balance-bg { background: #e3f2fd; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
       th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: right; font-size: 13px; }
       th { background: #f0f0f0; font-weight: bold; }
       tr:nth-child(even) { background: #fafafa; }
+      .income-row { color: #2e7d32; }
+      .expense-row { color: #c62828; }
       .total-row { font-weight: bold; background: #e8f5e9 !important; }
-      .grand-total { font-weight: bold; background: #c8e6c9 !important; font-size: 14px; }
-      .member-header { display: flex; justify-content: space-between; align-items: center; }
       .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #999; }
-      @media print { button { display: none; } body { padding: 10px; } }
+      @media print { button { display: none; } }
     `;
 
-    let bodyContent: string;
-
-    if (groupByMember) {
-      const groupSections = groupedData.map(group => `
-        <h2>
-          <span class="member-header">
-            <span>${group.name} (${group.payments.length} תשלומים)</span>
-            <span>${formatCurrency(group.total)}</span>
-          </span>
-        </h2>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>סוג תשלום</th>
-              <th>אמצעי תשלום</th>
-              <th>סכום</th>
-              <th>תאריך</th>
-              <th>הערות</th>
+    const bodyContent = `
+      <div class="summary">
+        <div class="summary-item income-bg"><div>הכנסות</div><div><strong>${formatCurrency(totalIncome)}</strong></div></div>
+        <div class="summary-item expense-bg"><div>הוצאות</div><div><strong>${formatCurrency(totalExpenses)}</strong></div></div>
+        <div class="summary-item balance-bg"><div>יתרה</div><div><strong>${formatCurrency(totalBalance)}</strong></div></div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>שם</th><th>סוג</th><th>קטגוריה</th><th>אמצעי</th><th>סכום</th><th>תאריך</th><th>הערות</th></tr></thead>
+        <tbody>
+          ${allRecords.map((r, i) => `
+            <tr class="${r.recordKind === 'income' ? 'income-row' : 'expense-row'}">
+              <td>${i + 1}</td>
+              <td>${r.name}</td>
+              <td>${r.recordKind === 'income' ? 'הכנסה' : 'הוצאה'}</td>
+              <td>${r.typeLabel}</td>
+              <td>${r.method}</td>
+              <td>${formatCurrency(r.amount)}</td>
+              <td>${formatDate(r.date)}</td>
+              <td>${r.notes || '-'}</td>
             </tr>
-          </thead>
-          <tbody>
-            ${group.payments.map((p, i) => `
-              <tr>
-                <td>${i + 1}</td>
-                <td>${PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type}</td>
-                <td>${METHOD_LABELS[p.method] || p.method}</td>
-                <td>${formatCurrency(Number(p.amount))}</td>
-                <td>${format(new Date(p.created_at!), 'dd/MM/yyyy')}</td>
-                <td>${p.notes || '-'}</td>
-              </tr>
-            `).join('')}
-            <tr class="total-row">
-              <td colspan="3">סה"כ ${group.name}</td>
-              <td>${formatCurrency(group.total)}</td>
-              <td colspan="2"></td>
-            </tr>
-          </tbody>
-        </table>
-      `).join('');
-
-      bodyContent = `
-        ${groupSections}
-        <table>
-          <tbody>
-            <tr class="grand-total">
-              <td colspan="3">סה"כ כללי (${groupedData.length} חברים, ${payments.length} רשומות)</td>
-              <td>${formatCurrency(totalAmount)}</td>
-              <td colspan="2"></td>
-            </tr>
-          </tbody>
-        </table>
-      `;
-    } else {
-      bodyContent = `
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>שם</th>
-              <th>סוג תשלום</th>
-              <th>אמצעי תשלום</th>
-              <th>סכום</th>
-              <th>תאריך</th>
-              <th>הערות</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${payments.map((p, i) => `
-              <tr>
-                <td>${i + 1}</td>
-                <td>${(p as any).members?.full_name || '-'}</td>
-                <td>${PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type}</td>
-                <td>${METHOD_LABELS[p.method] || p.method}</td>
-                <td>${formatCurrency(Number(p.amount))}</td>
-                <td>${format(new Date(p.created_at!), 'dd/MM/yyyy')}</td>
-                <td>${p.notes || '-'}</td>
-              </tr>
-            `).join('')}
-            <tr class="total-row">
-              <td colspan="4">סה"כ (${payments.length} רשומות)</td>
-              <td>${formatCurrency(totalAmount)}</td>
-              <td colspan="2"></td>
-            </tr>
-          </tbody>
-        </table>
-      `;
-    }
+          `).join('')}
+          <tr class="total-row"><td colspan="5">סה״כ הכנסות</td><td>${formatCurrency(totalIncome)}</td><td colspan="2"></td></tr>
+          <tr style="font-weight:bold;background:#fce4ec"><td colspan="5">סה״כ הוצאות</td><td>${formatCurrency(totalExpenses)}</td><td colspan="2"></td></tr>
+          <tr style="font-weight:bold;background:#e3f2fd"><td colspan="5">יתרה</td><td>${formatCurrency(totalBalance)}</td><td colspan="2"></td></tr>
+        </tbody>
+      </table>
+    `;
 
     const printContent = `
-      <!DOCTYPE html>
-      <html dir="rtl" lang="he">
-      <head><meta charset="UTF-8"><title>דוח מפורט${groupByMember ? ' - מקובץ לפי חבר' : ''}</title><style>${styles}</style></head>
+      <!DOCTYPE html><html dir="rtl" lang="he">
+      <head><meta charset="UTF-8"><title>דוח מפורט</title><style>${styles}</style></head>
       <body>
-        <h1>ברית שלום - דוח מפורט${groupByMember ? ' (מקובץ לפי חבר)' : ''}</h1>
-        <p class="subtitle">תקופה: ${format(parseISO(startDate), 'dd/MM/yyyy')} - ${format(parseISO(endDate), 'dd/MM/yyyy')}
-        ${typeFilter !== 'all' ? ' | סוג: ' + (PAYMENT_TYPE_LABELS[typeFilter] || typeFilter) : ''}</p>
+        <h1>ברית שלום - דוח מפורט</h1>
+        <p class="subtitle">תקופה: ${format(parseISO(startDate), 'dd/MM/yyyy')} - ${format(parseISO(endDate), 'dd/MM/yyyy')}</p>
         ${bodyContent}
         <p class="footer">הופק בתאריך ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
-        <button onclick="window.print()" style="margin: 20px auto; display: block; padding: 10px 30px; cursor: pointer;">הדפס / שמור כ-PDF</button>
-      </body>
-      </html>
+        <button onclick="window.print()" style="margin:20px auto;display:block;padding:10px 30px;cursor:pointer;">הדפס / שמור כ-PDF</button>
+      </body></html>
     `;
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-    }
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(printContent); w.document.close(); }
   };
 
-  // Mobile card view for each payment
-  const MobilePaymentCard = ({ payment, index }: { payment: any; index: number }) => (
+  const MobileRecordCard = ({ record, index }: { record: UnifiedRecord; index: number }) => (
     <div className="p-4 border-b border-border last:border-b-0">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground bg-muted rounded-full w-6 h-6 flex items-center justify-center">{index + 1}</span>
-          <span className="font-medium text-sm">{payment.members?.full_name || '-'}</span>
+          <span className="font-medium text-sm">{record.name}</span>
         </div>
-        <span className="font-bold text-sm font-mono">{formatCurrency(Number(payment.amount))}</span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Badge variant="secondary" className="text-xs">
-          {PAYMENT_TYPE_LABELS[payment.payment_type] || payment.payment_type}
-        </Badge>
-        <Badge variant="outline" className="text-xs">
-          {METHOD_LABELS[payment.method] || payment.method}
-        </Badge>
-        <span className="text-muted-foreground">
-          {format(new Date(payment.created_at!), 'dd/MM/yyyy')}
+        <span className={`font-bold text-sm font-mono ${record.recordKind === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
+          {record.recordKind === 'expense' ? '-' : '+'}{formatCurrency(record.amount)}
         </span>
       </div>
-      {payment.notes && (
-        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{payment.notes}</p>
-      )}
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <Badge variant={record.recordKind === 'income' ? 'default' : 'destructive'} className="text-xs">
+          {record.recordKind === 'income' ? 'הכנסה' : 'הוצאה'}
+        </Badge>
+        <Badge variant="secondary" className="text-xs">{record.typeLabel}</Badge>
+        {record.method !== '-' && <Badge variant="outline" className="text-xs">{record.method}</Badge>}
+        <span className="text-muted-foreground">{formatDate(record.date)}</span>
+      </div>
+      {record.notes && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{record.notes}</p>}
     </div>
   );
 
@@ -296,13 +312,13 @@ export default function DetailedReport() {
             </Button>
           </div>
         </div>
-        <p className="text-muted-foreground text-xs sm:text-sm">רשימת תשלומים עם שמות וסכומים</p>
+        <p className="text-muted-foreground text-xs sm:text-sm">הכנסות, הוצאות ותנועות תקציב</p>
       </div>
 
       {/* Filters */}
       <Card>
         <CardContent className="pt-4 pb-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">מתאריך</Label>
               <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} dir="ltr" className="h-9 text-sm" />
@@ -311,7 +327,20 @@ export default function DetailedReport() {
               <Label className="text-xs">עד תאריך</Label>
               <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} dir="ltr" className="h-9 text-sm" />
             </div>
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
+            <div className="space-y-1.5">
+              <Label className="text-xs">סוג רשומה</Label>
+              <Select value={recordTypeFilter} onValueChange={setRecordTypeFilter}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(RECORD_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
               <Label className="text-xs">סוג תשלום</Label>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="h-9 text-sm">
@@ -324,12 +353,11 @@ export default function DetailedReport() {
                 </SelectContent>
               </Select>
             </div>
-            {/* Group by member toggle */}
-            <div className="flex items-center gap-2 col-span-2 sm:col-span-3 pt-1">
+            <div className="flex items-center gap-2 col-span-2 sm:col-span-4 pt-1">
               <Switch checked={groupByMember} onCheckedChange={setGroupByMember} id="group-toggle" />
               <Label htmlFor="group-toggle" className="text-xs flex items-center gap-1 cursor-pointer">
                 <Users className="w-3.5 h-3.5" />
-                קיבוץ לפי חבר
+                קיבוץ לפי שם
               </Label>
             </div>
           </div>
@@ -337,17 +365,31 @@ export default function DetailedReport() {
       </Card>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Card>
-          <CardContent className="p-3 sm:p-4 flex items-center justify-between">
-            <span className="text-muted-foreground text-xs sm:text-sm">סה״כ</span>
-            <span className="text-base sm:text-xl font-bold">{isLoading ? '...' : formatCurrency(totalAmount)}</span>
+          <CardContent className="p-3 sm:p-4 flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1 text-emerald-600">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-xs text-muted-foreground">הכנסות</span>
+            </div>
+            <span className="text-sm sm:text-lg font-bold text-emerald-600">{isLoading ? '...' : formatCurrency(totalIncome)}</span>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-3 sm:p-4 flex items-center justify-between">
-            <span className="text-muted-foreground text-xs sm:text-sm">רשומות</span>
-            <span className="text-base sm:text-xl font-bold">{isLoading ? '...' : payments.length}</span>
+          <CardContent className="p-3 sm:p-4 flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1 text-red-600">
+              <TrendingDown className="w-4 h-4" />
+              <span className="text-xs text-muted-foreground">הוצאות</span>
+            </div>
+            <span className="text-sm sm:text-lg font-bold text-red-600">{isLoading ? '...' : formatCurrency(totalExpenses)}</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3 sm:p-4 flex flex-col items-center gap-1">
+            <span className="text-xs text-muted-foreground">יתרה</span>
+            <span className={`text-sm sm:text-lg font-bold ${totalBalance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+              {isLoading ? '...' : formatCurrency(totalBalance)}
+            </span>
           </CardContent>
         </Card>
       </div>
@@ -359,34 +401,32 @@ export default function DetailedReport() {
             <div className="p-4 space-y-2">
               {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 sm:h-10 w-full" />)}
             </div>
-          ) : payments.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">אין תשלומים בתקופה זו</div>
+          ) : allRecords.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">אין רשומות בתקופה זו</div>
           ) : groupByMember && groupedData ? (
-            /* Grouped by member view */
             <div>
               {groupedData.map((group) => (
                 <div key={group.name} className="border-b border-border last:border-b-0">
-                  {/* Group header */}
                   <div className="px-4 py-3 bg-muted/40 flex items-center justify-between sticky top-0">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-muted-foreground" />
                       <span className="font-bold text-sm">{group.name}</span>
-                      <Badge variant="secondary" className="text-xs">{group.payments.length} תשלומים</Badge>
+                      <Badge variant="secondary" className="text-xs">{group.records.length}</Badge>
                     </div>
-                    <span className="font-bold text-sm font-mono">{formatCurrency(group.total)}</span>
+                    <div className="flex gap-3 text-xs font-bold">
+                      {group.totalIncome > 0 && <span className="text-emerald-600">+{formatCurrency(group.totalIncome)}</span>}
+                      {group.totalExpenses > 0 && <span className="text-red-600">-{formatCurrency(group.totalExpenses)}</span>}
+                    </div>
                   </div>
-                  {/* Group items - mobile */}
                   <div className="sm:hidden">
-                    {group.payments.map((p, i) => (
-                      <MobilePaymentCard key={p.id} payment={p} index={i} />
-                    ))}
+                    {group.records.map((r, i) => <MobileRecordCard key={r.id} record={r} index={i} />)}
                   </div>
-                  {/* Group items - desktop */}
                   <div className="hidden sm:block">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="text-right">סוג</TableHead>
+                          <TableHead className="text-right">קטגוריה</TableHead>
                           <TableHead className="text-right">אמצעי</TableHead>
                           <TableHead className="text-right">סכום</TableHead>
                           <TableHead className="text-right">תאריך</TableHead>
@@ -394,13 +434,20 @@ export default function DetailedReport() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {group.payments.map((p) => (
-                          <TableRow key={p.id}>
-                            <TableCell>{PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type}</TableCell>
-                            <TableCell>{METHOD_LABELS[p.method] || p.method}</TableCell>
-                            <TableCell className="font-mono">{formatCurrency(Number(p.amount))}</TableCell>
-                            <TableCell>{format(new Date(p.created_at!), 'dd/MM/yyyy')}</TableCell>
-                            <TableCell className="max-w-[150px] truncate">{p.notes || '-'}</TableCell>
+                        {group.records.map((r) => (
+                          <TableRow key={r.id}>
+                            <TableCell>
+                              <Badge variant={r.recordKind === 'income' ? 'default' : 'destructive'} className="text-xs">
+                                {r.recordKind === 'income' ? 'הכנסה' : 'הוצאה'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{r.typeLabel}</TableCell>
+                            <TableCell>{r.method}</TableCell>
+                            <TableCell className={`font-mono ${r.recordKind === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {formatCurrency(r.amount)}
+                            </TableCell>
+                            <TableCell>{formatDate(r.date)}</TableCell>
+                            <TableCell className="max-w-[150px] truncate">{r.notes || '-'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -408,26 +455,20 @@ export default function DetailedReport() {
                   </div>
                 </div>
               ))}
-              {/* Grand total */}
               <div className="p-4 bg-muted/50 flex items-center justify-between font-bold text-sm">
-                <span>סה״כ כללי ({groupedData.length} חברים, {payments.length} רשומות)</span>
-                <span className="font-mono">{formatCurrency(totalAmount)}</span>
+                <span>סה״כ ({allRecords.length} רשומות)</span>
+                <span className={`font-mono ${totalBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(totalBalance)}</span>
               </div>
             </div>
           ) : (
-            /* Flat list view */
             <>
-              {/* Mobile */}
               <div className="sm:hidden">
-                {payments.map((p, i) => (
-                  <MobilePaymentCard key={p.id} payment={p} index={i} />
-                ))}
+                {allRecords.map((r, i) => <MobileRecordCard key={r.id} record={r} index={i} />)}
                 <div className="p-4 bg-muted/50 flex items-center justify-between font-bold text-sm">
-                  <span>סה״כ ({payments.length} רשומות)</span>
-                  <span className="font-mono">{formatCurrency(totalAmount)}</span>
+                  <span>סה״כ ({allRecords.length} רשומות)</span>
+                  <span className={`font-mono ${totalBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(totalBalance)}</span>
                 </div>
               </div>
-              {/* Desktop */}
               <div className="hidden sm:block overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -435,6 +476,7 @@ export default function DetailedReport() {
                       <TableHead className="text-right">#</TableHead>
                       <TableHead className="text-right">שם</TableHead>
                       <TableHead className="text-right">סוג</TableHead>
+                      <TableHead className="text-right">קטגוריה</TableHead>
                       <TableHead className="text-right">אמצעי</TableHead>
                       <TableHead className="text-right">סכום</TableHead>
                       <TableHead className="text-right">תאריך</TableHead>
@@ -442,15 +484,22 @@ export default function DetailedReport() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {payments.map((p, i) => (
-                      <TableRow key={p.id}>
+                    {allRecords.map((r, i) => (
+                      <TableRow key={r.id}>
                         <TableCell>{i + 1}</TableCell>
-                        <TableCell className="font-medium">{(p as any).members?.full_name || '-'}</TableCell>
-                        <TableCell>{PAYMENT_TYPE_LABELS[p.payment_type] || p.payment_type}</TableCell>
-                        <TableCell>{METHOD_LABELS[p.method] || p.method}</TableCell>
-                        <TableCell className="font-mono">{formatCurrency(Number(p.amount))}</TableCell>
-                        <TableCell>{format(new Date(p.created_at!), 'dd/MM/yyyy')}</TableCell>
-                        <TableCell className="max-w-[150px] truncate">{p.notes || '-'}</TableCell>
+                        <TableCell className="font-medium">{r.name}</TableCell>
+                        <TableCell>
+                          <Badge variant={r.recordKind === 'income' ? 'default' : 'destructive'} className="text-xs">
+                            {r.recordKind === 'income' ? 'הכנסה' : 'הוצאה'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{r.typeLabel}</TableCell>
+                        <TableCell>{r.method}</TableCell>
+                        <TableCell className={`font-mono ${r.recordKind === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {formatCurrency(r.amount)}
+                        </TableCell>
+                        <TableCell>{formatDate(r.date)}</TableCell>
+                        <TableCell className="max-w-[150px] truncate">{r.notes || '-'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
