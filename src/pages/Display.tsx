@@ -700,6 +700,15 @@ export default function Display() {
     >
       {displayBgUrl && <div className="absolute inset-0 bg-black/50 z-0" />}
 
+      {/* Wake Lock Indicator */}
+      <div className="absolute bottom-3 left-3 z-50">
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-sm text-xs font-medium transition-colors ${wakeLockActive ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+          <MonitorSmartphone className="w-3.5 h-3.5" />
+          <span>{wakeLockActive ? 'מסך פעיל' : 'מסך רגיל'}</span>
+          <span className={`w-1.5 h-1.5 rounded-full ${wakeLockActive ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
+        </div>
+      </div>
+
       {/* Fullscreen Controls */}
       <AnimatePresence>
         {(!isFullscreen || (showControls && !isLocked)) && (
