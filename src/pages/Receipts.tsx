@@ -604,8 +604,8 @@ export default function Receipts() {
                         <span>{formatShortDate(receipt.created_at)}</span>
                         {receipt.description && (
                           <>
-                            <span className="hidden sm:inline">•</span>
-                            <span className="hidden sm:inline truncate max-w-[150px]">{receipt.description}</span>
+                            <span>•</span>
+                            <span className="truncate max-w-[120px] sm:max-w-[150px]">{receipt.description}</span>
                           </>
                         )}
                       </div>
