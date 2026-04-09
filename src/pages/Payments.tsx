@@ -776,7 +776,7 @@ export default function Payments() {
                             </Badge>
                             {(payment as any).total_installments > 1 && (
                               <span className="text-xs">
-                                (תשלום {(payment as any).installment_number}/{(payment as any).total_installments})
+                                ({(payment as any).installment_number === 1 ? 'מקדמה' : 'תשלום מלא'})
                               </span>
                             )}
                           </>
@@ -1017,17 +1017,14 @@ export default function Payments() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs">תשלום מספר</Label>
+                  <Label className="text-xs">סוג תשלום</Label>
                   <Select value={installmentNumber} onValueChange={setInstallmentNumber}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Array.from({ length: Number(totalInstallments) || 1 }, (_, i) => (
-                        <SelectItem key={i + 1} value={String(i + 1)}>
-                          תשלום {i + 1} מתוך {totalInstallments}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="1">מקדמה</SelectItem>
+                      <SelectItem value="2">תשלום מלא</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
