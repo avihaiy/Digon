@@ -80,6 +80,7 @@ export default function Budget() {
   const [formData, setFormData] = useState({
     type: 'income' as TransactionType,
     category_id: '',
+    custom_category: '',
     amount: '',
     description: '',
     reference: '',
