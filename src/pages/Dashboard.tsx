@@ -160,9 +160,9 @@ export default function Dashboard() {
               <span>קבל תשלום</span>
             </Button>
           </Link>
-          <Link to="/expenses" className="col-span-1">
-            <Button variant="outline" className="gap-1 w-full text-xs md:text-sm">
-              <TrendingDown className="w-4 h-4 flex-shrink-0" />
+          <Link to="/budget" className="col-span-1">
+            <Button variant="outline" className="gap-1 w-full text-xs md:text-sm px-2">
+              <Wallet className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">הוצאות</span>
             </Button>
           </Link>
