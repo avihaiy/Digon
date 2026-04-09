@@ -351,7 +351,7 @@ export default function Payments() {
     e.preventDefault();
     
     // If using custom name for hall, create a member first
-    if (useCustomName && paymentCategory === 'hall') {
+    if (useCustomName) {
       if (!customName.trim()) {
         toast.error('יש להזין שם');
         return;
@@ -388,7 +388,7 @@ export default function Payments() {
         // Create new member
         const { data: newMember, error } = await supabase
           .from('members')
-          .insert({ full_name: customName.trim(), active: false, notes: 'נוצר אוטומטית - שכירות אולם' })
+          .insert({ full_name: customName.trim(), active: false, notes: 'נוצר אוטומטית - תשלום' })
           .select('id')
           .single();
         
@@ -1043,8 +1043,8 @@ export default function Payments() {
             {/* Member Selection */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>{useCustomName ? 'שם המזמין *' : 'בחר חבר *'}</Label>
-                {paymentCategory === 'hall' && !editingPayment && (
+                <Label>{useCustomName ? 'שם *' : 'בחר חבר *'}</Label>
+                {!editingPayment && (
                   <button
                     type="button"
                     onClick={() => {
