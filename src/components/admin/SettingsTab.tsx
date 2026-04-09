@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface SettingsTabProps {
@@ -22,6 +22,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [synagogueName, setSynagogueName] = useState('בית הכנסת');
   const [receiptEmail, setReceiptEmail] = useState('');
   const [displayLockCode, setDisplayLockCode] = useState('1234');
+  const [deleteProtectionCode, setDeleteProtectionCode] = useState('');
   const [tvDurations, setTvDurations] = useState({
     general: 30,
     memorial: 20,
@@ -69,6 +70,19 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         .eq('key', 'display_lock_code')
         .maybeSingle();
       return data?.value || '1234';
+    },
+  });
+
+  // Load delete protection code
+  const { data: deleteCodeSetting } = useQuery({
+    queryKey: ['app-settings-delete-code'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'delete_protection_code')
+        .maybeSingle();
+      return data?.value || '';
     },
   });
 
@@ -139,6 +153,12 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
       setDisplayLockCode(lockCodeSetting);
     }
   }, [lockCodeSetting]);
+
+  useEffect(() => {
+    if (deleteCodeSetting !== undefined) {
+      setDeleteProtectionCode(deleteCodeSetting);
+    }
+  }, [deleteCodeSetting]);
 
   // Save synagogue name
   const saveNameMutation = useMutation({
@@ -229,6 +249,21 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-settings-display-lock-code'] });
       toast({ title: 'קוד הנעילה נשמר בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
+  // Save delete protection code
+  const saveDeleteCodeMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'delete_protection_code', value: code }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-delete-code'] });
+      toast({ title: 'קוד הגנת מחיקה נשמר בהצלחה' });
     },
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
