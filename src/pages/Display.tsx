@@ -225,32 +225,87 @@ export default function Display() {
     if (sd?.value) setTickerSpeed(sd.value);
   }, []);
 
-  // Wake Lock - always keep screen on in display mode
+  // Wake Lock - keep screen on (Wake Lock API + video fallback for iOS Safari)
+  const noSleepVideoRef = useRef<HTMLVideoElement | null>(null);
+
   useEffect(() => {
+    let wakeLockSupported = false;
+
+    // Method 1: Wake Lock API (Chrome, Edge, Android Chrome)
     const requestWakeLock = async () => {
       if ("wakeLock" in navigator) {
         try {
           wakeLockRef.current = await (
             navigator as Navigator & { wakeLock: { request: (type: string) => Promise<WakeLockSentinel> } }
           ).wakeLock.request("screen");
+          wakeLockSupported = true;
           setWakeLockActive(true);
           wakeLockRef.current.addEventListener("release", () => setWakeLockActive(false));
-          console.log("Wake lock acquired - screen will stay on");
+          console.log("Wake lock acquired via API");
         } catch (e) {
-          console.log("Wake lock failed:", e);
+          console.log("Wake lock API failed:", e);
         }
       }
     };
-    requestWakeLock();
+
+    // Method 2: Silent video trick (iOS Safari fallback)
+    const startVideoFallback = () => {
+      if (noSleepVideoRef.current) return;
+      try {
+        const video = document.createElement("video");
+        video.setAttribute("playsinline", "");
+        video.setAttribute("muted", "");
+        video.setAttribute("loop", "");
+        video.muted = true;
+        video.style.position = "fixed";
+        video.style.top = "-9999px";
+        video.style.left = "-9999px";
+        video.style.width = "1px";
+        video.style.height = "1px";
+        video.style.opacity = "0.01";
+        // Minimal valid MP4 (silent, tiny)
+        const base64 = "AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAAhtZGF0AAAA1m1vb3YAAABsbXZoZAAAAAAAAAAAAAAAAAAAA+gAAAAAAAEAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA" +
+          "AQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAABRdWR0YQAAAENtZXRhAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTguNDUuMTAw";
+        video.src = "data:video/mp4;base64," + base64;
+        document.body.appendChild(video);
+        video.play().then(() => {
+          noSleepVideoRef.current = video;
+          if (!wakeLockSupported) setWakeLockActive(true);
+          console.log("NoSleep video fallback active");
+        }).catch((e) => {
+          console.log("Video fallback failed:", e);
+          video.remove();
+        });
+      } catch (e) {
+        console.log("Video fallback error:", e);
+      }
+    };
+
+    const enableNoSleep = async () => {
+      await requestWakeLock();
+      // Always start video fallback as backup (especially for iOS)
+      startVideoFallback();
+    };
+
+    enableNoSleep();
+
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") requestWakeLock();
+      if (document.visibilityState === "visible") {
+        enableNoSleep();
+      }
     };
     document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
       document.removeEventListener("visibilitychange", handleVisibility);
       if (wakeLockRef.current) {
         wakeLockRef.current.release().catch(() => {});
         wakeLockRef.current = null;
+      }
+      if (noSleepVideoRef.current) {
+        noSleepVideoRef.current.pause();
+        noSleepVideoRef.current.remove();
+        noSleepVideoRef.current = null;
       }
     };
   }, []);
