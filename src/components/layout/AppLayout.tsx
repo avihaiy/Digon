@@ -97,7 +97,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-sidebar-border">
+          <div className="p-6 border-b border-sidebar-border" style={{ paddingTop: 'calc(1.5rem + env(safe-area-inset-top))' }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img 
@@ -243,7 +243,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <OfflineBanner />
         
         {/* Top header */}
-        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 h-16 flex items-center justify-between">
+        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(4rem + env(safe-area-inset-top))' }}>
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 hover:bg-secondary rounded-lg"
