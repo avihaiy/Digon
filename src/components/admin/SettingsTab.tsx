@@ -373,6 +373,45 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             </Button>
           </CardContent>
         </Card>
+
+        {/* Delete Protection Code */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5" />
+              קוד הגנת מחיקה
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>קוד לאישור מחיקת תשלומים וקבלות</Label>
+              <Input 
+                type="text"
+                maxLength={6}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                value={deleteProtectionCode}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setDeleteProtectionCode(val);
+                }}
+                placeholder="השאר ריק לביטול ההגנה"
+                dir="ltr"
+                className="font-mono text-center text-xl tracking-widest"
+              />
+              <p className="text-xs text-muted-foreground">
+                כשקוד מוגדר, יידרש להזינו לפני כל מחיקה של תשלום או קבלה. השאר ריק כדי לבטל את ההגנה.
+              </p>
+            </div>
+            <Button 
+              onClick={() => saveDeleteCodeMutation.mutate(deleteProtectionCode)}
+              disabled={saveDeleteCodeMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              {deleteProtectionCode ? 'שמור קוד' : 'בטל הגנה'}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Location */}

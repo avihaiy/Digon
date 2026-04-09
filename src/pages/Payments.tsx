@@ -1330,30 +1330,15 @@ export default function Payments() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deletePaymentId} onOpenChange={(open) => !open && setDeletePaymentId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת תשלום</AlertDialogTitle>
-            <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק תשלום זה? פעולה זו תמחק גם את הקבלה המשויכת ולא ניתן לבטלה.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row-reverse gap-2">
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deletePaymentId && deletePayment.mutate(deletePaymentId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deletePayment.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                'מחק'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Confirmation Dialog with Code Protection */}
+      <DeleteCodeDialog
+        open={!!deletePaymentId}
+        onOpenChange={(open) => !open && setDeletePaymentId(null)}
+        title="מחיקת תשלום"
+        description="האם אתה בטוח שברצונך למחוק תשלום זה? פעולה זו תמחק גם את הקבלה המשויכת ולא ניתן לבטלה."
+        onConfirm={() => deletePaymentId && deletePayment.mutate(deletePaymentId)}
+        isPending={deletePayment.isPending}
+      />
 
       {/* Receipt Preview Dialog */}
       <ReceiptPreviewDialog
