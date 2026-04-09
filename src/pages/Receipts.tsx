@@ -65,6 +65,7 @@ import { ShareDebugPanel } from '@/components/ShareDebugPanel';
 
 export default function Receipts() {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterParasha, setFilterParasha] = useState<string>('');
   const [filterDateFrom, setFilterDateFrom] = useState<Date | undefined>();
