@@ -160,10 +160,10 @@ export default function Dashboard() {
               <span>קבל תשלום</span>
             </Button>
           </Link>
-          <Link to="/expense-reports" className="col-span-1">
+          <Link to="/expenses" className="col-span-1">
             <Button variant="outline" className="gap-1 w-full text-xs md:text-sm">
-              <PieChart className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">דו"ח</span>
+              <TrendingDown className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">הוצאות</span>
             </Button>
           </Link>
           <Link to="/display-finance" target="_blank" className="col-span-1">
