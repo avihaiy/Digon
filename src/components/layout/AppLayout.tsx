@@ -120,8 +120,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </div>
               </div>
               <button
-                onClick={() => setSidebarOpen(false)}
-                className="lg:hidden text-sidebar-foreground"
+                onClick={() => { triggerHaptic(); setSidebarOpen(false); }}
+                className="lg:hidden text-sidebar-foreground active:scale-90 transition-transform"
               >
                 <X className="w-5 h-5" />
               </button>
