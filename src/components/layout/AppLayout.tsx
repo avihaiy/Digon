@@ -257,8 +257,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {/* Top header */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(4rem + env(safe-area-inset-top))' }}>
           <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 hover:bg-secondary rounded-lg"
+            onClick={() => { triggerHaptic(); setSidebarOpen(true); }}
+            className="lg:hidden p-2 hover:bg-secondary rounded-lg active:scale-95 transition-transform"
           >
             <Menu className="w-5 h-5" />
           </button>
