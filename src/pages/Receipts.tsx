@@ -43,7 +43,16 @@ import {
   FileSpreadsheet,
   Wifi,
   Share2,
+  MoreVertical,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCurrency, formatShortDate, formatDate, getHebrewDate, PARASHA_LIST } from '@/lib/hebrew-utils';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -56,6 +65,7 @@ import { ShareDebugPanel } from '@/components/ShareDebugPanel';
 
 export default function Receipts() {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterParasha, setFilterParasha] = useState<string>('');
   const [filterDateFrom, setFilterDateFrom] = useState<Date | undefined>();
@@ -594,8 +604,8 @@ export default function Receipts() {
                         <span>{formatShortDate(receipt.created_at)}</span>
                         {receipt.description && (
                           <>
-                            <span className="hidden sm:inline">•</span>
-                            <span className="hidden sm:inline truncate max-w-[150px]">{receipt.description}</span>
+                            <span>•</span>
+                            <span className="truncate max-w-[120px] sm:max-w-[150px]">{receipt.description}</span>
                           </>
                         )}
                       </div>
@@ -607,91 +617,105 @@ export default function Receipts() {
 
                   {/* Bottom row: Actions */}
                   <div className="flex items-center justify-end gap-1 sm:gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setPreviewReceipt(receipt)}
-                      title="תצוגה מקדימה"
-                      className="h-8 w-8 p-0"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handlePrint(receipt)}
-                      title="הדפסה ישירה"
-                      className="h-8 w-8 p-0"
-                    >
-                      <Printer className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRemotePrint(receipt)}
-                      title="הדפס קבלה מרחוק"
-                      className="h-8 w-8 p-0"
-                    >
-                      <Wifi className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleShareReceipt(receipt)}
-                      title="שתף לווצאפ"
-                      className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                       onClick={async () => {
-                        try {
-                          const result = await shareReceipt(receipt);
-                          if (result === 'shared_with_file') toast.success('הקבלה שותפה עם קובץ');
-                          else if (result === 'shared_with_file_clipboard') toast.success('הקבלה שותפה! הטקסט הועתק - הדבק בצ׳אט');
-                          else if (result === 'whatsapp_with_download') toast.success('הקבלה הורדה ונשלחה לווצאפ');
-                          else toast.success('הקבלה שותפה בהצלחה');
-                        } catch (error: any) {
-                          if (error?.name !== 'AbortError') {
-                            console.error('General share error:', error);
-                            toast.error('שגיאה בשיתוף');
+                    {isMobile ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setPreviewReceipt(receipt)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleShareReceipt(receipt)}
+                          className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-background">
+                            <DropdownMenuItem onClick={() => handlePrint(receipt)}>
+                              <Printer className="w-4 h-4 ml-2" />
+                              הדפסה ישירה
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleRemotePrint(receipt)}>
+                              <Wifi className="w-4 h-4 ml-2" />
+                              הדפסה מרחוק
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={async () => {
+                              try {
+                                const result = await shareReceipt(receipt);
+                                if (result === 'shared_with_file') toast.success('הקבלה שותפה עם קובץ');
+                                else if (result === 'shared_with_file_clipboard') toast.success('הקבלה שותפה! הטקסט הועתק');
+                                else toast.success('הקבלה שותפה בהצלחה');
+                              } catch (error: any) {
+                                if (error?.name !== 'AbortError') toast.error('שגיאה בשיתוף');
+                              }
+                            }}>
+                              <Share2 className="w-4 h-4 ml-2" />
+                              שתף כללי
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEmail(receipt)}>
+                              <Mail className="w-4 h-4 ml-2" />
+                              שלח באימייל
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleEditReceipt(receipt)}>
+                              <Edit className="w-4 h-4 ml-2" />
+                              עריכה
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDeleteReceiptId(receipt.id)} className="text-destructive">
+                              <Trash2 className="w-4 h-4 ml-2" />
+                              מחיקה
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
+                    ) : (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => setPreviewReceipt(receipt)} title="תצוגה מקדימה" className="h-8 w-8 p-0">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handlePrint(receipt)} title="הדפסה ישירה" className="h-8 w-8 p-0">
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleRemotePrint(receipt)} title="הדפס מרחוק" className="h-8 w-8 p-0">
+                          <Wifi className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleShareReceipt(receipt)} title="שתף לווצאפ" className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
+                          <MessageCircle className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={async () => {
+                          try {
+                            const result = await shareReceipt(receipt);
+                            if (result === 'shared_with_file') toast.success('הקבלה שותפה עם קובץ');
+                            else if (result === 'shared_with_file_clipboard') toast.success('הקבלה שותפה! הטקסט הועתק');
+                            else toast.success('הקבלה שותפה בהצלחה');
+                          } catch (error: any) {
+                            if (error?.name !== 'AbortError') toast.error('שגיאה בשיתוף');
                           }
-                        }
-                      }}
-                      title="שתף כללי"
-                      className="h-8 w-8 p-0"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEmail(receipt)}
-                      title="שלח באימייל"
-                      className="h-8 w-8 p-0 hidden sm:flex"
-                    >
-                      <Mail className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEditReceipt(receipt)}
-                      title="עריכה"
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setDeleteReceiptId(receipt.id)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      title="מחיקה"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                        }} title="שתף כללי" className="h-8 w-8 p-0">
+                          <Share2 className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEmail(receipt)} title="שלח באימייל" className="h-8 w-8 p-0">
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEditReceipt(receipt)} title="עריכה" className="h-8 w-8 p-0">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setDeleteReceiptId(receipt.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive" title="מחיקה">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
