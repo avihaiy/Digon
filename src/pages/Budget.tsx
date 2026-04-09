@@ -559,18 +559,31 @@ export default function Budget() {
               </div>
             </div>
 
-            <div>
+            <div className="relative">
               <label className="text-sm font-medium mb-2 block">קטגוריה</label>
-              <Select value={formData.category_id} onValueChange={(v) => setFormData({ ...formData, category_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר קטגוריה" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                placeholder="בחר או הקלד קטגוריה..."
+                value={
+                  formData.category_id
+                    ? filteredCategories.find(c => c.id === formData.category_id)?.name || formData.custom_category
+                    : formData.custom_category
+                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const match = filteredCategories.find(c => c.name === val);
+                  setFormData({
+                    ...formData,
+                    category_id: match ? match.id : '',
+                    custom_category: val,
+                  });
+                }}
+                list={`category-list-${formData.type}`}
+              />
+              <datalist id={`category-list-${formData.type}`}>
+                {filteredCategories.map((cat) => (
+                  <option key={cat.id} value={cat.name} />
+                ))}
+              </datalist>
             </div>
 
             <div>
