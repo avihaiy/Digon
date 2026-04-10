@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useDisplayRotation } from '@/hooks/useDisplayRotation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -170,9 +171,12 @@ export default function DisplayTV() {
 
   const handleMouseMove = () => setShowControls(true);
 
+  const { rotationStyle } = useDisplayRotation();
+
   return (
     <div 
       className="min-h-screen bg-slate-950 overflow-hidden select-none cursor-none"
+      style={rotationStyle}
       onMouseMove={handleMouseMove}
       onClick={() => setShowControls(true)}
     >

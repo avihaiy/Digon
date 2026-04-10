@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useDisplayRotation } from '@/hooks/useDisplayRotation';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -182,8 +183,10 @@ export default function DisplayGeneral() {
     return time.slice(0, 5);
   };
 
+  const { rotationStyle } = useDisplayRotation();
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 overflow-hidden" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-50 p-4 overflow-hidden" dir="rtl" style={rotationStyle}>
       {/* Main Container with Decorative Border */}
       <div className="h-full bg-gradient-to-b from-amber-100/80 to-orange-100/60 rounded-2xl border-4 border-amber-700 shadow-2xl overflow-hidden">
         
