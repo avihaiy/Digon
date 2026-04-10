@@ -35,9 +35,70 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ניהול גבאות" />
     <meta name="twitter:description" content="מערכת ניהול גבאות מקצועית לבית הכנסת" />
+    <style>
+      #splash-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(160deg, #1a1a2e 0%, #2d1b3d 50%, #1a1a2e 100%);
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      #splash-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      #splash-logo {
+        width: 100px;
+        height: 100px;
+        border-radius: 24px;
+        object-fit: cover;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 60px rgba(212,175,55,0.15);
+        animation: splash-pulse 2s ease-in-out infinite;
+      }
+      #splash-title {
+        margin-top: 24px;
+        font-family: 'Heebo', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #f5f0e8;
+        letter-spacing: 0.5px;
+      }
+      #splash-subtitle {
+        margin-top: 8px;
+        font-family: 'Heebo', sans-serif;
+        font-size: 0.875rem;
+        color: rgba(245,240,232,0.6);
+      }
+      #splash-loader {
+        margin-top: 32px;
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(212,175,55,0.2);
+        border-top-color: #d4af37;
+        border-radius: 50%;
+        animation: splash-spin 0.8s linear infinite;
+      }
+      @keyframes splash-pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      @keyframes splash-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
   </head>
 
   <body>
+    <div id="splash-screen">
+      <img id="splash-logo" src="/brit-shalom-logo.jpeg" alt="לוגו" />
+      <div id="splash-title">מערכת ניהול גבאות</div>
+      <div id="splash-subtitle">בית הכנסת ברית שלום</div>
+      <div id="splash-loader"></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
