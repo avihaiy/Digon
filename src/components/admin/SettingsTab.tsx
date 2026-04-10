@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface SettingsTabProps {
@@ -33,7 +33,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     memorial: true,
     finance: true,
   });
-
+  const [displayRotated, setDisplayRotated] = useState(false);
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
@@ -124,6 +124,19 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     },
   });
 
+  // Load display rotation
+  const { data: rotationSetting } = useQuery({
+    queryKey: ['app-settings-display-rotation'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'display_rotation')
+        .maybeSingle();
+      return data?.value === 'true';
+    },
+  });
+
   useEffect(() => {
     if (nameSetting) {
       setSynagogueName(nameSetting);
@@ -159,6 +172,12 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
       setDeleteProtectionCode(deleteCodeSetting);
     }
   }, [deleteCodeSetting]);
+
+  useEffect(() => {
+    if (rotationSetting !== undefined) {
+      setDisplayRotated(rotationSetting);
+    }
+  }, [rotationSetting]);
 
   // Save synagogue name
   const saveNameMutation = useMutation({
@@ -234,6 +253,21 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
       queryClient.invalidateQueries({ queryKey: ['app-settings-tv-screens-enabled'] });
       queryClient.invalidateQueries({ queryKey: ['tv-screens-enabled'] });
       toast({ title: 'הגדרות המסכים נשמרו בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
+  // Save display rotation
+  const saveRotationMutation = useMutation({
+    mutationFn: async (rotated: boolean) => {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'display_rotation', value: String(rotated) }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-display-rotation'] });
+      toast({ title: 'כיוון התצוגה נשמר בהצלחה' });
     },
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
@@ -572,7 +606,33 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         </CardContent>
       </Card>
 
-      {/* Display Links */}
+      {/* Display Rotation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <RotateCcw className="w-5 h-5" />
+            כיוון מסך התצוגה
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label>סיבוב 180°</Label>
+              <p className="text-xs text-muted-foreground">
+                הפעל אם הטאבלט מורכב הפוך
+              </p>
+            </div>
+            <Switch
+              checked={displayRotated}
+              onCheckedChange={(checked) => {
+                setDisplayRotated(checked);
+                saveRotationMutation.mutate(checked);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

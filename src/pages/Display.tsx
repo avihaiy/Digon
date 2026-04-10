@@ -195,6 +195,7 @@ export default function Display() {
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
+  const [displayRotated, setDisplayRotated] = useState(false);
   const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements" | "omer")[]>([
     "heichal",
     "memorial",
@@ -330,6 +331,7 @@ export default function Display() {
           "display_slide_durations",
           "synagogue_name",
           "ticker_speed",
+          "display_rotation",
         ]);
       if (data) {
         for (const setting of data) {
@@ -342,6 +344,7 @@ export default function Display() {
           if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
+          if (setting.key === "display_rotation") setDisplayRotated(setting.value === "true");
           if (setting.key === "display_slide_durations" && setting.value) {
             try {
               setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
@@ -731,8 +734,6 @@ export default function Display() {
   const sefiratHaOmer = getSefiratHaOmer(currentTime);
   const parasha = getCurrentParasha();
 
-  const isRotated = new URLSearchParams(window.location.search).get('rotate') === '180';
-
   return (
     <div
       ref={containerRef}
@@ -742,7 +743,7 @@ export default function Display() {
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
         paddingBottom: "env(safe-area-inset-bottom)",
-        ...(isRotated ? { transform: "rotate(180deg)" } : {}),
+        ...(displayRotated ? { transform: "rotate(180deg)" } : {}),
         ...(displayBgUrl
           ? {
               backgroundImage: `url(${displayBgUrl})`,
