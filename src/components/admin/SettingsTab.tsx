@@ -265,7 +265,9 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         .upsert({ key: 'display_rotation', value: rotation }, { onConflict: 'key' });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, rotation) => {
+      // Cache for PWA manifest selection at page load
+      localStorage.setItem('display_rotation', rotation);
       queryClient.invalidateQueries({ queryKey: ['app-settings-display-rotation'] });
       toast({ title: 'כיוון התצוגה נשמר בהצלחה' });
     },
