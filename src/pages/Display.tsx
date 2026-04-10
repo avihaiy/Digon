@@ -331,6 +331,7 @@ export default function Display() {
           "display_slide_durations",
           "synagogue_name",
           "ticker_speed",
+          "display_rotation",
         ]);
       if (data) {
         for (const setting of data) {
