@@ -633,10 +633,10 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">רגיל (ללא סיבוב)</SelectItem>
-                <SelectItem value="90">90° (Landscape ימינה)</SelectItem>
-                <SelectItem value="180">180° (הפוך)</SelectItem>
-                <SelectItem value="270">270° (Landscape שמאלה)</SelectItem>
+                <SelectItem value="0">רגיל (Landscape)</SelectItem>
+                <SelectItem value="90">90° (Portrait ימינה)</SelectItem>
+                <SelectItem value="180">180° (Landscape הפוך)</SelectItem>
+                <SelectItem value="270">270° (Portrait שמאלה)</SelectItem>
               </SelectContent>
             </Select>
           </div>
