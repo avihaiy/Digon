@@ -743,7 +743,7 @@ export default function Display() {
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
         paddingBottom: "env(safe-area-inset-bottom)",
-        ...(isRotated ? { transform: "rotate(180deg)" } : {}),
+        ...(displayRotated ? { transform: "rotate(180deg)" } : {}),
         ...(displayBgUrl
           ? {
               backgroundImage: `url(${displayBgUrl})`,
