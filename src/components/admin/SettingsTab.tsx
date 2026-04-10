@@ -33,7 +33,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     memorial: true,
     finance: true,
   });
-  const [displayRotated, setDisplayRotated] = useState(false);
+  const [displayRotation, setDisplayRotation] = useState('0');
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
@@ -133,7 +133,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         .select('value')
         .eq('key', 'display_rotation')
         .maybeSingle();
-      return data?.value === 'true';
+      return data?.value || '0';
     },
   });
 
@@ -175,7 +175,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
 
   useEffect(() => {
     if (rotationSetting !== undefined) {
-      setDisplayRotated(rotationSetting);
+      setDisplayRotation(rotationSetting);
     }
   }, [rotationSetting]);
 
@@ -259,10 +259,10 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
 
   // Save display rotation
   const saveRotationMutation = useMutation({
-    mutationFn: async (rotated: boolean) => {
+    mutationFn: async (rotation: string) => {
       const { error } = await supabase
         .from('app_settings')
-        .upsert({ key: 'display_rotation', value: String(rotated) }, { onConflict: 'key' });
+        .upsert({ key: 'display_rotation', value: rotation }, { onConflict: 'key' });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -615,20 +615,28 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label>סיבוב 180°</Label>
-              <p className="text-xs text-muted-foreground">
-                הפעל אם הטאבלט מורכב הפוך
-              </p>
-            </div>
-            <Switch
-              checked={displayRotated}
-              onCheckedChange={(checked) => {
-                setDisplayRotated(checked);
-                saveRotationMutation.mutate(checked);
+          <div className="space-y-2">
+            <Label>כיוון סיבוב</Label>
+            <p className="text-xs text-muted-foreground">
+              בחר את כיוון הסיבוב בהתאם לאופן ההרכבה של המסך
+            </p>
+            <Select
+              value={displayRotation}
+              onValueChange={(val) => {
+                setDisplayRotation(val);
+                saveRotationMutation.mutate(val);
               }}
-            />
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">רגיל (ללא סיבוב)</SelectItem>
+                <SelectItem value="90">90° (Landscape ימינה)</SelectItem>
+                <SelectItem value="180">180° (הפוך)</SelectItem>
+                <SelectItem value="270">270° (Landscape שמאלה)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
