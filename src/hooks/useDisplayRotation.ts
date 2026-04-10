@@ -16,8 +16,9 @@ export function useDisplayRotation() {
         .eq('key', 'display_rotation')
         .maybeSingle();
       if (data?.value) {
-        // backward compat: old "true" → "180"
-        setRotation(data.value === 'true' ? '180' : data.value);
+        const val = data.value === 'true' ? '180' : data.value;
+        setRotation(val);
+        localStorage.setItem('display_rotation', val);
       }
     };
     fetchRotation();
