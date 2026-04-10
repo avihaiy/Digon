@@ -16,8 +16,12 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest-admin.json" />
+    <!-- PWA Manifest - set dynamically based on route -->
+    <script>
+      document.write('<link rel="manifest" href="' + 
+        (/^\/display/.test(window.location.pathname) ? '/manifest-display.json' : '/manifest-admin.json') + 
+        '" />');
+    </script>
     
     <!-- Icons -->
     <link rel="icon" href="/pwa-icon.png" type="image/png" />
