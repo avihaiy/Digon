@@ -731,6 +731,8 @@ export default function Display() {
   const sefiratHaOmer = getSefiratHaOmer(currentTime);
   const parasha = getCurrentParasha();
 
+  const isRotated = new URLSearchParams(window.location.search).get('rotate') === '180';
+
   return (
     <div
       ref={containerRef}
@@ -740,6 +742,7 @@ export default function Display() {
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
         paddingBottom: "env(safe-area-inset-bottom)",
+        ...(isRotated ? { transform: "rotate(180deg)" } : {}),
         ...(displayBgUrl
           ? {
               backgroundImage: `url(${displayBgUrl})`,
