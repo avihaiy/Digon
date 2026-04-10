@@ -344,6 +344,7 @@ export default function Display() {
           if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
+          if (setting.key === "display_rotation") setDisplayRotated(setting.value === "true");
           if (setting.key === "display_slide_durations" && setting.value) {
             try {
               setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
