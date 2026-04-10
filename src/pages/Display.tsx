@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useDisplayRotation } from "@/hooks/useDisplayRotation";
 import { supabase } from "@/integrations/supabase/client";
 import { HDate, months, gematriya, HebrewCalendar, flags } from "@hebcal/core";
 import {
@@ -331,7 +332,6 @@ export default function Display() {
           "display_slide_durations",
           "synagogue_name",
           "ticker_speed",
-          "display_rotation",
         ]);
       if (data) {
         for (const setting of data) {
@@ -344,11 +344,6 @@ export default function Display() {
           if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
-          if (setting.key === "display_rotation") {
-            const val = setting.value;
-            // backward compat: old "true" → "180"
-            setDisplayRotation(val === "true" ? "180" : (val || "0"));
-          }
           if (setting.key === "display_slide_durations" && setting.value) {
             try {
               setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
@@ -747,7 +742,7 @@ export default function Display() {
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
         paddingBottom: "env(safe-area-inset-bottom)",
-        ...(displayRotation !== '0' ? { transform: `rotate(${displayRotation}deg)` } : {}),
+        ...rotationStyle,
         ...(displayBgUrl
           ? {
               backgroundImage: `url(${displayBgUrl})`,
