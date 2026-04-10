@@ -344,7 +344,11 @@ export default function Display() {
           if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
-          if (setting.key === "display_rotation") setDisplayRotation(setting.value || "0");
+          if (setting.key === "display_rotation") {
+            const val = setting.value;
+            // backward compat: old "true" → "180"
+            setDisplayRotation(val === "true" ? "180" : (val || "0"));
+          }
           if (setting.key === "display_slide_durations" && setting.value) {
             try {
               setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
