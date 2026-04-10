@@ -195,7 +195,7 @@ export default function Display() {
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
-  const [displayRotated, setDisplayRotated] = useState(false);
+  const [displayRotation, setDisplayRotation] = useState('0');
   const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements" | "omer")[]>([
     "heichal",
     "memorial",
@@ -344,7 +344,7 @@ export default function Display() {
           if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
           if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
           if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
-          if (setting.key === "display_rotation") setDisplayRotated(setting.value === "true");
+          if (setting.key === "display_rotation") setDisplayRotation(setting.value || "0");
           if (setting.key === "display_slide_durations" && setting.value) {
             try {
               setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
@@ -743,7 +743,7 @@ export default function Display() {
         paddingLeft: "env(safe-area-inset-left)",
         paddingRight: "env(safe-area-inset-right)",
         paddingBottom: "env(safe-area-inset-bottom)",
-        ...(displayRotated ? { transform: "rotate(180deg)" } : {}),
+        ...(displayRotation !== '0' ? { transform: `rotate(${displayRotation}deg)` } : {}),
         ...(displayBgUrl
           ? {
               backgroundImage: `url(${displayBgUrl})`,
