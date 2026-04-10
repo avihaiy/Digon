@@ -32,8 +32,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     general: true,
     memorial: true,
     finance: true,
-  });
-
+  const [displayRotated, setDisplayRotated] = useState(false);
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
