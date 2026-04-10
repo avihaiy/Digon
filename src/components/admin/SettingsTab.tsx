@@ -606,7 +606,33 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         </CardContent>
       </Card>
 
-      {/* Display Links */}
+      {/* Display Rotation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <RotateCcw className="w-5 h-5" />
+            כיוון מסך התצוגה
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label>סיבוב 180°</Label>
+              <p className="text-xs text-muted-foreground">
+                הפעל אם הטאבלט מורכב הפוך
+              </p>
+            </div>
+            <Switch
+              checked={displayRotated}
+              onCheckedChange={(checked) => {
+                setDisplayRotated(checked);
+                saveRotationMutation.mutate(checked);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
