@@ -34,7 +34,9 @@ export function useDisplayRotation() {
       }, (payload: any) => {
         const val = payload.new?.value;
         if (val !== undefined) {
-          setRotation(val === 'true' ? '180' : val);
+          const resolved = val === 'true' ? '180' : val;
+          setRotation(resolved);
+          localStorage.setItem('display_rotation', resolved);
         }
       })
       .subscribe();
