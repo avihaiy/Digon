@@ -124,6 +124,19 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     },
   });
 
+  // Load display rotation
+  const { data: rotationSetting } = useQuery({
+    queryKey: ['app-settings-display-rotation'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'display_rotation')
+        .maybeSingle();
+      return data?.value === 'true';
+    },
+  });
+
   useEffect(() => {
     if (nameSetting) {
       setSynagogueName(nameSetting);
@@ -159,6 +172,12 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
       setDeleteProtectionCode(deleteCodeSetting);
     }
   }, [deleteCodeSetting]);
+
+  useEffect(() => {
+    if (rotationSetting !== undefined) {
+      setDisplayRotated(rotationSetting);
+    }
+  }, [rotationSetting]);
 
   // Save synagogue name
   const saveNameMutation = useMutation({
