@@ -1,0 +1,31 @@
+{
+  "name": "מסך תצוגה",
+  "short_name": "תצוגה",
+  "description": "מסך תצוגה לבית הכנסת ברית שלום",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/display",
+  "start_url": "/display",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "/pwa-display-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-display-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-display-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

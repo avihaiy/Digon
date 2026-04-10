@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useDisplayRotation } from '@/hooks/useDisplayRotation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -97,12 +98,15 @@ export default function DisplayMemorial() {
     </motion.div>
   );
 
+  const { rotationStyle } = useDisplayRotation();
+
   return (
     <div 
       className="min-h-screen relative overflow-hidden"
       dir="rtl"
       style={{
         background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f0f23 75%, #0a0a0a 100%)',
+        ...rotationStyle,
       }}
     >
       {/* Marble texture overlay */}

@@ -5,6 +5,7 @@ import { formatCurrency, getHebrewDate, getHebrewDayOfWeek } from '@/lib/hebrew-
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
+import { useDisplayRotation } from '@/hooks/useDisplayRotation';
 
 export default function DisplayFinance() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -109,8 +110,10 @@ export default function DisplayFinance() {
 
   const statusInfo = getStatusInfo();
 
+  const { rotationStyle } = useDisplayRotation();
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden select-none">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden select-none" style={rotationStyle}>
       {/* Header */}
       <header className="px-12 py-8 border-b border-slate-700/50">
         <div className="flex items-center justify-between">
