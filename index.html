@@ -47,6 +47,9 @@
         background: linear-gradient(160deg, #1a1a2e 0%, #2d1b3d 50%, #1a1a2e 100%);
         transition: opacity 0.5s ease, visibility 0.5s ease;
       }
+      #splash-screen.display-mode {
+        background: #000;
+      }
       #splash-screen.hidden {
         opacity: 0;
         visibility: hidden;
@@ -58,6 +61,15 @@
         object-fit: cover;
         box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 60px rgba(212,175,55,0.15);
         animation: splash-pulse 2s ease-in-out infinite;
+      }
+      .display-mode #splash-logo {
+        width: 140px;
+        height: 140px;
+        border-radius: 28px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      }
+      #splash-title, #splash-subtitle, #splash-loader {
+        transition: opacity 0.3s;
       }
       #splash-title {
         margin-top: 24px;
@@ -82,6 +94,10 @@
         border-radius: 50%;
         animation: splash-spin 0.8s linear infinite;
       }
+      .display-mode #splash-loader {
+        border-color: rgba(255,255,255,0.15);
+        border-top-color: rgba(255,255,255,0.6);
+      }
       @keyframes splash-pulse {
         0%, 100% { transform: scale(1); }
         50% { transform: scale(1.05); }
@@ -90,6 +106,23 @@
         to { transform: rotate(360deg); }
       }
     </style>
+    <script>
+      (function() {
+        var isDisplay = /^\/display/.test(window.location.pathname);
+        if (isDisplay) {
+          document.addEventListener('DOMContentLoaded', function() {
+            var splash = document.getElementById('splash-screen');
+            if (splash) {
+              splash.classList.add('display-mode');
+              var title = document.getElementById('splash-title');
+              var subtitle = document.getElementById('splash-subtitle');
+              if (title) title.style.display = 'none';
+              if (subtitle) subtitle.style.display = 'none';
+            }
+          });
+        }
+      })();
+    </script>
   </head>
 
   <body>
