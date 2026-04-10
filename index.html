@@ -16,11 +16,19 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     
-    <!-- PWA Manifest - set dynamically based on route -->
+    <!-- PWA Manifest - set dynamically based on route and saved rotation -->
     <script>
-      document.write('<link rel="manifest" href="' + 
-        (/^\/display/.test(window.location.pathname) ? '/manifest-display.json' : '/manifest-admin.json') + 
-        '" />');
+      (function() {
+        var isDisplay = /^\/display/.test(window.location.pathname);
+        if (!isDisplay) {
+          document.write('<link rel="manifest" href="/manifest-admin.json" />');
+        } else {
+          // Check localStorage cache for rotation (set by the app)
+          var rotation = localStorage.getItem('display_rotation') || '0';
+          var isPortrait = rotation === '90' || rotation === '270';
+          document.write('<link rel="manifest" href="' + (isPortrait ? '/manifest-display-portrait.json' : '/manifest-display.json') + '" />');
+        }
+      })();
     </script>
     
     <!-- Icons -->
