@@ -257,6 +257,21 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Save display rotation
+  const saveRotationMutation = useMutation({
+    mutationFn: async (rotated: boolean) => {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'display_rotation', value: String(rotated) }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-display-rotation'] });
+      toast({ title: 'כיוון התצוגה נשמר בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Save display lock code
   const saveLockCodeMutation = useMutation({
     mutationFn: async (code: string) => {
