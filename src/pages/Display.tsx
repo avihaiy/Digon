@@ -195,6 +195,7 @@ export default function Display() {
   const [showWeekBefore, setShowWeekBefore] = useState(false);
   const [showHeichal, setShowHeichal] = useState(false);
   const [displayBgUrl, setDisplayBgUrl] = useState<string | null>(null);
+  const [displayRotated, setDisplayRotated] = useState(false);
   const [slideOrder, setSlideOrder] = useState<("heichal" | "memorial" | "zmanim" | "finance" | "announcements" | "omer")[]>([
     "heichal",
     "memorial",
