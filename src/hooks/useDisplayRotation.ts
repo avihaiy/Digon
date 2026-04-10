@@ -46,6 +46,35 @@ export function useDisplayRotation() {
 
   const isPortrait = rotation === '90' || rotation === '270';
 
+  // Try to lock screen orientation via Screen Orientation API (works in installed PWA)
+  useEffect(() => {
+    const lockOrientation = async () => {
+      try {
+        const screen = window.screen as any;
+        if (screen?.orientation?.lock) {
+          if (isPortrait) {
+            await screen.orientation.lock('portrait');
+          } else {
+            await screen.orientation.lock('landscape');
+          }
+        }
+      } catch (e) {
+        // Screen Orientation API not supported or not in fullscreen/PWA – fall back to CSS rotation
+        console.log('Screen orientation lock not available, using CSS rotation fallback');
+      }
+    };
+    lockOrientation();
+
+    return () => {
+      try {
+        const screen = window.screen as any;
+        if (screen?.orientation?.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch (e) { /* ignore */ }
+    };
+  }, [isPortrait]);
+
   const rotationStyle: CSSProperties = rotation !== '0'
     ? {
         transform: `rotate(${rotation}deg)`,
