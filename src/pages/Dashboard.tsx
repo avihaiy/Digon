@@ -200,7 +200,7 @@ export default function Dashboard() {
       </div>
 
       {/* Financial Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="glass-card border-emerald-500/20 hover-lift animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-4">
             {statsLoading ? (
