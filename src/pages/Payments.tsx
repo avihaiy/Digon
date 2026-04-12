@@ -80,6 +80,7 @@ export default function Payments() {
   const [memberComboOpen, setMemberComboOpen] = useState(false);
   const [useCustomName, setUseCustomName] = useState(false);
   const [customName, setCustomName] = useState("");
+  const [debtsDialogOpen, setDebtsDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     member_id: "",
