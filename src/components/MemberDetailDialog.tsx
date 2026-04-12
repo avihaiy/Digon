@@ -301,21 +301,27 @@ export function MemberDetailDialog({
   const sharePreparedFile = async (file: File, shareText: string, successMsg: string) => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isEmbeddedPreview = window.self !== window.top;
 
-    if (isMobile && navigator.share) {
-      const canShareFiles = typeof navigator.canShare === 'function'
-        ? navigator.canShare({ files: [file] })
-        : true;
+    if (!isEmbeddedPreview && isMobile && navigator.share) {
+      try {
+        const canShareFiles = typeof navigator.canShare === 'function'
+          ? navigator.canShare({ files: [file] })
+          : true;
 
-      if (canShareFiles) {
-        if (isIOS) {
-          try { await navigator.clipboard.writeText(shareText); } catch {}
-          await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, '') });
-        } else {
-          await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, ''), text: shareText });
+        if (canShareFiles) {
+          if (isIOS) {
+            try { await navigator.clipboard.writeText(shareText); } catch {}
+            await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, '') });
+          } else {
+            await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, ''), text: shareText });
+          }
+          toast.success(successMsg);
+          return;
         }
-        toast.success(successMsg);
-        return;
+      } catch (error: any) {
+        if (error?.name === 'AbortError') throw error;
+        console.warn('Native member share failed, using fallback:', error);
       }
     }
 
@@ -330,7 +336,7 @@ export function MemberDetailDialog({
 
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
     window.open(waUrl, '_blank', 'noopener,noreferrer');
-    toast.success('הקובץ הורד');
+    toast.success(isEmbeddedPreview ? 'ב-Preview הקובץ הורד במקום שיתוף ישיר' : 'הקובץ הורד');
   };
 
   const getCachedOrBuildShareFile = async (
