@@ -366,83 +366,160 @@ export function MemberDetailDialog({
     return await buildPromise;
   };
 
+  const getSummarySharePayload = () => {
+    const today = new Date().toLocaleDateString('he-IL');
+    let html = `
+      <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
+      <div style="text-align:center;margin-bottom:3mm">
+        <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
+        <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
+      </div>
+      <div style="border-top:2px solid #000;margin:2mm 0"></div>
+      <div style="text-align:center;margin-bottom:3mm">
+        <div style="font-size:13px;font-weight:900">סיכום חשבון - ${memberName}</div>
+        <div style="font-size:9px;font-weight:700;color:#555">תאריך: ${today}</div>
+      </div>
+      <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${totalOwed > 0 ? '#c00' : '#090'}">
+        חוב פתוח: ${formatCurrency(totalOwed)}
+      </div>
+      <div style="border-top:2px dashed #000;margin:2mm 0"></div>
+    `;
+
+    if (pendingPayments.length > 0) {
+      html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">תשלומים ממתינים:</div>`;
+      pendingPayments.forEach((p) => {
+        const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
+        const date = formatShortDate(p.created_at);
+        html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
+          <span>${desc}</span>
+          <span>${formatCurrency(Number(p.amount))}</span>
+        </div>
+        <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${date}</div>`;
+      });
+      html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
+    }
+
+    if (chargesDebt > 0 && charges) {
+      const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
+      if (openCharges.length > 0) {
+        html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>`;
+        openCharges.forEach((c: any) => {
+          html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
+            <span>${c.description || 'חיוב'}</span>
+            <span>${formatCurrency(Number(c.remaining_balance))}</span>
+          </div>
+          <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${formatShortDate(c.charge_date)}</div>`;
+        });
+        html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
+      }
+    }
+
+    if (confirmedPayments.length > 0) {
+      html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">תשלומים אחרונים:</div>`;
+      confirmedPayments.slice(0, 10).forEach((p) => {
+        const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
+        const date = formatShortDate(p.created_at);
+        html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555">
+          <span>${desc} (${date})</span>
+          <span>${formatCurrency(Number(p.amount))}</span>
+        </div>`;
+      });
+      html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
+    }
+
+    html += `
+      <div style="text-align:center;margin-top:3mm">
+        <div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div>
+        <div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div>
+      </div>
+    `;
+
+    return {
+      html,
+      fileName: `account-${memberName.replace(/\s+/g, '-')}.jpg`,
+      signature: `summary:${memberId}:${html}`,
+      shareText: `סיכום חשבון - ${memberName}\nחוב פתוח: ${formatCurrency(totalOwed)}\nתודה, בית כנסת ברית שלום עכו`,
+      successMsg: 'הדוח שותף בהצלחה',
+    };
+  };
+
+  const getLedgerSharePayload = () => {
+    const openCharges = charges?.filter((c: any) => Number(c.remaining_balance) > 0) || [];
+    const paidCharges = charges?.filter((c: any) => Number(c.remaining_balance) === 0) || [];
+    let html = `
+      <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
+      <div style="text-align:center;margin-bottom:3mm">
+        <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
+        <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
+      </div>
+      <div style="border-top:2px solid #000;margin:2mm 0"></div>
+      <div style="text-align:center;margin-bottom:3mm">
+        <div style="font-size:13px;font-weight:900">כרטיסיית חוב - ${memberName}</div>
+      </div>
+      <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${chargesDebt > 0 ? '#c00' : '#090'}">
+        יתרת חוב: ${formatCurrency(chargesDebt)}
+      </div>
+      <div style="border-top:2px dashed #000;margin:2mm 0"></div>
+    `;
+
+    if (openCharges.length > 0) {
+      html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>';
+      openCharges.forEach((c: any) => {
+        const paid = Number(c.amount) - Number(c.remaining_balance);
+        html += `<div style="font-size:10px;font-weight:700;padding:1mm 0;border-bottom:1px dotted #ccc">
+          <div style="display:flex;justify-content:space-between"><span>${c.description || 'חיוב'}</span><span>${formatShortDate(c.charge_date)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:#555"><span>סכום: ${formatCurrency(Number(c.amount))}${paid > 0 ? ` | שולם: ${formatCurrency(paid)}` : ''}</span><span style="font-weight:900;color:${Number(c.remaining_balance) > 0 ? '#c00' : '#090'}">יתרה: ${formatCurrency(Number(c.remaining_balance))}</span></div>
+        </div>`;
+        const history = chargePayments?.filter((cp: any) => cp.charge_id === c.id) || [];
+        if (history.length > 0) {
+          history.forEach((cp: any) => {
+            html += `<div style="font-size:8px;color:#777;padding:0.3mm 3mm">← ${formatShortDate(cp.created_at)} - ${formatCurrency(Number(cp.amount))}</div>`;
+          });
+        }
+      });
+      html += '<div style="border-top:1px dashed #999;margin:2mm 0"></div>';
+    }
+
+    if (paidCharges.length > 0) {
+      html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">חיובים ששולמו:</div>';
+      paidCharges.forEach((c: any) => {
+        html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555"><span>${c.description || 'חיוב'} (${formatShortDate(c.charge_date)})</span><span>${formatCurrency(Number(c.amount))}</span></div>`;
+      });
+    }
+
+    html += `<div style="text-align:center;margin-top:3mm"><div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div><div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div></div>`;
+
+    return {
+      html,
+      fileName: `ledger-${memberName.replace(/\s+/g, '-')}.jpg`,
+      signature: `ledger:${memberId}:${html}`,
+      shareText: `כרטיסיית חוב - ${memberName}\nיתרה: ${formatCurrency(chargesDebt)}\nבית כנסת ברית שלום עכו`,
+      successMsg: 'הכרטיסיה שותפה בהצלחה',
+    };
+  };
+
+  useEffect(() => {
+    if (!open || !memberId || isLoading) return;
+
+    const summary = getSummarySharePayload();
+    void getCachedOrBuildShareFile('summary', summary.signature, () =>
+      buildShareImageFile(generateShareElement(summary.html), summary.fileName)
+    ).catch(() => {});
+
+    const ledger = getLedgerSharePayload();
+    void getCachedOrBuildShareFile('ledger', ledger.signature, () =>
+      buildShareImageFile(generateShareElement(ledger.html), ledger.fileName)
+    ).catch(() => {});
+  }, [open, memberId, memberName, isLoading, totalOwed, chargesDebt, pendingPayments, confirmedPayments, charges, chargePayments]);
+
   const handleSharePdf = async () => {
     setIsSharingPdf(true);
     try {
-      const today = new Date().toLocaleDateString('he-IL');
-      let html = `
-        <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
-        <div style="text-align:center;margin-bottom:3mm">
-          <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
-          <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
-        </div>
-        <div style="border-top:2px solid #000;margin:2mm 0"></div>
-        <div style="text-align:center;margin-bottom:3mm">
-          <div style="font-size:13px;font-weight:900">סיכום חשבון - ${memberName}</div>
-          <div style="font-size:9px;font-weight:700;color:#555">תאריך: ${today}</div>
-        </div>
-        <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${totalOwed > 0 ? '#c00' : '#090'}">
-          חוב פתוח: ${formatCurrency(totalOwed)}
-        </div>
-        <div style="border-top:2px dashed #000;margin:2mm 0"></div>
-      `;
-
-      if (pendingPayments.length > 0) {
-        html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">תשלומים ממתינים:</div>`;
-        pendingPayments.forEach(p => {
-          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
-          const date = formatShortDate(p.created_at);
-          html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-            <span>${desc}</span>
-            <span>${formatCurrency(Number(p.amount))}</span>
-          </div>
-          <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${date}</div>`;
-        });
-        html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
-      }
-
-      if (chargesDebt > 0 && charges) {
-        const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
-        if (openCharges.length > 0) {
-          html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>`;
-          openCharges.forEach((c: any) => {
-            html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-              <span>${c.description || 'חיוב'}</span>
-              <span>${formatCurrency(Number(c.remaining_balance))}</span>
-            </div>
-            <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${formatShortDate(c.charge_date)}</div>`;
-          });
-          html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
-        }
-      }
-
-      if (confirmedPayments.length > 0) {
-        html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">תשלומים אחרונים:</div>`;
-        confirmedPayments.slice(0, 10).forEach(p => {
-          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
-          const date = formatShortDate(p.created_at);
-          html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555">
-            <span>${desc} (${date})</span>
-            <span>${formatCurrency(Number(p.amount))}</span>
-          </div>`;
-        });
-        html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
-      }
-
-      html += `
-        <div style="text-align:center;margin-top:3mm">
-          <div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div>
-          <div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div>
-        </div>
-      `;
-
-      const el = generateShareElement(html);
-      await shareFileFromElement(el, {
-        pdfFormat: [80, 150],
-        filePrefix: `account-${memberName.replace(/\s+/g, '-')}`,
-        shareText: `סיכום חשבון - ${memberName}\nחוב פתוח: ${formatCurrency(totalOwed)}\nתודה, בית כנסת ברית שלום עכו`,
-        successMsg: 'הדוח שותף בהצלחה',
-      });
+      const summary = getSummarySharePayload();
+      const file = await getCachedOrBuildShareFile('summary', summary.signature, () =>
+        buildShareImageFile(generateShareElement(summary.html), summary.fileName)
+      );
+      await sharePreparedFile(file, summary.shareText, summary.successMsg);
     } catch (error: any) {
       if (error?.name !== 'AbortError') {
         console.error('PDF share error:', error);
@@ -781,58 +858,11 @@ export function MemberDetailDialog({
                         onClick={async () => {
                           setIsSharingLedgerPdf(true);
                           try {
-                            const el = document.createElement('div');
-                            el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;";
-                            const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
-                            const paidCharges = charges.filter((c: any) => Number(c.remaining_balance) === 0);
-                            let html = `
-                              <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
-                              <div style="text-align:center;margin-bottom:3mm">
-                                <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
-                                <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
-                              </div>
-                              <div style="border-top:2px solid #000;margin:2mm 0"></div>
-                              <div style="text-align:center;margin-bottom:3mm">
-                                <div style="font-size:13px;font-weight:900">כרטיסיית חוב - ${memberName}</div>
-                              </div>
-                              <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${chargesDebt > 0 ? '#c00' : '#090'}">
-                                יתרת חוב: ${formatCurrency(chargesDebt)}
-                              </div>
-                              <div style="border-top:2px dashed #000;margin:2mm 0"></div>
-                            `;
-                            if (openCharges.length > 0) {
-                              html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>';
-                              openCharges.forEach((c: any) => {
-                                const paid = Number(c.amount) - Number(c.remaining_balance);
-                                html += `<div style="font-size:10px;font-weight:700;padding:1mm 0;border-bottom:1px dotted #ccc">
-                                  <div style="display:flex;justify-content:space-between"><span>${c.description || 'חיוב'}</span><span>${formatShortDate(c.charge_date)}</span></div>
-                                  <div style="display:flex;justify-content:space-between;font-size:9px;color:#555"><span>סכום: ${formatCurrency(Number(c.amount))}${paid > 0 ? ` | שולם: ${formatCurrency(paid)}` : ''}</span><span style="font-weight:900;color:${Number(c.remaining_balance) > 0 ? '#c00' : '#090'}">יתרה: ${formatCurrency(Number(c.remaining_balance))}</span></div>
-                                </div>`;
-                                // Add payment history
-                                const history = chargePayments?.filter((cp: any) => cp.charge_id === c.id) || [];
-                                if (history.length > 0) {
-                                  history.forEach((cp: any) => {
-                                    html += `<div style="font-size:8px;color:#777;padding:0.3mm 3mm">← ${formatShortDate(cp.created_at)} - ${formatCurrency(Number(cp.amount))}</div>`;
-                                  });
-                                }
-                              });
-                              html += '<div style="border-top:1px dashed #999;margin:2mm 0"></div>';
-                            }
-                            if (paidCharges.length > 0) {
-                              html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">חיובים ששולמו:</div>';
-                              paidCharges.forEach((c: any) => {
-                                html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555"><span>${c.description || 'חיוב'} (${formatShortDate(c.charge_date)})</span><span>${formatCurrency(Number(c.amount))}</span></div>`;
-                              });
-                            }
-                            html += `<div style="text-align:center;margin-top:3mm"><div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div><div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div></div>`;
-                            el.innerHTML = html;
-                            
-                            await shareFileFromElement(el, {
-                              pdfFormat: [80, 200],
-                              filePrefix: `ledger-${memberName.replace(/\s+/g, '-')}`,
-                              shareText: `כרטיסיית חוב - ${memberName}\nיתרה: ${formatCurrency(chargesDebt)}\nבית כנסת ברית שלום עכו`,
-                              successMsg: 'הכרטיסיה שותפה בהצלחה',
-                            });
+                            const ledger = getLedgerSharePayload();
+                            const file = await getCachedOrBuildShareFile('ledger', ledger.signature, () =>
+                              buildShareImageFile(generateShareElement(ledger.html), ledger.fileName)
+                            );
+                            await sharePreparedFile(file, ledger.shareText, ledger.successMsg);
                           } catch (e: any) {
                             if (e?.name !== 'AbortError') {
                               console.error('Ledger PDF error:', e);
