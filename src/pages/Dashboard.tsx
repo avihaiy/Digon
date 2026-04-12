@@ -136,6 +136,32 @@ export default function Dashboard() {
     },
   });
 
+  const [debtsDialogOpen, setDebtsDialogOpen] = useState(false);
+
+  // Fetch detailed debts grouped by member
+  const { data: memberDebts } = useQuery({
+    queryKey: ['dashboard-debts-detail'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('member_charges')
+        .select('id, member_id, description, amount, remaining_balance, charge_date, member:members(full_name)')
+        .gt('remaining_balance', 0)
+        .order('charge_date', { ascending: false });
+      if (error) throw error;
+
+      const grouped: Record<string, { full_name: string; total: number; charges: { description: string | null; amount: number }[] }> = {};
+      for (const row of data || []) {
+        const name = (row.member as any)?.full_name || 'לא ידוע';
+        const mid = row.member_id;
+        if (!grouped[mid]) grouped[mid] = { full_name: name, total: 0, charges: [] };
+        grouped[mid].total += Number(row.remaining_balance);
+        grouped[mid].charges.push({ description: row.description, amount: Number(row.remaining_balance) });
+      }
+      return Object.values(grouped).sort((a, b) => b.total - a.total);
+    },
+    enabled: debtsDialogOpen,
+  });
+
   // Realtime: auto-refresh debts
   useEffect(() => {
     const channel = supabase
