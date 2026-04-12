@@ -61,6 +61,7 @@ const reportsSubItems = [
   { href: '/reports', icon: BarChart3, label: 'דוחות כלליים' },
   { href: '/expense-reports', icon: PieChart, label: 'הכנסות/הוצאות' },
   { href: '/detailed-report', icon: Calendar, label: 'דוח מפורט' },
+  { href: '/debts-report', icon: AlertCircle, label: 'דוח חובות' },
 ];
 
 const adminNavItems = [
