@@ -36,6 +36,7 @@ import {
   RefreshCw,
   ChevronDown,
   Megaphone,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';

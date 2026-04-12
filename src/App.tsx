@@ -23,6 +23,7 @@ import Equipment from "@/pages/Equipment";
 import Expenses from "@/pages/Expenses";
 import ExpenseReports from "@/pages/ExpenseReports";
 import DetailedReport from "@/pages/DetailedReport";
+import DebtsReport from "@/pages/DebtsReport";
 import Admin from "@/pages/Admin";
 import AdminMobile from "@/pages/AdminMobile";
 import Backups from "@/pages/Backups";
