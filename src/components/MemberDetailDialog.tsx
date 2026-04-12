@@ -268,7 +268,7 @@ export function MemberDetailDialog({
 
   const generateShareElement = (htmlContent: string) => {
     const el = document.createElement('div');
-    el.style.cssText = "position:fixed;left:-99999px;top:0;font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;z-index:-1;";
+    el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;box-sizing:border-box;";
     el.innerHTML = htmlContent;
     return el;
   };
@@ -293,13 +293,27 @@ export function MemberDetailDialog({
   }
 
   const buildShareImageFile = async (el: HTMLElement, fileName: string): Promise<File> => {
-    document.body.appendChild(el);
-    try {
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const mount = document.createElement('div');
+    mount.setAttribute('data-share-render-root', 'true');
+    mount.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;overflow:hidden;pointer-events:none;';
+    mount.appendChild(el);
+    document.body.appendChild(mount);
 
+    try {
+      if ('fonts' in document) {
+        try {
+          await document.fonts.ready;
+        } catch {
+          // ignore font readiness issues and continue rendering
+        }
+      }
+
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
+      const rect = el.getBoundingClientRect();
       const isMobileShareDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const width = Math.ceil(el.scrollWidth || el.getBoundingClientRect().width || 320);
-      const height = Math.ceil(el.scrollHeight || el.getBoundingClientRect().height || 400);
+      const width = Math.max(320, Math.ceil(rect.width || el.scrollWidth || el.offsetWidth || 320));
+      const height = Math.max(400, Math.ceil(el.scrollHeight || rect.height || el.offsetHeight || 400));
 
       const worker = html2pdf().set({
         margin: 0,
@@ -312,8 +326,10 @@ export function MemberDetailDialog({
           logging: false,
           width,
           height,
-          windowWidth: width,
-          windowHeight: height,
+          windowWidth: Math.max(document.documentElement.clientWidth, width),
+          windowHeight: Math.max(document.documentElement.clientHeight, height),
+          scrollX: 0,
+          scrollY: 0,
         },
         jsPDF: { unit: 'mm', format: [80, 200], orientation: 'portrait' as const },
       }).from(el).toCanvas();
@@ -346,8 +362,7 @@ export function MemberDetailDialog({
 
       return new File([blob], fileName, { type: 'image/jpeg' });
     } finally {
-      if (document.body.contains(el)) document.body.removeChild(el);
-      // Clean up html2pdf artifacts immediately and after a delay
+      if (document.body.contains(mount)) document.body.removeChild(mount);
       const cleanupHtml2Pdf = () => {
         document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
       };
