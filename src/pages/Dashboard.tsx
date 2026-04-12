@@ -274,6 +274,26 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        <Link to="/payments">
+          <Card className="glass-card border-warning/20 hover-lift animate-fade-in cursor-pointer" style={{ animationDelay: '0.3s' }}>
+            <CardContent className="p-4">
+              {debtsLoading ? (
+                <Skeleton className="h-20 w-full" />
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">חובות שטרם נגבו</p>
+                    <p className="text-xl font-bold text-warning">{formatCurrency(totalDebts || 0)}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Income vs Expenses Mini Chart */}
