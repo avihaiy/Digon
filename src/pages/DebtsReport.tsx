@@ -166,7 +166,10 @@ export default function DebtsReport() {
         ${memberTableHtml}
         ${detailTableHtml}
         <p class="footer">ברית שלום — מערכת ניהול בית כנסת</p>
-        <button onclick="window.print()" style="margin:20px auto;display:block;padding:10px 30px;cursor:pointer;border-radius:8px;border:1px solid #ccc;background:#7c2d12;color:white;font-size:14px;">הדפס / שמור כ-PDF</button>
+        <div style="display:flex;justify-content:center;gap:12px;margin:20px auto;">
+          <button onclick="window.print()" style="padding:10px 30px;cursor:pointer;border-radius:8px;border:1px solid #ccc;background:#7c2d12;color:white;font-size:14px;">הדפס / שמור כ-PDF</button>
+          <button onclick="window.close()" style="padding:10px 30px;cursor:pointer;border-radius:8px;border:1px solid #ccc;background:#666;color:white;font-size:14px;">סגור חלון</button>
+        </div>
       </body></html>
     `;
 
