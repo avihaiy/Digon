@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface SettingsTabProps {
@@ -691,6 +691,43 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
 
       {/* Backup Management */}
       <BackupCard />
+
+      {/* Email Reports */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            שליחת דוחות למייל
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            שליחת כל הדוחות המפורטים (חובות, תשלומים, הוצאות) למייל britakko12@gmail.com
+          </p>
+          <Button
+            onClick={async () => {
+              toast({ title: 'שולח דוחות למייל...', description: 'אנא המתן' });
+              try {
+                const { data, error } = await supabase.functions.invoke('email-reports', {
+                  body: {},
+                });
+                if (error) throw error;
+                if (data?.success) {
+                  toast({ title: 'הדוחות נשלחו בהצלחה! ✉️', description: 'בדוק את תיבת המייל' });
+                } else {
+                  throw new Error(data?.error || 'Unknown error');
+                }
+              } catch (err: any) {
+                toast({ title: 'שגיאה בשליחת הדוחות', description: err.message, variant: 'destructive' });
+              }
+            }}
+            className="gap-2"
+          >
+            <Send className="w-4 h-4" />
+            שלח דוחות מפורטים למייל
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
