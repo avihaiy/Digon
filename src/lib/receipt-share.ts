@@ -79,7 +79,10 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
 }
 
 function clearHtml2PdfArtifacts(): void {
-  document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
+  const cleanup = () => document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
+  cleanup();
+  setTimeout(cleanup, 100);
+  setTimeout(cleanup, 500);
 }
 
 function getCachedShareFile(receipt: any): File | undefined {

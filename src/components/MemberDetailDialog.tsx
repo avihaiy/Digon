@@ -347,7 +347,13 @@ export function MemberDetailDialog({
       return new File([blob], fileName, { type: 'image/jpeg' });
     } finally {
       if (document.body.contains(el)) document.body.removeChild(el);
-      document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
+      // Clean up html2pdf artifacts immediately and after a delay
+      const cleanupHtml2Pdf = () => {
+        document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
+      };
+      cleanupHtml2Pdf();
+      setTimeout(cleanupHtml2Pdf, 100);
+      setTimeout(cleanupHtml2Pdf, 500);
     }
   };
 
