@@ -245,12 +245,85 @@ export function MemberDetailDialog({
     }
   };
 
+  const generateShareElement = (htmlContent: string) => {
+    const el = document.createElement('div');
+    el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;";
+    el.innerHTML = htmlContent;
+    return el;
+  };
+
+  const shareFileFromElement = async (
+    el: HTMLElement,
+    opts: { pdfFormat: [number, number]; filePrefix: string; shareText: string; successMsg: string }
+  ) => {
+    document.body.appendChild(el);
+    try {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (isIOS) {
+        // iOS: share as JPEG image (iOS blocks PDF sharing via Web Share API)
+        const { default: html2pdfLib } = await import('html2pdf.js');
+        const canvas = await html2pdfLib().set({
+          image: { type: 'jpeg', quality: 0.95 },
+          html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+        }).from(el).toCanvas();
+        
+        const jpegBlob: Blob = await new Promise((resolve) => 
+          canvas.toBlob((b: Blob | null) => resolve(b!), 'image/jpeg', 0.95)
+        );
+        const imgFile = new File([jpegBlob], `${opts.filePrefix}.jpg`, { type: 'image/jpeg' });
+
+        // Copy text to clipboard before sharing (iOS ignores text with files)
+        try {
+          await navigator.clipboard.writeText(opts.shareText);
+        } catch {}
+
+        if (navigator.share && navigator.canShare?.({ files: [imgFile] })) {
+          await navigator.share({ files: [imgFile] });
+          toast.success(opts.successMsg);
+        } else {
+          // Fallback: open WhatsApp with text
+          const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(opts.shareText)}`;
+          window.open(waUrl, '_blank');
+          toast.success('הטקסט נשלח לוואטסאפ');
+        }
+      } else {
+        // Android & Desktop: share/download as PDF
+        const pdfBlob: Blob = await html2pdf().set({
+          margin: 0,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+          jsPDF: { unit: 'mm', format: opts.pdfFormat, orientation: 'portrait' as const },
+        }).from(el).toPdf().output('blob');
+        
+        const fileName = `${opts.filePrefix}.pdf`;
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+        if (isMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            text: opts.shareText,
+          });
+          toast.success(opts.successMsg);
+        } else {
+          const url = URL.createObjectURL(pdfBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+          toast.success('הדוח הורד כ-PDF');
+        }
+      }
+    } finally {
+      if (document.body.contains(el)) document.body.removeChild(el);
+    }
+  };
+
   const handleSharePdf = async () => {
     setIsSharingPdf(true);
     try {
-      const el = document.createElement('div');
-      el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;";
-      
       let html = `
         <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
         <div style="text-align:center;margin-bottom:3mm">
@@ -279,7 +352,6 @@ export function MemberDetailDialog({
         html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
       }
 
-
       html += `
         <div style="text-align:center;margin-top:3mm">
           <div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div>
@@ -287,41 +359,13 @@ export function MemberDetailDialog({
         </div>
       `;
 
-      el.innerHTML = html;
-      document.body.appendChild(el);
-
-      try {
-        const opt = {
-          margin: 0,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-          jsPDF: { unit: 'mm', format: [80, 150], orientation: 'portrait' as const },
-        };
-
-        const pdfBlob: Blob = await html2pdf().set(opt).from(el).toPdf().output('blob');
-        const fileName = `account-${memberName.replace(/\s+/g, '-')}.pdf`;
-        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-        if (navigator.share && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            text: `סיכום חשבון - ${memberName}\nחוב פתוח: ${formatCurrency(totalOwed)}\nתודה, בית כנסת ברית שלום עכו`,
-          });
-          toast.success('הדוח שותף בהצלחה');
-        } else {
-          const url = URL.createObjectURL(pdfBlob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = fileName;
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 5000);
-          toast.success('הדוח הורד כ-PDF');
-        }
-      } finally {
-        if (document.body.contains(el)) {
-          document.body.removeChild(el);
-        }
-      }
+      const el = generateShareElement(html);
+      await shareFileFromElement(el, {
+        pdfFormat: [80, 150],
+        filePrefix: `account-${memberName.replace(/\s+/g, '-')}`,
+        shareText: `סיכום חשבון - ${memberName}\nחוב פתוח: ${formatCurrency(totalOwed)}\nתודה, בית כנסת ברית שלום עכו`,
+        successMsg: 'הדוח שותף בהצלחה',
+      });
     } catch (error: any) {
       if (error?.name !== 'AbortError') {
         console.error('PDF share error:', error);
