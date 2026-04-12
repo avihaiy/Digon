@@ -27,7 +27,6 @@ import {
   Users,
   DollarSign,
   Bell,
-  
   Plus,
   Edit,
   Trash2,
@@ -380,8 +379,38 @@ export default function Admin() {
         </div>
       </aside>
 
+      {/* Top Navigation Bar - עם כפתור חברים בצבע כתום */}
+      <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 shadow-sm z-40 mr-64">
+        <div className="flex items-center gap-4 px-8 h-full">
+          {/* כפתור "קבל תשלום" - ירוק */}
+          <a
+            href="/payments"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium"
+          >
+            📥 קבל תשלום
+          </a>
+
+          {/* כפתור "הוצאות" - אדום */}
+          <a
+            href="/expenses"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+          >
+            📤 הוצאות
+          </a>
+
+          {/* כפתור "חברים" - כתום חדש! */}
+          <a
+            href="/members"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors font-medium"
+          >
+            <Users className="w-4 h-4" />
+            חברים
+          </a>
+        </div>
+      </nav>
+
       {/* Main Content */}
-      <main className="mr-64 p-8">
+      <main className="mr-64 mt-16 p-8">
         {/* Overview Tab */}
         {activeTab === "overview" && (
           <div className="space-y-6">
