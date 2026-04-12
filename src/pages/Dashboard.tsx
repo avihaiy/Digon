@@ -302,8 +302,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Link to="/payments">
-          <Card className="relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/20 hover-lift animate-fade-in cursor-pointer shadow-md hover:shadow-lg transition-all" style={{ animationDelay: '0.3s' }}>
+        <Card className="relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/20 hover-lift animate-fade-in cursor-pointer shadow-md hover:shadow-lg transition-all" style={{ animationDelay: '0.3s' }} onClick={() => setDebtsDialogOpen(true)}>
             <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/5 rounded-full -translate-y-6 translate-x-6" />
             <CardContent className="p-4">
               {debtsLoading ? (
@@ -321,7 +320,6 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
-        </Link>
       </div>
 
       {/* Income vs Expenses Mini Chart */}
