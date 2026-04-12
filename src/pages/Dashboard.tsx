@@ -276,18 +276,19 @@ export default function Dashboard() {
         </Card>
 
         <Link to="/payments">
-          <Card className="glass-card border-warning/20 hover-lift animate-fade-in cursor-pointer" style={{ animationDelay: '0.3s' }}>
+          <Card className="relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/20 hover-lift animate-fade-in cursor-pointer shadow-md hover:shadow-lg transition-all" style={{ animationDelay: '0.3s' }}>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/5 rounded-full -translate-y-6 translate-x-6" />
             <CardContent className="p-4">
               {debtsLoading ? (
                 <Skeleton className="h-20 w-full" />
               ) : (
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6 text-warning" />
+                  <div className="w-12 h-12 rounded-xl bg-red-500/15 flex items-center justify-center ring-2 ring-red-500/20">
+                    <AlertCircle className="w-6 h-6 text-red-500" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">חובות שטרם נגבו</p>
-                    <p className="text-xl font-bold text-warning">{formatCurrency(totalDebts || 0)}</p>
+                    <p className="text-sm font-medium text-red-700 dark:text-red-400">חובות שטרם נגבו</p>
+                    <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalDebts || 0)}</p>
                   </div>
                 </div>
               )}
