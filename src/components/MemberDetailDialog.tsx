@@ -749,35 +749,13 @@ export function MemberDetailDialog({
                             }
                             html += `<div style="text-align:center;margin-top:3mm"><div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div><div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div></div>`;
                             el.innerHTML = html;
-                            document.body.appendChild(el);
-                            try {
-                              const opt = {
-                                margin: 0,
-                                image: { type: 'jpeg', quality: 0.98 },
-                                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-                                jsPDF: { unit: 'mm', format: [80, 200], orientation: 'portrait' as const },
-                              };
-                              const pdfBlob: Blob = await html2pdf().set(opt).from(el).toPdf().output('blob');
-                              const fileName = `ledger-${memberName.replace(/\s+/g, '-')}.pdf`;
-                              const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-                              if (navigator.share && navigator.canShare?.({ files: [file] })) {
-                                await navigator.share({
-                                  files: [file],
-                                  text: `כרטיסיית חוב - ${memberName}\nיתרה: ${formatCurrency(chargesDebt)}\nבית כנסת ברית שלום עכו`,
-                                });
-                                toast.success('הכרטיסיה שותפה כ-PDF');
-                              } else {
-                                const url = URL.createObjectURL(pdfBlob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = fileName;
-                                a.click();
-                                setTimeout(() => URL.revokeObjectURL(url), 5000);
-                                toast.success('הכרטיסיה הורדה כ-PDF');
-                              }
-                            } finally {
-                              if (document.body.contains(el)) document.body.removeChild(el);
-                            }
+                            
+                            await shareFileFromElement(el, {
+                              pdfFormat: [80, 200],
+                              filePrefix: `ledger-${memberName.replace(/\s+/g, '-')}`,
+                              shareText: `כרטיסיית חוב - ${memberName}\nיתרה: ${formatCurrency(chargesDebt)}\nבית כנסת ברית שלום עכו`,
+                              successMsg: 'הכרטיסיה שותפה בהצלחה',
+                            });
                           } catch (e: any) {
                             if (e?.name !== 'AbortError') {
                               console.error('Ledger PDF error:', e);
