@@ -324,6 +324,7 @@ export function MemberDetailDialog({
   const handleSharePdf = async () => {
     setIsSharingPdf(true);
     try {
+      const today = new Date().toLocaleDateString('he-IL');
       let html = `
         <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
         <div style="text-align:center;margin-bottom:3mm">
@@ -333,6 +334,7 @@ export function MemberDetailDialog({
         <div style="border-top:2px solid #000;margin:2mm 0"></div>
         <div style="text-align:center;margin-bottom:3mm">
           <div style="font-size:13px;font-weight:900">סיכום חשבון - ${memberName}</div>
+          <div style="font-size:9px;font-weight:700;color:#555">תאריך: ${today}</div>
         </div>
         <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${totalOwed > 0 ? '#c00' : '#090'}">
           חוב פתוח: ${formatCurrency(totalOwed)}
@@ -344,8 +346,38 @@ export function MemberDetailDialog({
         html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">תשלומים ממתינים:</div>`;
         pendingPayments.forEach(p => {
           const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
+          const date = formatShortDate(p.created_at);
           html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
             <span>${desc}</span>
+            <span>${formatCurrency(Number(p.amount))}</span>
+          </div>
+          <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${date}</div>`;
+        });
+        html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
+      }
+
+      if (chargesDebt > 0 && charges) {
+        const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
+        if (openCharges.length > 0) {
+          html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>`;
+          openCharges.forEach((c: any) => {
+            html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
+              <span>${c.description || 'חיוב'}</span>
+              <span>${formatCurrency(Number(c.remaining_balance))}</span>
+            </div>
+            <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${formatShortDate(c.charge_date)}</div>`;
+          });
+          html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
+        }
+      }
+
+      if (confirmedPayments.length > 0) {
+        html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">תשלומים אחרונים:</div>`;
+        confirmedPayments.slice(0, 10).forEach(p => {
+          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
+          const date = formatShortDate(p.created_at);
+          html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555">
+            <span>${desc} (${date})</span>
             <span>${formatCurrency(Number(p.amount))}</span>
           </div>`;
         });
