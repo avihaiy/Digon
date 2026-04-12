@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -65,6 +65,9 @@ export function MemberDetailDialog({
   const [payAmount, setPayAmount] = useState('');
   const [isSharingLedgerText, setIsSharingLedgerText] = useState(false);
   const [isSharingLedgerPdf, setIsSharingLedgerPdf] = useState(false);
+  const shareFileCacheRef = useRef<Partial<Record<'summary' | 'ledger', File>>>({});
+  const shareFileSignatureRef = useRef<Partial<Record<'summary' | 'ledger', string>>>({});
+  const shareFileBuildRef = useRef<Partial<Record<'summary' | 'ledger', Promise<File>>>>({});
 
   // Fetch payments with receipt descriptions
   const { data: payments, isLoading: loadingPayments } = useQuery({
@@ -247,171 +250,276 @@ export function MemberDetailDialog({
 
   const generateShareElement = (htmlContent: string) => {
     const el = document.createElement('div');
-    el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;";
+    el.style.cssText = "position:fixed;left:-99999px;top:0;font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;z-index:-1;";
     el.innerHTML = htmlContent;
     return el;
   };
 
-  const shareFileFromElement = async (
-    el: HTMLElement,
-    opts: { pdfFormat: [number, number]; filePrefix: string; shareText: string; successMsg: string }
-  ) => {
+  const buildShareImageFile = async (el: HTMLElement, fileName: string): Promise<File> => {
     document.body.appendChild(el);
     try {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-      // Both platforms: generate as JPEG image for maximum compatibility
-      const { default: html2pdfLib } = await import('html2pdf.js');
-      const worker = html2pdfLib().set({
+      const worker = html2pdf().set({
         margin: 0,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: opts.pdfFormat, orientation: 'portrait' as const },
+        jsPDF: { unit: 'mm', format: [80, 200], orientation: 'portrait' as const },
       }).from(el).toCanvas();
-      
-      const canvas: HTMLCanvasElement = await (worker as any).get('canvas');
-      
-      if (!canvas) {
-        throw new Error('Failed to render canvas');
-      }
 
-      const jpegBlob: Blob = await new Promise((resolve, reject) => {
+      const canvas: HTMLCanvasElement | undefined = await (worker as any).get('canvas');
+      if (!canvas) throw new Error('Failed to render canvas');
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
         if (typeof canvas.toBlob === 'function') {
           canvas.toBlob(
-            (b) => b ? resolve(b) : reject(new Error('toBlob failed')),
+            (b) => (b ? resolve(b) : reject(new Error('Canvas to blob failed'))),
             'image/jpeg',
             0.95,
           );
-        } else {
-          try {
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-            const [meta, base64 = ''] = dataUrl.split(',');
-            const mime = meta.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            resolve(new Blob([bytes], { type: mime }));
-          } catch (e) {
-            reject(e);
-          }
+          return;
+        }
+
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+          const [meta, base64 = ''] = dataUrl.split(',');
+          const mime = meta.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+          resolve(new Blob([bytes], { type: mime }));
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error('Canvas export failed'));
         }
       });
 
-      const imgFile = new File([jpegBlob], `${opts.filePrefix}.jpg`, { type: 'image/jpeg' });
-
-      if (isIOS) {
-        try { await navigator.clipboard.writeText(opts.shareText); } catch {}
-      }
-
-      if (isMobile && navigator.share) {
-        const canShareFiles = typeof navigator.canShare === 'function' 
-          ? navigator.canShare({ files: [imgFile] }) 
-          : true;
-        
-        if (canShareFiles) {
-          const shareData: ShareData = { files: [imgFile], title: opts.filePrefix };
-          if (!isIOS) shareData.text = opts.shareText;
-          await navigator.share(shareData);
-          toast.success(opts.successMsg);
-          return;
-        }
-      }
-
-      // Fallback: download + WhatsApp
-      const url = URL.createObjectURL(jpegBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${opts.filePrefix}.jpg`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(opts.shareText)}`;
-      window.open(waUrl, '_blank');
-      toast.success('הקובץ הורד');
+      return new File([blob], fileName, { type: 'image/jpeg' });
     } finally {
       if (document.body.contains(el)) document.body.removeChild(el);
-      document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach(n => n.remove());
+      document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
     }
   };
+
+  const sharePreparedFile = async (file: File, shareText: string, successMsg: string) => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isEmbeddedPreview = window.self !== window.top;
+
+    if (!isEmbeddedPreview && isMobile && navigator.share) {
+      try {
+        const canShareFiles = typeof navigator.canShare === 'function'
+          ? navigator.canShare({ files: [file] })
+          : true;
+
+        if (canShareFiles) {
+          if (isIOS) {
+            try { await navigator.clipboard.writeText(shareText); } catch {}
+            await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, '') });
+          } else {
+            await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, ''), text: shareText });
+          }
+          toast.success(successMsg);
+          return;
+        }
+      } catch (error: any) {
+        if (error?.name === 'AbortError') throw error;
+        console.warn('Native member share failed, using fallback:', error);
+      }
+    }
+
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    toast.success(isEmbeddedPreview ? 'ב-Preview הקובץ הורד במקום שיתוף ישיר' : 'הקובץ הורד');
+  };
+
+  const getCachedOrBuildShareFile = async (
+    key: 'summary' | 'ledger',
+    signature: string,
+    builder: () => Promise<File>,
+  ): Promise<File> => {
+    if (shareFileSignatureRef.current[key] === signature && shareFileCacheRef.current[key]) {
+      return shareFileCacheRef.current[key]!;
+    }
+
+    if (shareFileBuildRef.current[key] && shareFileSignatureRef.current[key] === signature) {
+      return await shareFileBuildRef.current[key]!;
+    }
+
+    shareFileSignatureRef.current[key] = signature;
+    const buildPromise = builder()
+      .then((file) => {
+        shareFileCacheRef.current[key] = file;
+        return file;
+      })
+      .finally(() => {
+        delete shareFileBuildRef.current[key];
+      });
+
+    shareFileBuildRef.current[key] = buildPromise;
+    return await buildPromise;
+  };
+
+  const getSummarySharePayload = () => {
+    const today = new Date().toLocaleDateString('he-IL');
+    let html = `
+      <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
+      <div style="text-align:center;margin-bottom:3mm">
+        <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
+        <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
+      </div>
+      <div style="border-top:2px solid #000;margin:2mm 0"></div>
+      <div style="text-align:center;margin-bottom:3mm">
+        <div style="font-size:13px;font-weight:900">סיכום חשבון - ${memberName}</div>
+        <div style="font-size:9px;font-weight:700;color:#555">תאריך: ${today}</div>
+      </div>
+      <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${totalOwed > 0 ? '#c00' : '#090'}">
+        חוב פתוח: ${formatCurrency(totalOwed)}
+      </div>
+      <div style="border-top:2px dashed #000;margin:2mm 0"></div>
+    `;
+
+    if (pendingPayments.length > 0) {
+      html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">תשלומים ממתינים:</div>`;
+      pendingPayments.forEach((p) => {
+        const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
+        const date = formatShortDate(p.created_at);
+        html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
+          <span>${desc}</span>
+          <span>${formatCurrency(Number(p.amount))}</span>
+        </div>
+        <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${date}</div>`;
+      });
+      html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
+    }
+
+    if (chargesDebt > 0 && charges) {
+      const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
+      if (openCharges.length > 0) {
+        html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>`;
+        openCharges.forEach((c: any) => {
+          html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
+            <span>${c.description || 'חיוב'}</span>
+            <span>${formatCurrency(Number(c.remaining_balance))}</span>
+          </div>
+          <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${formatShortDate(c.charge_date)}</div>`;
+        });
+        html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
+      }
+    }
+
+    if (confirmedPayments.length > 0) {
+      html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">תשלומים אחרונים:</div>`;
+      confirmedPayments.slice(0, 10).forEach((p) => {
+        const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
+        const date = formatShortDate(p.created_at);
+        html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555">
+          <span>${desc} (${date})</span>
+          <span>${formatCurrency(Number(p.amount))}</span>
+        </div>`;
+      });
+      html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
+    }
+
+    html += `
+      <div style="text-align:center;margin-top:3mm">
+        <div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div>
+        <div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div>
+      </div>
+    `;
+
+    return {
+      html,
+      fileName: `account-${memberName.replace(/\s+/g, '-')}.jpg`,
+      signature: `summary:${memberId}:${html}`,
+      shareText: `סיכום חשבון - ${memberName}\nחוב פתוח: ${formatCurrency(totalOwed)}\nתודה, בית כנסת ברית שלום עכו`,
+      successMsg: 'הדוח שותף בהצלחה',
+    };
+  };
+
+  const getLedgerSharePayload = () => {
+    const openCharges = charges?.filter((c: any) => Number(c.remaining_balance) > 0) || [];
+    const paidCharges = charges?.filter((c: any) => Number(c.remaining_balance) === 0) || [];
+    let html = `
+      <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
+      <div style="text-align:center;margin-bottom:3mm">
+        <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
+        <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
+      </div>
+      <div style="border-top:2px solid #000;margin:2mm 0"></div>
+      <div style="text-align:center;margin-bottom:3mm">
+        <div style="font-size:13px;font-weight:900">כרטיסיית חוב - ${memberName}</div>
+      </div>
+      <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${chargesDebt > 0 ? '#c00' : '#090'}">
+        יתרת חוב: ${formatCurrency(chargesDebt)}
+      </div>
+      <div style="border-top:2px dashed #000;margin:2mm 0"></div>
+    `;
+
+    if (openCharges.length > 0) {
+      html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>';
+      openCharges.forEach((c: any) => {
+        const paid = Number(c.amount) - Number(c.remaining_balance);
+        html += `<div style="font-size:10px;font-weight:700;padding:1mm 0;border-bottom:1px dotted #ccc">
+          <div style="display:flex;justify-content:space-between"><span>${c.description || 'חיוב'}</span><span>${formatShortDate(c.charge_date)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:#555"><span>סכום: ${formatCurrency(Number(c.amount))}${paid > 0 ? ` | שולם: ${formatCurrency(paid)}` : ''}</span><span style="font-weight:900;color:${Number(c.remaining_balance) > 0 ? '#c00' : '#090'}">יתרה: ${formatCurrency(Number(c.remaining_balance))}</span></div>
+        </div>`;
+        const history = chargePayments?.filter((cp: any) => cp.charge_id === c.id) || [];
+        if (history.length > 0) {
+          history.forEach((cp: any) => {
+            html += `<div style="font-size:8px;color:#777;padding:0.3mm 3mm">← ${formatShortDate(cp.created_at)} - ${formatCurrency(Number(cp.amount))}</div>`;
+          });
+        }
+      });
+      html += '<div style="border-top:1px dashed #999;margin:2mm 0"></div>';
+    }
+
+    if (paidCharges.length > 0) {
+      html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">חיובים ששולמו:</div>';
+      paidCharges.forEach((c: any) => {
+        html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555"><span>${c.description || 'חיוב'} (${formatShortDate(c.charge_date)})</span><span>${formatCurrency(Number(c.amount))}</span></div>`;
+      });
+    }
+
+    html += `<div style="text-align:center;margin-top:3mm"><div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div><div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div></div>`;
+
+    return {
+      html,
+      fileName: `ledger-${memberName.replace(/\s+/g, '-')}.jpg`,
+      signature: `ledger:${memberId}:${html}`,
+      shareText: `כרטיסיית חוב - ${memberName}\nיתרה: ${formatCurrency(chargesDebt)}\nבית כנסת ברית שלום עכו`,
+      successMsg: 'הכרטיסיה שותפה בהצלחה',
+    };
+  };
+
+  useEffect(() => {
+    if (!open || !memberId || isLoading) return;
+
+    const summary = getSummarySharePayload();
+    void getCachedOrBuildShareFile('summary', summary.signature, () =>
+      buildShareImageFile(generateShareElement(summary.html), summary.fileName)
+    ).catch(() => {});
+
+    const ledger = getLedgerSharePayload();
+    void getCachedOrBuildShareFile('ledger', ledger.signature, () =>
+      buildShareImageFile(generateShareElement(ledger.html), ledger.fileName)
+    ).catch(() => {});
+  }, [open, memberId, memberName, isLoading, totalOwed, chargesDebt, pendingPayments, confirmedPayments, charges, chargePayments]);
 
   const handleSharePdf = async () => {
     setIsSharingPdf(true);
     try {
-      const today = new Date().toLocaleDateString('he-IL');
-      let html = `
-        <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
-        <div style="text-align:center;margin-bottom:3mm">
-          <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
-          <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
-        </div>
-        <div style="border-top:2px solid #000;margin:2mm 0"></div>
-        <div style="text-align:center;margin-bottom:3mm">
-          <div style="font-size:13px;font-weight:900">סיכום חשבון - ${memberName}</div>
-          <div style="font-size:9px;font-weight:700;color:#555">תאריך: ${today}</div>
-        </div>
-        <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${totalOwed > 0 ? '#c00' : '#090'}">
-          חוב פתוח: ${formatCurrency(totalOwed)}
-        </div>
-        <div style="border-top:2px dashed #000;margin:2mm 0"></div>
-      `;
-
-      if (pendingPayments.length > 0) {
-        html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">תשלומים ממתינים:</div>`;
-        pendingPayments.forEach(p => {
-          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
-          const date = formatShortDate(p.created_at);
-          html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-            <span>${desc}</span>
-            <span>${formatCurrency(Number(p.amount))}</span>
-          </div>
-          <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${date}</div>`;
-        });
-        html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
-      }
-
-      if (chargesDebt > 0 && charges) {
-        const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
-        if (openCharges.length > 0) {
-          html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>`;
-          openCharges.forEach((c: any) => {
-            html += `<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;padding:0.5mm 0">
-              <span>${c.description || 'חיוב'}</span>
-              <span>${formatCurrency(Number(c.remaining_balance))}</span>
-            </div>
-            <div style="font-size:8px;color:#777;padding:0 1mm 0.5mm">${formatShortDate(c.charge_date)}</div>`;
-          });
-          html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
-        }
-      }
-
-      if (confirmedPayments.length > 0) {
-        html += `<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">תשלומים אחרונים:</div>`;
-        confirmedPayments.slice(0, 10).forEach(p => {
-          const desc = p.receipt?.[0]?.description || PAYMENT_METHOD[p.method as keyof typeof PAYMENT_METHOD] || p.method;
-          const date = formatShortDate(p.created_at);
-          html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555">
-            <span>${desc} (${date})</span>
-            <span>${formatCurrency(Number(p.amount))}</span>
-          </div>`;
-        });
-        html += `<div style="border-top:1px dashed #999;margin:2mm 0"></div>`;
-      }
-
-      html += `
-        <div style="text-align:center;margin-top:3mm">
-          <div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div>
-          <div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div>
-        </div>
-      `;
-
-      const el = generateShareElement(html);
-      await shareFileFromElement(el, {
-        pdfFormat: [80, 150],
-        filePrefix: `account-${memberName.replace(/\s+/g, '-')}`,
-        shareText: `סיכום חשבון - ${memberName}\nחוב פתוח: ${formatCurrency(totalOwed)}\nתודה, בית כנסת ברית שלום עכו`,
-        successMsg: 'הדוח שותף בהצלחה',
-      });
+      const summary = getSummarySharePayload();
+      const file = await getCachedOrBuildShareFile('summary', summary.signature, () =>
+        buildShareImageFile(generateShareElement(summary.html), summary.fileName)
+      );
+      await sharePreparedFile(file, summary.shareText, summary.successMsg);
     } catch (error: any) {
       if (error?.name !== 'AbortError') {
         console.error('PDF share error:', error);
@@ -750,58 +858,11 @@ export function MemberDetailDialog({
                         onClick={async () => {
                           setIsSharingLedgerPdf(true);
                           try {
-                            const el = document.createElement('div');
-                            el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;";
-                            const openCharges = charges.filter((c: any) => Number(c.remaining_balance) > 0);
-                            const paidCharges = charges.filter((c: any) => Number(c.remaining_balance) === 0);
-                            let html = `
-                              <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
-                              <div style="text-align:center;margin-bottom:3mm">
-                                <div style="font-size:14px;font-weight:900">בית כנסת "ברית שלום" עכו</div>
-                                <div style="font-size:10px;font-weight:800">רח' קדושי קהיר 18, עכו</div>
-                              </div>
-                              <div style="border-top:2px solid #000;margin:2mm 0"></div>
-                              <div style="text-align:center;margin-bottom:3mm">
-                                <div style="font-size:13px;font-weight:900">כרטיסיית חוב - ${memberName}</div>
-                              </div>
-                              <div style="text-align:center;font-size:20px;font-weight:900;margin-bottom:3mm;color:${chargesDebt > 0 ? '#c00' : '#090'}">
-                                יתרת חוב: ${formatCurrency(chargesDebt)}
-                              </div>
-                              <div style="border-top:2px dashed #000;margin:2mm 0"></div>
-                            `;
-                            if (openCharges.length > 0) {
-                              html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm">חיובים פתוחים:</div>';
-                              openCharges.forEach((c: any) => {
-                                const paid = Number(c.amount) - Number(c.remaining_balance);
-                                html += `<div style="font-size:10px;font-weight:700;padding:1mm 0;border-bottom:1px dotted #ccc">
-                                  <div style="display:flex;justify-content:space-between"><span>${c.description || 'חיוב'}</span><span>${formatShortDate(c.charge_date)}</span></div>
-                                  <div style="display:flex;justify-content:space-between;font-size:9px;color:#555"><span>סכום: ${formatCurrency(Number(c.amount))}${paid > 0 ? ` | שולם: ${formatCurrency(paid)}` : ''}</span><span style="font-weight:900;color:${Number(c.remaining_balance) > 0 ? '#c00' : '#090'}">יתרה: ${formatCurrency(Number(c.remaining_balance))}</span></div>
-                                </div>`;
-                                // Add payment history
-                                const history = chargePayments?.filter((cp: any) => cp.charge_id === c.id) || [];
-                                if (history.length > 0) {
-                                  history.forEach((cp: any) => {
-                                    html += `<div style="font-size:8px;color:#777;padding:0.3mm 3mm">← ${formatShortDate(cp.created_at)} - ${formatCurrency(Number(cp.amount))}</div>`;
-                                  });
-                                }
-                              });
-                              html += '<div style="border-top:1px dashed #999;margin:2mm 0"></div>';
-                            }
-                            if (paidCharges.length > 0) {
-                              html += '<div style="font-size:11px;font-weight:900;margin-bottom:1mm;color:#090">חיובים ששולמו:</div>';
-                              paidCharges.forEach((c: any) => {
-                                html += `<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;padding:0.5mm 0;color:#555"><span>${c.description || 'חיוב'} (${formatShortDate(c.charge_date)})</span><span>${formatCurrency(Number(c.amount))}</span></div>`;
-                              });
-                            }
-                            html += `<div style="text-align:center;margin-top:3mm"><div style="font-size:10px;font-weight:800">תודה, בית כנסת ברית שלום עכו</div><div style="font-size:9px;font-weight:700">טלפון: 050-5768723</div></div>`;
-                            el.innerHTML = html;
-                            
-                            await shareFileFromElement(el, {
-                              pdfFormat: [80, 200],
-                              filePrefix: `ledger-${memberName.replace(/\s+/g, '-')}`,
-                              shareText: `כרטיסיית חוב - ${memberName}\nיתרה: ${formatCurrency(chargesDebt)}\nבית כנסת ברית שלום עכו`,
-                              successMsg: 'הכרטיסיה שותפה בהצלחה',
-                            });
+                            const ledger = getLedgerSharePayload();
+                            const file = await getCachedOrBuildShareFile('ledger', ledger.signature, () =>
+                              buildShareImageFile(generateShareElement(ledger.html), ledger.fileName)
+                            );
+                            await sharePreparedFile(file, ledger.shareText, ledger.successMsg);
                           } catch (e: any) {
                             if (e?.name !== 'AbortError') {
                               console.error('Ledger PDF error:', e);
