@@ -22,6 +22,7 @@ interface DebtRow {
 }
 
 export default function DebtsReport() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: debts, isLoading } = useQuery({
