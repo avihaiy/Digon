@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -65,6 +65,9 @@ export function MemberDetailDialog({
   const [payAmount, setPayAmount] = useState('');
   const [isSharingLedgerText, setIsSharingLedgerText] = useState(false);
   const [isSharingLedgerPdf, setIsSharingLedgerPdf] = useState(false);
+  const shareFileCacheRef = useRef<Partial<Record<'summary' | 'ledger', File>>>({});
+  const shareFileSignatureRef = useRef<Partial<Record<'summary' | 'ledger', string>>>({});
+  const shareFileBuildRef = useRef<Partial<Record<'summary' | 'ledger', Promise<File>>>>({});
 
   // Fetch payments with receipt descriptions
   const { data: payments, isLoading: loadingPayments } = useQuery({
