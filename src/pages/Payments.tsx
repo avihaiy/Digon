@@ -125,6 +125,39 @@ export default function Payments() {
     },
   });
 
+  // Fetch outstanding member debts
+  const { data: memberDebts } = useQuery({
+    queryKey: ["member-debts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_charges")
+        .select("member_id, remaining_balance, description, member:members(full_name)")
+        .gt("remaining_balance", 0);
+
+      if (error) throw error;
+
+      // Group by member
+      const grouped: Record<string, { full_name: string; total: number; charges: { description: string | null; amount: number }[] }> = {};
+      for (const row of data || []) {
+        const mid = row.member_id;
+        if (!grouped[mid]) {
+          grouped[mid] = {
+            full_name: (row.member as any)?.full_name || "לא ידוע",
+            total: 0,
+            charges: [],
+          };
+        }
+        grouped[mid].total += Number(row.remaining_balance);
+        grouped[mid].charges.push({ description: row.description, amount: Number(row.remaining_balance) });
+      }
+
+      return Object.values(grouped).sort((a, b) => b.total - a.total);
+    },
+  });
+
+  const totalMemberDebts = memberDebts?.reduce((sum, m) => sum + m.total, 0) || 0;
+  const debtMemberCount = memberDebts?.length || 0;
+
   // Create/Update payment
   const savePayment = useMutation({
     mutationFn: async () => {
