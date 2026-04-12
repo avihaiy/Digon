@@ -621,7 +621,7 @@ export default function Payments() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card">
+          <Card className="glass-card cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDebtsDialogOpen(true)}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
@@ -629,8 +629,8 @@ export default function Payments() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">חובות שטרם נגבו</p>
-                  <p className="text-lg font-bold hebrew-number">{formatCurrency(pendingAmount)}</p>
-                  {pendingCount > 0 && <p className="text-xs text-muted-foreground">{pendingCount} תשלומים</p>}
+                  <p className="text-lg font-bold hebrew-number">{formatCurrency(totalMemberDebts)}</p>
+                  {debtMemberCount > 0 && <p className="text-xs text-muted-foreground">{debtMemberCount} חברים</p>}
                 </div>
               </div>
             </CardContent>
