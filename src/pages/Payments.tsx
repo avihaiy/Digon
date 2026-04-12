@@ -80,6 +80,7 @@ export default function Payments() {
   const [memberComboOpen, setMemberComboOpen] = useState(false);
   const [useCustomName, setUseCustomName] = useState(false);
   const [customName, setCustomName] = useState("");
+  const [debtsDialogOpen, setDebtsDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     member_id: "",
@@ -123,6 +124,39 @@ export default function Payments() {
       return data || [];
     },
   });
+
+  // Fetch outstanding member debts
+  const { data: memberDebts } = useQuery({
+    queryKey: ["member-debts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_charges")
+        .select("member_id, remaining_balance, description, member:members(full_name)")
+        .gt("remaining_balance", 0);
+
+      if (error) throw error;
+
+      // Group by member
+      const grouped: Record<string, { full_name: string; total: number; charges: { description: string | null; amount: number }[] }> = {};
+      for (const row of data || []) {
+        const mid = row.member_id;
+        if (!grouped[mid]) {
+          grouped[mid] = {
+            full_name: (row.member as any)?.full_name || "לא ידוע",
+            total: 0,
+            charges: [],
+          };
+        }
+        grouped[mid].total += Number(row.remaining_balance);
+        grouped[mid].charges.push({ description: row.description, amount: Number(row.remaining_balance) });
+      }
+
+      return Object.values(grouped).sort((a, b) => b.total - a.total);
+    },
+  });
+
+  const totalMemberDebts = memberDebts?.reduce((sum, m) => sum + m.total, 0) || 0;
+  const debtMemberCount = memberDebts?.length || 0;
 
   // Create/Update payment
   const savePayment = useMutation({
@@ -587,7 +621,7 @@ export default function Payments() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card">
+          <Card className="glass-card cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDebtsDialogOpen(true)}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
@@ -595,8 +629,8 @@ export default function Payments() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">חובות שטרם נגבו</p>
-                  <p className="text-lg font-bold hebrew-number">{formatCurrency(pendingAmount)}</p>
-                  {pendingCount > 0 && <p className="text-xs text-muted-foreground">{pendingCount} תשלומים</p>}
+                  <p className="text-lg font-bold hebrew-number">{formatCurrency(totalMemberDebts)}</p>
+                  {debtMemberCount > 0 && <p className="text-xs text-muted-foreground">{debtMemberCount} חברים</p>}
                 </div>
               </div>
             </CardContent>
@@ -1335,6 +1369,44 @@ export default function Payments() {
           }
         }}
       />
+      {/* Debts Breakdown Dialog */}
+      <Dialog open={debtsDialogOpen} onOpenChange={setDebtsDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">פירוט חובות שטרם נגבו</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {memberDebts && memberDebts.length > 0 ? (
+              <>
+                {memberDebts.map((member, idx) => (
+                  <Card key={idx} className="glass-card">
+                    <CardContent className="p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">{member.full_name}</span>
+                        <Badge variant="destructive" className="hebrew-number">{formatCurrency(member.total)}</Badge>
+                      </div>
+                      <div className="space-y-1">
+                        {member.charges.map((charge, ci) => (
+                          <div key={ci} className="flex justify-between text-sm text-muted-foreground">
+                            <span>{charge.description || "חיוב"}</span>
+                            <span className="hebrew-number">{formatCurrency(charge.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                <div className="border-t pt-3 flex justify-between items-center font-bold text-lg">
+                  <span>סה״כ חובות</span>
+                  <span className="hebrew-number text-destructive">{formatCurrency(totalMemberDebts)}</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">אין חובות פתוחים 🎉</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
