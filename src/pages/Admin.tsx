@@ -379,31 +379,31 @@ export default function Admin() {
         </div>
       </aside>
 
-      {/* Top Navigation Bar - עם כפתור חברים בצבע כתום */}
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 shadow-sm z-40 mr-64">
-        <div className="flex items-center gap-4 px-8 h-full">
-          {/* כפתור "קבל תשלום" - ירוק */}
+      {/* Top Navigation Bar - עם כפתור חברים בצבע כתום 🟧 */}
+      <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 shadow-md z-40 mr-64">
+        <div className="flex items-center gap-3 px-6 h-full">
+          {/* כפתור "קבל תשלום" - ירוק 📥 */}
           <a
             href="/payments"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 active:bg-green-800 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
           >
             📥 קבל תשלום
           </a>
 
-          {/* כפתור "הוצאות" - אדום */}
+          {/* כפתור "הוצאות" - אדום 📤 */}
           <a
             href="/expenses"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 active:bg-red-800 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
           >
             📤 הוצאות
           </a>
 
-          {/* כפתור "חברים" - כתום חדש! */}
+          {/* כפתור "חברים" - כתום 🟧 ✨ */}
           <a
             href="/members"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors font-medium"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-orange-600 text-white hover:bg-orange-700 active:bg-orange-800 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-5 h-5" />
             חברים
           </a>
         </div>
