@@ -122,8 +122,30 @@ export default function Dashboard() {
     },
   });
 
+  // Fetch outstanding member debts
+  const { data: totalDebts, isLoading: debtsLoading } = useQuery({
+    queryKey: ['dashboard-debts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('member_charges')
+        .select('remaining_balance')
+        .gt('remaining_balance', 0);
+      if (error) throw error;
+      return data?.reduce((sum, r) => sum + Number(r.remaining_balance), 0) || 0;
+    },
+  });
 
-  // Fetch recent payments
+  // Realtime: auto-refresh debts
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-debts-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'member_charges' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-debts'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   const { data: recentPayments, isLoading: paymentsLoading } = useQuery({
     queryKey: ['recent-payments'],
     queryFn: async () => {
