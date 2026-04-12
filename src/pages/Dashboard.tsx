@@ -24,6 +24,7 @@ import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function Dashboard() {
+  const queryClient = useQueryClient();
   const nextShabbat = getNextShabbat();
   const parasha = getCurrentParasha();
 
