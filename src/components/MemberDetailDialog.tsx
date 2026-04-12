@@ -250,92 +250,114 @@ export function MemberDetailDialog({
 
   const generateShareElement = (htmlContent: string) => {
     const el = document.createElement('div');
-    el.style.cssText = "font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;";
+    el.style.cssText = "position:fixed;left:-99999px;top:0;font-family:'Heebo',Arial,sans-serif;font-size:12px;line-height:1.4;width:80mm;padding:4mm;color:#000;background:#fff;direction:rtl;z-index:-1;";
     el.innerHTML = htmlContent;
     return el;
   };
 
-  const shareFileFromElement = async (
-    el: HTMLElement,
-    opts: { pdfFormat: [number, number]; filePrefix: string; shareText: string; successMsg: string }
-  ) => {
+  const buildShareImageFile = async (el: HTMLElement, fileName: string): Promise<File> => {
     document.body.appendChild(el);
     try {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-      // Both platforms: generate as JPEG image for maximum compatibility
-      const { default: html2pdfLib } = await import('html2pdf.js');
-      const worker = html2pdfLib().set({
+      const worker = html2pdf().set({
         margin: 0,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: opts.pdfFormat, orientation: 'portrait' as const },
+        jsPDF: { unit: 'mm', format: [80, 200], orientation: 'portrait' as const },
       }).from(el).toCanvas();
-      
-      const canvas: HTMLCanvasElement = await (worker as any).get('canvas');
-      
-      if (!canvas) {
-        throw new Error('Failed to render canvas');
-      }
 
-      const jpegBlob: Blob = await new Promise((resolve, reject) => {
+      const canvas: HTMLCanvasElement | undefined = await (worker as any).get('canvas');
+      if (!canvas) throw new Error('Failed to render canvas');
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
         if (typeof canvas.toBlob === 'function') {
           canvas.toBlob(
-            (b) => b ? resolve(b) : reject(new Error('toBlob failed')),
+            (b) => (b ? resolve(b) : reject(new Error('Canvas to blob failed'))),
             'image/jpeg',
             0.95,
           );
-        } else {
-          try {
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-            const [meta, base64 = ''] = dataUrl.split(',');
-            const mime = meta.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            resolve(new Blob([bytes], { type: mime }));
-          } catch (e) {
-            reject(e);
-          }
+          return;
+        }
+
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+          const [meta, base64 = ''] = dataUrl.split(',');
+          const mime = meta.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+          resolve(new Blob([bytes], { type: mime }));
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error('Canvas export failed'));
         }
       });
 
-      const imgFile = new File([jpegBlob], `${opts.filePrefix}.jpg`, { type: 'image/jpeg' });
-
-      if (isIOS) {
-        try { await navigator.clipboard.writeText(opts.shareText); } catch {}
-      }
-
-      if (isMobile && navigator.share) {
-        const canShareFiles = typeof navigator.canShare === 'function' 
-          ? navigator.canShare({ files: [imgFile] }) 
-          : true;
-        
-        if (canShareFiles) {
-          const shareData: ShareData = { files: [imgFile], title: opts.filePrefix };
-          if (!isIOS) shareData.text = opts.shareText;
-          await navigator.share(shareData);
-          toast.success(opts.successMsg);
-          return;
-        }
-      }
-
-      // Fallback: download + WhatsApp
-      const url = URL.createObjectURL(jpegBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${opts.filePrefix}.jpg`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(opts.shareText)}`;
-      window.open(waUrl, '_blank');
-      toast.success('הקובץ הורד');
+      return new File([blob], fileName, { type: 'image/jpeg' });
     } finally {
       if (document.body.contains(el)) document.body.removeChild(el);
-      document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach(n => n.remove());
+      document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach((node) => node.remove());
     }
+  };
+
+  const sharePreparedFile = async (file: File, shareText: string, successMsg: string) => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile && navigator.share) {
+      const canShareFiles = typeof navigator.canShare === 'function'
+        ? navigator.canShare({ files: [file] })
+        : true;
+
+      if (canShareFiles) {
+        if (isIOS) {
+          try { await navigator.clipboard.writeText(shareText); } catch {}
+          await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, '') });
+        } else {
+          await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, ''), text: shareText });
+        }
+        toast.success(successMsg);
+        return;
+      }
+    }
+
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    toast.success('הקובץ הורד');
+  };
+
+  const getCachedOrBuildShareFile = async (
+    key: 'summary' | 'ledger',
+    signature: string,
+    builder: () => Promise<File>,
+  ): Promise<File> => {
+    if (shareFileSignatureRef.current[key] === signature && shareFileCacheRef.current[key]) {
+      return shareFileCacheRef.current[key]!;
+    }
+
+    if (shareFileBuildRef.current[key] && shareFileSignatureRef.current[key] === signature) {
+      return await shareFileBuildRef.current[key]!;
+    }
+
+    shareFileSignatureRef.current[key] = signature;
+    const buildPromise = builder()
+      .then((file) => {
+        shareFileCacheRef.current[key] = file;
+        return file;
+      })
+      .finally(() => {
+        delete shareFileBuildRef.current[key];
+      });
+
+    shareFileBuildRef.current[key] = buildPromise;
+    return await buildPromise;
   };
 
   const handleSharePdf = async () => {
