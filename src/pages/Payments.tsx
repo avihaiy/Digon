@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReceiptPreviewDialog } from "@/components/ReceiptPreviewDialog";
@@ -157,6 +157,17 @@ export default function Payments() {
 
   const totalMemberDebts = memberDebts?.reduce((sum, m) => sum + m.total, 0) || 0;
   const debtMemberCount = memberDebts?.length || 0;
+
+  // Realtime: auto-refresh debts when member_charges changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('member-charges-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'member_charges' }, () => {
+        queryClient.invalidateQueries({ queryKey: ["member-debts"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   // Create/Update payment
   const savePayment = useMutation({
