@@ -77,7 +77,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(
-    location.pathname === '/reports' || location.pathname === '/expense-reports'
+    location.pathname === '/reports' || location.pathname === '/expense-reports' || location.pathname === '/debts-report'
   );
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
 
