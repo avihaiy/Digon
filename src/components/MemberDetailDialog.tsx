@@ -261,63 +261,77 @@ export function MemberDetailDialog({
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-      if (isIOS) {
-        // iOS: share as JPEG image (iOS blocks PDF sharing via Web Share API)
-        const { default: html2pdfLib } = await import('html2pdf.js');
-        const canvas = await html2pdfLib().set({
-          image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-        }).from(el).toCanvas();
-        
-        const jpegBlob: Blob = await new Promise((resolve) => 
-          canvas.toBlob((b: Blob | null) => resolve(b!), 'image/jpeg', 0.95)
-        );
-        const imgFile = new File([jpegBlob], `${opts.filePrefix}.jpg`, { type: 'image/jpeg' });
+      // Both platforms: generate as JPEG image for maximum compatibility
+      const { default: html2pdfLib } = await import('html2pdf.js');
+      const worker = html2pdfLib().set({
+        margin: 0,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: opts.pdfFormat, orientation: 'portrait' as const },
+      }).from(el).toCanvas();
+      
+      const canvas: HTMLCanvasElement = await (worker as any).get('canvas');
+      
+      if (!canvas) {
+        throw new Error('Failed to render canvas');
+      }
 
-        // Copy text to clipboard before sharing (iOS ignores text with files)
-        try {
-          await navigator.clipboard.writeText(opts.shareText);
-        } catch {}
-
-        if (navigator.share && navigator.canShare?.({ files: [imgFile] })) {
-          await navigator.share({ files: [imgFile] });
-          toast.success(opts.successMsg);
+      const jpegBlob: Blob = await new Promise((resolve, reject) => {
+        if (typeof canvas.toBlob === 'function') {
+          canvas.toBlob(
+            (b) => b ? resolve(b) : reject(new Error('toBlob failed')),
+            'image/jpeg',
+            0.95,
+          );
         } else {
-          // Fallback: open WhatsApp with text
-          const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(opts.shareText)}`;
-          window.open(waUrl, '_blank');
-          toast.success('הטקסט נשלח לוואטסאפ');
+          try {
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            const [meta, base64 = ''] = dataUrl.split(',');
+            const mime = meta.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            resolve(new Blob([bytes], { type: mime }));
+          } catch (e) {
+            reject(e);
+          }
         }
-      } else {
-        // Android & Desktop: share/download as PDF
-        const pdfBlob: Blob = await html2pdf().set({
-          margin: 0,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-          jsPDF: { unit: 'mm', format: opts.pdfFormat, orientation: 'portrait' as const },
-        }).from(el).toPdf().output('blob');
-        
-        const fileName = `${opts.filePrefix}.pdf`;
-        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+      });
 
-        if (isMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            text: opts.shareText,
-          });
+      const imgFile = new File([jpegBlob], `${opts.filePrefix}.jpg`, { type: 'image/jpeg' });
+
+      if (isIOS) {
+        try { await navigator.clipboard.writeText(opts.shareText); } catch {}
+      }
+
+      if (isMobile && navigator.share) {
+        const canShareFiles = typeof navigator.canShare === 'function' 
+          ? navigator.canShare({ files: [imgFile] }) 
+          : true;
+        
+        if (canShareFiles) {
+          const shareData: ShareData = { files: [imgFile], title: opts.filePrefix };
+          if (!isIOS) shareData.text = opts.shareText;
+          await navigator.share(shareData);
           toast.success(opts.successMsg);
-        } else {
-          const url = URL.createObjectURL(pdfBlob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = fileName;
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 5000);
-          toast.success('הדוח הורד כ-PDF');
+          return;
         }
       }
+
+      // Fallback: download + WhatsApp
+      const url = URL.createObjectURL(jpegBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${opts.filePrefix}.jpg`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(opts.shareText)}`;
+      window.open(waUrl, '_blank');
+      toast.success('הקובץ הורד');
     } finally {
       if (document.body.contains(el)) document.body.removeChild(el);
+      document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach(n => n.remove());
     }
   };
 
