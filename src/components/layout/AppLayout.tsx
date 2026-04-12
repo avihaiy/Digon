@@ -36,6 +36,7 @@ import {
   RefreshCw,
   ChevronDown,
   Megaphone,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -61,6 +62,7 @@ const reportsSubItems = [
   { href: '/reports', icon: BarChart3, label: 'דוחות כלליים' },
   { href: '/expense-reports', icon: PieChart, label: 'הכנסות/הוצאות' },
   { href: '/detailed-report', icon: Calendar, label: 'דוח מפורט' },
+  { href: '/debts-report', icon: AlertCircle, label: 'דוח חובות' },
 ];
 
 const adminNavItems = [
@@ -75,7 +77,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(
-    location.pathname === '/reports' || location.pathname === '/expense-reports'
+    location.pathname === '/reports' || location.pathname === '/expense-reports' || location.pathname === '/debts-report'
   );
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
 
