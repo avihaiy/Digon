@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function Dashboard() {
+  const queryClient = useQueryClient();
   const nextShabbat = getNextShabbat();
   const parasha = getCurrentParasha();
 
@@ -120,8 +122,30 @@ export default function Dashboard() {
     },
   });
 
+  // Fetch outstanding member debts
+  const { data: totalDebts, isLoading: debtsLoading } = useQuery({
+    queryKey: ['dashboard-debts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('member_charges')
+        .select('remaining_balance')
+        .gt('remaining_balance', 0);
+      if (error) throw error;
+      return data?.reduce((sum, r) => sum + Number(r.remaining_balance), 0) || 0;
+    },
+  });
 
-  // Fetch recent payments
+  // Realtime: auto-refresh debts
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-debts-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'member_charges' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-debts'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   const { data: recentPayments, isLoading: paymentsLoading } = useQuery({
     queryKey: ['recent-payments'],
     queryFn: async () => {
@@ -176,7 +200,7 @@ export default function Dashboard() {
       </div>
 
       {/* Financial Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="glass-card border-emerald-500/20 hover-lift animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-4">
             {statsLoading ? (
@@ -250,6 +274,26 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        <Link to="/payments">
+          <Card className="glass-card border-warning/20 hover-lift animate-fade-in cursor-pointer" style={{ animationDelay: '0.3s' }}>
+            <CardContent className="p-4">
+              {debtsLoading ? (
+                <Skeleton className="h-20 w-full" />
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">חובות שטרם נגבו</p>
+                    <p className="text-xl font-bold text-warning">{formatCurrency(totalDebts || 0)}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Income vs Expenses Mini Chart */}
