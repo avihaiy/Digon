@@ -47,6 +47,22 @@ interface MemberDetailDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type ShareFileKey = 'summary' | 'ledger';
+type ShareFileStatus = 'idle' | 'building' | 'ready';
+
+interface SharePayload {
+  html: string;
+  fileName: string;
+  signature: string;
+  shareText: string;
+  successMsg: string;
+}
+
+const DEFAULT_SHARE_FILE_STATUS: Record<ShareFileKey, ShareFileStatus> = {
+  summary: 'idle',
+  ledger: 'idle',
+};
+
 export function MemberDetailDialog({
   memberId,
   memberName,
@@ -65,9 +81,11 @@ export function MemberDetailDialog({
   const [payAmount, setPayAmount] = useState('');
   const [isSharingLedgerText, setIsSharingLedgerText] = useState(false);
   const [isSharingLedgerPdf, setIsSharingLedgerPdf] = useState(false);
-  const shareFileCacheRef = useRef<Partial<Record<'summary' | 'ledger', File>>>({});
-  const shareFileSignatureRef = useRef<Partial<Record<'summary' | 'ledger', string>>>({});
-  const shareFileBuildRef = useRef<Partial<Record<'summary' | 'ledger', Promise<File>>>>({});
+  const [shareFileStatus, setShareFileStatus] = useState<Record<ShareFileKey, ShareFileStatus>>({ ...DEFAULT_SHARE_FILE_STATUS });
+  const shareFileCacheRef = useRef<Partial<Record<ShareFileKey, File>>>({});
+  const shareFileSignatureRef = useRef<Partial<Record<ShareFileKey, string>>>({});
+  const shareFileBuildRef = useRef<Partial<Record<ShareFileKey, Promise<File>>>>({});
+  const shareBuildQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   // Fetch payments with receipt descriptions
   const { data: payments, isLoading: loadingPayments } = useQuery({
@@ -255,13 +273,48 @@ export function MemberDetailDialog({
     return el;
   };
 
+  const setShareStatus = (key: ShareFileKey, status: ShareFileStatus) => {
+    setShareFileStatus((current) => (
+      current[key] === status ? current : { ...current, [key]: status }
+    ));
+  };
+
+  async function queueShareBuild<T>(builder: () => Promise<T>): Promise<T> {
+    const queuedTask = shareBuildQueueRef.current
+      .catch(() => undefined)
+      .then(builder);
+
+    shareBuildQueueRef.current = queuedTask.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    return await queuedTask;
+  }
+
   const buildShareImageFile = async (el: HTMLElement, fileName: string): Promise<File> => {
     document.body.appendChild(el);
     try {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+      const isMobileShareDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const width = Math.ceil(el.scrollWidth || el.getBoundingClientRect().width || 320);
+      const height = Math.ceil(el.scrollHeight || el.getBoundingClientRect().height || 400);
+
       const worker = html2pdf().set({
         margin: 0,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+        image: { type: 'jpeg', quality: isMobileShareDevice ? 0.9 : 0.95 },
+        html2canvas: {
+          scale: isMobileShareDevice ? 2 : 3,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          letterRendering: false,
+          logging: false,
+          width,
+          height,
+          windowWidth: width,
+          windowHeight: height,
+        },
         jsPDF: { unit: 'mm', format: [80, 200], orientation: 'portrait' as const },
       }).from(el).toCanvas();
 
@@ -301,7 +354,13 @@ export function MemberDetailDialog({
   const sharePreparedFile = async (file: File, shareText: string, successMsg: string) => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isEmbeddedPreview = window.self !== window.top;
+    const isEmbeddedPreview = (() => {
+      try {
+        return window.self !== window.top;
+      } catch {
+        return true;
+      }
+    })();
 
     if (!isEmbeddedPreview && isMobile && navigator.share) {
       try {
@@ -310,18 +369,25 @@ export function MemberDetailDialog({
           : true;
 
         if (canShareFiles) {
-          if (isIOS) {
-            try { await navigator.clipboard.writeText(shareText); } catch {}
-            await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, '') });
-          } else {
-            await navigator.share({ files: [file], title: file.name.replace(/\.[^.]+$/, ''), text: shareText });
-          }
+          await navigator.share(
+            isIOS
+              ? { files: [file], title: file.name.replace(/\.[^.]+$/, '') }
+              : { files: [file], title: file.name.replace(/\.[^.]+$/, ''), text: shareText },
+          );
           toast.success(successMsg);
           return;
         }
       } catch (error: any) {
         if (error?.name === 'AbortError') throw error;
         console.warn('Native member share failed, using fallback:', error);
+      }
+    }
+
+    if (isIOS && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareText);
+      } catch {
+        // ignore clipboard failures on fallback path
       }
     }
 
@@ -339,34 +405,68 @@ export function MemberDetailDialog({
     toast.success(isEmbeddedPreview ? 'ב-Preview הקובץ הורד במקום שיתוף ישיר' : 'הקובץ הורד');
   };
 
+  const isShareFileReady = (key: ShareFileKey, signature: string) => (
+    shareFileSignatureRef.current[key] === signature && Boolean(shareFileCacheRef.current[key])
+  );
+
+  const getReadyShareFile = (key: ShareFileKey, signature: string) => (
+    isShareFileReady(key, signature) ? shareFileCacheRef.current[key] : undefined
+  );
+
   const getCachedOrBuildShareFile = async (
-    key: 'summary' | 'ledger',
+    key: ShareFileKey,
     signature: string,
     builder: () => Promise<File>,
   ): Promise<File> => {
-    if (shareFileSignatureRef.current[key] === signature && shareFileCacheRef.current[key]) {
+    if (isShareFileReady(key, signature)) {
+      setShareStatus(key, 'ready');
       return shareFileCacheRef.current[key]!;
     }
 
     if (shareFileBuildRef.current[key] && shareFileSignatureRef.current[key] === signature) {
+      setShareStatus(key, 'building');
       return await shareFileBuildRef.current[key]!;
     }
 
     shareFileSignatureRef.current[key] = signature;
-    const buildPromise = builder()
+    delete shareFileCacheRef.current[key];
+    setShareStatus(key, 'building');
+
+    let buildPromise: Promise<File>;
+    buildPromise = queueShareBuild(builder)
       .then((file) => {
-        shareFileCacheRef.current[key] = file;
+        if (shareFileSignatureRef.current[key] === signature) {
+          shareFileCacheRef.current[key] = file;
+          setShareStatus(key, 'ready');
+        }
         return file;
       })
+      .catch((error) => {
+        if (shareFileSignatureRef.current[key] === signature) {
+          delete shareFileCacheRef.current[key];
+          setShareStatus(key, 'idle');
+        }
+        throw error;
+      })
       .finally(() => {
-        delete shareFileBuildRef.current[key];
+        if (shareFileBuildRef.current[key] === buildPromise) {
+          delete shareFileBuildRef.current[key];
+        }
       });
 
     shareFileBuildRef.current[key] = buildPromise;
     return await buildPromise;
   };
 
-  const getSummarySharePayload = () => {
+  const prepareShareFileInBackground = (key: ShareFileKey, payload: SharePayload) => {
+    void getCachedOrBuildShareFile(key, payload.signature, () =>
+      buildShareImageFile(generateShareElement(payload.html), payload.fileName),
+    ).catch((error) => {
+      console.warn(`Failed to prebuild ${key} share file:`, error);
+    });
+  };
+
+  const getSummarySharePayload = (): SharePayload => {
     const today = new Date().toLocaleDateString('he-IL');
     let html = `
       <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
@@ -443,7 +543,7 @@ export function MemberDetailDialog({
     };
   };
 
-  const getLedgerSharePayload = () => {
+  const getLedgerSharePayload = (): SharePayload => {
     const openCharges = charges?.filter((c: any) => Number(c.remaining_balance) > 0) || [];
     const paidCharges = charges?.filter((c: any) => Number(c.remaining_balance) === 0) || [];
     let html = `
@@ -498,28 +598,73 @@ export function MemberDetailDialog({
     };
   };
 
+  const summarySharePayload = getSummarySharePayload();
+  const ledgerSharePayload = getLedgerSharePayload();
+
+  useEffect(() => {
+    if (open) return;
+
+    shareFileCacheRef.current = {};
+    shareFileSignatureRef.current = {};
+    shareFileBuildRef.current = {};
+    shareBuildQueueRef.current = Promise.resolve();
+    setShareFileStatus({ ...DEFAULT_SHARE_FILE_STATUS });
+  }, [open]);
+
   useEffect(() => {
     if (!open || !memberId || isLoading) return;
 
-    const summary = getSummarySharePayload();
-    void getCachedOrBuildShareFile('summary', summary.signature, () =>
-      buildShareImageFile(generateShareElement(summary.html), summary.fileName)
-    ).catch(() => {});
+    let cancelled = false;
 
-    const ledger = getLedgerSharePayload();
-    void getCachedOrBuildShareFile('ledger', ledger.signature, () =>
-      buildShareImageFile(generateShareElement(ledger.html), ledger.fileName)
-    ).catch(() => {});
-  }, [open, memberId, memberName, isLoading, totalOwed, chargesDebt, pendingPayments, confirmedPayments, charges, chargePayments]);
+    const warmShareFiles = async () => {
+      try {
+        await getCachedOrBuildShareFile('summary', summarySharePayload.signature, () =>
+          buildShareImageFile(generateShareElement(summarySharePayload.html), summarySharePayload.fileName),
+        );
+      } catch {
+        // keep button available for manual retry
+      }
+
+      if (cancelled || activeTab !== 'ledger' || !charges?.length) {
+        return;
+      }
+
+      try {
+        await getCachedOrBuildShareFile('ledger', ledgerSharePayload.signature, () =>
+          buildShareImageFile(generateShareElement(ledgerSharePayload.html), ledgerSharePayload.fileName),
+        );
+      } catch {
+        // keep button available for manual retry
+      }
+    };
+
+    void warmShareFiles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    open,
+    memberId,
+    isLoading,
+    activeTab,
+    charges?.length,
+    summarySharePayload.signature,
+    ledgerSharePayload.signature,
+  ]);
 
   const handleSharePdf = async () => {
+    const file = getReadyShareFile('summary', summarySharePayload.signature);
+
+    if (!file) {
+      prepareShareFileInBackground('summary', summarySharePayload);
+      toast.info('מכין את הקובץ לשיתוף, נסה שוב בעוד רגע');
+      return;
+    }
+
     setIsSharingPdf(true);
     try {
-      const summary = getSummarySharePayload();
-      const file = await getCachedOrBuildShareFile('summary', summary.signature, () =>
-        buildShareImageFile(generateShareElement(summary.html), summary.fileName)
-      );
-      await sharePreparedFile(file, summary.shareText, summary.successMsg);
+      await sharePreparedFile(file, summarySharePayload.shareText, summarySharePayload.successMsg);
     } catch (error: any) {
       if (error?.name !== 'AbortError') {
         console.error('PDF share error:', error);
@@ -527,6 +672,28 @@ export function MemberDetailDialog({
       }
     } finally {
       setIsSharingPdf(false);
+    }
+  };
+
+  const handleShareLedgerPdf = async () => {
+    const file = getReadyShareFile('ledger', ledgerSharePayload.signature);
+
+    if (!file) {
+      prepareShareFileInBackground('ledger', ledgerSharePayload);
+      toast.info('מכין את הקובץ לשיתוף, נסה שוב בעוד רגע');
+      return;
+    }
+
+    setIsSharingLedgerPdf(true);
+    try {
+      await sharePreparedFile(file, ledgerSharePayload.shareText, ledgerSharePayload.successMsg);
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        console.error('Ledger PDF error:', error);
+        toast.error('שגיאה בשיתוף');
+      }
+    } finally {
+      setIsSharingLedgerPdf(false);
     }
   };
 
@@ -646,10 +813,12 @@ export function MemberDetailDialog({
                       size="sm"
                       className="flex-1 gap-2"
                       onClick={handleSharePdf}
-                      disabled={isSharingPdf}
+                      disabled={isSharingPdf || shareFileStatus.summary === 'building'}
                     >
-                      {isSharingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-                      שתף PDF
+                      {isSharingPdf || shareFileStatus.summary === 'building'
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <FileDown className="w-4 h-4" />}
+                      {shareFileStatus.summary === 'building' ? 'מכין קובץ...' : 'שתף PDF'}
                     </Button>
                   </div>
                 </div>
@@ -854,27 +1023,13 @@ export function MemberDetailDialog({
                         variant="outline"
                         size="sm"
                         className="flex-1 gap-2"
-                        disabled={isSharingLedgerPdf}
-                        onClick={async () => {
-                          setIsSharingLedgerPdf(true);
-                          try {
-                            const ledger = getLedgerSharePayload();
-                            const file = await getCachedOrBuildShareFile('ledger', ledger.signature, () =>
-                              buildShareImageFile(generateShareElement(ledger.html), ledger.fileName)
-                            );
-                            await sharePreparedFile(file, ledger.shareText, ledger.successMsg);
-                          } catch (e: any) {
-                            if (e?.name !== 'AbortError') {
-                              console.error('Ledger PDF error:', e);
-                              toast.error('שגיאה בשיתוף');
-                            }
-                          } finally {
-                            setIsSharingLedgerPdf(false);
-                          }
-                        }}
+                        disabled={isSharingLedgerPdf || shareFileStatus.ledger === 'building'}
+                        onClick={handleShareLedgerPdf}
                       >
-                        {isSharingLedgerPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-                        שתף PDF
+                        {isSharingLedgerPdf || shareFileStatus.ledger === 'building'
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <FileDown className="w-4 h-4" />}
+                        {shareFileStatus.ledger === 'building' ? 'מכין קובץ...' : 'שתף PDF'}
                       </Button>
                     </div>
                   )}
