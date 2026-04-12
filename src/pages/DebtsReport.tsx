@@ -87,6 +87,91 @@ export default function DebtsReport() {
     URL.revokeObjectURL(url);
   };
 
+  const exportPDF = () => {
+    if (!filtered.length) return;
+    const today = format(new Date(), 'dd/MM/yyyy HH:mm');
+
+    const styles = `
+      body { font-family: Arial, sans-serif; padding: 30px; direction: rtl; color: #1a1a1a; }
+      h1 { text-align: center; margin-bottom: 4px; color: #7c2d12; font-size: 22px; }
+      .subtitle { text-align: center; color: #888; margin-bottom: 20px; font-size: 13px; }
+      .summary { display: flex; justify-content: center; gap: 24px; margin-bottom: 24px; }
+      .summary-item { text-align: center; padding: 12px 24px; border-radius: 10px; min-width: 120px; }
+      .debt-bg { background: #fef2f2; border: 1px solid #fecaca; }
+      .members-bg { background: #f0fdf4; border: 1px solid #bbf7d0; }
+      .charges-bg { background: #eff6ff; border: 1px solid #bfdbfe; }
+      .summary-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+      .summary-value { font-size: 20px; font-weight: bold; }
+      .section-title { font-size: 16px; font-weight: bold; margin: 20px 0 8px; color: #7c2d12; border-bottom: 2px solid #fecaca; padding-bottom: 4px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      th { background: #7c2d12; color: white; padding: 8px 12px; text-align: right; font-size: 12px; }
+      td { border-bottom: 1px solid #e5e7eb; padding: 7px 12px; text-align: right; font-size: 12px; }
+      tr:nth-child(even) { background: #fafafa; }
+      .total-row { font-weight: bold; background: #fef2f2 !important; border-top: 2px solid #7c2d12; }
+      .amount { font-weight: 600; color: #dc2626; }
+      .footer { text-align: center; margin-top: 24px; font-size: 10px; color: #aaa; border-top: 1px solid #eee; padding-top: 8px; }
+      @media print { button { display: none; } }
+    `;
+
+    const summaryHtml = `
+      <div class="summary">
+        <div class="summary-item debt-bg"><div class="summary-label">סה״כ חובות</div><div class="summary-value amount">${formatCurrency(totalDebt)}</div></div>
+        <div class="summary-item members-bg"><div class="summary-label">חברים חייבים</div><div class="summary-value">${memberSummary.length}</div></div>
+        <div class="summary-item charges-bg"><div class="summary-label">חיובים פתוחים</div><div class="summary-value">${filtered.length}</div></div>
+      </div>
+    `;
+
+    const memberTableHtml = `
+      <div class="section-title">סיכום לפי חבר</div>
+      <table>
+        <thead><tr><th>#</th><th>שם חבר</th><th>מס׳ חיובים</th><th>סה״כ חוב</th></tr></thead>
+        <tbody>
+          ${memberSummary.map((m, i) => `
+            <tr><td>${i + 1}</td><td>${m.name}</td><td>${m.count}</td><td class="amount">${formatCurrency(m.total)}</td></tr>
+          `).join('')}
+          <tr class="total-row"><td colspan="2">סה״כ</td><td>${filtered.length}</td><td class="amount">${formatCurrency(totalDebt)}</td></tr>
+        </tbody>
+      </table>
+    `;
+
+    const detailTableHtml = `
+      <div class="section-title" style="margin-top:30px">פירוט חיובים</div>
+      <table>
+        <thead><tr><th>#</th><th>שם חבר</th><th>תיאור</th><th>סכום חיוב</th><th>יתרה לתשלום</th><th>תאריך</th></tr></thead>
+        <tbody>
+          ${filtered.map((d, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${d.member_name}</td>
+              <td>${d.description || '-'}</td>
+              <td>${formatCurrency(d.amount)}</td>
+              <td class="amount">${formatCurrency(d.remaining_balance)}</td>
+              <td>${formatShortDate(d.charge_date)}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row"><td colspan="4">סה״כ</td><td class="amount">${formatCurrency(totalDebt)}</td><td></td></tr>
+        </tbody>
+      </table>
+    `;
+
+    const html = `
+      <!DOCTYPE html><html dir="rtl" lang="he">
+      <head><meta charset="UTF-8"><title>דוח חובות מפורט</title><style>${styles}</style></head>
+      <body>
+        <h1>ברית שלום — דוח חובות מפורט</h1>
+        <p class="subtitle">הופק בתאריך ${today}</p>
+        ${summaryHtml}
+        ${memberTableHtml}
+        ${detailTableHtml}
+        <p class="footer">ברית שלום — מערכת ניהול בית כנסת</p>
+        <button onclick="window.print()" style="margin:20px auto;display:block;padding:10px 30px;cursor:pointer;border-radius:8px;border:1px solid #ccc;background:#7c2d12;color:white;font-size:14px;">הדפס / שמור כ-PDF</button>
+      </body></html>
+    `;
+
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); }
+  };
+
   return (
     <div className="space-y-6 animate-fade-up">
       {/* Header */}
@@ -95,10 +180,16 @@ export default function DebtsReport() {
           <AlertCircle className="w-7 h-7 text-red-500" />
           דוח חובות מפורט
         </h1>
-        <Button onClick={exportCSV} variant="outline" className="gap-2" disabled={!filtered.length}>
-          <FileSpreadsheet className="w-4 h-4" />
-          ייצוא Excel
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={exportPDF} variant="outline" className="gap-2" disabled={!filtered.length}>
+            <FileText className="w-4 h-4" />
+            ייצוא PDF
+          </Button>
+          <Button onClick={exportCSV} variant="outline" className="gap-2" disabled={!filtered.length}>
+            <FileSpreadsheet className="w-4 h-4" />
+            ייצוא Excel
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
