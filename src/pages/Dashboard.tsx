@@ -501,6 +501,45 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Debts Dialog */}
+      <Dialog open={debtsDialogOpen} onOpenChange={setDebtsDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">פירוט חובות שטרם נגבו</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {memberDebts && memberDebts.length > 0 ? (
+              <>
+                {memberDebts.map((member, idx) => (
+                  <Card key={idx} className="glass-card">
+                    <CardContent className="p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">{member.full_name}</span>
+                        <Badge variant="destructive" className="hebrew-number">{formatCurrency(member.total)}</Badge>
+                      </div>
+                      <div className="space-y-1">
+                        {member.charges.map((charge, ci) => (
+                          <div key={ci} className="flex justify-between text-sm text-muted-foreground">
+                            <span>{charge.description || "חיוב"}</span>
+                            <span className="hebrew-number">{formatCurrency(charge.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                <div className="border-t pt-3 flex justify-between items-center font-bold text-lg">
+                  <span>סה״כ חובות</span>
+                  <span className="hebrew-number text-destructive">{formatCurrency(totalDebts || 0)}</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">אין חובות פתוחים 🎉</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
