@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Download, Search, FileSpreadsheet, FileText } from 'lucide-react';
+import { AlertCircle, Download, Search, FileSpreadsheet, FileText, ArrowRight } from 'lucide-react';
 import { formatCurrency, formatShortDate } from '@/lib/hebrew-utils';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface DebtRow {
   id: string;
