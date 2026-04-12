@@ -92,7 +92,24 @@ function getCachedShareFile(receipt: any): File | undefined {
   return imageCache.get(cacheKey) || pdfCache.get(cacheKey);
 }
 
+function getPaymentMethodLabel(method?: string): string {
+  const map: Record<string, string> = {
+    cash: 'מזומן',
+    bit: 'ביט',
+    check: 'צ׳ק',
+    bank_transfer: 'העברה בנקאית',
+  };
+  return method ? (map[method] || method) : '';
+}
+
 function getReceiptHtml(receipt: any): string {
+  const paymentMethod = receipt.payment?.method;
+  const methodLabel = getPaymentMethodLabel(paymentMethod);
+  const reference = receipt.payment?.reference;
+  const methodLine = methodLabel
+    ? `<div style="display:flex;justify-content:center;gap:8px;font-size:11px;font-weight:800;padding:0.5mm 0"><span>אופן תשלום:</span><span>${methodLabel}${reference ? ` (${reference})` : ''}</span></div>`
+    : '';
+
   return `
     <div style="text-align:center;font-size:10px;font-weight:900;margin-bottom:2mm">בס"ד</div>
     <div style="text-align:center;margin-bottom:2mm">
@@ -105,6 +122,7 @@ function getReceiptHtml(receipt: any): string {
     <div style="margin-bottom:2mm">
       <div style="display:flex;justify-content:center;gap:8px;font-size:11px;font-weight:800;padding:0.5mm 0"><span>התקבל מאת:</span><span>${receipt.member?.full_name || '-'}</span></div>
       <div style="display:flex;justify-content:center;gap:8px;font-size:11px;font-weight:800;padding:0.5mm 0"><span>עבור:</span><span>${receipt.description || 'תרומה'}</span></div>
+      ${methodLine}
     </div>
     <div style="border-top:2px dashed #000;margin:1.5mm 0"></div>
     <div style="text-align:center;padding:2mm 0">
@@ -256,12 +274,19 @@ export function downloadPdfFile(file: File) {
 }
 
 function getShareText(receipt: any): string {
+  const methodLabel = getPaymentMethodLabel(receipt.payment?.method);
+  const reference = receipt.payment?.reference;
+  const methodStr = methodLabel
+    ? `💳 אופן תשלום: ${methodLabel}${reference ? ` (${reference})` : ''}`
+    : '';
+
   return [
     `🧾 קבלה מס׳ ${receipt.receipt_number}`,
     `👤 ${receipt.member?.full_name || ''}`,
     `💰 סכום: ${formatCurrency(Number(receipt.total_amount))}`,
     `📅 תאריך: ${formatDate(receipt.created_at)}`,
     `${receipt.description ? `📝 עבור: ${receipt.description}` : ''}`,
+    methodStr,
     '',
     'תודה רבה! 🙏',
     'בית כנסת "ברית שלום" עכו',
