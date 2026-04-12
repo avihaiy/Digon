@@ -178,10 +178,15 @@ export default function DebtsReport() {
     <div className="space-y-6 animate-fade-up">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold flex items-center gap-3">
-          <AlertCircle className="w-7 h-7 text-red-500" />
-          דוח חובות מפורט
-        </h1>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+            <ArrowRight className="w-5 h-5" />
+          </Button>
+          <h1 className="text-2xl font-bold flex items-center gap-3">
+            <AlertCircle className="w-7 h-7 text-red-500" />
+            דוח חובות מפורט
+          </h1>
+        </div>
         <div className="flex gap-2">
           <Button onClick={exportPDF} variant="outline" className="gap-2" disabled={!filtered.length}>
             <FileText className="w-4 h-4" />
