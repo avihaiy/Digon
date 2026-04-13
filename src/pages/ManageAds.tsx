@@ -1730,7 +1730,7 @@ export default function ManageAds() {
       </Card>
 
       {/* כפתור הוסף — sticky תחתית */}
-      <div className="fixed bottom-0 right-0 left-0 p-3 pb-[calc(0.75rem+76px)] lg:pb-3 bg-background/95 backdrop-blur-sm border-t z-40">
+      <div className="fixed right-0 left-0 p-3 bg-background/95 backdrop-blur-sm border-t z-40 bottom-[68px] lg:bottom-0" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <Button
           className="w-full h-14 text-base font-semibold rounded-2xl shadow-lg"
           onClick={() => {
@@ -1746,7 +1746,7 @@ export default function ManageAds() {
 
       {/* טופס מודעה — מסך מלא על נייד */}
       {isDialogOpen && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col" dir="rtl">
+        <div className="fixed inset-0 z-[60] bg-background flex flex-col" dir="rtl">
           <div className="flex items-center justify-between p-4 border-b bg-background shrink-0">
             <h2 className="text-lg font-bold">{editingId ? "עריכת מודעה" : "מודעה חדשה"}</h2>
             <Button variant="ghost" size="icon" onClick={handleCloseDialog} className="h-10 w-10">
@@ -1754,7 +1754,7 @@ export default function ManageAds() {
             </Button>
           </div>
           <div
-            className="flex-1 overflow-y-auto overscroll-contain px-4 py-4"
+            className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-8"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <AnnouncementForm
