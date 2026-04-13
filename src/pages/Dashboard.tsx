@@ -228,54 +228,57 @@ export default function Dashboard() {
 
       {/* Financial Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="glass-card border-emerald-500/20 hover-lift animate-fade-in" style={{ animationDelay: '0.1s' }}>
-          <CardContent className="p-4">
+        <Card className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-50/80 to-green-50/50 dark:from-emerald-950/30 dark:to-green-950/20 hover-lift animate-fade-in cursor-default rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group" style={{ animationDelay: '0.1s' }}>
+          <div className="absolute top-0 left-0 w-24 h-24 bg-emerald-500/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-125 transition-transform duration-500" />
+          <CardContent className="p-4 relative">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
                   <TrendingUp className="w-6 h-6 text-emerald-500" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">הכנסות החודש</p>
-                  <p className="text-xl font-bold text-emerald-600">{formatCurrency(stats?.thisMonthIncome || 0)}</p>
+                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.thisMonthIncome || 0)}</p>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-red-500/20 hover-lift animate-fade-in" style={{ animationDelay: '0.15s' }}>
-          <CardContent className="p-4">
+        <Card className="relative overflow-hidden border-red-500/20 bg-gradient-to-br from-red-50/80 to-rose-50/50 dark:from-red-950/30 dark:to-rose-950/20 hover-lift animate-fade-in cursor-default rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group" style={{ animationDelay: '0.15s' }}>
+          <div className="absolute top-0 left-0 w-24 h-24 bg-red-500/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-125 transition-transform duration-500" />
+          <CardContent className="p-4 relative">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/20 group-hover:scale-110 transition-transform duration-300">
                   <TrendingDown className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">הוצאות החודש</p>
-                  <p className="text-xl font-bold text-red-600">{formatCurrency(stats?.thisMonthExpenses || 0)}</p>
+                  <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(stats?.thisMonthExpenses || 0)}</p>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className={`glass-card hover-lift animate-fade-in ${(stats?.balance || 0) >= 0 ? 'border-blue-500/20' : 'border-orange-500/20'}`} style={{ animationDelay: '0.2s' }}>
-          <CardContent className="p-4">
+        <Card className={`relative overflow-hidden hover-lift animate-fade-in cursor-default rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group ${(stats?.balance || 0) >= 0 ? 'border-blue-500/20 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20' : 'border-orange-500/20 bg-gradient-to-br from-orange-50/80 to-amber-50/50 dark:from-orange-950/30 dark:to-amber-950/20'}`} style={{ animationDelay: '0.2s' }}>
+          <div className={`absolute top-0 left-0 w-24 h-24 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-125 transition-transform duration-500 ${(stats?.balance || 0) >= 0 ? 'bg-blue-500/5' : 'bg-orange-500/5'}`} />
+          <CardContent className="p-4 relative">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${(stats?.balance || 0) >= 0 ? 'bg-blue-500/10' : 'bg-orange-500/10'}`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-transform duration-300 ${(stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/20' : 'bg-orange-500/15 ring-orange-500/20'}`}>
                   <Wallet className={`w-6 h-6 ${(stats?.balance || 0) >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">יתרה כוללת</p>
-                  <p className={`text-xl font-bold ${(stats?.balance || 0) >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                  <p className={`text-xl font-bold ${(stats?.balance || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     {formatCurrency(stats?.balance || 0)}
                   </p>
                 </div>
@@ -284,13 +287,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card hover-lift animate-fade-in" style={{ animationDelay: '0.25s' }}>
-          <CardContent className="p-4">
+        <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-primary/[0.02] dark:from-primary/10 dark:to-primary/5 hover-lift animate-fade-in cursor-default rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group" style={{ animationDelay: '0.25s' }}>
+          <div className="absolute top-0 left-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-125 transition-transform duration-500" />
+          <CardContent className="p-4 relative">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/20 group-hover:scale-110 transition-transform duration-300">
                   <Receipt className="w-6 h-6 text-primary" />
                 </div>
                 <div>
@@ -302,24 +306,24 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/20 hover-lift animate-fade-in cursor-pointer shadow-md hover:shadow-lg transition-all" style={{ animationDelay: '0.3s' }} onClick={() => setDebtsDialogOpen(true)}>
-            <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/5 rounded-full -translate-y-6 translate-x-6" />
-            <CardContent className="p-4">
-              {debtsLoading ? (
-                <Skeleton className="h-20 w-full" />
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-red-500/15 flex items-center justify-center ring-2 ring-red-500/20">
-                    <AlertCircle className="w-6 h-6 text-red-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-red-700 dark:text-red-400">חובות שטרם נגבו</p>
-                    <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalDebts || 0)}</p>
-                  </div>
+        <Card className="relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-50/90 to-orange-50/70 dark:from-red-950/30 dark:to-orange-950/20 hover-lift animate-fade-in cursor-pointer rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 group" style={{ animationDelay: '0.3s' }} onClick={() => setDebtsDialogOpen(true)}>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-125 transition-transform duration-500" />
+          <CardContent className="p-4 relative">
+            {debtsLoading ? (
+              <Skeleton className="h-20 w-full" />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-2 ring-red-500/20 group-hover:scale-110 transition-transform duration-300">
+                  <AlertCircle className="w-6 h-6 text-red-500" />
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div>
+                  <p className="text-sm font-medium text-red-700 dark:text-red-400">חובות שטרם נגבו</p>
+                  <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalDebts || 0)}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Income vs Expenses Mini Chart */}
@@ -561,8 +565,9 @@ function StatsCard({
   isAmount?: boolean;
 }) {
   return (
-    <Card className="glass-card relative overflow-hidden">
-      <CardContent className="p-4">
+    <Card className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-muted/50 to-muted/20 border hover-lift transition-all duration-300 group">
+      <div className="absolute top-0 left-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-8 -translate-x-8 group-hover:scale-125 transition-transform duration-500" />
+      <CardContent className="p-4 relative">
         {loading ? (
           <div className="space-y-2">
             <Skeleton className="h-8 w-24" />
