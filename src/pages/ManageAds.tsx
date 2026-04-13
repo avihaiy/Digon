@@ -1730,7 +1730,7 @@ export default function ManageAds() {
       </Card>
 
       {/* כפתור הוסף — sticky תחתית */}
-      <div className="fixed bottom-0 right-0 left-0 p-3 bg-background/95 backdrop-blur-sm border-t z-40" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 76px)' }}>
+      <div className="fixed bottom-0 right-0 left-0 p-3 pb-[calc(0.75rem+76px)] lg:pb-3 bg-background/95 backdrop-blur-sm border-t z-40">
         <Button
           className="w-full h-14 text-base font-semibold rounded-2xl shadow-lg"
           onClick={() => {
