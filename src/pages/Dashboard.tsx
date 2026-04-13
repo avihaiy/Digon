@@ -153,12 +153,45 @@ function MonthlyBarChart({ data }: { data: { month: string; הכנסות: number
   }, []);
 
   return (
-    <div className="flex items-end gap-3 h-52 pt-6 px-1">
+    <div className="flex items-end gap-3 h-52 pt-6 px-1 relative">
       {data.map((d, i) => {
         const incomeH = (d.הכנסות / maxVal) * 100;
         const expenseH = (d.הוצאות / maxVal) * 100;
+        const diff = d.הכנסות - d.הוצאות;
+        const isPositive = diff >= 0;
         return (
-          <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group/col">
+          <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group/col relative">
+            {/* Tooltip */}
+            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-30 opacity-0 group-hover/col:opacity-100 translate-y-2 group-hover/col:translate-y-0 transition-all duration-300 pointer-events-none">
+              <div className="bg-card dark:bg-popover border border-border rounded-xl shadow-xl p-3 min-w-[140px] text-right" dir="rtl">
+                <p className="text-xs font-bold text-foreground mb-2 border-b border-border/50 pb-1.5">{d.month}</p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ background: '#00897B' }} />
+                      <span className="text-[11px] text-muted-foreground">הכנסות</span>
+                    </div>
+                    <span className="text-xs font-bold tabular-nums">₪ {d.הכנסות.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ background: '#E63946' }} />
+                      <span className="text-[11px] text-muted-foreground">הוצאות</span>
+                    </div>
+                    <span className="text-xs font-bold tabular-nums">₪ {d.הוצאות.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-border/50 pt-1.5 flex items-center justify-between gap-3">
+                    <span className="text-[11px] font-semibold text-muted-foreground">הפרש</span>
+                    <span className={cn('text-xs font-bold tabular-nums', isPositive ? 'text-[#00897B]' : 'text-[#E63946]')}>
+                      {isPositive ? '+' : ''}{diff.toLocaleString()} ₪
+                    </span>
+                  </div>
+                </div>
+                {/* Arrow */}
+                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-card dark:bg-popover border-b border-r border-border rotate-45" />
+              </div>
+            </div>
+
             <div className="flex items-end gap-1 w-full h-40 justify-center">
               {/* Income bar */}
               <div className="relative w-[45%] flex flex-col justify-end h-full">
