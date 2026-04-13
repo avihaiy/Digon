@@ -214,9 +214,9 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-up">
         <div>
           <h1 className="text-2xl font-bold text-foreground">לוח בקרה</h1>
           <p className="text-muted-foreground">
@@ -225,19 +225,19 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex">
           <Link to="/payments?action=add" className="col-span-1">
-            <Button className="gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button className="gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white click-scale">
               <CreditCard className="w-4 h-4" />
               <span>קבל תשלום</span>
             </Button>
           </Link>
           <Link to="/budget" className="col-span-1">
-            <Button variant="destructive" className="gap-1 w-full text-xs md:text-sm px-2">
+            <Button variant="destructive" className="gap-1 w-full text-xs md:text-sm px-2 click-scale">
               <Wallet className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">הוצאות</span>
             </Button>
           </Link>
           <Link to="/members" className="col-span-1">
-            <Button className="gap-2 w-full bg-orange-600 hover:bg-orange-700 text-white">
+            <Button className="gap-2 w-full bg-orange-600 hover:bg-orange-700 text-white click-scale">
               <Users className="w-4 h-4" />
               <span>חברים</span>
             </Button>
@@ -247,14 +247,14 @@ export default function Dashboard() {
 
       {/* Financial Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-50/80 to-green-50/50 dark:from-emerald-950/30 dark:to-green-950/20 hover-lift animate-fade-in cursor-default rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group" style={{ animationDelay: '0.1s' }}>
-          <div className="absolute top-0 left-0 w-24 h-24 bg-emerald-500/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-125 transition-transform duration-500" />
+        <Card className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-50/80 to-green-50/50 dark:from-emerald-950/30 dark:to-green-950/20 interactive-card rounded-2xl shadow-sm animate-fade-up stagger-1 group">
+          <div className="absolute top-0 left-0 w-24 h-24 bg-emerald-500/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-150 transition-transform duration-700" />
           <CardContent className="p-4 relative">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/20 group-hover:scale-110 group-hover:ring-emerald-500/40 transition-all duration-300">
                   <TrendingUp className="w-6 h-6 text-emerald-500" />
                 </div>
                 <div>
@@ -266,14 +266,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-red-500/20 bg-gradient-to-br from-red-50/80 to-rose-50/50 dark:from-red-950/30 dark:to-rose-950/20 hover-lift animate-fade-in cursor-default rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group" style={{ animationDelay: '0.15s' }}>
-          <div className="absolute top-0 left-0 w-24 h-24 bg-red-500/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-125 transition-transform duration-500" />
+        <Card className="relative overflow-hidden border-red-500/20 bg-gradient-to-br from-red-50/80 to-rose-50/50 dark:from-red-950/30 dark:to-rose-950/20 interactive-card rounded-2xl shadow-sm animate-fade-up stagger-2 group">
+          <div className="absolute top-0 left-0 w-24 h-24 bg-red-500/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-150 transition-transform duration-700" />
           <CardContent className="p-4 relative">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/20 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/20 group-hover:scale-110 group-hover:ring-red-500/40 transition-all duration-300">
                   <TrendingDown className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
@@ -285,19 +285,24 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className={`relative overflow-hidden hover-lift animate-fade-in cursor-default rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group ${(stats?.balance || 0) >= 0 ? 'border-blue-500/20 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20' : 'border-orange-500/20 bg-gradient-to-br from-orange-50/80 to-amber-50/50 dark:from-orange-950/30 dark:to-amber-950/20'}`} style={{ animationDelay: '0.2s' }}>
-          <div className={`absolute top-0 left-0 w-24 h-24 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-125 transition-transform duration-500 ${(stats?.balance || 0) >= 0 ? 'bg-blue-500/5' : 'bg-orange-500/5'}`} />
+        <Card className={cn(
+          'relative overflow-hidden interactive-card rounded-2xl shadow-sm animate-fade-up stagger-3 group',
+          (stats?.balance || 0) >= 0
+            ? 'border-blue-500/20 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20'
+            : 'border-orange-500/20 bg-gradient-to-br from-orange-50/80 to-amber-50/50 dark:from-orange-950/30 dark:to-amber-950/20'
+        )}>
+          <div className={cn('absolute top-0 left-0 w-24 h-24 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-150 transition-transform duration-700', (stats?.balance || 0) >= 0 ? 'bg-blue-500/5' : 'bg-orange-500/5')} />
           <CardContent className="p-4 relative">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-transform duration-300 ${(stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/20' : 'bg-orange-500/15 ring-orange-500/20'}`}>
-                  <Wallet className={`w-6 h-6 ${(stats?.balance || 0) >= 0 ? 'text-blue-500' : 'text-orange-500'}`} />
+                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-all duration-300', (stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/20 group-hover:ring-blue-500/40' : 'bg-orange-500/15 ring-orange-500/20 group-hover:ring-orange-500/40')}>
+                  <Wallet className={cn('w-6 h-6', (stats?.balance || 0) >= 0 ? 'text-blue-500' : 'text-orange-500')} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">יתרה כוללת</p>
-                  <p className={`text-xl font-bold ${(stats?.balance || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                  <p className={cn('text-xl font-bold', (stats?.balance || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400')}>
                     {formatCurrency(stats?.balance || 0)}
                   </p>
                 </div>
@@ -306,14 +311,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-primary/[0.02] dark:from-primary/10 dark:to-primary/5 hover-lift animate-fade-in cursor-default rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group" style={{ animationDelay: '0.25s' }}>
-          <div className="absolute top-0 left-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-125 transition-transform duration-500" />
+        <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-primary/[0.02] dark:from-primary/10 dark:to-primary/5 interactive-card rounded-2xl shadow-sm animate-fade-up stagger-4 group">
+          <div className="absolute top-0 left-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-150 transition-transform duration-700" />
           <CardContent className="p-4 relative">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/20 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/20 group-hover:scale-110 group-hover:ring-primary/40 transition-all duration-300">
                   <Receipt className="w-6 h-6 text-primary" />
                 </div>
                 <div>
@@ -325,14 +330,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-50/90 to-orange-50/70 dark:from-red-950/30 dark:to-orange-950/20 hover-lift animate-fade-in cursor-pointer rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 group" style={{ animationDelay: '0.3s' }} onClick={() => setDebtsDialogOpen(true)}>
-          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-125 transition-transform duration-500" />
+        <Card className="relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-50/90 to-orange-50/70 dark:from-red-950/30 dark:to-orange-950/20 interactive-card cursor-pointer rounded-2xl shadow-md animate-fade-up stagger-5 group" onClick={() => setDebtsDialogOpen(true)}>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-150 transition-transform duration-700" />
           <CardContent className="p-4 relative">
             {debtsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-2 ring-red-500/20 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-2 ring-red-500/20 group-hover:scale-110 group-hover:ring-red-500/40 transition-all duration-300">
                   <AlertCircle className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
@@ -462,15 +467,16 @@ export default function Dashboard() {
       <RevealSection delay={200}>
       {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickActions.map((action) => (
+        {quickActions.map((action, i) => (
           <Link key={action.href} to={action.href}>
-            <div className="quick-action group">
-              <div className={`w-12 h-12 rounded-xl mb-3 flex items-center justify-center ${
+            <div className="quick-action group click-scale">
+              <div className={cn(
+                'w-12 h-12 rounded-xl mb-3 flex items-center justify-center transition-all duration-300',
                 action.variant === 'primary' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors'
-              }`}>
-                <action.icon className="w-6 h-6" />
+                  ? 'bg-primary text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25' 
+                  : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25'
+              )}>
+                <action.icon className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
               </div>
               <p className="font-medium">{action.label}</p>
             </div>
@@ -510,7 +516,7 @@ export default function Dashboard() {
                 {recentPayments?.map((payment: any) => (
                   <div
                     key={payment.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 table-row-hover"
+                    className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary/80 hover:shadow-sm transition-all duration-200 click-scale"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
