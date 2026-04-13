@@ -543,15 +543,15 @@ export default function Dashboard() {
                 className="hero-action-btn w-full relative overflow-hidden flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-3 sm:px-3 md:px-5 md:py-3.5 text-white font-semibold text-xs sm:text-sm md:text-base rounded-2xl border-0 outline-none cursor-pointer group/btn"
                 style={{
                   background: `linear-gradient(135deg, ${btn.from}, ${btn.to})`,
-                  boxShadow: `0 4px 16px -4px ${btn.shadow}`,
-                  animationDelay: `${btn.delay}ms`,
+                  ['--hero-shadow' as string]: btn.shadow,
+                  animationDelay: `${btn.delay}ms, ${btn.delay + 200}ms, ${btn.delay + 200}ms, ${btn.delay + 400}ms`,
                 } as React.CSSProperties}
                 onClick={() => { try { navigator.vibrate?.(8); } catch {} }}
               >
                 {/* Gradient shift overlay */}
                 <div className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" style={{ background: `linear-gradient(135deg, ${btn.to}, ${btn.from})` }} />
-                {/* Shine sweep */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-out" />
+                {/* Shine sweep - continuous */}
+                <div className="hero-shine-sweep absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent" style={{ animationDelay: `${i * 1.5 + 1}s` }} />
                 <btn.icon className="w-4 h-4 md:w-5 md:h-5 relative z-10 group-hover/btn:scale-110 group-hover/btn:rotate-6 transition-transform duration-300" />
                 <span className="relative z-10 truncate hidden sm:inline">{btn.label}</span>
                 <span className="relative z-10 truncate sm:hidden">{btn.mobileLabel}</span>
