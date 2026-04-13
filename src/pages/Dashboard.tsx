@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, ReactNode, useCallback } from 'react';
+import { useEffect, useState, useRef, ReactNode, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,6 +81,74 @@ function AnimatedBar({ percentage, color, delay = 0 }: { percentage: number; col
         style={{ width: `${width}%`, transitionDuration: '1s' }}
       />
     </div>
+  );
+}
+
+// Mini confetti burst component
+function ConfettiBurst({ active }: { active: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fired = useRef(false);
+
+  useEffect(() => {
+    if (!active || fired.current || !canvasRef.current) return;
+    fired.current = true;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    const colors = ['#22c55e', '#10b981', '#fbbf24', '#3b82f6', '#a855f7', '#f43f5e'];
+    const particles: { x: number; y: number; vx: number; vy: number; size: number; color: string; life: number; rotation: number; rv: number }[] = [];
+
+    for (let i = 0; i < 40; i++) {
+      particles.push({
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 8,
+        vy: (Math.random() - 1) * 6 - 2,
+        size: Math.random() * 5 + 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1,
+        rotation: Math.random() * 360,
+        rv: (Math.random() - 0.5) * 10,
+      });
+    }
+
+    let frameId: number;
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      for (const p of particles) {
+        if (p.life <= 0) continue;
+        alive = true;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.15;
+        p.life -= 0.018;
+        p.rotation += p.rv;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      }
+      if (alive) frameId = requestAnimationFrame(animate);
+    };
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
+  }, [active]);
+
+  if (!active) return null;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none z-20"
+    />
   );
 }
 
@@ -458,7 +526,8 @@ export default function Dashboard() {
               </div>
 
               {/* Balance Summary */}
-              <div className="pt-2 border-t flex justify-between items-center animate-fade-in" style={{ animationDelay: '0.8s' }}>
+              <div className="pt-2 border-t flex justify-between items-center animate-fade-in relative" style={{ animationDelay: '0.8s' }}>
+                <ConfettiBurst active={((stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0)) > 0} />
                 <span className="text-muted-foreground">יתרה החודש:</span>
                 <AnimatedCounter
                   value={(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0)}
