@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, ReactNode } from 'react';
+import { useEffect, useState, useRef, ReactNode, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +25,64 @@ import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { cn } from '@/lib/utils';
+
+// Animated counter that counts from 0 to target value
+function AnimatedCounter({ value, duration = 900, className, prefix = '₪ ' }: { value: number; duration?: number; className?: string; prefix?: string }) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const [done, setDone] = useState(false);
+  const prevValue = useRef(0);
+
+  useEffect(() => {
+    if (value === 0) { setDisplayValue(0); setDone(true); return; }
+    setDone(false);
+    const start = prevValue.current;
+    const diff = value - start;
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + diff * eased);
+      setDisplayValue(current);
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        setDone(true);
+        prevValue.current = value;
+      }
+    };
+    requestAnimationFrame(tick);
+  }, [value, duration]);
+
+  return (
+    <span className={cn(className, done ? 'font-bold' : 'font-semibold', 'transition-all duration-300 tabular-nums')}>
+      {prefix}{displayValue.toLocaleString()}
+    </span>
+  );
+}
+
+// Animated progress bar
+function AnimatedBar({ percentage, color, delay = 0 }: { percentage: number; color: string; delay?: number }) {
+  const [width, setWidth] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setWidth(percentage), delay + 100);
+    return () => clearTimeout(timer);
+  }, [percentage, delay]);
+
+  return (
+    <div className="h-7 bg-secondary/60 rounded-lg overflow-hidden">
+      <div
+        ref={ref}
+        className={cn('h-full rounded-lg transition-all ease-out', color)}
+        style={{ width: `${width}%`, transitionDuration: '1s' }}
+      />
+    </div>
+  );
+}
 
 function RevealSection({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   const { ref, isVisible } = useScrollReveal();
