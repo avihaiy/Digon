@@ -674,6 +674,7 @@ export default function ManageAds() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogClosing, setIsDialogClosing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(defaultFormData);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -998,11 +999,23 @@ export default function ManageAds() {
     setIsDialogOpen(true);
   };
   const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingId(null);
-    setFormData(defaultFormData);
-    setImageFile(null);
-    setImagePreview(null);
+    if (isMobile) {
+      setIsDialogClosing(true);
+      setTimeout(() => {
+        setIsDialogOpen(false);
+        setIsDialogClosing(false);
+        setEditingId(null);
+        setFormData(defaultFormData);
+        setImageFile(null);
+        setImagePreview(null);
+      }, 300);
+    } else {
+      setIsDialogOpen(false);
+      setEditingId(null);
+      setFormData(defaultFormData);
+      setImageFile(null);
+      setImagePreview(null);
+    }
   };
 
   // ── פריסת מחשב: 2 עמודות ──
