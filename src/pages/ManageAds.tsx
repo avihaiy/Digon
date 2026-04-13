@@ -1754,7 +1754,7 @@ export default function ManageAds() {
             </Button>
           </div>
           <div
-            className="flex-1 overflow-y-auto overscroll-contain px-4 py-4"
+            className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-8"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <AnnouncementForm
