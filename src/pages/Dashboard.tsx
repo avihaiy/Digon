@@ -516,7 +516,7 @@ export default function Dashboard() {
                 {recentPayments?.map((payment: any) => (
                   <div
                     key={payment.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 table-row-hover"
+                    className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary/80 hover:shadow-sm transition-all duration-200 click-scale"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
