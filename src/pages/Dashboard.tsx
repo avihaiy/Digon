@@ -501,20 +501,6 @@ export default function Dashboard() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const { data: recentPayments, isLoading: paymentsLoading } = useQuery({
-    queryKey: ['recent-payments'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('payments')
-        .select(`
-          *,
-          member:members(full_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      return data || [];
-    },
-  });
 
   const quickActions = [
     { label: 'הוסף חבר', icon: Users, href: '/members?action=add', variant: 'secondary' as const },
@@ -829,60 +815,6 @@ export default function Dashboard() {
       </div>
       </RevealSection>
 
-      <RevealSection delay={250}>
-      {/* Recent Activity */}
-      <div className="grid gap-6">
-        {/* Recent Payments */}
-        <Card className="glass-card recent-card relative overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between pb-4 relative z-10">
-            <CardTitle className="text-lg font-semibold">תשלומים אחרונים</CardTitle>
-            <Link to="/payments">
-              <Button variant="ghost" size="sm">
-                הצג הכל
-                <ArrowLeft className="w-4 h-4 mr-1 flip-icon" />
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {paymentsLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : recentPayments?.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>אין תשלומים אחרונים</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentPayments?.map((payment: any) => (
-                  <div
-                    key={payment.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 payment-row-enhanced click-scale"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        payment.method === 'bit' ? 'bg-purple-100 text-purple-600' : 'bg-green-100 text-green-600'
-                      }`}>
-                        <CreditCard className="w-4 h-4" />
-                      </div>
-                      <span className="font-medium">
-                        {payment.member?.full_name}
-                      </span>
-                    </div>
-                    <span className="font-bold hebrew-number">
-                      {formatCurrency(Number(payment.amount))}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      </RevealSection>
 
       <Dialog open={debtsDialogOpen} onOpenChange={setDebtsDialogOpen}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto" dir="rtl">
