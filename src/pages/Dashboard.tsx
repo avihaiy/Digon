@@ -467,15 +467,16 @@ export default function Dashboard() {
       <RevealSection delay={200}>
       {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickActions.map((action) => (
+        {quickActions.map((action, i) => (
           <Link key={action.href} to={action.href}>
-            <div className="quick-action group">
-              <div className={`w-12 h-12 rounded-xl mb-3 flex items-center justify-center ${
+            <div className="quick-action group click-scale">
+              <div className={cn(
+                'w-12 h-12 rounded-xl mb-3 flex items-center justify-center transition-all duration-300',
                 action.variant === 'primary' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors'
-              }`}>
-                <action.icon className="w-6 h-6" />
+                  ? 'bg-primary text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25' 
+                  : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25'
+              )}>
+                <action.icon className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
               </div>
               <p className="font-medium">{action.label}</p>
             </div>
