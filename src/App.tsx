@@ -38,7 +38,6 @@ import Display from "@/pages/Display";
 import SettingsPage from "@/pages/SettingsPage";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
-import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 
 const queryClient = new QueryClient();
 
@@ -85,33 +84,235 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
-        <Route path="/install" element={<PageTransition><Install /></PageTransition>} />
-        <Route path="/" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
-        
-        <Route path="/members" element={<ProtectedRoute><PageTransition><Members /></PageTransition></ProtectedRoute>} />
-        
-        <Route path="/payments" element={<ProtectedRoute><PageTransition><Payments /></PageTransition></ProtectedRoute>} />
-        <Route path="/receipts" element={<ProtectedRoute><PageTransition><Receipts /></PageTransition></ProtectedRoute>} />
-        <Route path="/reports" element={<ProtectedRoute><PageTransition><Reports /></PageTransition></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute><PageTransition><UserManagement /></PageTransition></ProtectedRoute>} />
-        <Route path="/budget" element={<ProtectedRoute><PageTransition><Budget /></PageTransition></ProtectedRoute>} />
-        <Route path="/equipment" element={<ProtectedRoute><PageTransition><Equipment /></PageTransition></ProtectedRoute>} />
-        <Route path="/expenses" element={<ProtectedRoute><PageTransition><Expenses /></PageTransition></ProtectedRoute>} />
-        <Route path="/expense-reports" element={<ProtectedRoute><PageTransition><ExpenseReports /></PageTransition></ProtectedRoute>} />
-        <Route path="/detailed-report" element={<ProtectedRoute><PageTransition><DetailedReport /></PageTransition></ProtectedRoute>} />
-        <Route path="/debts-report" element={<ProtectedRoute><PageTransition><DebtsReport /></PageTransition></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
-        <Route path="/backups" element={<ProtectedRoute><PageTransition><Backups /></PageTransition></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><PageTransition><SettingsPage /></PageTransition></ProtectedRoute>} />
-        <Route path="/manage-ads" element={<ProtectedRoute><PageTransition><ManageAds /></PageTransition></ProtectedRoute>} />
-        <Route path="/admin-mobile" element={<PageTransition><AdminMobile /></PageTransition>} />
-        <Route path="/display-general" element={<PageTransition><DisplayGeneral /></PageTransition>} />
-        <Route path="/display-memorial" element={<PageTransition><DisplayMemorial /></PageTransition>} />
-        <Route path="/display-finance" element={<PageTransition><DisplayFinance /></PageTransition>} />
-        <Route path="/display-tv" element={<PageTransition><DisplayTV /></PageTransition>} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <PageTransition>
+                <Login />
+              </PageTransition>
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/install"
+          element={
+            <PageTransition>
+              <Install />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Dashboard />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/members"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Members />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/payments"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Payments />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receipts"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Receipts />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Reports />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <UserManagement />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/budget"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Budget />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/equipment"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Equipment />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Expenses />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expense-reports"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <ExpenseReports />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/detailed-report"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <DetailedReport />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/debts-report"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <DebtsReport />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Admin />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/backups"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Backups />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <SettingsPage />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manage-ads"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <ManageAds />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-mobile"
+          element={
+            <PageTransition>
+              <AdminMobile />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/display-general"
+          element={
+            <PageTransition>
+              <DisplayGeneral />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/display-memorial"
+          element={
+            <PageTransition>
+              <DisplayMemorial />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/display-finance"
+          element={
+            <PageTransition>
+              <DisplayFinance />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/display-tv"
+          element={
+            <PageTransition>
+              <DisplayTV />
+            </PageTransition>
+          }
+        />
         <Route path="/display" element={<Display />} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        <Route
+          path="*"
+          element={
+            <PageTransition>
+              <NotFound />
+            </PageTransition>
+          }
+        />
       </Routes>
     </AnimatePresence>
   );
@@ -119,23 +320,17 @@ const AnimatedRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <TooltipProvider>
         <OfflineSyncProvider>
           <PWAUpdateProvider>
             <Toaster />
             <Sonner />
-            <PWAUpdatePrompt />
-          <BrowserRouter>
-            <AuthProvider>
-              <AnimatedRoutes />
-            </AuthProvider>
-          </BrowserRouter>
+            <BrowserRouter>
+              <AuthProvider>
+                <AnimatedRoutes />
+              </AuthProvider>
+            </BrowserRouter>
           </PWAUpdateProvider>
         </OfflineSyncProvider>
       </TooltipProvider>
