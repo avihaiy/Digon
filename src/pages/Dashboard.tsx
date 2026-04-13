@@ -312,12 +312,12 @@ export default function Dashboard() {
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/20 group-hover:scale-110 group-hover:ring-emerald-500/40 transition-all duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/20 group-hover:scale-110 group-hover:ring-emerald-500/40 transition-all duration-300 animate-bounce-subtle" style={{ animationDelay: '0.3s' }}>
                   <TrendingUp className="w-6 h-6 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">הכנסות החודש</p>
-                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.thisMonthIncome || 0)}</p>
+                  <p className="text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.2s' }}>הכנסות החודש</p>
+                  <AnimatedCounter value={stats?.thisMonthIncome || 0} className="text-xl text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
             )}
@@ -331,12 +331,12 @@ export default function Dashboard() {
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/20 group-hover:scale-110 group-hover:ring-red-500/40 transition-all duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/20 group-hover:scale-110 group-hover:ring-red-500/40 transition-all duration-300 animate-bounce-subtle" style={{ animationDelay: '0.5s' }}>
                   <TrendingDown className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">הוצאות החודש</p>
-                  <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(stats?.thisMonthExpenses || 0)}</p>
+                  <p className="text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.4s' }}>הוצאות החודש</p>
+                  <AnimatedCounter value={stats?.thisMonthExpenses || 0} className="text-xl text-red-600 dark:text-red-400" />
                 </div>
               </div>
             )}
@@ -355,14 +355,12 @@ export default function Dashboard() {
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-all duration-300', (stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/20 group-hover:ring-blue-500/40' : 'bg-orange-500/15 ring-orange-500/20 group-hover:ring-orange-500/40')}>
+                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-all duration-300 animate-bounce-subtle', (stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/20 group-hover:ring-blue-500/40' : 'bg-orange-500/15 ring-orange-500/20 group-hover:ring-orange-500/40')} style={{ animationDelay: '0.7s' }}>
                   <Wallet className={cn('w-6 h-6', (stats?.balance || 0) >= 0 ? 'text-blue-500' : 'text-orange-500')} />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">יתרה כוללת</p>
-                  <p className={cn('text-xl font-bold', (stats?.balance || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400')}>
-                    {formatCurrency(stats?.balance || 0)}
-                  </p>
+                  <p className="text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.6s' }}>יתרה כוללת</p>
+                  <AnimatedCounter value={stats?.balance || 0} className={cn('text-xl', (stats?.balance || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400')} />
                 </div>
               </div>
             )}
