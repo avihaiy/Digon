@@ -501,20 +501,6 @@ export default function Dashboard() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const { data: recentPayments, isLoading: paymentsLoading } = useQuery({
-    queryKey: ['recent-payments'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('payments')
-        .select(`
-          *,
-          member:members(full_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      return data || [];
-    },
-  });
 
   const quickActions = [
     { label: 'הוסף חבר', icon: Users, href: '/members?action=add', variant: 'secondary' as const },
