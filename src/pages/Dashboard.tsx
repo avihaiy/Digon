@@ -214,9 +214,9 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-up">
         <div>
           <h1 className="text-2xl font-bold text-foreground">לוח בקרה</h1>
           <p className="text-muted-foreground">
@@ -225,19 +225,19 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex">
           <Link to="/payments?action=add" className="col-span-1">
-            <Button className="gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+            <Button className="gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white click-scale">
               <CreditCard className="w-4 h-4" />
               <span>קבל תשלום</span>
             </Button>
           </Link>
           <Link to="/budget" className="col-span-1">
-            <Button variant="destructive" className="gap-1 w-full text-xs md:text-sm px-2">
+            <Button variant="destructive" className="gap-1 w-full text-xs md:text-sm px-2 click-scale">
               <Wallet className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">הוצאות</span>
             </Button>
           </Link>
           <Link to="/members" className="col-span-1">
-            <Button className="gap-2 w-full bg-orange-600 hover:bg-orange-700 text-white">
+            <Button className="gap-2 w-full bg-orange-600 hover:bg-orange-700 text-white click-scale">
               <Users className="w-4 h-4" />
               <span>חברים</span>
             </Button>
