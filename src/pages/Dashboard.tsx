@@ -457,7 +457,6 @@ export default function Dashboard() {
           isAmount
         />
       </div>
-      </div>
       </RevealSection>
 
       <RevealSection delay={200}>
@@ -477,7 +476,6 @@ export default function Dashboard() {
             </div>
           </Link>
         ))}
-      </div>
       </div>
       </RevealSection>
 
