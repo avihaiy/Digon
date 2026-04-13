@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,25 @@ import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebre
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
+
+function RevealSection({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+  const { ref, isVisible } = useScrollReveal();
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'transition-all duration-700 ease-out',
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8',
+        className
+      )}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -326,6 +345,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      <RevealSection>
       {/* Income vs Expenses Mini Chart */}
       <Card className="glass-card">
         <CardHeader className="pb-2">
@@ -385,7 +405,9 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      </RevealSection>
 
+      <RevealSection delay={100}>
       {/* Monthly History Chart */}
       <Card className="glass-card">
         <CardHeader className="pb-2">
@@ -416,7 +438,9 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      </RevealSection>
 
+      <RevealSection delay={150}>
       {/* Secondary Stats */}
       <div className="grid grid-cols-2 gap-4">
         <StatsCard
@@ -433,7 +457,9 @@ export default function Dashboard() {
           isAmount
         />
       </div>
+      </RevealSection>
 
+      <RevealSection delay={200}>
       {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {quickActions.map((action) => (
@@ -451,8 +477,9 @@ export default function Dashboard() {
           </Link>
         ))}
       </div>
+      </RevealSection>
 
-
+      <RevealSection delay={250}>
       {/* Recent Activity */}
       <div className="grid gap-6">
         {/* Recent Payments */}
@@ -505,8 +532,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </RevealSection>
 
-      {/* Debts Dialog */}
       <Dialog open={debtsDialogOpen} onOpenChange={setDebtsDialogOpen}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
