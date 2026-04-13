@@ -345,6 +345,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      <RevealSection>
       {/* Income vs Expenses Mini Chart */}
       <Card className="glass-card">
         <CardHeader className="pb-2">
@@ -404,7 +405,9 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      </RevealSection>
 
+      <RevealSection delay={100}>
       {/* Monthly History Chart */}
       <Card className="glass-card">
         <CardHeader className="pb-2">
@@ -435,7 +438,9 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      </RevealSection>
 
+      <RevealSection delay={150}>
       {/* Secondary Stats */}
       <div className="grid grid-cols-2 gap-4">
         <StatsCard
@@ -452,7 +457,10 @@ export default function Dashboard() {
           isAmount
         />
       </div>
+      </div>
+      </RevealSection>
 
+      <RevealSection delay={200}>
       {/* Quick Actions */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {quickActions.map((action) => (
@@ -470,8 +478,10 @@ export default function Dashboard() {
           </Link>
         ))}
       </div>
+      </div>
+      </RevealSection>
 
-
+      <RevealSection delay={250}>
       {/* Recent Activity */}
       <div className="grid gap-6">
         {/* Recent Payments */}
