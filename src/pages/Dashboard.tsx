@@ -532,25 +532,31 @@ export default function Dashboard() {
             שבת פרשת {parasha} • {formatDate(nextShabbat)} • {getHebrewDate(nextShabbat)}
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex">
-          <Link to="/payments?action=add" className="col-span-1">
-            <Button className="gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white click-scale">
-              <CreditCard className="w-4 h-4" />
-              <span>קבל תשלום</span>
-            </Button>
-          </Link>
-          <Link to="/budget" className="col-span-1">
-            <Button variant="destructive" className="gap-1 w-full text-xs md:text-sm px-2 click-scale">
-              <Wallet className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">הוצאות</span>
-            </Button>
-          </Link>
-          <Link to="/members" className="col-span-1">
-            <Button className="gap-2 w-full bg-orange-600 hover:bg-orange-700 text-white click-scale">
-              <Users className="w-4 h-4" />
-              <span>חברים</span>
-            </Button>
-          </Link>
+        <div className="grid grid-cols-3 gap-3 w-full md:w-auto">
+          {[
+            { label: 'קבל תשלום', icon: CreditCard, href: '/payments?action=add', from: '#00897B', to: '#00695C', shadow: 'rgba(0,137,123,0.35)', delay: 0 },
+            { label: 'הוצאות', icon: Wallet, href: '/budget', from: '#E63946', to: '#C62828', shadow: 'rgba(230,57,70,0.35)', delay: 80 },
+            { label: 'חברים', icon: Users, href: '/members', from: '#FF7043', to: '#E64A19', shadow: 'rgba(255,112,67,0.35)', delay: 160 },
+          ].map((btn, i) => (
+            <Link key={btn.href} to={btn.href} className="col-span-1">
+              <button
+                className="hero-action-btn w-full relative overflow-hidden flex items-center justify-center gap-2 px-3 py-3 md:px-5 md:py-3.5 text-white font-semibold text-sm md:text-base rounded-2xl border-0 outline-none cursor-pointer group/btn"
+                style={{
+                  background: `linear-gradient(135deg, ${btn.from}, ${btn.to})`,
+                  boxShadow: `0 4px 16px -4px ${btn.shadow}`,
+                  animationDelay: `${btn.delay}ms`,
+                } as React.CSSProperties}
+                onClick={() => { try { navigator.vibrate?.(8); } catch {} }}
+              >
+                {/* Gradient shift overlay */}
+                <div className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500" style={{ background: `linear-gradient(135deg, ${btn.to}, ${btn.from})` }} />
+                {/* Shine sweep */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-out" />
+                <btn.icon className="w-4 h-4 md:w-5 md:h-5 relative z-10 group-hover/btn:scale-110 group-hover/btn:rotate-6 transition-transform duration-300" />
+                <span className="relative z-10 truncate">{btn.label}</span>
+              </button>
+            </Link>
+          ))}
         </div>
       </div>
 
