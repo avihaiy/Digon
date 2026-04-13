@@ -121,11 +121,11 @@ function ProBar({ value, maxValue, color, gradientFrom, gradientTo, delay = 0, l
           {/* Shimmer overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/bar:opacity-100 transition-opacity duration-500" style={{ backgroundSize: '200% 100%', animation: hovered ? 'border-shine 2s linear infinite' : 'none' }} />
         </div>
-        {/* Hover lift effect */}
+        {/* Hover ring effect */}
         <div className={cn(
           'absolute inset-0 rounded-xl transition-all duration-300 pointer-events-none',
           hovered ? 'ring-2 ring-offset-1' : 'ring-0',
-        )} style={{ ringColor: gradientFrom }} />
+        )} style={{ '--tw-ring-color': gradientFrom } as React.CSSProperties} />
       </div>
       {/* Floating value on hover */}
       <div className={cn(
