@@ -34,10 +34,13 @@ export default function BottomNavigation() {
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-50 lg:hidden bg-background/85 backdrop-blur-xl border-t border-border/50 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.3)]"
+      className="fixed bottom-0 inset-x-0 z-50 lg:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="flex items-center justify-around h-16">
+      {/* Glass background */}
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-xl border-t border-border/40 shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.4)]" />
+      
+      <div className="relative flex items-center justify-around h-[68px]">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.href;
           return (
@@ -46,41 +49,42 @@ export default function BottomNavigation() {
               to={tab.href}
               onClick={triggerHaptic}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all duration-300 relative group',
+                'flex flex-col items-center justify-center gap-1 flex-1 h-full transition-all duration-300 relative',
                 isActive
                   ? 'text-primary'
-                  : 'text-muted-foreground active:scale-95'
+                  : 'text-muted-foreground active:scale-90'
               )}
             >
-              {/* Active indicator line */}
+              {/* Active indicator line - top */}
               <div
                 className={cn(
-                  'absolute top-0 left-1/2 -translate-x-1/2 h-[3px] rounded-full bg-primary transition-all duration-300',
-                  isActive ? 'w-8 opacity-100' : 'w-0 opacity-0'
+                  'absolute top-0 left-1/2 -translate-x-1/2 h-[3px] rounded-b-full bg-primary transition-all duration-400 ease-out',
+                  isActive ? 'w-10 opacity-100' : 'w-0 opacity-0'
                 )}
               />
 
-              <div className="relative">
-                {/* Glow effect */}
+              <div className="relative flex items-center justify-center w-10 h-7">
+                {/* Glow effect behind icon */}
                 {isActive && (
-                  <div className="absolute inset-0 w-5 h-5 mx-auto bg-primary/20 rounded-full blur-md animate-fade-in" />
+                  <div className="absolute inset-0 mx-auto w-8 h-8 -top-0.5 bg-primary/15 rounded-full blur-lg glow-pulse" />
                 )}
                 <tab.icon
                   className={cn(
-                    'w-5 h-5 transition-all duration-300 relative z-10',
-                    isActive && 'scale-110'
+                    'w-[22px] h-[22px] transition-all duration-300 relative z-10',
+                    isActive ? 'scale-115 text-primary' : 'text-muted-foreground'
                   )}
+                  strokeWidth={isActive ? 2.5 : 2}
                 />
                 {tab.badge && activeAdsCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold z-20">
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold z-20 shadow-sm">
                     {activeAdsCount}
                   </span>
                 )}
               </div>
               <span
                 className={cn(
-                  'text-[10px] transition-all duration-300',
-                  isActive ? 'font-bold' : 'font-medium'
+                  'text-[10px] leading-tight transition-all duration-300',
+                  isActive ? 'font-bold text-primary' : 'font-medium text-muted-foreground'
                 )}
               >
                 {tab.label}
