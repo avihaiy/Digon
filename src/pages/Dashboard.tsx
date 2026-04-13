@@ -22,7 +22,7 @@ import {
 import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate } from '@/lib/hebrew-utils';
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+// recharts removed - using custom bar chart
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { cn } from '@/lib/utils';
 
@@ -66,7 +66,6 @@ function AnimatedCounter({ value, duration = 900, className, prefix = '₪ ' }: 
 // Animated progress bar
 function AnimatedBar({ percentage, color, delay = 0 }: { percentage: number; color: string; delay?: number }) {
   const [width, setWidth] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setWidth(percentage), delay + 100);
@@ -76,10 +75,134 @@ function AnimatedBar({ percentage, color, delay = 0 }: { percentage: number; col
   return (
     <div className="h-7 bg-secondary/60 rounded-lg overflow-hidden">
       <div
-        ref={ref}
-        className={cn('h-full rounded-lg transition-all ease-out', color)}
-        style={{ width: `${width}%`, transitionDuration: '1s' }}
+        className={cn('h-full rounded-lg', color)}
+        style={{
+          width: `${width}%`,
+          transition: `width 1s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+        }}
       />
+    </div>
+  );
+}
+
+// Professional animated bar for the comparison chart
+function ProBar({ value, maxValue, color, gradientFrom, gradientTo, delay = 0, label }: {
+  value: number; maxValue: number; color: string; gradientFrom: string; gradientTo: string; delay?: number; label: string;
+}) {
+  const [width, setWidth] = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const pct = maxValue > 0 ? Math.min(100, (value / maxValue) * 100) : 0;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setWidth(pct), delay + 200);
+    return () => clearTimeout(timer);
+  }, [pct, delay]);
+
+  return (
+    <div
+      className="group/bar relative"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className={cn(
+        'h-10 rounded-xl overflow-hidden relative',
+        'bg-secondary/40 dark:bg-secondary/30',
+        'transition-shadow duration-300',
+        hovered && 'shadow-md'
+      )}>
+        <div
+          className="h-full rounded-xl relative overflow-hidden"
+          style={{
+            width: `${width}%`,
+            transition: `width 1s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+            background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
+          }}
+        >
+          {/* Shimmer overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/bar:opacity-100 transition-opacity duration-500" style={{ backgroundSize: '200% 100%', animation: hovered ? 'border-shine 2s linear infinite' : 'none' }} />
+        </div>
+        {/* Hover ring effect */}
+        <div className={cn(
+          'absolute inset-0 rounded-xl transition-all duration-300 pointer-events-none',
+          hovered ? 'ring-2 ring-offset-1' : 'ring-0',
+        )} style={{ '--tw-ring-color': gradientFrom } as React.CSSProperties} />
+      </div>
+      {/* Floating value on hover */}
+      <div className={cn(
+        'absolute -top-8 right-2 px-2 py-0.5 rounded-md text-xs font-bold text-white shadow-lg transition-all duration-300',
+        hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2',
+      )} style={{ background: gradientFrom }}>
+        ₪ {value.toLocaleString()}
+      </div>
+    </div>
+  );
+}
+
+// Custom bar chart for monthly history
+function MonthlyBarChart({ data }: { data: { month: string; הכנסות: number; הוצאות: number }[] }) {
+  const [loaded, setLoaded] = useState(false);
+  const maxVal = useMemo(() => {
+    let m = 0;
+    for (const d of data) { m = Math.max(m, d.הכנסות, d.הוצאות); }
+    return m || 1;
+  }, [data]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoaded(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="flex items-end gap-3 h-52 pt-6 px-1">
+      {data.map((d, i) => {
+        const incomeH = (d.הכנסות / maxVal) * 100;
+        const expenseH = (d.הוצאות / maxVal) * 100;
+        return (
+          <div key={d.month} className="flex-1 flex flex-col items-center gap-1 group/col">
+            <div className="flex items-end gap-1 w-full h-40 justify-center">
+              {/* Income bar */}
+              <div className="relative w-[45%] flex flex-col justify-end h-full">
+                <div
+                  className={cn(
+                    'w-full rounded-t-lg relative overflow-hidden cursor-pointer',
+                    'transition-all duration-300',
+                    'group-hover/col:shadow-lg group-hover/col:-translate-y-0.5',
+                  )}
+                  style={{
+                    height: loaded ? `${incomeH}%` : '0%',
+                    transition: `height 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 120}ms, transform 0.3s, box-shadow 0.3s`,
+                    background: 'linear-gradient(180deg, #00897B, #00695C)',
+                    boxShadow: '0 2px 8px -2px rgba(0, 137, 123, 0.3)',
+                    minHeight: d.הכנסות > 0 ? '4px' : '0',
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/15" />
+                </div>
+              </div>
+              {/* Expense bar */}
+              <div className="relative w-[45%] flex flex-col justify-end h-full">
+                <div
+                  className={cn(
+                    'w-full rounded-t-lg relative overflow-hidden cursor-pointer',
+                    'transition-all duration-300',
+                    'group-hover/col:shadow-lg group-hover/col:-translate-y-0.5',
+                  )}
+                  style={{
+                    height: loaded ? `${expenseH}%` : '0%',
+                    transition: `height 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 120 + 60}ms, transform 0.3s, box-shadow 0.3s`,
+                    background: 'linear-gradient(180deg, #E63946, #C62828)',
+                    boxShadow: '0 2px 8px -2px rgba(230, 57, 70, 0.3)',
+                    minHeight: d.הוצאות > 0 ? '4px' : '0',
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/15" />
+                </div>
+              </div>
+            </div>
+            <span className="text-xs text-muted-foreground font-medium mt-1 opacity-0 animate-fade-in" style={{ animationDelay: `${i * 100 + 400}ms`, animationFillMode: 'forwards' }}>{d.month}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -483,55 +606,82 @@ export default function Dashboard() {
       </div>
 
       <RevealSection>
-      {/* Income vs Expenses Mini Chart */}
-      <Card className="glass-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">הכנסות מול הוצאות החודש</CardTitle>
+      {/* Income vs Expenses - Professional */}
+      <Card className="glass-card relative overflow-hidden border-0 shadow-lg">
+        {/* Subtle background decoration */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-[#00897B]/5 dark:bg-[#00897B]/10 rounded-full -translate-y-20 translate-x-20 blur-2xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#E63946]/5 dark:bg-[#E63946]/10 rounded-full translate-y-16 -translate-x-16 blur-2xl" />
+
+        <CardHeader className="pb-3 relative z-10">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-bold tracking-tight">הכנסות מול הוצאות החודש</CardTitle>
+            {/* Legend */}
+            <div className="flex items-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: 'linear-gradient(135deg, #00897B, #00695C)' }} />
+                <span className="text-xs font-medium text-muted-foreground">הכנסות</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full shadow-sm" style={{ background: 'linear-gradient(135deg, #E63946, #C62828)' }} />
+                <span className="text-xs font-medium text-muted-foreground">הוצאות</span>
+              </div>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           {statsLoading ? (
             <Skeleton className="h-40 w-full" />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Income Bar */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm bg-emerald-500" />
-                    <span className="font-medium animate-fade-in">הכנסות</span>
-                  </div>
-                  <AnimatedCounter value={stats?.thisMonthIncome || 0} className="font-bold text-emerald-600" duration={1000} />
+                  <span className="text-sm font-semibold text-foreground animate-fade-in">הכנסות</span>
+                  <AnimatedCounter value={stats?.thisMonthIncome || 0} className="font-bold tabular-nums" duration={1000}  />
                 </div>
-                <AnimatedBar
-                  percentage={Math.min(100, ((stats?.thisMonthIncome || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}
-                  color="bg-emerald-500"
+                <ProBar
+                  value={stats?.thisMonthIncome || 0}
+                  maxValue={Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)}
+                  color="#00897B"
+                  gradientFrom="#00897B"
+                  gradientTo="#4DB6AC"
                   delay={200}
+                  label="הכנסות"
                 />
               </div>
 
               {/* Expenses Bar */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm bg-red-500" />
-                    <span className="font-medium animate-fade-in" style={{ animationDelay: '0.15s' }}>הוצאות</span>
-                  </div>
-                  <AnimatedCounter value={stats?.thisMonthExpenses || 0} className="font-bold text-red-600" duration={1000} />
+                  <span className="text-sm font-semibold text-foreground animate-fade-in" style={{ animationDelay: '0.15s' }}>הוצאות</span>
+                  <AnimatedCounter value={stats?.thisMonthExpenses || 0} className="font-bold tabular-nums" duration={1000} />
                 </div>
-                <AnimatedBar
-                  percentage={Math.min(100, ((stats?.thisMonthExpenses || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}
-                  color="bg-red-500"
+                <ProBar
+                  value={stats?.thisMonthExpenses || 0}
+                  maxValue={Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)}
+                  color="#E63946"
+                  gradientFrom="#E63946"
+                  gradientTo="#EF9A9A"
                   delay={500}
+                  label="הוצאות"
                 />
               </div>
 
               {/* Balance Summary */}
-              <div className="pt-2 border-t flex justify-between items-center animate-fade-in relative" style={{ animationDelay: '0.8s' }}>
+              <div className="pt-3 border-t border-border/50 flex justify-between items-center animate-fade-in relative" style={{ animationDelay: '0.8s' }}>
                 <ConfettiBurst active={((stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0)) > 0} />
-                <span className="text-muted-foreground">יתרה החודש:</span>
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    'w-8 h-8 rounded-lg flex items-center justify-center',
+                    (stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'bg-[#00897B]/15' : 'bg-[#E63946]/15'
+                  )}>
+                    <Wallet className={cn('w-4 h-4', (stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-[#00897B]' : 'text-[#E63946]')} />
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">יתרה החודש</span>
+                </div>
                 <AnimatedCounter
                   value={(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0)}
-                  className={cn('text-lg', (stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-emerald-600' : 'text-red-600')}
+                  className={cn('text-xl tabular-nums', (stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-[#00897B]' : 'text-[#E63946]')}
                   duration={1200}
                 />
               </div>
@@ -542,33 +692,31 @@ export default function Dashboard() {
       </RevealSection>
 
       <RevealSection delay={100}>
-      {/* Monthly History Chart */}
-      <Card className="glass-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">היסטוריית הכנסות והוצאות (6 חודשים)</CardTitle>
+      {/* Monthly History - Custom Bars */}
+      <Card className="glass-card relative overflow-hidden border-0 shadow-lg">
+        <div className="absolute top-0 left-1/2 w-60 h-60 bg-[#00897B]/3 dark:bg-[#00897B]/8 rounded-full -translate-y-40 -translate-x-1/2 blur-3xl pointer-events-none" />
+        <CardHeader className="pb-2 relative z-10">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-bold tracking-tight">היסטוריית הכנסות והוצאות</CardTitle>
+            <span className="text-xs text-muted-foreground bg-secondary/60 dark:bg-secondary/40 px-2.5 py-1 rounded-full">6 חודשים</span>
+          </div>
+          {/* Legend */}
+          <div className="flex items-center gap-4 mt-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'linear-gradient(180deg, #00897B, #00695C)' }} />
+              <span className="text-xs text-muted-foreground">הכנסות</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: 'linear-gradient(180deg, #E63946, #C62828)' }} />
+              <span className="text-xs text-muted-foreground">הוצאות</span>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           {historyLoading ? (
-            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-52 w-full" />
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={monthlyHistory}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  contentStyle={{
-                    background: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="הכנסות" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="הוצאות" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <MonthlyBarChart data={monthlyHistory || []} />
           )}
         </CardContent>
       </Card>
