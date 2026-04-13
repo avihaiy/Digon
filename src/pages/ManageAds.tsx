@@ -1746,7 +1746,7 @@ export default function ManageAds() {
 
       {/* טופס מודעה — מסך מלא על נייד */}
       {isDialogOpen && (
-        <div className="fixed inset-0 z-[60] bg-background flex flex-col" dir="rtl">
+        <div className="fixed inset-0 z-[60] bg-background flex flex-col animate-[slide-up_0.35s_ease-out]" dir="rtl">
           <div className="flex items-center justify-between p-4 border-b bg-background shrink-0">
             <h2 className="text-lg font-bold">{editingId ? "עריכת מודעה" : "מודעה חדשה"}</h2>
             <Button variant="ghost" size="icon" onClick={handleCloseDialog} className="h-10 w-10">
