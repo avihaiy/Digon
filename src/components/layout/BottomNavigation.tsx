@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, CreditCard, BarChart3, Settings } from 'lucide-react';
+import { Home, Users, CreditCard, Megaphone, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { href: '/', icon: Home, label: 'בקרה' },
   { href: '/members', icon: Users, label: 'חברים' },
   { href: '/payments', icon: CreditCard, label: 'תשלומים' },
-  { href: '/reports', icon: BarChart3, label: 'דוחות' },
+  { href: '/manage-ads', icon: Megaphone, label: 'מודעות' },
   { href: '/settings', icon: Settings, label: 'הגדרות' },
 ];
 
