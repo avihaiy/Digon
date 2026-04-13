@@ -44,6 +44,7 @@ import { OfflineIndicator, OfflineBanner } from './OfflineIndicator';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { usePWAUpdate } from '@/hooks/usePWAUpdate';
 import NotificationDropdown from './NotificationDropdown';
+import BottomNavigation from './BottomNavigation';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -314,7 +315,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
           {children}
         </main>
 
@@ -329,6 +330,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </p>
         </footer>
       </div>
+      <BottomNavigation />
     </div>
   );
 }
