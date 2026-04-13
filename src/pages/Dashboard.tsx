@@ -529,16 +529,16 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {quickActions.map((action, i) => (
           <Link key={action.href} to={action.href}>
-            <div className="quick-action group click-scale">
+            <div className="quick-action quick-action-enhanced group click-scale">
               <div className={cn(
-                'w-12 h-12 rounded-xl mb-3 flex items-center justify-center transition-all duration-300',
+                'w-12 h-12 rounded-xl mb-3 flex items-center justify-center transition-all duration-300 relative z-10',
                 action.variant === 'primary' 
-                  ? 'bg-primary text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25' 
-                  : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25'
+                  ? 'bg-primary text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25 group-hover:scale-110' 
+                  : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/25 group-hover:scale-110'
               )}>
                 <action.icon className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
               </div>
-              <p className="font-medium">{action.label}</p>
+              <p className="font-medium relative z-10">{action.label}</p>
             </div>
           </Link>
         ))}
@@ -549,8 +549,8 @@ export default function Dashboard() {
       {/* Recent Activity */}
       <div className="grid gap-6">
         {/* Recent Payments */}
-        <Card className="glass-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <Card className="glass-card recent-card relative overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-4 relative z-10">
             <CardTitle className="text-lg font-semibold">תשלומים אחרונים</CardTitle>
             <Link to="/payments">
               <Button variant="ghost" size="sm">
@@ -576,7 +576,7 @@ export default function Dashboard() {
                 {recentPayments?.map((payment: any) => (
                   <div
                     key={payment.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary/80 hover:shadow-sm transition-all duration-200 click-scale"
+                    className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 payment-row-enhanced click-scale"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
