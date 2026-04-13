@@ -330,6 +330,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </p>
         </footer>
       </div>
+      <BottomNavigation />
     </div>
   );
 }
