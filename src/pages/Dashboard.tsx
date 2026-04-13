@@ -397,8 +397,8 @@ export default function Dashboard() {
                   <AlertCircle className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-red-700 dark:text-red-400">חובות שטרם נגבו</p>
-                  <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalDebts || 0)}</p>
+                  <p className="text-sm font-medium text-red-700 dark:text-red-400 animate-fade-in">חובות שטרם נגבו</p>
+                  <AnimatedCounter value={totalDebts || 0} className="text-xl text-red-600 dark:text-red-400" duration={1100} />
                 </div>
               </div>
             )}
