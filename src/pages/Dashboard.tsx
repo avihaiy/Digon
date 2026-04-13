@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, ReactNode } from 'react';
+import { useEffect, useState, useRef, ReactNode, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +25,64 @@ import { he } from 'date-fns/locale';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { cn } from '@/lib/utils';
+
+// Animated counter that counts from 0 to target value
+function AnimatedCounter({ value, duration = 900, className, prefix = '₪ ' }: { value: number; duration?: number; className?: string; prefix?: string }) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const [done, setDone] = useState(false);
+  const prevValue = useRef(0);
+
+  useEffect(() => {
+    if (value === 0) { setDisplayValue(0); setDone(true); return; }
+    setDone(false);
+    const start = prevValue.current;
+    const diff = value - start;
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + diff * eased);
+      setDisplayValue(current);
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        setDone(true);
+        prevValue.current = value;
+      }
+    };
+    requestAnimationFrame(tick);
+  }, [value, duration]);
+
+  return (
+    <span className={cn(className, done ? 'font-bold' : 'font-semibold', 'transition-all duration-300 tabular-nums')}>
+      {prefix}{displayValue.toLocaleString()}
+    </span>
+  );
+}
+
+// Animated progress bar
+function AnimatedBar({ percentage, color, delay = 0 }: { percentage: number; color: string; delay?: number }) {
+  const [width, setWidth] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setWidth(percentage), delay + 100);
+    return () => clearTimeout(timer);
+  }, [percentage, delay]);
+
+  return (
+    <div className="h-7 bg-secondary/60 rounded-lg overflow-hidden">
+      <div
+        ref={ref}
+        className={cn('h-full rounded-lg transition-all ease-out', color)}
+        style={{ width: `${width}%`, transitionDuration: '1s' }}
+      />
+    </div>
+  );
+}
 
 function RevealSection({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   const { ref, isVisible } = useScrollReveal();
@@ -254,12 +312,12 @@ export default function Dashboard() {
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/20 group-hover:scale-110 group-hover:ring-emerald-500/40 transition-all duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/20 group-hover:scale-110 group-hover:ring-emerald-500/40 transition-all duration-300 animate-bounce-subtle" style={{ animationDelay: '0.3s' }}>
                   <TrendingUp className="w-6 h-6 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">הכנסות החודש</p>
-                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.thisMonthIncome || 0)}</p>
+                  <p className="text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.2s' }}>הכנסות החודש</p>
+                  <AnimatedCounter value={stats?.thisMonthIncome || 0} className="text-xl text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
             )}
@@ -273,12 +331,12 @@ export default function Dashboard() {
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/20 group-hover:scale-110 group-hover:ring-red-500/40 transition-all duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/20 group-hover:scale-110 group-hover:ring-red-500/40 transition-all duration-300 animate-bounce-subtle" style={{ animationDelay: '0.5s' }}>
                   <TrendingDown className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">הוצאות החודש</p>
-                  <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(stats?.thisMonthExpenses || 0)}</p>
+                  <p className="text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.4s' }}>הוצאות החודש</p>
+                  <AnimatedCounter value={stats?.thisMonthExpenses || 0} className="text-xl text-red-600 dark:text-red-400" />
                 </div>
               </div>
             )}
@@ -297,14 +355,12 @@ export default function Dashboard() {
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-all duration-300', (stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/20 group-hover:ring-blue-500/40' : 'bg-orange-500/15 ring-orange-500/20 group-hover:ring-orange-500/40')}>
+                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-all duration-300 animate-bounce-subtle', (stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/20 group-hover:ring-blue-500/40' : 'bg-orange-500/15 ring-orange-500/20 group-hover:ring-orange-500/40')} style={{ animationDelay: '0.7s' }}>
                   <Wallet className={cn('w-6 h-6', (stats?.balance || 0) >= 0 ? 'text-blue-500' : 'text-orange-500')} />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">יתרה כוללת</p>
-                  <p className={cn('text-xl font-bold', (stats?.balance || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400')}>
-                    {formatCurrency(stats?.balance || 0)}
-                  </p>
+                  <p className="text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '0.6s' }}>יתרה כוללת</p>
+                  <AnimatedCounter value={stats?.balance || 0} className={cn('text-xl', (stats?.balance || 0) >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400')} />
                 </div>
               </div>
             )}
@@ -341,8 +397,8 @@ export default function Dashboard() {
                   <AlertCircle className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-red-700 dark:text-red-400">חובות שטרם נגבו</p>
-                  <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalDebts || 0)}</p>
+                  <p className="text-sm font-medium text-red-700 dark:text-red-400 animate-fade-in">חובות שטרם נגבו</p>
+                  <AnimatedCounter value={totalDebts || 0} className="text-xl text-red-600 dark:text-red-400" duration={1100} />
                 </div>
               </div>
             )}
@@ -366,18 +422,15 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm bg-emerald-500" />
-                    <span className="font-medium">הכנסות</span>
+                    <span className="font-medium animate-fade-in">הכנסות</span>
                   </div>
-                  <span className="font-bold text-emerald-600">{formatCurrency(stats?.thisMonthIncome || 0)}</span>
+                  <AnimatedCounter value={stats?.thisMonthIncome || 0} className="font-bold text-emerald-600" duration={1000} />
                 </div>
-                <div className="h-6 bg-secondary rounded-md overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-500 rounded-md transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min(100, ((stats?.thisMonthIncome || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}%` 
-                    }}
-                  />
-                </div>
+                <AnimatedBar
+                  percentage={Math.min(100, ((stats?.thisMonthIncome || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}
+                  color="bg-emerald-500"
+                  delay={200}
+                />
               </div>
 
               {/* Expenses Bar */}
@@ -385,26 +438,25 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm bg-red-500" />
-                    <span className="font-medium">הוצאות</span>
+                    <span className="font-medium animate-fade-in" style={{ animationDelay: '0.15s' }}>הוצאות</span>
                   </div>
-                  <span className="font-bold text-red-600">{formatCurrency(stats?.thisMonthExpenses || 0)}</span>
+                  <AnimatedCounter value={stats?.thisMonthExpenses || 0} className="font-bold text-red-600" duration={1000} />
                 </div>
-                <div className="h-6 bg-secondary rounded-md overflow-hidden">
-                  <div 
-                    className="h-full bg-red-500 rounded-md transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min(100, ((stats?.thisMonthExpenses || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}%` 
-                    }}
-                  />
-                </div>
+                <AnimatedBar
+                  percentage={Math.min(100, ((stats?.thisMonthExpenses || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}
+                  color="bg-red-500"
+                  delay={500}
+                />
               </div>
 
               {/* Balance Summary */}
-              <div className="pt-2 border-t flex justify-between items-center">
+              <div className="pt-2 border-t flex justify-between items-center animate-fade-in" style={{ animationDelay: '0.8s' }}>
                 <span className="text-muted-foreground">יתרה החודש:</span>
-                <span className={`text-lg font-bold ${(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {formatCurrency((stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0))}
-                </span>
+                <AnimatedCounter
+                  value={(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0)}
+                  className={cn('text-lg', (stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-emerald-600' : 'text-red-600')}
+                  duration={1200}
+                />
               </div>
             </div>
           )}
