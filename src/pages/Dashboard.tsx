@@ -534,8 +534,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </RevealSection>
 
-      {/* Debts Dialog */}
       <Dialog open={debtsDialogOpen} onOpenChange={setDebtsDialogOpen}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
