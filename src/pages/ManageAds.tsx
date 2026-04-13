@@ -674,6 +674,7 @@ export default function ManageAds() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogClosing, setIsDialogClosing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(defaultFormData);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -998,11 +999,23 @@ export default function ManageAds() {
     setIsDialogOpen(true);
   };
   const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingId(null);
-    setFormData(defaultFormData);
-    setImageFile(null);
-    setImagePreview(null);
+    if (isMobile) {
+      setIsDialogClosing(true);
+      setTimeout(() => {
+        setIsDialogOpen(false);
+        setIsDialogClosing(false);
+        setEditingId(null);
+        setFormData(defaultFormData);
+        setImageFile(null);
+        setImagePreview(null);
+      }, 300);
+    } else {
+      setIsDialogOpen(false);
+      setEditingId(null);
+      setFormData(defaultFormData);
+      setImageFile(null);
+      setImagePreview(null);
+    }
   };
 
   // ── פריסת מחשב: 2 עמודות ──
@@ -1746,7 +1759,7 @@ export default function ManageAds() {
 
       {/* טופס מודעה — מסך מלא על נייד */}
       {isDialogOpen && (
-        <div className="fixed inset-0 z-[60] bg-background flex flex-col animate-[slide-up_0.35s_ease-out]" dir="rtl">
+        <div className={`fixed inset-0 z-[60] bg-background flex flex-col ${isDialogClosing ? 'animate-[slide-down_0.3s_ease-in_forwards]' : 'animate-[slide-up_0.35s_ease-out]'}`} dir="rtl">
           <div className="flex items-center justify-between p-4 border-b bg-background shrink-0">
             <h2 className="text-lg font-bold">{editingId ? "עריכת מודעה" : "מודעה חדשה"}</h2>
             <Button variant="ghost" size="icon" onClick={handleCloseDialog} className="h-10 w-10">
