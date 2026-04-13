@@ -305,14 +305,16 @@ export default function Dashboard() {
 
       {/* Financial Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-50/80 to-green-50/50 dark:from-emerald-950/30 dark:to-green-950/20 interactive-card rounded-2xl shadow-sm animate-fade-up stagger-1 group">
-          <div className="absolute top-0 left-0 w-24 h-24 bg-emerald-500/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-150 transition-transform duration-700" />
-          <CardContent className="p-4 relative">
+        {/* Income */}
+        <Card className="stat-card-base stat-card-income animate-fade-up stagger-1 group border-0">
+          <div className="border-shine-overlay" />
+          <div className="absolute top-0 left-0 w-28 h-28 bg-emerald-500/8 rounded-full -translate-y-12 -translate-x-12 group-hover:scale-150 transition-transform duration-700" />
+          <CardContent className="p-4 relative z-10">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/20 group-hover:scale-110 group-hover:ring-emerald-500/40 transition-all duration-300 animate-bounce-subtle" style={{ animationDelay: '0.3s' }}>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 flex items-center justify-center ring-1 ring-emerald-500/25 group-hover:scale-110 group-hover:ring-emerald-500/50 transition-all duration-300 animate-bounce-subtle" style={{ animationDelay: '0.3s' }}>
                   <TrendingUp className="w-6 h-6 text-emerald-500" />
                 </div>
                 <div>
@@ -324,14 +326,16 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-red-500/20 bg-gradient-to-br from-red-50/80 to-rose-50/50 dark:from-red-950/30 dark:to-rose-950/20 interactive-card rounded-2xl shadow-sm animate-fade-up stagger-2 group">
-          <div className="absolute top-0 left-0 w-24 h-24 bg-red-500/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-150 transition-transform duration-700" />
-          <CardContent className="p-4 relative">
+        {/* Expenses */}
+        <Card className="stat-card-base stat-card-expense animate-fade-up stagger-2 group border-0">
+          <div className="border-shine-overlay" />
+          <div className="absolute top-0 left-0 w-28 h-28 bg-red-500/8 rounded-full -translate-y-12 -translate-x-12 group-hover:scale-150 transition-transform duration-700" />
+          <CardContent className="p-4 relative z-10">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/20 group-hover:scale-110 group-hover:ring-red-500/40 transition-all duration-300 animate-bounce-subtle" style={{ animationDelay: '0.5s' }}>
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-1 ring-red-500/25 group-hover:scale-110 group-hover:ring-red-500/50 transition-all duration-300 animate-bounce-subtle" style={{ animationDelay: '0.5s' }}>
                   <TrendingDown className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
@@ -343,19 +347,19 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* Balance */}
         <Card className={cn(
-          'relative overflow-hidden interactive-card rounded-2xl shadow-sm animate-fade-up stagger-3 group',
-          (stats?.balance || 0) >= 0
-            ? 'border-blue-500/20 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/20'
-            : 'border-orange-500/20 bg-gradient-to-br from-orange-50/80 to-amber-50/50 dark:from-orange-950/30 dark:to-amber-950/20'
+          'stat-card-base animate-fade-up stagger-3 group border-0',
+          (stats?.balance || 0) >= 0 ? 'stat-card-balance-pos' : 'stat-card-balance-neg'
         )}>
-          <div className={cn('absolute top-0 left-0 w-24 h-24 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-150 transition-transform duration-700', (stats?.balance || 0) >= 0 ? 'bg-blue-500/5' : 'bg-orange-500/5')} />
-          <CardContent className="p-4 relative">
+          <div className="border-shine-overlay" />
+          <div className={cn('absolute top-0 left-0 w-28 h-28 rounded-full -translate-y-12 -translate-x-12 group-hover:scale-150 transition-transform duration-700', (stats?.balance || 0) >= 0 ? 'bg-blue-500/8' : 'bg-orange-500/8')} />
+          <CardContent className="p-4 relative z-10">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-all duration-300 animate-bounce-subtle', (stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/20 group-hover:ring-blue-500/40' : 'bg-orange-500/15 ring-orange-500/20 group-hover:ring-orange-500/40')} style={{ animationDelay: '0.7s' }}>
+                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center ring-1 group-hover:scale-110 transition-all duration-300 animate-bounce-subtle', (stats?.balance || 0) >= 0 ? 'bg-blue-500/15 ring-blue-500/25 group-hover:ring-blue-500/50' : 'bg-orange-500/15 ring-orange-500/25 group-hover:ring-orange-500/50')} style={{ animationDelay: '0.7s' }}>
                   <Wallet className={cn('w-6 h-6', (stats?.balance || 0) >= 0 ? 'text-blue-500' : 'text-orange-500')} />
                 </div>
                 <div>
@@ -367,14 +371,16 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-primary/[0.02] dark:from-primary/10 dark:to-primary/5 interactive-card rounded-2xl shadow-sm animate-fade-up stagger-4 group">
-          <div className="absolute top-0 left-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-10 -translate-x-10 group-hover:scale-150 transition-transform duration-700" />
-          <CardContent className="p-4 relative">
+        {/* Receipts */}
+        <Card className="stat-card-base stat-card-receipts animate-fade-up stagger-4 group border-0">
+          <div className="border-shine-overlay" />
+          <div className="absolute top-0 left-0 w-28 h-28 bg-primary/5 rounded-full -translate-y-12 -translate-x-12 group-hover:scale-150 transition-transform duration-700" />
+          <CardContent className="p-4 relative z-10">
             {statsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/20 group-hover:scale-110 group-hover:ring-primary/40 transition-all duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/25 group-hover:scale-110 group-hover:ring-primary/50 transition-all duration-300">
                   <Receipt className="w-6 h-6 text-primary" />
                 </div>
                 <div>
@@ -386,14 +392,16 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-red-500/30 bg-gradient-to-br from-red-50/90 to-orange-50/70 dark:from-red-950/30 dark:to-orange-950/20 interactive-card cursor-pointer rounded-2xl shadow-md animate-fade-up stagger-5 group" onClick={() => setDebtsDialogOpen(true)}>
-          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -translate-y-8 translate-x-8 group-hover:scale-150 transition-transform duration-700" />
-          <CardContent className="p-4 relative">
+        {/* Debts */}
+        <Card className="stat-card-base stat-card-debts animate-fade-up stagger-5 group border-0 cursor-pointer" onClick={() => setDebtsDialogOpen(true)}>
+          <div className="border-shine-overlay" />
+          <div className="absolute top-0 right-0 w-28 h-28 bg-red-500/8 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-700" />
+          <CardContent className="p-4 relative z-10">
             {debtsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-2 ring-red-500/20 group-hover:scale-110 group-hover:ring-red-500/40 transition-all duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 flex items-center justify-center ring-2 ring-red-500/25 group-hover:scale-110 group-hover:ring-red-500/50 transition-all duration-300">
                   <AlertCircle className="w-6 h-6 text-red-500" />
                 </div>
                 <div>

@@ -273,18 +273,172 @@
   }
 
   @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 
   .shimmer {
     background: linear-gradient(90deg, transparent 25%, hsl(45 30% 95%) 50%, transparent 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
+  }
+
+  /* Animated gradient backgrounds for stat cards */
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  @keyframes border-shine {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes dot-fade {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.25; }
+  }
+
+  .stat-card-base {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .stat-card-base::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-size: 300% 300%;
+    animation: gradient-shift 6s ease-in-out infinite;
+    z-index: 0;
+    opacity: 0.9;
+    transition: opacity 0.4s;
+  }
+
+  .stat-card-base::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+    background-size: 16px 16px;
+    opacity: 0.04;
+    animation: dot-fade 4s ease-in-out infinite;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .stat-card-base:hover {
+    transform: translateY(-3px);
+  }
+
+  .stat-card-base:hover::before {
+    opacity: 1;
+  }
+
+  /* Border shine overlay */
+  .stat-card-base > .border-shine-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    z-index: 2;
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    background: linear-gradient(90deg, transparent 30%, var(--shine-color, hsl(160 60% 50% / 0.4)) 50%, transparent 70%);
+    background-size: 200% 100%;
+    animation: border-shine 4s linear infinite;
+  }
+
+  /* Income card */
+  .stat-card-income::before {
+    background: linear-gradient(135deg, hsl(152 60% 96%), hsl(140 50% 92%), hsl(160 55% 94%), hsl(145 60% 96%));
+  }
+  .dark .stat-card-income::before {
+    background: linear-gradient(135deg, hsl(152 40% 12%), hsl(140 35% 10%), hsl(160 40% 14%), hsl(145 40% 12%));
+  }
+  .stat-card-income {
+    --shine-color: hsl(152 70% 50% / 0.5);
+    box-shadow: 0 4px 20px -4px hsl(152 60% 40% / 0.12);
+  }
+  .stat-card-income:hover {
+    box-shadow: 0 8px 30px -4px hsl(152 60% 40% / 0.22);
+  }
+
+  /* Expense card */
+  .stat-card-expense::before {
+    background: linear-gradient(135deg, hsl(0 60% 97%), hsl(350 50% 94%), hsl(10 55% 96%), hsl(355 60% 97%));
+  }
+  .dark .stat-card-expense::before {
+    background: linear-gradient(135deg, hsl(0 40% 12%), hsl(350 35% 10%), hsl(10 40% 14%), hsl(355 40% 12%));
+  }
+  .stat-card-expense {
+    --shine-color: hsl(0 70% 55% / 0.5);
+    box-shadow: 0 4px 20px -4px hsl(0 60% 45% / 0.12);
+  }
+  .stat-card-expense:hover {
+    box-shadow: 0 8px 30px -4px hsl(0 60% 45% / 0.22);
+  }
+
+  /* Balance card - positive */
+  .stat-card-balance-pos::before {
+    background: linear-gradient(135deg, hsl(217 60% 97%), hsl(230 50% 94%), hsl(210 55% 96%), hsl(220 60% 97%));
+  }
+  .dark .stat-card-balance-pos::before {
+    background: linear-gradient(135deg, hsl(217 40% 12%), hsl(230 35% 10%), hsl(210 40% 14%), hsl(220 40% 12%));
+  }
+  .stat-card-balance-pos {
+    --shine-color: hsl(217 70% 55% / 0.5);
+    box-shadow: 0 4px 20px -4px hsl(217 60% 45% / 0.12);
+  }
+  .stat-card-balance-pos:hover {
+    box-shadow: 0 8px 30px -4px hsl(217 60% 45% / 0.22);
+  }
+
+  /* Balance card - negative */
+  .stat-card-balance-neg::before {
+    background: linear-gradient(135deg, hsl(30 60% 97%), hsl(25 50% 94%), hsl(35 55% 96%), hsl(28 60% 97%));
+  }
+  .dark .stat-card-balance-neg::before {
+    background: linear-gradient(135deg, hsl(30 40% 12%), hsl(25 35% 10%), hsl(35 40% 14%), hsl(28 40% 12%));
+  }
+  .stat-card-balance-neg {
+    --shine-color: hsl(30 70% 55% / 0.5);
+    box-shadow: 0 4px 20px -4px hsl(30 60% 45% / 0.12);
+  }
+  .stat-card-balance-neg:hover {
+    box-shadow: 0 8px 30px -4px hsl(30 60% 45% / 0.22);
+  }
+
+  /* Receipts card */
+  .stat-card-receipts::before {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.06), hsl(var(--primary) / 0.03), hsl(var(--primary) / 0.08), hsl(var(--primary) / 0.05));
+  }
+  .stat-card-receipts {
+    --shine-color: hsl(var(--primary) / 0.5);
+    box-shadow: 0 4px 20px -4px hsl(var(--primary) / 0.1);
+  }
+  .stat-card-receipts:hover {
+    box-shadow: 0 8px 30px -4px hsl(var(--primary) / 0.2);
+  }
+
+  /* Debts card */
+  .stat-card-debts::before {
+    background: linear-gradient(135deg, hsl(0 65% 96%), hsl(20 55% 93%), hsl(5 60% 95%), hsl(15 60% 96%));
+  }
+  .dark .stat-card-debts::before {
+    background: linear-gradient(135deg, hsl(0 40% 13%), hsl(20 35% 11%), hsl(5 40% 14%), hsl(15 40% 13%));
+  }
+  .stat-card-debts {
+    --shine-color: hsl(0 70% 50% / 0.6);
+    box-shadow: 0 4px 24px -4px hsl(0 65% 45% / 0.15);
+  }
+  .stat-card-debts:hover {
+    box-shadow: 0 8px 32px -4px hsl(0 65% 45% / 0.28);
   }
 
   @keyframes fade-in {
