@@ -422,18 +422,15 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm bg-emerald-500" />
-                    <span className="font-medium">הכנסות</span>
+                    <span className="font-medium animate-fade-in">הכנסות</span>
                   </div>
-                  <span className="font-bold text-emerald-600">{formatCurrency(stats?.thisMonthIncome || 0)}</span>
+                  <AnimatedCounter value={stats?.thisMonthIncome || 0} className="font-bold text-emerald-600" duration={1000} />
                 </div>
-                <div className="h-6 bg-secondary rounded-md overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-500 rounded-md transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min(100, ((stats?.thisMonthIncome || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}%` 
-                    }}
-                  />
-                </div>
+                <AnimatedBar
+                  percentage={Math.min(100, ((stats?.thisMonthIncome || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}
+                  color="bg-emerald-500"
+                  delay={200}
+                />
               </div>
 
               {/* Expenses Bar */}
@@ -441,26 +438,25 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm bg-red-500" />
-                    <span className="font-medium">הוצאות</span>
+                    <span className="font-medium animate-fade-in" style={{ animationDelay: '0.15s' }}>הוצאות</span>
                   </div>
-                  <span className="font-bold text-red-600">{formatCurrency(stats?.thisMonthExpenses || 0)}</span>
+                  <AnimatedCounter value={stats?.thisMonthExpenses || 0} className="font-bold text-red-600" duration={1000} />
                 </div>
-                <div className="h-6 bg-secondary rounded-md overflow-hidden">
-                  <div 
-                    className="h-full bg-red-500 rounded-md transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min(100, ((stats?.thisMonthExpenses || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}%` 
-                    }}
-                  />
-                </div>
+                <AnimatedBar
+                  percentage={Math.min(100, ((stats?.thisMonthExpenses || 0) / Math.max(stats?.thisMonthIncome || 1, stats?.thisMonthExpenses || 1)) * 100)}
+                  color="bg-red-500"
+                  delay={500}
+                />
               </div>
 
               {/* Balance Summary */}
-              <div className="pt-2 border-t flex justify-between items-center">
+              <div className="pt-2 border-t flex justify-between items-center animate-fade-in" style={{ animationDelay: '0.8s' }}>
                 <span className="text-muted-foreground">יתרה החודש:</span>
-                <span className={`text-lg font-bold ${(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {formatCurrency((stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0))}
-                </span>
+                <AnimatedCounter
+                  value={(stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0)}
+                  className={cn('text-lg', (stats?.thisMonthIncome || 0) - (stats?.thisMonthExpenses || 0) >= 0 ? 'text-emerald-600' : 'text-red-600')}
+                  duration={1200}
+                />
               </div>
             </div>
           )}
