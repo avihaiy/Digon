@@ -23,6 +23,13 @@ export default function Reminders() {
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
 
+  const initFormWithCurrentDateTime = () => {
+    const now = new Date();
+    setReminderDate(format(now, 'yyyy-MM-dd'));
+    setReminderTime(format(now, 'HH:mm'));
+    setShowForm(true);
+  };
+
   // Active reminders (not dismissed)
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ['reminders'],
@@ -144,7 +151,7 @@ export default function Reminders() {
         </div>
         {isAdmin && (
           <Button
-            onClick={() => setShowForm(!showForm)}
+            onClick={initFormWithCurrentDateTime}
             size="sm"
             className="shrink-0"
           >
