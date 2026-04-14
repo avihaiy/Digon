@@ -914,6 +914,33 @@ export type Database = {
           },
         ]
       }
+      reminders: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_dismissed: boolean
+          reminder_date: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_dismissed?: boolean
+          reminder_date?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_dismissed?: boolean
+          reminder_date?: string
+        }
+        Relationships: []
+      }
       scheduled_announcements: {
         Row: {
           content: string
