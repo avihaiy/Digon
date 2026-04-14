@@ -8,7 +8,7 @@ const tabs = [
   { href: '/', icon: Home, label: 'בקרה', badge: false },
   { href: '/members', icon: Users, label: 'חברים', badge: false },
   { href: '/payments', icon: CreditCard, label: 'תשלומים', badge: false },
-  { href: '/manage-ads', icon: Megaphone, label: 'מודעות', badge: true },
+  { href: '/reminders', icon: Bell, label: 'תזכורות', badge: 'reminders' as const },
   { href: '/settings', icon: Settings, label: 'הגדרות', badge: false },
 ];
 
