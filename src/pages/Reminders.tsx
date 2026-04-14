@@ -9,10 +9,73 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, Plus, Trash2, X, Clock, CalendarIcon, History, CheckCircle } from 'lucide-react';
-import { format, isBefore, isAfter } from 'date-fns';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Bell, Plus, Trash2, X, Clock, CalendarIcon, History, CheckCircle, Pencil, CalendarPlus, Repeat } from 'lucide-react';
+import { format, isBefore, isAfter, addDays, addWeeks, addMonths } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+
+const RECURRENCE_LABELS: Record<string, string> = {
+  daily: 'יומי',
+  weekly: 'שבועי',
+  monthly: 'חודשי',
+};
+
+function generateICSFile(reminder: any): string {
+  const date = new Date(reminder.reminder_date);
+  const endDate = new Date(date.getTime() + 30 * 60000); // 30 min duration
+  const formatICS = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  
+  let rrule = '';
+  if (reminder.recurrence === 'daily') rrule = '\nRRULE:FREQ=DAILY';
+  else if (reminder.recurrence === 'weekly') rrule = '\nRRULE:FREQ=WEEKLY';
+  else if (reminder.recurrence === 'monthly') rrule = '\nRRULE:FREQ=MONTHLY';
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Brit Shalom//Reminders//HE',
+    'BEGIN:VEVENT',
+    `DTSTART:${formatICS(date)}`,
+    `DTEND:${formatICS(endDate)}`,
+    `SUMMARY:${reminder.content}`,
+    `DESCRIPTION:תזכורת מברית שלום`,
+    'BEGIN:VALARM',
+    'TRIGGER:-PT10M',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:תזכורת',
+    'END:VALARM',
+    rrule,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean).join('\r\n');
+}
+
+function downloadICS(reminder: any) {
+  const ics = generateICSFile(reminder);
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reminder-${reminder.id.slice(0, 8)}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast.success('קובץ יומן הורד - פתח אותו כדי להוסיף ליומן');
+}
+
+const invalidateAll = (qc: any) => {
+  qc.invalidateQueries({ queryKey: ['reminders'] });
+  qc.invalidateQueries({ queryKey: ['reminders-history'] });
+  qc.invalidateQueries({ queryKey: ['active-reminders'] });
+};
 
 export default function Reminders() {
   const { user, loading, isAdmin } = useAuth();
@@ -20,14 +83,30 @@ export default function Reminders() {
   const [content, setContent] = useState('');
   const [reminderDate, setReminderDate] = useState('');
   const [reminderTime, setReminderTime] = useState('');
+  const [recurrence, setRecurrence] = useState<string>('none');
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
 
   const initFormWithCurrentDateTime = () => {
     const now = new Date();
+    setContent('');
     setReminderDate(format(now, 'yyyy-MM-dd'));
     setReminderTime(format(now, 'HH:mm'));
+    setRecurrence('none');
+    setEditingId(null);
     setShowForm(true);
+  };
+
+  const startEdit = (r: any) => {
+    const d = new Date(r.reminder_date);
+    setContent(r.content);
+    setReminderDate(format(d, 'yyyy-MM-dd'));
+    setReminderTime(format(d, 'HH:mm'));
+    setRecurrence(r.recurrence || 'none');
+    setEditingId(r.id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Active reminders (not dismissed)
@@ -60,23 +139,43 @@ export default function Reminders() {
   });
 
   const addMutation = useMutation({
-    mutationFn: async (params: { content: string; reminder_date: string }) => {
+    mutationFn: async (params: { content: string; reminder_date: string; recurrence: string | null }) => {
       const { error } = await supabase
         .from('reminders' as any)
         .insert({
           content: params.content,
           reminder_date: params.reminder_date,
+          recurrence: params.recurrence,
           created_by: user?.id,
         } as any);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
-      queryClient.invalidateQueries({ queryKey: ['active-reminders'] });
+      invalidateAll(queryClient);
       resetForm();
       toast.success('תזכורת נוספה בהצלחה');
     },
     onError: () => toast.error('שגיאה בהוספת תזכורת'),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (params: { id: string; content: string; reminder_date: string; recurrence: string | null }) => {
+      const { error } = await supabase
+        .from('reminders' as any)
+        .update({
+          content: params.content,
+          reminder_date: params.reminder_date,
+          recurrence: params.recurrence,
+        } as any)
+        .eq('id', params.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll(queryClient);
+      resetForm();
+      toast.success('תזכורת עודכנה בהצלחה');
+    },
+    onError: () => toast.error('שגיאה בעדכון תזכורת'),
   });
 
   const deleteMutation = useMutation({
@@ -88,26 +187,40 @@ export default function Reminders() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
-      queryClient.invalidateQueries({ queryKey: ['reminders-history'] });
-      queryClient.invalidateQueries({ queryKey: ['active-reminders'] });
+      invalidateAll(queryClient);
       toast.success('תזכורת נמחקה');
     },
     onError: () => toast.error('שגיאה במחיקת תזכורת'),
   });
 
   const dismissMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (reminder: any) => {
+      // If recurring, create next occurrence before dismissing
+      if (reminder.recurrence && reminder.recurrence !== 'none') {
+        const currentDate = new Date(reminder.reminder_date);
+        let nextDate: Date;
+        if (reminder.recurrence === 'daily') nextDate = addDays(currentDate, 1);
+        else if (reminder.recurrence === 'weekly') nextDate = addWeeks(currentDate, 1);
+        else nextDate = addMonths(currentDate, 1);
+
+        await supabase
+          .from('reminders' as any)
+          .insert({
+            content: reminder.content,
+            reminder_date: nextDate.toISOString(),
+            recurrence: reminder.recurrence,
+            created_by: reminder.created_by,
+          } as any);
+      }
+
       const { error } = await supabase
         .from('reminders' as any)
         .update({ is_dismissed: true } as any)
-        .eq('id', id);
+        .eq('id', reminder.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
-      queryClient.invalidateQueries({ queryKey: ['reminders-history'] });
-      queryClient.invalidateQueries({ queryKey: ['active-reminders'] });
+      invalidateAll(queryClient);
       toast.success('תזכורת נסגרה');
     },
   });
@@ -116,19 +229,24 @@ export default function Reminders() {
     setContent('');
     setReminderDate('');
     setReminderTime('');
+    setRecurrence('none');
+    setEditingId(null);
     setShowForm(false);
   };
 
   const handleSubmit = () => {
     if (!content.trim()) return;
-    let dateStr: string;
-    if (reminderDate) {
-      const time = reminderTime || '00:00';
-      dateStr = new Date(`${reminderDate}T${time}`).toISOString();
+    const time = reminderTime || '00:00';
+    const dateStr = reminderDate
+      ? new Date(`${reminderDate}T${time}`).toISOString()
+      : new Date().toISOString();
+    const rec = recurrence === 'none' ? null : recurrence;
+
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, content: content.trim(), reminder_date: dateStr, recurrence: rec });
     } else {
-      dateStr = new Date().toISOString();
+      addMutation.mutate({ content: content.trim(), reminder_date: dateStr, recurrence: rec });
     }
-    addMutation.mutate({ content: content.trim(), reminder_date: dateStr });
   };
 
   const now = new Date();
@@ -162,18 +280,24 @@ export default function Reminders() {
         )}
       </div>
 
-      {/* Add Form */}
+      {/* Add / Edit Form */}
       {showForm && (
-        <Card className="animate-in slide-in-from-top-2">
+        <Card className="animate-in slide-in-from-top-2 border-primary/30">
           <CardContent className="pt-4 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant={editingId ? 'default' : 'secondary'} className="text-xs">
+                {editingId ? 'עריכת תזכורת' : 'תזכורת חדשה'}
+              </Badge>
+            </div>
             <Input
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="תוכן התזכורת..."
               className="text-base"
+              autoFocus
             />
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex-1 flex items-center gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
                 <Input
                   type="date"
@@ -182,7 +306,7 @@ export default function Reminders() {
                   className="flex-1"
                 />
               </div>
-              <div className="flex-1 flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
                 <Input
                   type="time"
@@ -191,20 +315,31 @@ export default function Reminders() {
                   className="flex-1"
                 />
               </div>
+              <div className="flex items-center gap-2">
+                <Repeat className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Select value={recurrence} onValueChange={setRecurrence}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="חד פעמי" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">חד פעמי</SelectItem>
+                    <SelectItem value="daily">יומי</SelectItem>
+                    <SelectItem value="weekly">שבועי</SelectItem>
+                    <SelectItem value="monthly">חודשי</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {!reminderDate ? 'ללא תאריך - התזכורת תופיע מיד' : 'התזכורת תופיע בתאריך ובשעה שנקבעו'}
-            </p>
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={resetForm} size="sm">
                 ביטול
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={!content.trim() || addMutation.isPending}
+                disabled={!content.trim() || addMutation.isPending || updateMutation.isPending}
                 size="sm"
               >
-                שמור תזכורת
+                {editingId ? 'עדכן' : 'שמור תזכורת'}
               </Button>
             </div>
           </CardContent>
@@ -238,7 +373,6 @@ export default function Reminders() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Active Tab */}
         <TabsContent value="active" className="mt-4">
           {isLoading ? (
             <LoadingState />
@@ -250,8 +384,10 @@ export default function Reminders() {
                 <ReminderCard
                   key={r.id}
                   reminder={r}
-                  onDismiss={() => dismissMutation.mutate(r.id)}
+                  onDismiss={() => dismissMutation.mutate(r)}
                   onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
+                  onEdit={isAdmin ? () => startEdit(r) : undefined}
+                  onAddToCalendar={() => downloadICS(r)}
                   showDate
                 />
               ))}
@@ -259,7 +395,6 @@ export default function Reminders() {
           )}
         </TabsContent>
 
-        {/* Scheduled Tab */}
         <TabsContent value="scheduled" className="mt-4">
           {isLoading ? (
             <LoadingState />
@@ -271,8 +406,10 @@ export default function Reminders() {
                 <ReminderCard
                   key={r.id}
                   reminder={r}
-                  onDismiss={() => dismissMutation.mutate(r.id)}
+                  onDismiss={() => dismissMutation.mutate(r)}
                   onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
+                  onEdit={isAdmin ? () => startEdit(r) : undefined}
+                  onAddToCalendar={() => downloadICS(r)}
                   showDate
                   isScheduled
                 />
@@ -281,7 +418,6 @@ export default function Reminders() {
           )}
         </TabsContent>
 
-        {/* History Tab */}
         <TabsContent value="history" className="mt-4">
           {historyLoading ? (
             <LoadingState />
@@ -310,6 +446,8 @@ function ReminderCard({
   reminder,
   onDismiss,
   onDelete,
+  onEdit,
+  onAddToCalendar,
   showDate,
   isScheduled,
   isDismissed,
@@ -317,6 +455,8 @@ function ReminderCard({
   reminder: any;
   onDismiss?: () => void;
   onDelete?: () => void;
+  onEdit?: () => void;
+  onAddToCalendar?: () => void;
   showDate?: boolean;
   isScheduled?: boolean;
   isDismissed?: boolean;
@@ -327,17 +467,23 @@ function ReminderCard({
       isDismissed && 'opacity-60',
       isScheduled && 'border-dashed'
     )}>
-      <CardContent className="py-3 px-4 flex items-start justify-between gap-3">
+      <CardContent className="py-3 px-3 sm:px-4 flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <p className={cn('text-sm md:text-base', !isDismissed && 'font-medium')}>
             {reminder.content}
           </p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
             {showDate && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <CalendarIcon className="w-3 h-3" />
                 {format(new Date(reminder.reminder_date), 'dd/MM/yyyy HH:mm', { locale: he })}
               </span>
+            )}
+            {reminder.recurrence && reminder.recurrence !== 'none' && (
+              <Badge variant="outline" className="text-[10px] h-5">
+                <Repeat className="w-3 h-3 ml-1" />
+                {RECURRENCE_LABELS[reminder.recurrence] || reminder.recurrence}
+              </Badge>
             )}
             {isScheduled && (
               <Badge variant="outline" className="text-[10px] h-5">
@@ -353,7 +499,29 @@ function ReminderCard({
             )}
           </div>
         </div>
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-0.5 shrink-0 flex-wrap justify-end">
+          {onAddToCalendar && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
+              onClick={onAddToCalendar}
+              title="הוסף ליומן"
+            >
+              <CalendarPlus className="w-4 h-4" />
+            </Button>
+          )}
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
+              onClick={onEdit}
+              title="ערוך תזכורת"
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+          )}
           {onDismiss && (
             <Button
               variant="ghost"
