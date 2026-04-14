@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -108,8 +108,46 @@ export default function NotificationDropdown() {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 60000, // check every minute for newly due reminders
+    refetchInterval: 60000,
   });
+
+  // Track previously seen reminder IDs to detect new ones
+  const prevReminderIdsRef = useRef<Set<string>>(new Set());
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Send browser push notification for newly due reminders
+  useEffect(() => {
+    if (activeReminders.length === 0) return;
+    const currentIds = new Set(activeReminders.map((r: any) => r.id));
+    const prevIds = prevReminderIdsRef.current;
+
+    activeReminders.forEach((r: any) => {
+      if (!prevIds.has(r.id)) {
+        // New reminder became due - send push notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification('תזכורת - ברית שלום', {
+              body: r.content,
+              icon: '/pwa-icon.png',
+              tag: `reminder-${r.id}`,
+            });
+          } catch (e) {
+            // Fallback for environments that don't support Notification constructor
+          }
+        }
+        // Also show in-app toast
+        toast.info('⏰ תזכורת', { description: r.content });
+      }
+    });
+
+    prevReminderIdsRef.current = currentIds;
+  }, [activeReminders]);
 
   const dismissReminderMutation = useMutation({
     mutationFn: async (id: string) => {
