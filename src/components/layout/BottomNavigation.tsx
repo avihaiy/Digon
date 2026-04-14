@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, CreditCard, Megaphone, Settings } from 'lucide-react';
+import { Home, Users, CreditCard, Bell, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,22 +8,24 @@ const tabs = [
   { href: '/', icon: Home, label: 'בקרה', badge: false },
   { href: '/members', icon: Users, label: 'חברים', badge: false },
   { href: '/payments', icon: CreditCard, label: 'תשלומים', badge: false },
-  { href: '/manage-ads', icon: Megaphone, label: 'מודעות', badge: true },
+  { href: '/reminders', icon: Bell, label: 'תזכורות', badge: 'reminders' as const },
   { href: '/settings', icon: Settings, label: 'הגדרות', badge: false },
 ];
 
 export default function BottomNavigation() {
   const location = useLocation();
 
-  const { data: activeAdsCount = 0 } = useQuery({
-    queryKey: ['active-ads-count'],
+  const { data: activeRemindersCount = 0 } = useQuery({
+    queryKey: ['active-reminders-count'],
     queryFn: async () => {
       const { count } = await supabase
-        .from('scheduled_announcements')
+        .from('reminders')
         .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .eq('is_dismissed', false)
+        .lte('reminder_date', new Date().toISOString());
       return count || 0;
     },
+    refetchInterval: 60000,
   });
 
   const triggerHaptic = () => {
@@ -75,9 +77,9 @@ export default function BottomNavigation() {
                   )}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
-                {tab.badge && activeAdsCount > 0 && (
+                {tab.badge === 'reminders' && activeRemindersCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold z-20 shadow-sm">
-                    {activeAdsCount}
+                    {activeRemindersCount}
                   </span>
                 )}
               </div>
