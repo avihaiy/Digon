@@ -921,6 +921,7 @@ export type Database = {
           created_by: string | null
           id: string
           is_dismissed: boolean
+          recurrence: string | null
           reminder_date: string
         }
         Insert: {
@@ -929,6 +930,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_dismissed?: boolean
+          recurrence?: string | null
           reminder_date?: string
         }
         Update: {
@@ -937,6 +939,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_dismissed?: boolean
+          recurrence?: string | null
           reminder_date?: string
         }
         Relationships: []
