@@ -95,7 +95,36 @@ export default function NotificationDropdown() {
     };
   }, [user?.id, queryClient]);
 
+  // Active reminders
+  const { data: activeReminders = [] } = useQuery({
+    queryKey: ['active-reminders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reminders' as any)
+        .select('*')
+        .eq('is_dismissed', false)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const dismissReminderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('reminders' as any)
+        .update({ is_dismissed: true } as any)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['active-reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+  });
+
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  const totalBadge = unreadCount + activeReminders.length;
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
@@ -151,9 +180,9 @@ export default function NotificationDropdown() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
-          {unreadCount > 0 && (
+          {totalBadge > 0 && (
             <span className="absolute -top-1 -left-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center animate-pulse">
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {totalBadge > 9 ? '9+' : totalBadge}
             </span>
           )}
         </Button>
@@ -174,7 +203,35 @@ export default function NotificationDropdown() {
           )}
         </div>
         
-        <ScrollArea className="h-[300px]">
+        <ScrollArea className="h-[350px]">
+          {/* Active Reminders */}
+          {activeReminders.length > 0 && (
+            <>
+              <div className="px-3 py-1.5 bg-accent/50 text-xs font-medium text-accent-foreground">
+                תזכורות
+              </div>
+              {activeReminders.map((r: any) => (
+                <div key={r.id} className="flex items-start gap-3 p-3 border-b bg-primary/5">
+                  <Bell className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{r.content}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {r.created_at && formatDistanceToNow(new Date(r.created_at), { addSuffix: true, locale: he })}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                    onClick={() => dismissReminderMutation.mutate(r.id)}
+                  >
+                    <Check className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+              <DropdownMenuSeparator />
+            </>
+          )}
           {isLoading ? (
             <div className="p-4 text-center text-muted-foreground">
               טוען התראות...
