@@ -77,9 +77,9 @@ export default function BottomNavigation() {
                   )}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
-                {tab.badge && activeAdsCount > 0 && (
+                {tab.badge === 'reminders' && activeRemindersCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold z-20 shadow-sm">
-                    {activeAdsCount}
+                    {activeRemindersCount}
                   </span>
                 )}
               </div>
