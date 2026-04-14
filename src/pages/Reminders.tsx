@@ -6,17 +6,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Plus, Trash2, X } from 'lucide-react';
-import { format } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Bell, Plus, Trash2, X, Clock, CalendarIcon, History, CheckCircle } from 'lucide-react';
+import { format, isBefore, isAfter } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export default function Reminders() {
   const { user, loading, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
+  const [reminderDate, setReminderDate] = useState('');
+  const [reminderTime, setReminderTime] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('active');
 
+  // Active reminders (not dismissed)
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ['reminders'],
     queryFn: async () => {
@@ -24,24 +31,42 @@ export default function Reminders() {
         .from('reminders' as any)
         .select('*')
         .eq('is_dismissed', false)
-        .order('created_at', { ascending: false });
+        .order('reminder_date', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Dismissed reminders (history)
+  const { data: history = [], isLoading: historyLoading } = useQuery({
+    queryKey: ['reminders-history'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reminders' as any)
+        .select('*')
+        .eq('is_dismissed', true)
+        .order('created_at', { ascending: false })
+        .limit(50);
       if (error) throw error;
       return data || [];
     },
   });
 
   const addMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async (params: { content: string; reminder_date: string }) => {
       const { error } = await supabase
         .from('reminders' as any)
-        .insert({ content, created_by: user?.id } as any);
+        .insert({
+          content: params.content,
+          reminder_date: params.reminder_date,
+          created_by: user?.id,
+        } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
       queryClient.invalidateQueries({ queryKey: ['active-reminders'] });
-      setContent('');
-      setShowForm(false);
+      resetForm();
       toast.success('תזכורת נוספה בהצלחה');
     },
     onError: () => toast.error('שגיאה בהוספת תזכורת'),
@@ -57,6 +82,7 @@ export default function Reminders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['reminders-history'] });
       queryClient.invalidateQueries({ queryKey: ['active-reminders'] });
       toast.success('תזכורת נמחקה');
     },
@@ -73,107 +99,293 @@ export default function Reminders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['reminders-history'] });
       queryClient.invalidateQueries({ queryKey: ['active-reminders'] });
+      toast.success('תזכורת נסגרה');
     },
   });
+
+  const resetForm = () => {
+    setContent('');
+    setReminderDate('');
+    setReminderTime('');
+    setShowForm(false);
+  };
+
+  const handleSubmit = () => {
+    if (!content.trim()) return;
+    let dateStr: string;
+    if (reminderDate) {
+      const time = reminderTime || '00:00';
+      dateStr = new Date(`${reminderDate}T${time}`).toISOString();
+    } else {
+      dateStr = new Date().toISOString();
+    }
+    addMutation.mutate({ content: content.trim(), reminder_date: dateStr });
+  };
+
+  const now = new Date();
+  const activeReminders = reminders.filter((r: any) => isBefore(new Date(r.reminder_date), now));
+  const scheduledReminders = reminders.filter((r: any) => isAfter(new Date(r.reminder_date), now));
 
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Bell className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold">תזכורות</h1>
+    <div className="space-y-4 md:space-y-6" dir="rtl">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <Bell className="w-5 h-5 md:w-6 md:h-6 text-primary shrink-0" />
+          <h1 className="text-xl md:text-2xl font-bold truncate">תזכורות</h1>
           {reminders.length > 0 && (
-            <Badge variant="secondary">{reminders.length}</Badge>
+            <Badge variant="secondary" className="shrink-0">{reminders.length}</Badge>
           )}
         </div>
         {isAdmin && (
-          <Button onClick={() => setShowForm(!showForm)} size="sm">
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            size="sm"
+            className="shrink-0"
+          >
             <Plus className="w-4 h-4 ml-1" />
-            הוסף תזכורת
+            <span className="hidden sm:inline">הוסף תזכורת</span>
+            <span className="sm:hidden">הוסף</span>
           </Button>
         )}
       </div>
 
+      {/* Add Form */}
       {showForm && (
         <Card className="animate-in slide-in-from-top-2">
-          <CardContent className="pt-4">
-            <div className="flex gap-2">
-              <Input
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="תוכן התזכורת..."
-                className="flex-1"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && content.trim()) {
-                    addMutation.mutate(content.trim());
-                  }
-                }}
-              />
-              <Button
-                onClick={() => content.trim() && addMutation.mutate(content.trim())}
-                disabled={!content.trim() || addMutation.isPending}
-              >
-                שמור
+          <CardContent className="pt-4 space-y-3">
+            <Input
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="תוכן התזכורת..."
+              className="text-base"
+            />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex items-center gap-2">
+                <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  type="date"
+                  value={reminderDate}
+                  onChange={(e) => setReminderDate(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex-1 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  type="time"
+                  value={reminderTime}
+                  onChange={(e) => setReminderTime(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {!reminderDate ? 'ללא תאריך - התזכורת תופיע מיד' : 'התזכורת תופיע בתאריך ובשעה שנקבעו'}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" onClick={resetForm} size="sm">
+                ביטול
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setShowForm(false)}>
-                <X className="w-4 h-4" />
+              <Button
+                onClick={handleSubmit}
+                disabled={!content.trim() || addMutation.isPending}
+                size="sm"
+              >
+                שמור תזכורת
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {isLoading ? (
-        <div className="text-center py-8 text-muted-foreground">טוען...</div>
-      ) : reminders.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>אין תזכורות פעילות</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {reminders.map((reminder: any) => (
-            <Card key={reminder.id} className="group">
-              <CardContent className="py-4 flex items-center justify-between gap-3">
-                <div className="flex-1">
-                  <p className="font-medium">{reminder.content}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(reminder.created_at), 'dd/MM/yyyy HH:mm')}
-                  </p>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    onClick={() => dismissMutation.mutate(reminder.id)}
-                    title="סגור תזכורת"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteMutation.mutate(reminder.id)}
-                      title="מחק תזכורת"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="active" className="text-xs sm:text-sm">
+            <Bell className="w-3.5 h-3.5 ml-1 hidden sm:block" />
+            פעילות
+            {activeReminders.length > 0 && (
+              <Badge variant="destructive" className="mr-1.5 h-5 min-w-[20px] text-[10px]">
+                {activeReminders.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="scheduled" className="text-xs sm:text-sm">
+            <Clock className="w-3.5 h-3.5 ml-1 hidden sm:block" />
+            מתוזמנות
+            {scheduledReminders.length > 0 && (
+              <Badge variant="secondary" className="mr-1.5 h-5 min-w-[20px] text-[10px]">
+                {scheduledReminders.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-xs sm:text-sm">
+            <History className="w-3.5 h-3.5 ml-1 hidden sm:block" />
+            היסטוריה
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Active Tab */}
+        <TabsContent value="active" className="mt-4">
+          {isLoading ? (
+            <LoadingState />
+          ) : activeReminders.length === 0 ? (
+            <EmptyState icon={Bell} text="אין תזכורות פעילות" />
+          ) : (
+            <div className="space-y-2">
+              {activeReminders.map((r: any) => (
+                <ReminderCard
+                  key={r.id}
+                  reminder={r}
+                  onDismiss={() => dismissMutation.mutate(r.id)}
+                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
+                  showDate
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Scheduled Tab */}
+        <TabsContent value="scheduled" className="mt-4">
+          {isLoading ? (
+            <LoadingState />
+          ) : scheduledReminders.length === 0 ? (
+            <EmptyState icon={Clock} text="אין תזכורות מתוזמנות" />
+          ) : (
+            <div className="space-y-2">
+              {scheduledReminders.map((r: any) => (
+                <ReminderCard
+                  key={r.id}
+                  reminder={r}
+                  onDismiss={() => dismissMutation.mutate(r.id)}
+                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
+                  showDate
+                  isScheduled
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history" className="mt-4">
+          {historyLoading ? (
+            <LoadingState />
+          ) : history.length === 0 ? (
+            <EmptyState icon={History} text="אין היסטוריה" />
+          ) : (
+            <div className="space-y-2">
+              {history.map((r: any) => (
+                <ReminderCard
+                  key={r.id}
+                  reminder={r}
+                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
+                  isDismissed
+                  showDate
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
+}
+
+function ReminderCard({
+  reminder,
+  onDismiss,
+  onDelete,
+  showDate,
+  isScheduled,
+  isDismissed,
+}: {
+  reminder: any;
+  onDismiss?: () => void;
+  onDelete?: () => void;
+  showDate?: boolean;
+  isScheduled?: boolean;
+  isDismissed?: boolean;
+}) {
+  return (
+    <Card className={cn(
+      'transition-all',
+      isDismissed && 'opacity-60',
+      isScheduled && 'border-dashed'
+    )}>
+      <CardContent className="py-3 px-4 flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className={cn('text-sm md:text-base', !isDismissed && 'font-medium')}>
+            {reminder.content}
+          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+            {showDate && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <CalendarIcon className="w-3 h-3" />
+                {format(new Date(reminder.reminder_date), 'dd/MM/yyyy HH:mm', { locale: he })}
+              </span>
+            )}
+            {isScheduled && (
+              <Badge variant="outline" className="text-[10px] h-5">
+                <Clock className="w-3 h-3 ml-1" />
+                ממתינה
+              </Badge>
+            )}
+            {isDismissed && (
+              <Badge variant="secondary" className="text-[10px] h-5">
+                <CheckCircle className="w-3 h-3 ml-1" />
+                נסגרה
+              </Badge>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-1 shrink-0">
+          {onDismiss && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={onDismiss}
+              title="סגור תזכורת"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={onDelete}
+              title="מחק תזכורת"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EmptyState({ icon: Icon, text }: { icon: any; text: string }) {
+  return (
+    <Card>
+      <CardContent className="py-10 text-center text-muted-foreground">
+        <Icon className="w-10 h-10 mx-auto mb-3 opacity-30" />
+        <p className="text-sm">{text}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LoadingState() {
+  return <div className="text-center py-8 text-muted-foreground text-sm">טוען...</div>;
 }
