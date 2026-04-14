@@ -103,10 +103,12 @@ export default function NotificationDropdown() {
         .from('reminders' as any)
         .select('*')
         .eq('is_dismissed', false)
+        .lte('reminder_date', new Date().toISOString())
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     },
+    refetchInterval: 60000, // check every minute for newly due reminders
   });
 
   const dismissReminderMutation = useMutation({
