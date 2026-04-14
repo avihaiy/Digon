@@ -15,15 +15,17 @@ const tabs = [
 export default function BottomNavigation() {
   const location = useLocation();
 
-  const { data: activeAdsCount = 0 } = useQuery({
-    queryKey: ['active-ads-count'],
+  const { data: activeRemindersCount = 0 } = useQuery({
+    queryKey: ['active-reminders-count'],
     queryFn: async () => {
       const { count } = await supabase
-        .from('scheduled_announcements')
+        .from('reminders')
         .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .eq('is_dismissed', false)
+        .lte('reminder_date', new Date().toISOString());
       return count || 0;
     },
+    refetchInterval: 60000,
   });
 
   const triggerHaptic = () => {
