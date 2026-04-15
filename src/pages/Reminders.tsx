@@ -84,6 +84,7 @@ export default function Reminders() {
   const [reminderDate, setReminderDate] = useState('');
   const [reminderTime, setReminderTime] = useState('');
   const [recurrence, setRecurrence] = useState<string>('none');
+  const [monthDay, setMonthDay] = useState<number>(1);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
