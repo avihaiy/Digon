@@ -71,6 +71,7 @@ export default function Expenses() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+  const [pendingEditExpense, setPendingEditExpense] = useState<Expense | null>(null);
   
   const [formData, setFormData] = useState({
     amount: '',
@@ -483,7 +484,7 @@ export default function Expenses() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => openEditDialog(expense)}
+                                onClick={() => setPendingEditExpense(expense)}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -647,6 +648,19 @@ export default function Expenses() {
           }
         }}
         isPending={deleteExpenseMutation.isPending}
+      />
+
+      <DeleteCodeDialog
+        open={!!pendingEditExpense}
+        onOpenChange={(open) => !open && setPendingEditExpense(null)}
+        title="עריכת הוצאה"
+        description="הזן קוד לאישור עריכת ההוצאה."
+        onConfirm={() => {
+          if (pendingEditExpense) {
+            openEditDialog(pendingEditExpense);
+            setPendingEditExpense(null);
+          }
+        }}
       />
       </div>
     </AppLayout>

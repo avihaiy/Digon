@@ -79,6 +79,7 @@ export default function Budget() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<BudgetTransaction | null>(null);
   const [deleteTransactionId, setDeleteTransactionId] = useState<string | null>(null);
+  const [pendingEditTransaction, setPendingEditTransaction] = useState<BudgetTransaction | null>(null);
   const [formData, setFormData] = useState({
     type: 'income' as TransactionType,
     category_id: '',
@@ -439,7 +440,7 @@ export default function Budget() {
                         </p>
                         {isManager && (
                           <div className="flex gap-1 mt-1 justify-end">
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEditDialog(transaction)}>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPendingEditTransaction(transaction)}>
                               <Edit className="w-3 h-3" />
                             </Button>
                             <Button
@@ -490,7 +491,7 @@ export default function Budget() {
                         {isManager && (
                           <TableCell>
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="sm" onClick={() => openEditDialog(transaction)}>
+                              <Button variant="ghost" size="sm" onClick={() => setPendingEditTransaction(transaction)}>
                                 <Edit className="w-4 h-4" />
                               </Button>
                               <Button
@@ -675,6 +676,19 @@ export default function Budget() {
           }
         }}
         isPending={deleteTransactionMutation.isPending}
+      />
+
+      <DeleteCodeDialog
+        open={!!pendingEditTransaction}
+        onOpenChange={(open) => !open && setPendingEditTransaction(null)}
+        title="עריכת תנועה"
+        description="הזן קוד לאישור עריכת התנועה."
+        onConfirm={() => {
+          if (pendingEditTransaction) {
+            openEditDialog(pendingEditTransaction);
+            setPendingEditTransaction(null);
+          }
+        }}
       />
     </div>
   );
