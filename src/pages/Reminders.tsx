@@ -493,6 +493,33 @@ export default function Reminders() {
           )}
         </TabsContent>
       </Tabs>
+
+      <DeleteCodeDialog
+        open={!!pendingDeleteId}
+        onOpenChange={(open) => !open && setPendingDeleteId(null)}
+        title="מחיקת תזכורת"
+        description="האם למחוק את התזכורת? פעולה זו אינה ניתנת לביטול."
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            deleteMutation.mutate(pendingDeleteId);
+            setPendingDeleteId(null);
+          }
+        }}
+        isPending={deleteMutation.isPending}
+      />
+
+      <DeleteCodeDialog
+        open={!!pendingEditReminder}
+        onOpenChange={(open) => !open && setPendingEditReminder(null)}
+        title="עריכת תזכורת"
+        description="הזן קוד לאישור עריכת התזכורת."
+        onConfirm={() => {
+          if (pendingEditReminder) {
+            startEdit(pendingEditReminder);
+            setPendingEditReminder(null);
+          }
+        }}
+      />
     </div>
   );
 }
