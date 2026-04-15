@@ -293,26 +293,26 @@ export default function Budget() {
   const filteredCategories = categories.filter(c => c.type === formData.type);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
-              <Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+            <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+              <Wallet className="w-5 h-5 sm:w-8 sm:h-8 text-primary" />
               ניהול תקציב
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm sm:text-base">מעקב אחר הכנסות והוצאות</p>
+            <p className="text-muted-foreground mt-0.5 text-xs sm:text-base">מעקב אחר הכנסות והוצאות</p>
           </div>
           {isManager && (
             <div className="flex gap-2">
-              <Button onClick={() => openAddDialog('income')} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 flex-1 sm:flex-none">
-                <TrendingUp className="w-4 h-4" />
-                <span className="hidden sm:inline">הוסף</span> הכנסה
+              <Button onClick={() => openAddDialog('income')} size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 flex-1 sm:flex-none text-xs sm:text-sm h-9">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                הכנסה
               </Button>
-              <Button onClick={() => openAddDialog('expense')} variant="destructive" size="sm" className="gap-2 flex-1 sm:flex-none">
-                <TrendingDown className="w-4 h-4" />
-                <span className="hidden sm:inline">הוסף</span> הוצאה
+              <Button onClick={() => openAddDialog('expense')} variant="destructive" size="sm" className="gap-1.5 flex-1 sm:flex-none text-xs sm:text-sm h-9">
+                <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                הוצאה
               </Button>
             </div>
           )}
@@ -320,44 +320,44 @@ export default function Budget() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-2 sm:gap-4">
         <Card className="glass-card border-emerald-500/20">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-emerald-500" />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-500" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">סה"כ הכנסות</p>
-                <p className="text-2xl font-bold text-emerald-500">₪{totalIncome.toLocaleString()}</p>
+              <div className="text-center sm:text-right">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">הכנסות</p>
+                <p className="text-sm sm:text-2xl font-bold text-emerald-500">₪{totalIncome.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="glass-card border-destructive/20">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
-                <TrendingDown className="w-6 h-6 text-destructive" />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-destructive/10 flex items-center justify-center">
+                <TrendingDown className="w-4 h-4 sm:w-6 sm:h-6 text-destructive" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">סה"כ הוצאות</p>
-                <p className="text-2xl font-bold text-destructive">₪{totalExpense.toLocaleString()}</p>
+              <div className="text-center sm:text-right">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">הוצאות</p>
+                <p className="text-sm sm:text-2xl font-bold text-destructive">₪{totalExpense.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className={`glass-card ${balance >= 0 ? 'border-emerald-500/20' : 'border-destructive/20'}`}>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${balance >= 0 ? 'bg-emerald-500/10' : 'bg-destructive/10'}`}>
-                <PiggyBank className={`w-6 h-6 ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`} />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4">
+              <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center ${balance >= 0 ? 'bg-emerald-500/10' : 'bg-destructive/10'}`}>
+                <PiggyBank className={`w-4 h-4 sm:w-6 sm:h-6 ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`} />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">יתרה</p>
-                <p className={`text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+              <div className="text-center sm:text-right">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">יתרה</p>
+                <p className={`text-sm sm:text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
                   ₪{balance.toLocaleString()}
                 </p>
               </div>
@@ -368,32 +368,33 @@ export default function Budget() {
 
       {/* Transactions Table */}
       <Card className="glass-card">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
+        <CardHeader className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-1.5 text-sm sm:text-base">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
               תנועות
             </CardTitle>
             {isManager && (
-              <Button variant="outline" size="sm" onClick={() => setCategoryDialogOpen(true)}>
-                <Plus className="w-4 h-4 ml-1" />
-                קטגוריה חדשה
+              <Button variant="outline" size="sm" onClick={() => setCategoryDialogOpen(true)} className="text-xs h-8 px-2 sm:px-3">
+                <Plus className="w-3.5 h-3.5 ml-1" />
+                <span className="hidden sm:inline">קטגוריה חדשה</span>
+                <span className="sm:hidden">קטגוריה</span>
               </Button>
             )}
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
               <Input
                 placeholder="חיפוש..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pr-9"
+                className="pr-8 sm:pr-9 h-9 text-sm"
               />
             </div>
             <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as 'all' | TransactionType)}>
-              <SelectTrigger className="w-32">
-                <Filter className="w-4 h-4 ml-2" />
+              <SelectTrigger className="w-24 sm:w-32 h-9 text-xs sm:text-sm">
+                <Filter className="w-3.5 h-3.5 ml-1" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -404,7 +405,7 @@ export default function Budget() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 pt-0">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -415,45 +416,36 @@ export default function Budget() {
             </div>
           ) : (
             <>
-              {/* Mobile view - Cards */}
-              <div className="block sm:hidden space-y-3">
+               {/* Mobile view - Cards */}
+              <div className="block sm:hidden space-y-2">
                 {filteredTransactions.map((transaction) => (
-                  <div key={transaction.id} className="p-3 rounded-lg border bg-card">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'} className="text-xs">
-                            {transaction.type === 'income' ? 'הכנסה' : 'הוצאה'}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(transaction.transaction_date), 'dd/MM/yy', { locale: he })}
-                          </span>
+                  <div key={transaction.id} className="p-2.5 rounded-lg border bg-card">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0 shrink-0">
+                          {transaction.type === 'income' ? 'הכנסה' : 'הוצאה'}
+                        </Badge>
+                        <span className="text-xs font-medium truncate">{transaction.budget_categories?.name || transaction.description || '-'}</span>
+                      </div>
+                      <span className={`text-sm font-bold shrink-0 ${transaction.type === 'income' ? 'text-emerald-500' : 'text-destructive'}`}>
+                        {transaction.type === 'income' ? '+' : '-'}₪{Number(transaction.amount).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="text-[10px] text-muted-foreground">
+                        {format(new Date(transaction.transaction_date), 'dd/MM/yy', { locale: he })}
+                        {transaction.description && transaction.budget_categories?.name ? ` · ${transaction.description}` : ''}
+                      </span>
+                      {isManager && (
+                        <div className="flex gap-0.5">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPendingEditTransaction(transaction)}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => setDeleteTransactionId(transaction.id)}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
                         </div>
-                        <p className="text-sm font-medium truncate">{transaction.budget_categories?.name || '-'}</p>
-                        {transaction.description && (
-                          <p className="text-xs text-muted-foreground truncate">{transaction.description}</p>
-                        )}
-                      </div>
-                      <div className="text-left shrink-0">
-                        <p className={`font-bold ${transaction.type === 'income' ? 'text-emerald-500' : 'text-destructive'}`}>
-                          {transaction.type === 'income' ? '+' : '-'}₪{Number(transaction.amount).toLocaleString()}
-                        </p>
-                        {isManager && (
-                          <div className="flex gap-1 mt-1 justify-end">
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPendingEditTransaction(transaction)}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                              onClick={() => setDeleteTransactionId(transaction.id)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -517,7 +509,7 @@ export default function Budget() {
 
       {/* Transaction Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg rounded-xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {formData.type === 'income' ? (
@@ -528,7 +520,7 @@ export default function Budget() {
               {editingTransaction ? 'עריכת תנועה' : formData.type === 'income' ? 'הוספת הכנסה' : 'הוספת הוצאה'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-3 sm:space-y-4 py-2 sm:py-4">
             <Tabs value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as TransactionType, category_id: '' })}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="income" className="gap-2">
@@ -618,7 +610,7 @@ export default function Budget() {
 
       {/* Category Dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md rounded-xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>הוספת קטגוריה חדשה</DialogTitle>
           </DialogHeader>
