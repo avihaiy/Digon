@@ -509,7 +509,7 @@ export default function Budget() {
 
       {/* Transaction Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg rounded-xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {formData.type === 'income' ? (
@@ -520,7 +520,7 @@ export default function Budget() {
               {editingTransaction ? 'עריכת תנועה' : formData.type === 'income' ? 'הוספת הכנסה' : 'הוספת הוצאה'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-3 sm:space-y-4 py-2 sm:py-4">
             <Tabs value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as TransactionType, category_id: '' })}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="income" className="gap-2">
@@ -610,7 +610,7 @@ export default function Budget() {
 
       {/* Category Dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md rounded-xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>הוספת קטגוריה חדשה</DialogTitle>
           </DialogHeader>
