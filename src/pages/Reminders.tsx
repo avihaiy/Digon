@@ -241,9 +241,17 @@ export default function Reminders() {
   const handleSubmit = () => {
     if (!content.trim()) return;
     const time = reminderTime || '00:00';
-    const dateStr = reminderDate
-      ? new Date(`${reminderDate}T${time}`).toISOString()
-      : new Date().toISOString();
+    let dateObj = reminderDate
+      ? new Date(`${reminderDate}T${time}`)
+      : new Date();
+    
+    // For monthly recurrence, set the chosen day of month
+    if (recurrence === 'monthly') {
+      const maxDay = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).getDate();
+      dateObj.setDate(Math.min(monthDay, maxDay));
+    }
+
+    const dateStr = dateObj.toISOString();
     const rec = recurrence === 'none' ? null : recurrence;
 
     if (editingId) {
