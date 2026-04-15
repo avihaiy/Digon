@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { DeleteCodeDialog } from '@/components/DeleteCodeDialog';
 import { Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,6 +89,8 @@ export default function Reminders() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingEditReminder, setPendingEditReminder] = useState<any>(null);
 
   const initFormWithCurrentDateTime = () => {
     const now = new Date();
@@ -435,8 +438,8 @@ export default function Reminders() {
                   key={r.id}
                   reminder={r}
                   onDismiss={() => dismissMutation.mutate(r)}
-                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
-                  onEdit={isAdmin ? () => startEdit(r) : undefined}
+                  onDelete={isAdmin ? () => setPendingDeleteId(r.id) : undefined}
+                  onEdit={isAdmin ? () => setPendingEditReminder(r) : undefined}
                   onAddToCalendar={() => downloadICS(r)}
                   onToggleImportant={isAdmin ? () => toggleImportantMutation.mutate({ id: r.id, is_important: !r.is_important }) : undefined}
                   showDate
@@ -458,8 +461,8 @@ export default function Reminders() {
                   key={r.id}
                   reminder={r}
                   onDismiss={() => dismissMutation.mutate(r)}
-                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
-                  onEdit={isAdmin ? () => startEdit(r) : undefined}
+                  onDelete={isAdmin ? () => setPendingDeleteId(r.id) : undefined}
+                  onEdit={isAdmin ? () => setPendingEditReminder(r) : undefined}
                   onAddToCalendar={() => downloadICS(r)}
                   onToggleImportant={isAdmin ? () => toggleImportantMutation.mutate({ id: r.id, is_important: !r.is_important }) : undefined}
                   showDate
@@ -481,7 +484,7 @@ export default function Reminders() {
                 <ReminderCard
                   key={r.id}
                   reminder={r}
-                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
+                  onDelete={isAdmin ? () => setPendingDeleteId(r.id) : undefined}
                   isDismissed
                   showDate
                 />
@@ -490,6 +493,33 @@ export default function Reminders() {
           )}
         </TabsContent>
       </Tabs>
+
+      <DeleteCodeDialog
+        open={!!pendingDeleteId}
+        onOpenChange={(open) => !open && setPendingDeleteId(null)}
+        title="מחיקת תזכורת"
+        description="האם למחוק את התזכורת? פעולה זו אינה ניתנת לביטול."
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            deleteMutation.mutate(pendingDeleteId);
+            setPendingDeleteId(null);
+          }
+        }}
+        isPending={deleteMutation.isPending}
+      />
+
+      <DeleteCodeDialog
+        open={!!pendingEditReminder}
+        onOpenChange={(open) => !open && setPendingEditReminder(null)}
+        title="עריכת תזכורת"
+        description="הזן קוד לאישור עריכת התזכורת."
+        onConfirm={() => {
+          if (pendingEditReminder) {
+            startEdit(pendingEditReminder);
+            setPendingEditReminder(null);
+          }
+        }}
+      />
     </div>
   );
 }
