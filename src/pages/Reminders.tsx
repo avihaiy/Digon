@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Bell, Plus, Trash2, X, Clock, CalendarIcon, History, CheckCircle, Pencil, CalendarPlus, Repeat } from 'lucide-react';
+import { Bell, Plus, Trash2, X, Clock, CalendarIcon, History, CheckCircle, Pencil, CalendarPlus, Repeat, Star } from 'lucide-react';
 import { format, isBefore, isAfter, addDays, addWeeks, addMonths } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
