@@ -502,6 +502,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         </Card>
       </div>
 
+      {/* Location */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
