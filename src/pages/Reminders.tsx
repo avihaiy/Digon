@@ -219,6 +219,7 @@ export default function Reminders() {
             reminder_date: nextDate.toISOString(),
             recurrence: reminder.recurrence,
             created_by: reminder.created_by,
+            is_important: reminder.is_important || false,
           } as any);
       }
 
