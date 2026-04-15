@@ -234,6 +234,19 @@ export default function Reminders() {
     },
   });
 
+  const toggleImportantMutation = useMutation({
+    mutationFn: async ({ id, is_important }: { id: string; is_important: boolean }) => {
+      const { error } = await supabase
+        .from('reminders' as any)
+        .update({ is_important } as any)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll(queryClient);
+    },
+  });
+
   const resetForm = () => {
     setContent('');
     setReminderDate('');
