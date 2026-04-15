@@ -687,6 +687,7 @@ export default function Dashboard() {
         </RevealSection>
       )}
 
+      {/* Financial Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Income */}
         <Card className="stat-card-base stat-card-income animate-fade-up stagger-1 group border-0">
