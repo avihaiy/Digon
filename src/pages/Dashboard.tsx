@@ -837,7 +837,6 @@ export default function Dashboard() {
       </div>
       </RevealSection>
 
-      </RevealSection>
 
       <RevealSection delay={200}>
       {/* Quick Actions */}
