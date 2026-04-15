@@ -517,7 +517,8 @@ export default function Dashboard() {
         .not('recurrence', 'is', null)
         .order('reminder_date', { ascending: true });
       if (error) throw error;
-      return (data || []).filter((r: any) => r.recurrence && r.recurrence !== 'none');
+      const filtered = (data || []).filter((r: any) => r.recurrence && r.recurrence !== 'none');
+      return filtered.sort((a: any, b: any) => (b.is_important ? 1 : 0) - (a.is_important ? 1 : 0));
     },
     refetchInterval: 60000,
   });
