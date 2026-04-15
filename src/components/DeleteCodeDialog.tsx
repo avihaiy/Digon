@@ -22,6 +22,7 @@ interface DeleteCodeDialogProps {
   description: string;
   onConfirm: () => void;
   isPending?: boolean;
+  confirmLabel?: string;
 }
 
 export function DeleteCodeDialog({
