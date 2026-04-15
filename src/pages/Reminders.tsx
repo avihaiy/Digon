@@ -567,6 +567,7 @@ function ReminderCard({
             )}
           </div>
         </div>
+        </div>
         <div className="flex gap-0.5 shrink-0 flex-wrap justify-end">
           {onAddToCalendar && (
             <Button
