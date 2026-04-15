@@ -500,6 +500,7 @@ function ReminderCard({
   onDelete,
   onEdit,
   onAddToCalendar,
+  onToggleImportant,
   showDate,
   isScheduled,
   isDismissed,
@@ -509,6 +510,7 @@ function ReminderCard({
   onDelete?: () => void;
   onEdit?: () => void;
   onAddToCalendar?: () => void;
+  onToggleImportant?: () => void;
   showDate?: boolean;
   isScheduled?: boolean;
   isDismissed?: boolean;
@@ -517,10 +519,23 @@ function ReminderCard({
     <Card className={cn(
       'transition-all',
       isDismissed && 'opacity-60',
-      isScheduled && 'border-dashed'
+      isScheduled && 'border-dashed',
+      reminder.is_important && !isDismissed && 'border-amber-400/50 bg-amber-50/30 dark:bg-amber-950/10'
     )}>
       <CardContent className="py-3 px-3 sm:px-4 flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-2 flex-1 min-w-0">
+          {onToggleImportant && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0 mt-0.5"
+              onClick={onToggleImportant}
+              title={reminder.is_important ? 'הסר סימון חשוב' : 'סמן כחשוב'}
+            >
+              <Star className={cn('w-4 h-4 transition-colors', reminder.is_important ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground')} />
+            </Button>
+          )}
+          <div className="flex-1 min-w-0">
           <p className={cn('text-sm md:text-base', !isDismissed && 'font-medium')}>
             {reminder.content}
           </p>
