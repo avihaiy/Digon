@@ -590,7 +590,103 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Financial Overview */}
+      {/* Recurring Reminders Summary - Top Section */}
+      {(recurringReminders.length > 0 || dueRemindersCount > 0) && (
+        <RevealSection delay={50}>
+        <Card className="glass-card relative overflow-hidden border-0 shadow-lg">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none" />
+          <CardHeader className="pb-2 px-3 sm:px-6 relative z-10">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                  <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+                </div>
+                <CardTitle className="text-base sm:text-lg font-bold tracking-tight">תזכורות חוזרות</CardTitle>
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {dueRemindersCount > 0 && (
+                  <Badge variant="destructive" className="animate-pulse text-[10px] sm:text-xs">
+                    {dueRemindersCount} פעילות
+                  </Badge>
+                )}
+                <Link to="/reminders">
+                  <Button variant="ghost" size="sm" className="text-[10px] sm:text-xs gap-1 h-7 px-2">
+                    <span className="hidden sm:inline">כל התזכורות</span>
+                    <span className="sm:hidden">הכל</span>
+                    <ArrowLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="relative z-10 px-3 sm:px-6">
+            {remindersLoading ? (
+              <Skeleton className="h-16 w-full" />
+            ) : recurringReminders.length === 0 ? (
+              <p className="text-center text-muted-foreground py-3 text-sm">אין תזכורות חוזרות פעילות</p>
+            ) : (
+              <div className="space-y-1.5 sm:space-y-2">
+                {recurringReminders.slice(0, 5).map((r: any) => {
+                  const reminderDate = new Date(r.reminder_date);
+                  const isPast = reminderDate <= new Date();
+                  return (
+                    <div
+                      key={r.id}
+                      className={cn(
+                        'flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-xl transition-colors',
+                        isPast ? 'bg-destructive/5 border border-destructive/20' : 'bg-muted/40 hover:bg-muted/60',
+                        r.is_important && !isPast && 'border border-amber-400/30 bg-amber-50/20 dark:bg-amber-950/10'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0',
+                        isPast ? 'bg-destructive/15' : r.is_important ? 'bg-amber-500/15' : 'bg-primary/10'
+                      )}>
+                        {r.is_important ? (
+                          <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-amber-400 text-amber-400" />
+                        ) : (
+                          <Repeat className={cn('w-3.5 h-3.5 sm:w-4 sm:h-4', isPast ? 'text-destructive' : 'text-primary')} />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={cn('text-xs sm:text-sm font-medium truncate', r.is_important && 'text-amber-700 dark:text-amber-300')}>{r.content}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-0.5">
+                            <CalendarIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            {format(reminderDate, 'dd/MM HH:mm')}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge variant="outline" className="text-[9px] sm:text-[10px] h-4 sm:h-5 px-1 sm:px-1.5">
+                          <Repeat className="w-2.5 h-2.5 sm:w-3 sm:h-3 ml-0.5" />
+                          <span className="hidden sm:inline">{RECURRENCE_LABELS[r.recurrence] || r.recurrence}</span>
+                          <span className="sm:hidden">{r.recurrence === 'daily' ? 'יומי' : r.recurrence === 'weekly' ? 'שבועי' : 'חודשי'}</span>
+                        </Badge>
+                        {isPast && (
+                          <Badge variant="destructive" className="text-[9px] sm:text-[10px] h-4 sm:h-5 px-1 sm:px-1.5">
+                            <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 ml-0.5" />
+                            <span className="hidden sm:inline">פעילה</span>
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {recurringReminders.length > 5 && (
+                  <Link to="/reminders" className="block text-center">
+                    <Button variant="link" size="sm" className="text-xs">
+                      עוד {recurringReminders.length - 5} תזכורות...
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </RevealSection>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Income */}
         <Card className="stat-card-base stat-card-income animate-fade-up stagger-1 group border-0">
