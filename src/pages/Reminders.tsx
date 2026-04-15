@@ -329,7 +329,7 @@ export default function Reminders() {
               </div>
               <div className="flex items-center gap-2">
                 <Repeat className="w-4 h-4 text-muted-foreground shrink-0" />
-                <Select value={recurrence} onValueChange={setRecurrence}>
+                <Select value={recurrence} onValueChange={(v) => { setRecurrence(v); if (v === 'monthly') setMonthDay(new Date().getDate()); }}>
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="חד פעמי" />
                   </SelectTrigger>
@@ -342,6 +342,23 @@ export default function Reminders() {
                 </Select>
               </div>
             </div>
+            {recurrence === 'monthly' && (
+              <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-sm text-muted-foreground">כל יום</span>
+                <Select value={String(monthDay)} onValueChange={(v) => setMonthDay(Number(v))}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <SelectItem key={d} value={String(d)}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">בחודש</span>
+              </div>
+            )}
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={resetForm} size="sm">
                 ביטול
