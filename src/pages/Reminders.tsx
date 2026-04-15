@@ -89,6 +89,8 @@ export default function Reminders() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingEditReminder, setPendingEditReminder] = useState<any>(null);
 
   const initFormWithCurrentDateTime = () => {
     const now = new Date();
