@@ -82,9 +82,15 @@ Deno.serve(async (req) => {
           case "weekly":
             nextDate = addWeeks(currentDate, 1);
             break;
-          case "monthly":
+          case "monthly": {
+            // Preserve the original day of month
+            const originalDay = currentDate.getDate();
             nextDate = addMonths(currentDate, 1);
+            // Correct the day (addMonths may clamp to month end)
+            const maxDay = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+            nextDate.setDate(Math.min(originalDay, maxDay));
             break;
+          }
           default:
             continue;
         }
