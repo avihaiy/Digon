@@ -204,7 +204,13 @@ export default function Reminders() {
         let nextDate: Date;
         if (reminder.recurrence === 'daily') nextDate = addDays(currentDate, 1);
         else if (reminder.recurrence === 'weekly') nextDate = addWeeks(currentDate, 1);
-        else nextDate = addMonths(currentDate, 1);
+        else {
+          // Monthly: preserve original day
+          const originalDay = currentDate.getDate();
+          nextDate = addMonths(currentDate, 1);
+          const maxDay = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+          nextDate.setDate(Math.min(originalDay, maxDay));
+        }
 
         await supabase
           .from('reminders' as any)
