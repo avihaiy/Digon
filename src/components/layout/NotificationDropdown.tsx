@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { playNotificationSound } from '@/lib/notification-sounds';
 
 interface Notification {
   id: string;
