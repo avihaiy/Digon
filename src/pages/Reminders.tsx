@@ -84,6 +84,7 @@ export default function Reminders() {
   const [reminderDate, setReminderDate] = useState('');
   const [reminderTime, setReminderTime] = useState('');
   const [recurrence, setRecurrence] = useState<string>('none');
+  const [monthDay, setMonthDay] = useState<number>(1);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('active');
@@ -94,6 +95,7 @@ export default function Reminders() {
     setReminderDate(format(now, 'yyyy-MM-dd'));
     setReminderTime(format(now, 'HH:mm'));
     setRecurrence('none');
+    setMonthDay(now.getDate());
     setEditingId(null);
     setShowForm(true);
   };
@@ -104,6 +106,7 @@ export default function Reminders() {
     setReminderDate(format(d, 'yyyy-MM-dd'));
     setReminderTime(format(d, 'HH:mm'));
     setRecurrence(r.recurrence || 'none');
+    setMonthDay(d.getDate());
     setEditingId(r.id);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -201,7 +204,13 @@ export default function Reminders() {
         let nextDate: Date;
         if (reminder.recurrence === 'daily') nextDate = addDays(currentDate, 1);
         else if (reminder.recurrence === 'weekly') nextDate = addWeeks(currentDate, 1);
-        else nextDate = addMonths(currentDate, 1);
+        else {
+          // Monthly: preserve original day
+          const originalDay = currentDate.getDate();
+          nextDate = addMonths(currentDate, 1);
+          const maxDay = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+          nextDate.setDate(Math.min(originalDay, maxDay));
+        }
 
         await supabase
           .from('reminders' as any)
@@ -230,6 +239,7 @@ export default function Reminders() {
     setReminderDate('');
     setReminderTime('');
     setRecurrence('none');
+    setMonthDay(1);
     setEditingId(null);
     setShowForm(false);
   };
@@ -237,9 +247,17 @@ export default function Reminders() {
   const handleSubmit = () => {
     if (!content.trim()) return;
     const time = reminderTime || '00:00';
-    const dateStr = reminderDate
-      ? new Date(`${reminderDate}T${time}`).toISOString()
-      : new Date().toISOString();
+    let dateObj = reminderDate
+      ? new Date(`${reminderDate}T${time}`)
+      : new Date();
+    
+    // For monthly recurrence, set the chosen day of month
+    if (recurrence === 'monthly') {
+      const maxDay = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).getDate();
+      dateObj.setDate(Math.min(monthDay, maxDay));
+    }
+
+    const dateStr = dateObj.toISOString();
     const rec = recurrence === 'none' ? null : recurrence;
 
     if (editingId) {
@@ -317,7 +335,7 @@ export default function Reminders() {
               </div>
               <div className="flex items-center gap-2">
                 <Repeat className="w-4 h-4 text-muted-foreground shrink-0" />
-                <Select value={recurrence} onValueChange={setRecurrence}>
+                <Select value={recurrence} onValueChange={(v) => { setRecurrence(v); if (v === 'monthly') setMonthDay(new Date().getDate()); }}>
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="חד פעמי" />
                   </SelectTrigger>
@@ -330,6 +348,23 @@ export default function Reminders() {
                 </Select>
               </div>
             </div>
+            {recurrence === 'monthly' && (
+              <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                <CalendarIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-sm text-muted-foreground">כל יום</span>
+                <Select value={String(monthDay)} onValueChange={(v) => setMonthDay(Number(v))}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <SelectItem key={d} value={String(d)}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">בחודש</span>
+              </div>
+            )}
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={resetForm} size="sm">
                 ביטול
@@ -483,6 +518,7 @@ function ReminderCard({
               <Badge variant="outline" className="text-[10px] h-5">
                 <Repeat className="w-3 h-3 ml-1" />
                 {RECURRENCE_LABELS[reminder.recurrence] || reminder.recurrence}
+                {reminder.recurrence === 'monthly' && ` (${new Date(reminder.reminder_date).getDate()} בחודש)`}
               </Badge>
             )}
             {isScheduled && (
