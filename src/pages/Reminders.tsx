@@ -512,6 +512,7 @@ function ReminderCard({
               <Badge variant="outline" className="text-[10px] h-5">
                 <Repeat className="w-3 h-3 ml-1" />
                 {RECURRENCE_LABELS[reminder.recurrence] || reminder.recurrence}
+                {reminder.recurrence === 'monthly' && ` (${new Date(reminder.reminder_date).getDate()} בחודש)`}
               </Badge>
             )}
             {isScheduled && (
