@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send, Bell, Volume2, VolumeX } from 'lucide-react';
+import { playNotificationSound, getSelectedSound, setSelectedSound, SOUND_PRESETS, type SoundPreset } from '@/lib/notification-sounds';
 import { Link } from 'react-router-dom';
 
 interface SettingsTabProps {
@@ -34,6 +35,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     finance: true,
   });
   const [displayRotation, setDisplayRotation] = useState('0');
+  const [notificationSound, setNotificationSound] = useState<SoundPreset>(getSelectedSound());
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
@@ -445,6 +447,56 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             >
               <Save className="w-4 h-4 ml-2" />
               {deleteProtectionCode ? 'שמור קוד' : 'בטל הגנה'}
+            </Button>
+          </CardContent>
+        </Card>
+        {/* Notification Sound */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Volume2 className="w-5 h-5" />
+              צליל התראה
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>צליל לתזכורות חשובות</Label>
+              <Select 
+                value={notificationSound} 
+                onValueChange={(v: SoundPreset) => {
+                  setNotificationSound(v);
+                  setSelectedSound(v);
+                  if (v !== 'mute') {
+                    setTimeout(() => playNotificationSound(v), 100);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOUND_PRESETS.map(p => (
+                    <SelectItem key={p.value} value={p.value}>
+                      <span className="flex items-center gap-2">
+                        {p.value === 'mute' ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                        {p.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                הצליל יושמע כשתזכורת חשובה (⭐) מגיעה לזמנה. בחר "השתקה" לביטול.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => playNotificationSound(notificationSound)}
+              disabled={notificationSound === 'mute'}
+            >
+              <Bell className="w-4 h-4 ml-2" />
+              השמע צליל
             </Button>
           </CardContent>
         </Card>
