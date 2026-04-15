@@ -106,6 +106,7 @@ export default function Reminders() {
     setReminderDate(format(d, 'yyyy-MM-dd'));
     setReminderTime(format(d, 'HH:mm'));
     setRecurrence(r.recurrence || 'none');
+    setMonthDay(d.getDate());
     setEditingId(r.id);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
