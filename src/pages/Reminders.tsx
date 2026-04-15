@@ -233,6 +233,7 @@ export default function Reminders() {
     setReminderDate('');
     setReminderTime('');
     setRecurrence('none');
+    setMonthDay(1);
     setEditingId(null);
     setShowForm(false);
   };
