@@ -293,26 +293,26 @@ export default function Budget() {
   const filteredCategories = categories.filter(c => c.type === formData.type);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
-              <Wallet className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+            <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+              <Wallet className="w-5 h-5 sm:w-8 sm:h-8 text-primary" />
               ניהול תקציב
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm sm:text-base">מעקב אחר הכנסות והוצאות</p>
+            <p className="text-muted-foreground mt-0.5 text-xs sm:text-base">מעקב אחר הכנסות והוצאות</p>
           </div>
           {isManager && (
             <div className="flex gap-2">
-              <Button onClick={() => openAddDialog('income')} size="sm" className="gap-2 bg-emerald-600 hover:bg-emerald-700 flex-1 sm:flex-none">
-                <TrendingUp className="w-4 h-4" />
-                <span className="hidden sm:inline">הוסף</span> הכנסה
+              <Button onClick={() => openAddDialog('income')} size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 flex-1 sm:flex-none text-xs sm:text-sm h-9">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                הכנסה
               </Button>
-              <Button onClick={() => openAddDialog('expense')} variant="destructive" size="sm" className="gap-2 flex-1 sm:flex-none">
-                <TrendingDown className="w-4 h-4" />
-                <span className="hidden sm:inline">הוסף</span> הוצאה
+              <Button onClick={() => openAddDialog('expense')} variant="destructive" size="sm" className="gap-1.5 flex-1 sm:flex-none text-xs sm:text-sm h-9">
+                <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                הוצאה
               </Button>
             </div>
           )}
@@ -320,44 +320,44 @@ export default function Budget() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-2 sm:gap-4">
         <Card className="glass-card border-emerald-500/20">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-emerald-500" />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-500" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">סה"כ הכנסות</p>
-                <p className="text-2xl font-bold text-emerald-500">₪{totalIncome.toLocaleString()}</p>
+              <div className="text-center sm:text-right">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">הכנסות</p>
+                <p className="text-sm sm:text-2xl font-bold text-emerald-500">₪{totalIncome.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="glass-card border-destructive/20">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
-                <TrendingDown className="w-6 h-6 text-destructive" />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-destructive/10 flex items-center justify-center">
+                <TrendingDown className="w-4 h-4 sm:w-6 sm:h-6 text-destructive" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">סה"כ הוצאות</p>
-                <p className="text-2xl font-bold text-destructive">₪{totalExpense.toLocaleString()}</p>
+              <div className="text-center sm:text-right">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">הוצאות</p>
+                <p className="text-sm sm:text-2xl font-bold text-destructive">₪{totalExpense.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className={`glass-card ${balance >= 0 ? 'border-emerald-500/20' : 'border-destructive/20'}`}>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${balance >= 0 ? 'bg-emerald-500/10' : 'bg-destructive/10'}`}>
-                <PiggyBank className={`w-6 h-6 ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`} />
+          <CardContent className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4">
+              <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center ${balance >= 0 ? 'bg-emerald-500/10' : 'bg-destructive/10'}`}>
+                <PiggyBank className={`w-4 h-4 sm:w-6 sm:h-6 ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`} />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">יתרה</p>
-                <p className={`text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+              <div className="text-center sm:text-right">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">יתרה</p>
+                <p className={`text-sm sm:text-2xl font-bold ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
                   ₪{balance.toLocaleString()}
                 </p>
               </div>
