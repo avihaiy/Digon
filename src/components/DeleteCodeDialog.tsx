@@ -32,6 +32,7 @@ export function DeleteCodeDialog({
   description,
   onConfirm,
   isPending = false,
+  confirmLabel,
 }: DeleteCodeDialogProps) {
   const [code, setCode] = useState('');
   const [error, setError] = useState(false);
