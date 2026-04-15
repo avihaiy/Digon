@@ -18,6 +18,10 @@ import {
   Wallet,
   PieChart,
   Monitor,
+  Bell,
+  Repeat,
+  Clock,
+  CalendarIcon,
 } from 'lucide-react';
 import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate } from '@/lib/hebrew-utils';
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
@@ -502,6 +506,43 @@ export default function Dashboard() {
   }, [queryClient]);
 
 
+  // Fetch active recurring reminders
+  const { data: recurringReminders = [], isLoading: remindersLoading } = useQuery({
+    queryKey: ['dashboard-recurring-reminders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reminders' as any)
+        .select('*')
+        .eq('is_dismissed', false)
+        .not('recurrence', 'is', null)
+        .order('reminder_date', { ascending: true });
+      if (error) throw error;
+      return (data || []).filter((r: any) => r.recurrence && r.recurrence !== 'none');
+    },
+    refetchInterval: 60000,
+  });
+
+  // Active (due) reminders count
+  const { data: dueRemindersCount = 0 } = useQuery({
+    queryKey: ['dashboard-due-reminders'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('reminders' as any)
+        .select('*', { count: 'exact', head: true })
+        .eq('is_dismissed', false)
+        .lte('reminder_date', new Date().toISOString());
+      if (error) throw error;
+      return count || 0;
+    },
+    refetchInterval: 60000,
+  });
+
+  const RECURRENCE_LABELS: Record<string, string> = {
+    daily: 'יומי',
+    weekly: 'שבועי',
+    monthly: 'חודשי',
+  };
+
   const quickActions = [
     { label: 'הוסף חבר', icon: Users, href: '/members?action=add', variant: 'secondary' as const },
     { label: 'קבל תשלום', icon: CreditCard, href: '/payments?action=add', variant: 'secondary' as const },
@@ -792,6 +833,97 @@ export default function Dashboard() {
           isAmount
         />
       </div>
+      </RevealSection>
+
+      {/* Recurring Reminders Summary */}
+      <RevealSection delay={180}>
+      <Card className="glass-card relative overflow-hidden border-0 shadow-lg">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -translate-y-16 translate-x-16 pointer-events-none" />
+        <CardHeader className="pb-2 relative z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                <Bell className="w-5 h-5 text-amber-500" />
+              </div>
+              <CardTitle className="text-lg font-bold tracking-tight">תזכורות חוזרות</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              {dueRemindersCount > 0 && (
+                <Badge variant="destructive" className="animate-pulse">
+                  {dueRemindersCount} פעילות
+                </Badge>
+              )}
+              <Link to="/reminders">
+                <Button variant="ghost" size="sm" className="text-xs gap-1">
+                  כל התזכורות
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="relative z-10">
+          {remindersLoading ? (
+            <Skeleton className="h-20 w-full" />
+          ) : recurringReminders.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4 text-sm">אין תזכורות חוזרות פעילות</p>
+          ) : (
+            <div className="space-y-2">
+              {recurringReminders.slice(0, 5).map((r: any) => {
+                const reminderDate = new Date(r.reminder_date);
+                const isPast = reminderDate <= new Date();
+                return (
+                  <div
+                    key={r.id}
+                    className={cn(
+                      'flex items-center justify-between gap-3 p-2.5 rounded-xl transition-colors',
+                      isPast ? 'bg-destructive/5 border border-destructive/20' : 'bg-muted/40 hover:bg-muted/60'
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className={cn(
+                        'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                        isPast ? 'bg-destructive/15' : 'bg-primary/10'
+                      )}>
+                        <Repeat className={cn('w-4 h-4', isPast ? 'text-destructive' : 'text-primary')} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{r.content}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <CalendarIcon className="w-3 h-3" />
+                            {format(reminderDate, 'dd/MM/yyyy HH:mm', { locale: he })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Badge variant="outline" className="text-[10px] h-5">
+                        <Repeat className="w-3 h-3 ml-0.5" />
+                        {RECURRENCE_LABELS[r.recurrence] || r.recurrence}
+                        {r.recurrence === 'monthly' && ` (${reminderDate.getDate()} בחודש)`}
+                      </Badge>
+                      {isPast && (
+                        <Badge variant="destructive" className="text-[10px] h-5">
+                          <Clock className="w-3 h-3 ml-0.5" />
+                          פעילה
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {recurringReminders.length > 5 && (
+                <Link to="/reminders" className="block text-center">
+                  <Button variant="link" size="sm" className="text-xs">
+                    עוד {recurringReminders.length - 5} תזכורות...
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
       </RevealSection>
 
       <RevealSection delay={200}>
