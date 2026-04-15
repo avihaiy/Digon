@@ -281,8 +281,9 @@ export default function Reminders() {
   };
 
   const now = new Date();
-  const activeReminders = reminders.filter((r: any) => isBefore(new Date(r.reminder_date), now));
-  const scheduledReminders = reminders.filter((r: any) => isAfter(new Date(r.reminder_date), now));
+  const sortByImportance = (a: any, b: any) => (b.is_important ? 1 : 0) - (a.is_important ? 1 : 0);
+  const activeReminders = reminders.filter((r: any) => isBefore(new Date(r.reminder_date), now)).sort(sortByImportance);
+  const scheduledReminders = reminders.filter((r: any) => isAfter(new Date(r.reminder_date), now)).sort(sortByImportance);
 
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
