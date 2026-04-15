@@ -921,6 +921,7 @@ export type Database = {
           created_by: string | null
           id: string
           is_dismissed: boolean
+          is_important: boolean
           notified: boolean
           recurrence: string | null
           reminder_date: string
@@ -931,6 +932,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_dismissed?: boolean
+          is_important?: boolean
           notified?: boolean
           recurrence?: string | null
           reminder_date?: string
@@ -941,6 +943,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_dismissed?: boolean
+          is_important?: boolean
           notified?: boolean
           recurrence?: string | null
           reminder_date?: string

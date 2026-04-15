@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Bell, Plus, Trash2, X, Clock, CalendarIcon, History, CheckCircle, Pencil, CalendarPlus, Repeat } from 'lucide-react';
+import { Bell, Plus, Trash2, X, Clock, CalendarIcon, History, CheckCircle, Pencil, CalendarPlus, Repeat, Star } from 'lucide-react';
 import { format, isBefore, isAfter, addDays, addWeeks, addMonths } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -219,6 +219,7 @@ export default function Reminders() {
             reminder_date: nextDate.toISOString(),
             recurrence: reminder.recurrence,
             created_by: reminder.created_by,
+            is_important: reminder.is_important || false,
           } as any);
       }
 
@@ -231,6 +232,19 @@ export default function Reminders() {
     onSuccess: () => {
       invalidateAll(queryClient);
       toast.success('תזכורת נסגרה');
+    },
+  });
+
+  const toggleImportantMutation = useMutation({
+    mutationFn: async ({ id, is_important }: { id: string; is_important: boolean }) => {
+      const { error } = await supabase
+        .from('reminders' as any)
+        .update({ is_important } as any)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll(queryClient);
     },
   });
 
@@ -268,8 +282,9 @@ export default function Reminders() {
   };
 
   const now = new Date();
-  const activeReminders = reminders.filter((r: any) => isBefore(new Date(r.reminder_date), now));
-  const scheduledReminders = reminders.filter((r: any) => isAfter(new Date(r.reminder_date), now));
+  const sortByImportance = (a: any, b: any) => (b.is_important ? 1 : 0) - (a.is_important ? 1 : 0);
+  const activeReminders = reminders.filter((r: any) => isBefore(new Date(r.reminder_date), now)).sort(sortByImportance);
+  const scheduledReminders = reminders.filter((r: any) => isAfter(new Date(r.reminder_date), now)).sort(sortByImportance);
 
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
@@ -423,6 +438,7 @@ export default function Reminders() {
                   onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
                   onEdit={isAdmin ? () => startEdit(r) : undefined}
                   onAddToCalendar={() => downloadICS(r)}
+                  onToggleImportant={isAdmin ? () => toggleImportantMutation.mutate({ id: r.id, is_important: !r.is_important }) : undefined}
                   showDate
                 />
               ))}
@@ -445,6 +461,7 @@ export default function Reminders() {
                   onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
                   onEdit={isAdmin ? () => startEdit(r) : undefined}
                   onAddToCalendar={() => downloadICS(r)}
+                  onToggleImportant={isAdmin ? () => toggleImportantMutation.mutate({ id: r.id, is_important: !r.is_important }) : undefined}
                   showDate
                   isScheduled
                 />
@@ -483,6 +500,7 @@ function ReminderCard({
   onDelete,
   onEdit,
   onAddToCalendar,
+  onToggleImportant,
   showDate,
   isScheduled,
   isDismissed,
@@ -492,6 +510,7 @@ function ReminderCard({
   onDelete?: () => void;
   onEdit?: () => void;
   onAddToCalendar?: () => void;
+  onToggleImportant?: () => void;
   showDate?: boolean;
   isScheduled?: boolean;
   isDismissed?: boolean;
@@ -500,10 +519,23 @@ function ReminderCard({
     <Card className={cn(
       'transition-all',
       isDismissed && 'opacity-60',
-      isScheduled && 'border-dashed'
+      isScheduled && 'border-dashed',
+      reminder.is_important && !isDismissed && 'border-amber-400/50 bg-amber-50/30 dark:bg-amber-950/10'
     )}>
       <CardContent className="py-3 px-3 sm:px-4 flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-2 flex-1 min-w-0">
+          {onToggleImportant && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0 mt-0.5"
+              onClick={onToggleImportant}
+              title={reminder.is_important ? 'הסר סימון חשוב' : 'סמן כחשוב'}
+            >
+              <Star className={cn('w-4 h-4 transition-colors', reminder.is_important ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground')} />
+            </Button>
+          )}
+          <div className="flex-1 min-w-0">
           <p className={cn('text-sm md:text-base', !isDismissed && 'font-medium')}>
             {reminder.content}
           </p>
@@ -534,6 +566,7 @@ function ReminderCard({
               </Badge>
             )}
           </div>
+        </div>
         </div>
         <div className="flex gap-0.5 shrink-0 flex-wrap justify-end">
           {onAddToCalendar && (
