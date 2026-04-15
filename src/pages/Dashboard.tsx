@@ -885,12 +885,16 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div className={cn(
                         'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                        isPast ? 'bg-destructive/15' : 'bg-primary/10'
+                        isPast ? 'bg-destructive/15' : r.is_important ? 'bg-amber-500/15' : 'bg-primary/10'
                       )}>
-                        <Repeat className={cn('w-4 h-4', isPast ? 'text-destructive' : 'text-primary')} />
+                        {r.is_important ? (
+                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        ) : (
+                          <Repeat className={cn('w-4 h-4', isPast ? 'text-destructive' : 'text-primary')} />
+                        )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{r.content}</p>
+                        <p className={cn('text-sm font-medium truncate', r.is_important && 'text-amber-700 dark:text-amber-300')}>{r.content}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <CalendarIcon className="w-3 h-3" />
