@@ -95,6 +95,7 @@ export default function Reminders() {
     setReminderDate(format(now, 'yyyy-MM-dd'));
     setReminderTime(format(now, 'HH:mm'));
     setRecurrence('none');
+    setMonthDay(now.getDate());
     setEditingId(null);
     setShowForm(true);
   };
