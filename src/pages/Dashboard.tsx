@@ -506,6 +506,43 @@ export default function Dashboard() {
   }, [queryClient]);
 
 
+  // Fetch active recurring reminders
+  const { data: recurringReminders = [], isLoading: remindersLoading } = useQuery({
+    queryKey: ['dashboard-recurring-reminders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reminders' as any)
+        .select('*')
+        .eq('is_dismissed', false)
+        .not('recurrence', 'is', null)
+        .order('reminder_date', { ascending: true });
+      if (error) throw error;
+      return (data || []).filter((r: any) => r.recurrence && r.recurrence !== 'none');
+    },
+    refetchInterval: 60000,
+  });
+
+  // Active (due) reminders count
+  const { data: dueRemindersCount = 0 } = useQuery({
+    queryKey: ['dashboard-due-reminders'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('reminders' as any)
+        .select('*', { count: 'exact', head: true })
+        .eq('is_dismissed', false)
+        .lte('reminder_date', new Date().toISOString());
+      if (error) throw error;
+      return count || 0;
+    },
+    refetchInterval: 60000,
+  });
+
+  const RECURRENCE_LABELS: Record<string, string> = {
+    daily: 'יומי',
+    weekly: 'שבועי',
+    monthly: 'חודשי',
+  };
+
   const quickActions = [
     { label: 'הוסף חבר', icon: Users, href: '/members?action=add', variant: 'secondary' as const },
     { label: 'קבל תשלום', icon: CreditCard, href: '/payments?action=add', variant: 'secondary' as const },
