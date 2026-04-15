@@ -450,9 +450,58 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             </Button>
           </CardContent>
         </Card>
+        {/* Notification Sound */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Volume2 className="w-5 h-5" />
+              צליל התראה
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>צליל לתזכורות חשובות</Label>
+              <Select 
+                value={notificationSound} 
+                onValueChange={(v: SoundPreset) => {
+                  setNotificationSound(v);
+                  setSelectedSound(v);
+                  if (v !== 'mute') {
+                    setTimeout(() => playNotificationSound(v), 100);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOUND_PRESETS.map(p => (
+                    <SelectItem key={p.value} value={p.value}>
+                      <span className="flex items-center gap-2">
+                        {p.value === 'mute' ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                        {p.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                הצליל יושמע כשתזכורת חשובה (⭐) מגיעה לזמנה. בחר "השתקה" לביטול.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => playNotificationSound(notificationSound)}
+              disabled={notificationSound === 'mute'}
+            >
+              <Bell className="w-4 h-4 ml-2" />
+              השמע צליל
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Location */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
