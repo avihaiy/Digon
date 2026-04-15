@@ -78,6 +78,7 @@ export default function Budget() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<BudgetTransaction | null>(null);
+  const [deleteTransactionId, setDeleteTransactionId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     type: 'income' as TransactionType,
     category_id: '',
@@ -445,7 +446,7 @@ export default function Budget() {
                               variant="ghost"
                               size="sm"
                               className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                              onClick={() => deleteTransactionMutation.mutate(transaction.id)}
+                              onClick={() => setDeleteTransactionId(transaction.id)}
                             >
                               <Trash2 className="w-3 h-3" />
                             </Button>
@@ -495,7 +496,7 @@ export default function Budget() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => deleteTransactionMutation.mutate(transaction.id)}
+                                onClick={() => setDeleteTransactionId(transaction.id)}
                                 className="text-destructive hover:text-destructive"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -661,6 +662,20 @@ export default function Budget() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DeleteCodeDialog
+        open={!!deleteTransactionId}
+        onOpenChange={(open) => !open && setDeleteTransactionId(null)}
+        title="מחיקת תנועה"
+        description="האם למחוק את התנועה? פעולה זו אינה ניתנת לביטול."
+        onConfirm={() => {
+          if (deleteTransactionId) {
+            deleteTransactionMutation.mutate(deleteTransactionId);
+            setDeleteTransactionId(null);
+          }
+        }}
+        isPending={deleteTransactionMutation.isPending}
+      />
     </div>
   );
 }

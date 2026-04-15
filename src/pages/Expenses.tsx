@@ -634,6 +634,20 @@ export default function Expenses() {
           open={isPreviewOpen}
           onOpenChange={setIsPreviewOpen}
         />
+
+      <DeleteCodeDialog
+        open={!!deleteExpenseId}
+        onOpenChange={(open) => !open && setDeleteExpenseId(null)}
+        title="מחיקת הוצאה"
+        description="האם למחוק את ההוצאה? פעולה זו אינה ניתנת לביטול."
+        onConfirm={() => {
+          if (deleteExpenseId) {
+            deleteExpenseMutation.mutate(deleteExpenseId);
+            setDeleteExpenseId(null);
+          }
+        }}
+        isPending={deleteExpenseMutation.isPending}
+      />
       </div>
     </AppLayout>
   );
