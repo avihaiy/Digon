@@ -110,6 +110,7 @@ Deno.serve(async (req) => {
             created_by: reminder.created_by,
             is_dismissed: false,
             notified: false,
+            is_important: reminder.is_important || false,
           });
 
         if (!recurError) recurrencesCreated++;
