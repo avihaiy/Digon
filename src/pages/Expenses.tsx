@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Upload, FileText, Image, Download, Eye, Search, Filter } from 'lucide-react';
+import { DeleteCodeDialog } from '@/components/DeleteCodeDialog';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import ExpenseAttachmentPreview from '@/components/expenses/ExpenseAttachmentPreview';
@@ -69,6 +70,7 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     amount: '',
@@ -488,11 +490,7 @@ export default function Expenses() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  if (confirm('האם למחוק את ההוצאה?')) {
-                                    deleteExpenseMutation.mutate(expense.id);
-                                  }
-                                }}
+                                onClick={() => setDeleteExpenseId(expense.id)}
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
