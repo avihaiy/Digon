@@ -18,6 +18,10 @@ import {
   Wallet,
   PieChart,
   Monitor,
+  Bell,
+  Repeat,
+  Clock,
+  CalendarIcon,
 } from 'lucide-react';
 import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate } from '@/lib/hebrew-utils';
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
