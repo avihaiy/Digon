@@ -22,6 +22,7 @@ interface DeleteCodeDialogProps {
   description: string;
   onConfirm: () => void;
   isPending?: boolean;
+  confirmLabel?: string;
 }
 
 export function DeleteCodeDialog({
@@ -31,6 +32,7 @@ export function DeleteCodeDialog({
   description,
   onConfirm,
   isPending = false,
+  confirmLabel,
 }: DeleteCodeDialogProps) {
   const [code, setCode] = useState('');
   const [error, setError] = useState(false);
@@ -69,20 +71,23 @@ export function DeleteCodeDialog({
 
   const codeRequired = !!deleteCode;
 
+  const resolvedLabel = confirmLabel || (title.includes('עריכ') ? 'אשר' : 'מחק');
+  const buttonVariant = title.includes('עריכ') ? 'default' as const : 'destructive' as const;
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent dir="rtl">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-destructive" />
+      <AlertDialogContent dir="rtl" className="max-w-[calc(100vw-2rem)] sm:max-w-lg rounded-xl p-4 sm:p-6">
+        <AlertDialogHeader className="space-y-1.5">
+          <AlertDialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-destructive shrink-0" />
             {title}
           </AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription className="text-xs sm:text-sm">{description}</AlertDialogDescription>
         </AlertDialogHeader>
 
         {codeRequired && (
-          <div className="space-y-2 py-2">
-            <Label>הזן קוד מחיקה לאישור</Label>
+          <div className="space-y-2 py-1 sm:py-2">
+            <Label className="text-xs sm:text-sm">הזן קוד לאישור</Label>
             <Input
               type="password"
               inputMode="numeric"
@@ -97,23 +102,24 @@ export function DeleteCodeDialog({
               }}
               placeholder="הזן קוד..."
               dir="ltr"
-              className={`font-mono text-center text-xl tracking-widest ${error ? 'border-destructive' : ''}`}
+              className={`font-mono text-center text-lg sm:text-xl tracking-widest h-11 ${error ? 'border-destructive' : ''}`}
               autoFocus
             />
             {error && (
-              <p className="text-sm text-destructive">קוד שגוי, נסה שוב</p>
+              <p className="text-xs sm:text-sm text-destructive">קוד שגוי, נסה שוב</p>
             )}
           </div>
         )}
 
-        <AlertDialogFooter className="flex-row-reverse gap-2">
-          <AlertDialogCancel>ביטול</AlertDialogCancel>
+        <AlertDialogFooter className="flex-row-reverse gap-2 mt-2">
+          <AlertDialogCancel className="h-10 min-w-[80px] text-sm">ביטול</AlertDialogCancel>
           <Button
-            variant="destructive"
+            variant={buttonVariant}
             onClick={handleConfirm}
             disabled={isPending || (codeRequired && code.length === 0)}
+            className="h-10 min-w-[80px] text-sm"
           >
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'מחק'}
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : resolvedLabel}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
