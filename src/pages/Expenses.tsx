@@ -649,6 +649,19 @@ export default function Expenses() {
         }}
         isPending={deleteExpenseMutation.isPending}
       />
+
+      <DeleteCodeDialog
+        open={!!pendingEditExpense}
+        onOpenChange={(open) => !open && setPendingEditExpense(null)}
+        title="עריכת הוצאה"
+        description="הזן קוד לאישור עריכת ההוצאה."
+        onConfirm={() => {
+          if (pendingEditExpense) {
+            openEditDialog(pendingEditExpense);
+            setPendingEditExpense(null);
+          }
+        }}
+      />
       </div>
     </AppLayout>
   );

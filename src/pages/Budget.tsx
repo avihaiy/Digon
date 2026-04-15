@@ -677,6 +677,19 @@ export default function Budget() {
         }}
         isPending={deleteTransactionMutation.isPending}
       />
+
+      <DeleteCodeDialog
+        open={!!pendingEditTransaction}
+        onOpenChange={(open) => !open && setPendingEditTransaction(null)}
+        title="עריכת תנועה"
+        description="הזן קוד לאישור עריכת התנועה."
+        onConfirm={() => {
+          if (pendingEditTransaction) {
+            openEditDialog(pendingEditTransaction);
+            setPendingEditTransaction(null);
+          }
+        }}
+      />
     </div>
   );
 }
