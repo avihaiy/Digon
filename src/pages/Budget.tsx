@@ -368,32 +368,33 @@ export default function Budget() {
 
       {/* Transactions Table */}
       <Card className="glass-card">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
+        <CardHeader className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-1.5 text-sm sm:text-base">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
               תנועות
             </CardTitle>
             {isManager && (
-              <Button variant="outline" size="sm" onClick={() => setCategoryDialogOpen(true)}>
-                <Plus className="w-4 h-4 ml-1" />
-                קטגוריה חדשה
+              <Button variant="outline" size="sm" onClick={() => setCategoryDialogOpen(true)} className="text-xs h-8 px-2 sm:px-3">
+                <Plus className="w-3.5 h-3.5 ml-1" />
+                <span className="hidden sm:inline">קטגוריה חדשה</span>
+                <span className="sm:hidden">קטגוריה</span>
               </Button>
             )}
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
               <Input
                 placeholder="חיפוש..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pr-9"
+                className="pr-8 sm:pr-9 h-9 text-sm"
               />
             </div>
             <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as 'all' | TransactionType)}>
-              <SelectTrigger className="w-32">
-                <Filter className="w-4 h-4 ml-2" />
+              <SelectTrigger className="w-24 sm:w-32 h-9 text-xs sm:text-sm">
+                <Filter className="w-3.5 h-3.5 ml-1" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -404,7 +405,7 @@ export default function Budget() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6 pt-0">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
