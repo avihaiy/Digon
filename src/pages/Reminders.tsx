@@ -438,6 +438,7 @@ export default function Reminders() {
                   onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
                   onEdit={isAdmin ? () => startEdit(r) : undefined}
                   onAddToCalendar={() => downloadICS(r)}
+                  onToggleImportant={isAdmin ? () => toggleImportantMutation.mutate({ id: r.id, is_important: !r.is_important }) : undefined}
                   showDate
                 />
               ))}
