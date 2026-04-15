@@ -416,45 +416,36 @@ export default function Budget() {
             </div>
           ) : (
             <>
-              {/* Mobile view - Cards */}
-              <div className="block sm:hidden space-y-3">
+               {/* Mobile view - Cards */}
+              <div className="block sm:hidden space-y-2">
                 {filteredTransactions.map((transaction) => (
-                  <div key={transaction.id} className="p-3 rounded-lg border bg-card">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'} className="text-xs">
-                            {transaction.type === 'income' ? 'הכנסה' : 'הוצאה'}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(transaction.transaction_date), 'dd/MM/yy', { locale: he })}
-                          </span>
+                  <div key={transaction.id} className="p-2.5 rounded-lg border bg-card">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0 shrink-0">
+                          {transaction.type === 'income' ? 'הכנסה' : 'הוצאה'}
+                        </Badge>
+                        <span className="text-xs font-medium truncate">{transaction.budget_categories?.name || transaction.description || '-'}</span>
+                      </div>
+                      <span className={`text-sm font-bold shrink-0 ${transaction.type === 'income' ? 'text-emerald-500' : 'text-destructive'}`}>
+                        {transaction.type === 'income' ? '+' : '-'}₪{Number(transaction.amount).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="text-[10px] text-muted-foreground">
+                        {format(new Date(transaction.transaction_date), 'dd/MM/yy', { locale: he })}
+                        {transaction.description && transaction.budget_categories?.name ? ` · ${transaction.description}` : ''}
+                      </span>
+                      {isManager && (
+                        <div className="flex gap-0.5">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPendingEditTransaction(transaction)}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => setDeleteTransactionId(transaction.id)}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
                         </div>
-                        <p className="text-sm font-medium truncate">{transaction.budget_categories?.name || '-'}</p>
-                        {transaction.description && (
-                          <p className="text-xs text-muted-foreground truncate">{transaction.description}</p>
-                        )}
-                      </div>
-                      <div className="text-left shrink-0">
-                        <p className={`font-bold ${transaction.type === 'income' ? 'text-emerald-500' : 'text-destructive'}`}>
-                          {transaction.type === 'income' ? '+' : '-'}₪{Number(transaction.amount).toLocaleString()}
-                        </p>
-                        {isManager && (
-                          <div className="flex gap-1 mt-1 justify-end">
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPendingEditTransaction(transaction)}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                              onClick={() => setDeleteTransactionId(transaction.id)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 ))}
