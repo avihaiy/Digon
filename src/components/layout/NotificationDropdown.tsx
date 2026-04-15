@@ -122,31 +122,6 @@ export default function NotificationDropdown() {
     }
   }, []);
 
-  // Play alert sound for important reminders
-  const playAlertSound = useCallback(() => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const playTone = (freq: number, startTime: number, duration: number) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = freq;
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0.3, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-        osc.start(startTime);
-        osc.stop(startTime + duration);
-      };
-      // Two-tone chime
-      playTone(880, ctx.currentTime, 0.15);
-      playTone(1174, ctx.currentTime + 0.15, 0.25);
-      playTone(1318, ctx.currentTime + 0.35, 0.3);
-    } catch (e) {
-      // Audio not supported
-    }
-  }, []);
-
   // Send browser push notification for newly due reminders
   useEffect(() => {
     if (activeReminders.length === 0) return;
@@ -169,7 +144,7 @@ export default function NotificationDropdown() {
         }
         // Play sound for important reminders
         if (r.is_important) {
-          playAlertSound();
+          playNotificationSound();
         }
         // Also show in-app toast
         toast.info(r.is_important ? '⭐ תזכורת חשובה' : '⏰ תזכורת', { description: r.content });
@@ -177,7 +152,7 @@ export default function NotificationDropdown() {
     });
 
     prevReminderIdsRef.current = currentIds;
-  }, [activeReminders, playAlertSound]);
+  }, [activeReminders]);
 
   const dismissReminderMutation = useMutation({
     mutationFn: async (id: string) => {
