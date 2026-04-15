@@ -438,8 +438,8 @@ export default function Reminders() {
                   key={r.id}
                   reminder={r}
                   onDismiss={() => dismissMutation.mutate(r)}
-                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
-                  onEdit={isAdmin ? () => startEdit(r) : undefined}
+                  onDelete={isAdmin ? () => setPendingDeleteId(r.id) : undefined}
+                  onEdit={isAdmin ? () => setPendingEditReminder(r) : undefined}
                   onAddToCalendar={() => downloadICS(r)}
                   onToggleImportant={isAdmin ? () => toggleImportantMutation.mutate({ id: r.id, is_important: !r.is_important }) : undefined}
                   showDate
@@ -461,8 +461,8 @@ export default function Reminders() {
                   key={r.id}
                   reminder={r}
                   onDismiss={() => dismissMutation.mutate(r)}
-                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
-                  onEdit={isAdmin ? () => startEdit(r) : undefined}
+                  onDelete={isAdmin ? () => setPendingDeleteId(r.id) : undefined}
+                  onEdit={isAdmin ? () => setPendingEditReminder(r) : undefined}
                   onAddToCalendar={() => downloadICS(r)}
                   onToggleImportant={isAdmin ? () => toggleImportantMutation.mutate({ id: r.id, is_important: !r.is_important }) : undefined}
                   showDate
@@ -484,7 +484,7 @@ export default function Reminders() {
                 <ReminderCard
                   key={r.id}
                   reminder={r}
-                  onDelete={isAdmin ? () => deleteMutation.mutate(r.id) : undefined}
+                  onDelete={isAdmin ? () => setPendingDeleteId(r.id) : undefined}
                   isDismissed
                   showDate
                 />
