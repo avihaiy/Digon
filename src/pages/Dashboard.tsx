@@ -378,6 +378,9 @@ export default function Dashboard() {
       ]);
 
       const totalPayments = paymentsRes.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+      const totalBudgetIncome = budgetExpensesRes.data?.filter(b => b.type === 'income')
+        .reduce((sum, b) => sum + Number(b.amount), 0) || 0;
+      const totalIncome = totalPayments + totalBudgetIncome;
       
       // This month calculations
       const thisMonthPayments = paymentsRes.data?.filter(p => new Date(p.created_at) >= startOfMonth)
@@ -401,12 +404,12 @@ export default function Dashboard() {
 
       return {
         totalMembers: membersRes.count || 0,
-        totalPayments,
+        totalPayments: totalIncome,
         totalReceipts: receiptsRes.data?.length || 0,
         thisMonthIncome,
         thisMonthExpenses,
         totalExpenses,
-        balance: totalPayments - totalExpenses,
+        balance: totalIncome - totalExpenses,
       };
     },
   });
