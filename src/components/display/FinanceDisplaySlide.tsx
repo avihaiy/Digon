@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/hebrew-utils";
-import { startOfMonth, subMonths, endOfMonth } from "date-fns";
 import { fetchWithCache, getCacheData } from "@/lib/display-cache";
+import { fetchPublicFinanceDisplayStats, type PublicFinanceDisplayStats } from "@/lib/public-finance-display";
 
 interface FinanceDisplaySlideProps {
   textClass?: string;
@@ -16,79 +15,9 @@ export default function FinanceDisplaySlide({ textClass, accentClass }: FinanceD
     queryKey: ["display-finance-slide"],
     queryFn: async () => {
       const { data: result } = await fetchWithCache('finance-display', async () => {
-        const now = new Date();
-        const startOfCurrentMonth = startOfMonth(now);
-
-        const [paymentsRes, expensesRes, budgetRes] = await Promise.all([
-          supabase.from("payments").select("amount, created_at").eq("status", "confirmed"),
-          supabase.from("expenses").select("amount, expense_date"),
-          supabase.from("budget_transactions").select("amount, transaction_date, type"),
-        ]);
-
-        const thisMonthIncome =
-          (paymentsRes.data
-            ?.filter((p) => new Date(p.created_at!) >= startOfCurrentMonth)
-            .reduce((sum, p) => sum + Number(p.amount), 0) || 0) +
-          (budgetRes.data
-            ?.filter((b) => b.type === "income" && new Date(b.transaction_date) >= startOfCurrentMonth)
-            .reduce((sum, b) => sum + Number(b.amount), 0) || 0);
-
-        const thisMonthExpenses =
-          (expensesRes.data
-            ?.filter((e) => new Date(e.expense_date) >= startOfCurrentMonth)
-            .reduce((sum, e) => sum + Number(e.amount), 0) || 0) +
-          (budgetRes.data
-            ?.filter((b) => b.type === "expense" && new Date(b.transaction_date) >= startOfCurrentMonth)
-            .reduce((sum, b) => sum + Number(b.amount), 0) || 0);
-
-        const monthlyData = [];
-        for (let i = 2; i >= 0; i--) {
-          const monthStart = startOfMonth(subMonths(now, i));
-          const monthEnd = endOfMonth(subMonths(now, i));
-          const label = monthStart.toLocaleDateString("he-IL", { month: "long" });
-
-          const inc =
-            (paymentsRes.data
-              ?.filter((p) => {
-                const d = new Date(p.created_at!);
-                return d >= monthStart && d <= monthEnd;
-              })
-              .reduce((sum, p) => sum + Number(p.amount), 0) || 0) +
-            (budgetRes.data
-              ?.filter(
-                (b) =>
-                  b.type === "income" &&
-                  (() => {
-                    const d = new Date(b.transaction_date);
-                    return d >= monthStart && d <= monthEnd;
-                  })(),
-              )
-              .reduce((sum, b) => sum + Number(b.amount), 0) || 0);
-
-          const exp =
-            (expensesRes.data
-              ?.filter((e) => {
-                const d = new Date(e.expense_date);
-                return d >= monthStart && d <= monthEnd;
-              })
-              .reduce((sum, e) => sum + Number(e.amount), 0) || 0) +
-            (budgetRes.data
-              ?.filter(
-                (b) =>
-                  b.type === "expense" &&
-                  (() => {
-                    const d = new Date(b.transaction_date);
-                    return d >= monthStart && d <= monthEnd;
-                  })(),
-              )
-              .reduce((sum, b) => sum + Number(b.amount), 0) || 0);
-
-          monthlyData.push({ label, isCurrent: i === 0, income: inc, expenses: exp, balance: inc - exp });
-        }
-
-        return { thisMonthIncome, thisMonthExpenses, thisMonthBalance: thisMonthIncome - thisMonthExpenses, monthlyData };
+        return fetchPublicFinanceDisplayStats(3);
       });
-      return result || getCacheData<{ thisMonthIncome: number; thisMonthExpenses: number; thisMonthBalance: number; monthlyData: any[] }>('finance-display');
+      return result || getCacheData<PublicFinanceDisplayStats>('finance-display');
     },
     refetchInterval: 5 * 60 * 1000,
   });
