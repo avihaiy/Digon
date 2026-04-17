@@ -218,14 +218,26 @@ export default function Display() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const [wakeLockActive, setWakeLockActive] = useState(false);
 
-  // פונקציה לטעינת טיקר
+  // פונקציה לטעינת טיקר (עם תמיכה אופליין)
   const fetchTicker = useCallback(async () => {
-    const [{ data: td }, { data: sd }] = await Promise.all([
-      supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
-      supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
-    ]);
-    if (td) setTickerItems(td);
-    if (sd?.value) setTickerSpeed(sd.value);
+    const { data } = await fetchWithCache('display-ticker', async () => {
+      const [tdRes, sdRes] = await Promise.all([
+        supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
+        supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
+      ]);
+      return { items: tdRes.data || [], speed: sdRes.data?.value || 'medium' };
+    });
+    if (data) {
+      setTickerItems(data.items as TickerItem[]);
+      if (data.speed) setTickerSpeed(data.speed);
+    } else {
+      // fallback - אם אין כלום ב-cache, נסה לטעון מ-cache לבד
+      const cached = getCacheData<{ items: TickerItem[]; speed: string }>('display-ticker');
+      if (cached) {
+        setTickerItems(cached.items);
+        setTickerSpeed(cached.speed || 'medium');
+      }
+    }
   }, []);
 
   // Wake Lock - keep screen on (Wake Lock API + video fallback for iOS Safari)
