@@ -21,7 +21,7 @@ import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
 import TickerBanner from "@/components/display/TickerBanner";
 import OmerDisplaySlide from "@/components/display/OmerDisplaySlide";
-import { fetchWithCache, getCacheData, setCacheData } from "@/lib/display-cache";
+import { fetchWithCache, getCacheData } from "@/lib/display-cache";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
