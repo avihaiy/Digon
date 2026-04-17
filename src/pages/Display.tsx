@@ -21,6 +21,7 @@ import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
 import TickerBanner from "@/components/display/TickerBanner";
 import OmerDisplaySlide from "@/components/display/OmerDisplaySlide";
+import { fetchWithCache, getCacheData } from "@/lib/display-cache";
 
 type DayType = "weekdays" | "friday" | "shabbat";
 type StyleType = "traditional_gold" | "modern_dark" | "clean_white" | "royal_blue";
@@ -217,14 +218,26 @@ export default function Display() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const [wakeLockActive, setWakeLockActive] = useState(false);
 
-  // פונקציה לטעינת טיקר
+  // פונקציה לטעינת טיקר (עם תמיכה אופליין)
   const fetchTicker = useCallback(async () => {
-    const [{ data: td }, { data: sd }] = await Promise.all([
-      supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
-      supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
-    ]);
-    if (td) setTickerItems(td);
-    if (sd?.value) setTickerSpeed(sd.value);
+    const { data } = await fetchWithCache('display-ticker', async () => {
+      const [tdRes, sdRes] = await Promise.all([
+        supabase.from("ticker_items").select("*").eq("is_active", true).order("order_index", { ascending: true }),
+        supabase.from("app_settings").select("value").eq("key", "ticker_speed").maybeSingle(),
+      ]);
+      return { items: tdRes.data || [], speed: sdRes.data?.value || 'medium' };
+    });
+    if (data) {
+      setTickerItems(data.items as TickerItem[]);
+      if (data.speed) setTickerSpeed(data.speed);
+    } else {
+      // fallback - אם אין כלום ב-cache, נסה לטעון מ-cache לבד
+      const cached = getCacheData<{ items: TickerItem[]; speed: string }>('display-ticker');
+      if (cached) {
+        setTickerItems(cached.items);
+        setTickerSpeed(cached.speed || 'medium');
+      }
+    }
   }, []);
 
   // Wake Lock - keep screen on (Wake Lock API + video fallback for iOS Safari)
@@ -316,50 +329,56 @@ export default function Display() {
 
   // Settings + ticker setup
   useEffect(() => {
-    const fetchSettings = async () => {
-      const { data } = await supabase
-        .from("app_settings")
-        .select("key, value")
-        .in("key", [
-          "display_lock_code",
-          "show_memorial_on_display",
-          "memorial_show_week_before",
-          "show_finance_on_display",
-          "show_omer_counter",
-          "display_background_url",
-          "show_heichal_on_display",
-          "display_slide_order",
-          "display_slide_durations",
-          "synagogue_name",
-          "ticker_speed",
-        ]);
-      if (data) {
-        for (const setting of data) {
-          if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
-          if (setting.key === "show_memorial_on_display") setShowMemorial(setting.value !== "false");
-          if (setting.key === "memorial_show_week_before") setShowWeekBefore(setting.value === "true");
-          if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
-          if (setting.key === "display_background_url" && setting.value) setDisplayBgUrl(setting.value);
-          if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
-          if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
-          if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
-          if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
-          if (setting.key === "display_slide_durations" && setting.value) {
-            try {
-              setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
-            } catch {}
-          }
-          if (setting.key === "display_slide_order" && setting.value) {
-            try {
-              const parsed = JSON.parse(setting.value);
-              const allTypes = ["heichal", "memorial", "omer", "zmanim", "finance", "announcements"];
-              const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
-              setSlideOrder(merged as ("heichal" | "memorial" | "omer" | "zmanim" | "finance" | "announcements")[]);
-            } catch {}
-          }
+    const applySettings = (data: { key: string; value: string }[]) => {
+      for (const setting of data) {
+        if (setting.key === "display_lock_code" && setting.value) setUnlockCode(setting.value);
+        if (setting.key === "show_memorial_on_display") setShowMemorial(setting.value !== "false");
+        if (setting.key === "memorial_show_week_before") setShowWeekBefore(setting.value === "true");
+        if (setting.key === "show_finance_on_display") setShowFinance(setting.value === "true");
+        if (setting.key === "display_background_url" && setting.value) setDisplayBgUrl(setting.value);
+        if (setting.key === "show_heichal_on_display") setShowHeichal(setting.value === "true");
+        if (setting.key === "show_omer_counter") setShowOmer(setting.value !== "false");
+        if (setting.key === "synagogue_name") setSynagogueName(setting.value || "");
+        if (setting.key === "ticker_speed") setTickerSpeed(setting.value || "medium");
+        if (setting.key === "display_slide_durations" && setting.value) {
+          try {
+            setSlideDurations((prev) => ({ ...prev, ...JSON.parse(setting.value) }));
+          } catch {}
+        }
+        if (setting.key === "display_slide_order" && setting.value) {
+          try {
+            const parsed = JSON.parse(setting.value);
+            const allTypes = ["heichal", "memorial", "omer", "zmanim", "finance", "announcements"];
+            const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
+            setSlideOrder(merged as ("heichal" | "memorial" | "omer" | "zmanim" | "finance" | "announcements")[]);
+          } catch {}
         }
       }
-      // טען טיקר
+    };
+
+    const fetchSettings = async () => {
+      const { data } = await fetchWithCache('display-settings', async () => {
+        const { data, error } = await supabase
+          .from("app_settings")
+          .select("key, value")
+          .in("key", [
+            "display_lock_code",
+            "show_memorial_on_display",
+            "memorial_show_week_before",
+            "show_finance_on_display",
+            "show_omer_counter",
+            "display_background_url",
+            "show_heichal_on_display",
+            "display_slide_order",
+            "display_slide_durations",
+            "synagogue_name",
+            "ticker_speed",
+          ]);
+        if (error) throw error;
+        return data || [];
+      });
+      if (data) applySettings(data);
+      // טען טיקר (גם הוא תומך ב-cache)
       await fetchTicker();
     };
 
@@ -438,11 +457,16 @@ export default function Display() {
           datePairs.push({ day: futureDate.getDate(), month: futureDate.getMonth() });
         }
       }
-      const { data, error } = await supabase
-        .from("memorial_names")
-        .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
-        .eq("is_active", true);
-      if (!error && data) {
+      // טעינה עם תמיכה אופליין - שומר את כל הרשימה ב-cache
+      const { data } = await fetchWithCache('memorial-names-all', async () => {
+        const { data, error } = await supabase
+          .from("memorial_names")
+          .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
+          .eq("is_active", true);
+        if (error) throw error;
+        return data || [];
+      });
+      if (data) {
         const matched = data.filter((p) =>
           datePairs.some((dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month),
         );
@@ -644,12 +668,16 @@ export default function Display() {
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
-      const { data, error } = await supabase
-        .from("scheduled_announcements")
-        .select("*")
-        .eq("is_active", true)
-        .order("priority", { ascending: false });
-      if (!error && data) setAnnouncements(data as ScheduledAnnouncement[]);
+      const { data } = await fetchWithCache('display-announcements', async () => {
+        const { data, error } = await supabase
+          .from("scheduled_announcements")
+          .select("*")
+          .eq("is_active", true)
+          .order("priority", { ascending: false });
+        if (error) throw error;
+        return (data || []) as ScheduledAnnouncement[];
+      });
+      if (data) setAnnouncements(data);
     };
     fetchAnnouncements();
     const channel = supabase
@@ -658,8 +686,15 @@ export default function Display() {
         fetchAnnouncements(),
       )
       .subscribe();
+    // רענון מיידי כשחוזרים לאינטרנט/לפעילות
+    const handleOnline = () => fetchAnnouncements();
+    const handleVisibility = () => { if (document.visibilityState === 'visible') fetchAnnouncements(); };
+    window.addEventListener('online', handleOnline);
+    document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
 
