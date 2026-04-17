@@ -1055,6 +1055,10 @@ export type Database = {
     }
     Functions: {
       get_email_by_username: { Args: { _username: string }; Returns: string }
+      get_public_finance_display_stats: {
+        Args: { months_count?: number }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
