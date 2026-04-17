@@ -518,11 +518,11 @@ export default function Display() {
     const checkDailyReload = () => {
       const now = new Date();
       if (now.getHours() === 4 && now.getMinutes() === 0) {
-        if (typeof window !== 'undefined' && 'caches' in window) {
+        if ('caches' in window) {
           window.caches.keys()
             .then((names) => Promise.all(names.map((n) => window.caches.delete(n))))
             .finally(() => window.location.reload());
-        } else if (typeof window !== 'undefined') {
+        } else {
           window.location.reload();
         }
       }
