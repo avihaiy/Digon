@@ -668,12 +668,16 @@ export default function Display() {
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
-      const { data, error } = await supabase
-        .from("scheduled_announcements")
-        .select("*")
-        .eq("is_active", true)
-        .order("priority", { ascending: false });
-      if (!error && data) setAnnouncements(data as ScheduledAnnouncement[]);
+      const { data } = await fetchWithCache('display-announcements', async () => {
+        const { data, error } = await supabase
+          .from("scheduled_announcements")
+          .select("*")
+          .eq("is_active", true)
+          .order("priority", { ascending: false });
+        if (error) throw error;
+        return (data || []) as ScheduledAnnouncement[];
+      });
+      if (data) setAnnouncements(data);
     };
     fetchAnnouncements();
     const channel = supabase
@@ -682,8 +686,15 @@ export default function Display() {
         fetchAnnouncements(),
       )
       .subscribe();
+    // רענון מיידי כשחוזרים לאינטרנט/לפעילות
+    const handleOnline = () => fetchAnnouncements();
+    const handleVisibility = () => { if (document.visibilityState === 'visible') fetchAnnouncements(); };
+    window.addEventListener('online', handleOnline);
+    document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
 
