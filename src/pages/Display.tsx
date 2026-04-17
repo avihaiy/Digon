@@ -367,13 +367,18 @@ export default function Display() {
 
     // polling טיקר כל 15 שניות
     const tickerPollInterval = setInterval(fetchTicker, 15000);
+    // polling fallback להגדרות כל 30 שניות (ליתר ביטחון אם ה-WebSocket נופל)
+    const settingsPollInterval = setInterval(fetchSettings, 30000);
 
+    // ערוץ Realtime ייחודי לכל מסך כדי למנוע התנגשויות בין כמה מסכים
+    const channelName = `display-settings-${Math.random().toString(36).slice(2, 9)}`;
     const channel = supabase
-      .channel("display-settings")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "app_settings" },
         (payload: { new: { key?: string; value?: string } }) => {
+          console.log('[Display] Settings change received:', payload.new?.key, '=', payload.new?.value);
           if (payload.new?.key === "display_lock_code" && payload.new?.value) setUnlockCode(payload.new.value);
           if (payload.new?.key === "show_memorial_on_display") setShowMemorial(payload.new.value !== "false");
           if (payload.new?.key === "memorial_show_week_before") setShowWeekBefore(payload.new.value === "true");
@@ -383,6 +388,19 @@ export default function Display() {
           if (payload.new?.key === "show_omer_counter") setShowOmer(payload.new.value !== "false");
           if (payload.new?.key === "synagogue_name") setSynagogueName(payload.new.value || "");
           if (payload.new?.key === "ticker_speed") setTickerSpeed(payload.new.value || "medium");
+          if (payload.new?.key === "display_slide_order" && payload.new?.value) {
+            try {
+              const parsed = JSON.parse(payload.new.value);
+              const allTypes = ["heichal", "memorial", "omer", "zmanim", "finance", "announcements"];
+              const merged = [...parsed, ...allTypes.filter((t) => !parsed.includes(t))];
+              setSlideOrder(merged as ("heichal" | "memorial" | "omer" | "zmanim" | "finance" | "announcements")[]);
+            } catch {}
+          }
+          if (payload.new?.key === "display_slide_durations" && payload.new?.value) {
+            try {
+              setSlideDurations((prev) => ({ ...prev, ...JSON.parse(payload.new!.value!) }));
+            } catch {}
+          }
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "ticker_items" }, () => {
@@ -390,8 +408,21 @@ export default function Display() {
       })
       .subscribe();
 
+    // רענון מיידי של הגדרות כשהמסך חוזר לפעילות (אחרי שינה/ברקע)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSettings();
+      }
+    };
+    const handleOnline = () => fetchSettings();
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('online', handleOnline);
+
     return () => {
       clearInterval(tickerPollInterval);
+      clearInterval(settingsPollInterval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('online', handleOnline);
       supabase.removeChannel(channel);
     };
   }, [fetchTicker]);
