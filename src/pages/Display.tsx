@@ -457,11 +457,16 @@ export default function Display() {
           datePairs.push({ day: futureDate.getDate(), month: futureDate.getMonth() });
         }
       }
-      const { data, error } = await supabase
-        .from("memorial_names")
-        .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
-        .eq("is_active", true);
-      if (!error && data) {
+      // טעינה עם תמיכה אופליין - שומר את כל הרשימה ב-cache
+      const { data } = await fetchWithCache('memorial-names-all', async () => {
+        const { data, error } = await supabase
+          .from("memorial_names")
+          .select("id, deceased_name, father_name, is_male, hebrew_death_day, hebrew_death_month")
+          .eq("is_active", true);
+        if (error) throw error;
+        return data || [];
+      });
+      if (data) {
         const matched = data.filter((p) =>
           datePairs.some((dp) => dp.day === p.hebrew_death_day && dp.month === p.hebrew_death_month),
         );
