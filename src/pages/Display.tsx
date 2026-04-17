@@ -523,12 +523,13 @@ export default function Display() {
     const checkDailyReload = () => {
       const now = new Date();
       if (now.getHours() === 4 && now.getMinutes() === 0) {
-        if ('caches' in window) {
-          window.caches.keys()
-            .then((names) => Promise.all(names.map((n) => window.caches.delete(n))))
-            .finally(() => window.location.reload());
+        const w = window as Window;
+        if (typeof w.caches !== 'undefined') {
+          w.caches.keys()
+            .then((names) => Promise.all(names.map((n) => w.caches.delete(n))))
+            .finally(() => w.location.reload());
         } else {
-          window.location.reload();
+          w.location.reload();
         }
       }
     };
