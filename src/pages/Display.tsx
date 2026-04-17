@@ -499,15 +499,37 @@ export default function Display() {
     };
   }, [showWeekBefore]);
 
-  useRegisterSW({
+  const { updateServiceWorker } = useRegisterSW({
     immediate: true,
     onRegistered(registration) {
-      if (registration) setInterval(() => registration.update(), 30 * 1000);
+      if (registration) {
+        // בדוק עדכון כל 30 שניות
+        setInterval(() => registration.update().catch(() => {}), 30 * 1000);
+      }
     },
     onNeedRefresh() {
-      window.location.reload();
+      // עדכון מיידי + ניקוי SW + reload
+      updateServiceWorker(true).catch(() => window.location.reload());
     },
   });
+
+  // Hard reload יומי בשעה 4 לפנות בוקר כדי לוודא שהטאבלט תמיד רץ עם הגרסה האחרונה
+  useEffect(() => {
+    const checkDailyReload = () => {
+      const now = new Date();
+      if (now.getHours() === 4 && now.getMinutes() === 0) {
+        // נקה את כל ה-caches ואז reload
+        if ('caches' in window) {
+          caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n))))
+            .finally(() => window.location.reload());
+        } else {
+          window.location.reload();
+        }
+      }
+    };
+    const interval = setInterval(checkDailyReload, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const enterFullscreen = useCallback(async () => {
     try {
