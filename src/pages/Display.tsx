@@ -509,7 +509,12 @@ export default function Display() {
     },
     onNeedRefresh() {
       // עדכון מיידי + ניקוי SW + reload
-      updateServiceWorker(true).catch(() => window.location.reload());
+      void updateServiceWorker(true).then(
+        () => {},
+        () => {
+          window.location.reload();
+        },
+      );
     },
   });
 
