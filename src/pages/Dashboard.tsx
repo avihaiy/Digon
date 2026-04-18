@@ -30,6 +30,7 @@ import { he } from 'date-fns/locale';
 // recharts removed - using custom bar chart
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { cn } from '@/lib/utils';
+import EventsWidget from '@/components/dashboard/EventsWidget';
 
 // Animated counter that counts from 0 to target value
 function AnimatedCounter({ value, duration = 900, className, prefix = '₪ ' }: { value: number; duration?: number; className?: string; prefix?: string }) {
@@ -652,6 +653,11 @@ export default function Dashboard() {
         </Card>
         </RevealSection>
       )}
+
+      {/* Upcoming Events Widget */}
+      <RevealSection delay={75}>
+        <EventsWidget />
+      </RevealSection>
 
       {/* Financial Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">

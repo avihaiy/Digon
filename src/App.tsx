@@ -37,6 +37,7 @@ import ManageAds from "@/pages/ManageAds";
 import Display from "@/pages/Display";
 import SettingsPage from "@/pages/SettingsPage";
 import Reminders from "@/pages/Reminders";
+import Events from "@/pages/Events";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 
@@ -271,6 +272,16 @@ const AnimatedRoutes = () => {
             <ProtectedRoute>
               <PageTransition>
                 <Reminders />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Events />
               </PageTransition>
             </ProtectedRoute>
           }
