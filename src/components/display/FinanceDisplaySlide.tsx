@@ -1,9 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/hebrew-utils";
 import { fetchWithCache, getCacheData } from "@/lib/display-cache";
 import { fetchPublicFinanceDisplayStats, type PublicFinanceDisplayStats } from "@/lib/public-finance-display";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FinanceDisplaySlideProps {
   textClass?: string;
@@ -11,6 +13,7 @@ interface FinanceDisplaySlideProps {
 }
 
 export default function FinanceDisplaySlide({ textClass, accentClass }: FinanceDisplaySlideProps) {
+  const queryClient = useQueryClient();
   const { data: stats, isLoading } = useQuery({
     queryKey: ["display-finance-slide"],
     queryFn: async () => {
@@ -21,6 +24,28 @@ export default function FinanceDisplaySlide({ textClass, accentClass }: FinanceD
     },
     refetchInterval: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const invalidate = () => {
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["display-finance-slide"] });
+      }, 400);
+    };
+
+    const channel = supabase
+      .channel("finance-display-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "expenses" }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "budget_transactions" }, invalidate)
+      .subscribe();
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const balance = stats?.thisMonthBalance || 0;
 
