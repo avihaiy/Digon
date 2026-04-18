@@ -56,6 +56,7 @@ const navItems = [
   { href: '/payments', icon: CreditCard, label: 'תשלומים' },
   { href: '/receipts', icon: Receipt, label: 'קבלות' },
   { href: '/budget', icon: Wallet, label: 'תקציב' },
+  { href: '/events', icon: Calendar, label: 'יומן אירועים' },
   { href: '/manage-ads', icon: Megaphone, label: 'ניהול מודעות' },
 ];
 
