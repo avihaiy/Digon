@@ -21,6 +21,7 @@ import FinanceDisplaySlide from "@/components/display/FinanceDisplaySlide";
 import PrayerTimesSlide from "@/components/display/PrayerTimesSlide";
 import TickerBanner from "@/components/display/TickerBanner";
 import OmerDisplaySlide from "@/components/display/OmerDisplaySlide";
+import SyncIndicator from "@/components/display/SyncIndicator";
 import { fetchWithCache, getCacheData } from "@/lib/display-cache";
 
 type DayType = "weekdays" | "friday" | "shabbat";
@@ -1260,6 +1261,9 @@ export default function Display() {
 
       {/* TICKER — מקבל נתונים מ-Display */}
       <TickerBanner items={tickerItems} speed={tickerSpeed} />
+
+      {/* SYNC INDICATOR */}
+      <SyncIndicator />
 
       {/* CREDIT */}
       <div
