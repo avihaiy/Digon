@@ -49,6 +49,47 @@ export default function FinanceDisplaySlide({ textClass, accentClass }: FinanceD
 
   const balance = stats?.thisMonthBalance || 0;
 
+  // השוואה אחוזית לחודש קודם
+  const monthly = stats?.monthlyData || [];
+  const currentIdx = monthly.findIndex((m) => m.isCurrent);
+  const prev = currentIdx > 0 ? monthly[currentIdx - 1] : undefined;
+
+  const calcDelta = (current: number, previous: number | undefined) => {
+    if (previous === undefined) return null;
+    if (previous === 0) {
+      if (current === 0) return { pct: 0 as number | null, dir: "flat" as const };
+      return { pct: null as number | null, dir: current > 0 ? ("up" as const) : ("down" as const) };
+    }
+    const pct = ((current - previous) / Math.abs(previous)) * 100;
+    return {
+      pct: pct as number | null,
+      dir: pct > 0.5 ? ("up" as const) : pct < -0.5 ? ("down" as const) : ("flat" as const),
+    };
+  };
+
+  const incomeDelta = calcDelta(stats?.thisMonthIncome || 0, prev?.income);
+  const expensesDelta = calcDelta(stats?.thisMonthExpenses || 0, prev?.expenses);
+  const balanceDelta = calcDelta(balance, prev?.balance);
+
+  const renderDelta = (
+    delta: ReturnType<typeof calcDelta>,
+    goodDirection: "up" | "down",
+  ) => {
+    if (!delta) return null;
+    const isGood = delta.dir === "flat" ? true : delta.dir === goodDirection;
+    const color = delta.dir === "flat" ? "#9ca3af" : isGood ? "#34d399" : "#f87171";
+    const arrow = delta.dir === "up" ? "▲" : delta.dir === "down" ? "▼" : "■";
+    const label =
+      delta.pct === null
+        ? "חדש"
+        : `${delta.pct > 0 ? "+" : ""}${delta.pct.toFixed(1)}%`;
+    return (
+      <p className="text-[1.6vh] font-semibold tabular-nums" dir="ltr" style={{ color }}>
+        {arrow} {label}
+      </p>
+    );
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -88,9 +129,12 @@ export default function FinanceDisplaySlide({ textClass, accentClass }: FinanceD
           {isLoading ? (
             <div className="w-full h-[5vh] rounded-lg animate-pulse bg-emerald-500/20" />
           ) : (
-            <p className="text-[3.5vh] font-bold text-emerald-300 tabular-nums" dir="ltr">
-              {formatCurrency(stats?.thisMonthIncome || 0)}
-            </p>
+            <>
+              <p className="text-[3.5vh] font-bold text-emerald-300 tabular-nums" dir="ltr">
+                {formatCurrency(stats?.thisMonthIncome || 0)}
+              </p>
+              {renderDelta(incomeDelta, "up")}
+            </>
           )}
         </motion.div>
 
@@ -112,9 +156,12 @@ export default function FinanceDisplaySlide({ textClass, accentClass }: FinanceD
           {isLoading ? (
             <div className="w-full h-[5vh] rounded-lg animate-pulse bg-red-500/20" />
           ) : (
-            <p className="text-[3.5vh] font-bold text-red-300 tabular-nums" dir="ltr">
-              {formatCurrency(stats?.thisMonthExpenses || 0)}
-            </p>
+            <>
+              <p className="text-[3.5vh] font-bold text-red-300 tabular-nums" dir="ltr">
+                {formatCurrency(stats?.thisMonthExpenses || 0)}
+              </p>
+              {renderDelta(expensesDelta, "down")}
+            </>
           )}
         </motion.div>
 
@@ -138,13 +185,16 @@ export default function FinanceDisplaySlide({ textClass, accentClass }: FinanceD
           {isLoading ? (
             <div className="w-full h-[5vh] rounded-lg animate-pulse bg-blue-500/20" />
           ) : (
-            <p
-              className="text-[3.5vh] font-bold tabular-nums"
-              dir="ltr"
-              style={{ color: balance >= 0 ? "#60a5fa" : "#fb923c" }}
-            >
-              {formatCurrency(balance)}
-            </p>
+            <>
+              <p
+                className="text-[3.5vh] font-bold tabular-nums"
+                dir="ltr"
+                style={{ color: balance >= 0 ? "#60a5fa" : "#fb923c" }}
+              >
+                {formatCurrency(balance)}
+              </p>
+              {renderDelta(balanceDelta, "up")}
+            </>
           )}
         </motion.div>
       </div>
