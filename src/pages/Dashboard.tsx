@@ -30,6 +30,7 @@ import { he } from 'date-fns/locale';
 // recharts removed - using custom bar chart
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { cn } from '@/lib/utils';
+import EventsWidget from '@/components/dashboard/EventsWidget';
 
 // Animated counter that counts from 0 to target value
 function AnimatedCounter({ value, duration = 900, className, prefix = '₪ ' }: { value: number; duration?: number; className?: string; prefix?: string }) {
