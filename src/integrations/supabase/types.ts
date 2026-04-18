@@ -429,6 +429,45 @@ export type Database = {
           },
         ]
       }
+      events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_at: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id: string
+          location: string | null
+          start_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_at?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          location?: string | null
+          start_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_at?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          location?: string | null
+          start_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       expense_attachments: {
         Row: {
           created_at: string
@@ -1090,6 +1129,14 @@ export type Database = {
       app_role: "admin" | "gabai" | "viewer"
       equipment_category: "hall" | "furniture" | "books" | "events" | "other"
       equipment_status: "available" | "loaned" | "maintenance" | "retired"
+      event_type:
+        | "wedding"
+        | "bar_mitzvah"
+        | "memorial"
+        | "lesson"
+        | "meeting"
+        | "holiday"
+        | "other"
       loan_status: "active" | "returned" | "overdue"
       payment_method: "bit" | "cash" | "check" | "bank_transfer"
       payment_status: "pending" | "confirmed"
@@ -1244,6 +1291,15 @@ export const Constants = {
       app_role: ["admin", "gabai", "viewer"],
       equipment_category: ["hall", "furniture", "books", "events", "other"],
       equipment_status: ["available", "loaned", "maintenance", "retired"],
+      event_type: [
+        "wedding",
+        "bar_mitzvah",
+        "memorial",
+        "lesson",
+        "meeting",
+        "holiday",
+        "other",
+      ],
       loan_status: ["active", "returned", "overdue"],
       payment_method: ["bit", "cash", "check", "bank_transfer"],
       payment_status: ["pending", "confirmed"],
