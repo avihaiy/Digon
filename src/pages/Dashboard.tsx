@@ -654,6 +654,11 @@ export default function Dashboard() {
         </RevealSection>
       )}
 
+      {/* Upcoming Events Widget */}
+      <RevealSection delay={75}>
+        <EventsWidget />
+      </RevealSection>
+
       {/* Financial Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Income */}
