@@ -195,6 +195,12 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     }
   }, [rotationSetting]);
 
+  useEffect(() => {
+    if (eventReminderHoursSetting) {
+      setEventReminderHours(eventReminderHoursSetting);
+    }
+  }, [eventReminderHoursSetting]);
+
   // Save synagogue name
   const saveNameMutation = useMutation({
     mutationFn: async (name: string) => {
