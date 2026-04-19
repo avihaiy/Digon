@@ -92,6 +92,10 @@ export default function Events() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  
+  // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState<EventType | 'all'>('all');
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
@@ -105,9 +109,20 @@ export default function Events() {
     },
   });
 
+  // Filter events based on search and type
+  const filteredEvents = events.filter((e) => {
+    const matchesType = selectedType === 'all' || e.event_type === selectedType;
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query ||
+      e.title.toLowerCase().includes(query) ||
+      (e.description?.toLowerCase() || '').includes(query) ||
+      (e.location?.toLowerCase() || '').includes(query);
+    return matchesType && matchesSearch;
+  });
+
   const now = new Date();
-  const upcoming = events.filter((e) => new Date(e.end_at || e.start_at) >= now);
-  const past = events.filter((e) => new Date(e.end_at || e.start_at) < now).reverse();
+  const upcoming = filteredEvents.filter((e) => new Date(e.end_at || e.start_at) >= now);
+  const past = filteredEvents.filter((e) => new Date(e.end_at || e.start_at) < now).reverse();
 
   const calendarEvents = events.map((e) => {
     const meta = EVENT_TYPES.find((t) => t.value === e.event_type) || EVENT_TYPES[6];
