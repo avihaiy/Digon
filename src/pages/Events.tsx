@@ -42,6 +42,8 @@ import {
   Download,
   List,
   LayoutGrid,
+  Search,
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -92,6 +94,10 @@ export default function Events() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  
+  // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState<EventType | 'all'>('all');
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['events'],
@@ -105,9 +111,20 @@ export default function Events() {
     },
   });
 
+  // Filter events based on search and type
+  const filteredEvents = events.filter((e) => {
+    const matchesType = selectedType === 'all' || e.event_type === selectedType;
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query ||
+      e.title.toLowerCase().includes(query) ||
+      (e.description?.toLowerCase() || '').includes(query) ||
+      (e.location?.toLowerCase() || '').includes(query);
+    return matchesType && matchesSearch;
+  });
+
   const now = new Date();
-  const upcoming = events.filter((e) => new Date(e.end_at || e.start_at) >= now);
-  const past = events.filter((e) => new Date(e.end_at || e.start_at) < now).reverse();
+  const upcoming = filteredEvents.filter((e) => new Date(e.end_at || e.start_at) >= now);
+  const past = filteredEvents.filter((e) => new Date(e.end_at || e.start_at) < now).reverse();
 
   const calendarEvents = events.map((e) => {
     const meta = EVENT_TYPES.find((t) => t.value === e.event_type) || EVENT_TYPES[6];
@@ -300,6 +317,63 @@ export default function Events() {
           </TabsTrigger>
         </TabsList>
 
+        {/* Filters */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="חיפוש באירועים..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-9"
+              />
+            </div>
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="h-9 px-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex flex-wrap gap-1.5">
+            <Badge
+              variant={selectedType === 'all' ? 'default' : 'outline'}
+              className="cursor-pointer h-7 px-3"
+              onClick={() => setSelectedType('all')}
+            >
+              הכל ({events.length})
+            </Badge>
+            {EVENT_TYPES.map((t) => {
+              const count = events.filter((e) => e.event_type === t.value).length;
+              const isSelected = selectedType === t.value;
+              return (
+                <Badge
+                  key={t.value}
+                  variant={isSelected ? 'default' : 'outline'}
+                  className={`cursor-pointer h-7 px-3 transition-colors ${
+                    isSelected ? '' : 'hover:bg-muted'
+                  } ${t.color}`}
+                  onClick={() => setSelectedType(isSelected ? 'all' : t.value)}
+                >
+                  {t.label} ({count})
+                </Badge>
+              );
+            })}
+          </div>
+          
+          {(searchQuery || selectedType !== 'all') && (
+            <p className="text-sm text-muted-foreground">
+              מציג {filteredEvents.length} מתוך {events.length} אירועים
+            </p>
+          )}
+        </div>
+
         <TabsContent value="list" className="space-y-4 md:space-y-6 mt-0">
           <Card>
             <CardHeader className="p-3 md:p-6">
@@ -333,7 +407,20 @@ export default function Events() {
         </TabsContent>
 
         <TabsContent value="calendar" className="mt-0">
-          <MonthCalendar events={calendarEvents} />
+          <MonthCalendar 
+            events={filteredEvents.map((e) => {
+              const meta = EVENT_TYPES.find((t) => t.value === e.event_type) || EVENT_TYPES[6];
+              return {
+                id: e.id,
+                title: e.title,
+                location: e.location,
+                start_at: e.start_at,
+                end_at: e.end_at,
+                event_type: meta.label,
+                color: meta.color,
+              };
+            })} 
+          />
         </TabsContent>
       </Tabs>
 
