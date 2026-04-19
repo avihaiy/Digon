@@ -407,7 +407,20 @@ export default function Events() {
         </TabsContent>
 
         <TabsContent value="calendar" className="mt-0">
-          <MonthCalendar events={calendarEvents} />
+          <MonthCalendar 
+            events={filteredEvents.map((e) => {
+              const meta = EVENT_TYPES.find((t) => t.value === e.event_type) || EVENT_TYPES[6];
+              return {
+                id: e.id,
+                title: e.title,
+                location: e.location,
+                start_at: e.start_at,
+                end_at: e.end_at,
+                event_type: meta.label,
+                color: meta.color,
+              };
+            })} 
+          />
         </TabsContent>
       </Tabs>
 
