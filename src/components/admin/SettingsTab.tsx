@@ -326,6 +326,21 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Save event reminder hours
+  const saveEventReminderHoursMutation = useMutation({
+    mutationFn: async (hours: string) => {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'event_reminder_hours_before', value: hours }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-event-reminder-hours'] });
+      toast({ title: 'הגדרת תזכורות אירועים נשמרה בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Count enabled screens
   const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
