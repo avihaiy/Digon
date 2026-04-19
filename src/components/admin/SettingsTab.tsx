@@ -535,6 +535,49 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             </Button>
           </CardContent>
         </Card>
+
+        {/* Event Reminder Hours */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              תזכורות לאירועים
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>כמה זמן לפני האירוע לשלוח תזכורת?</Label>
+              <Select
+                value={eventReminderHours}
+                onValueChange={setEventReminderHours}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">שעה לפני</SelectItem>
+                  <SelectItem value="2">שעתיים לפני</SelectItem>
+                  <SelectItem value="6">6 שעות לפני</SelectItem>
+                  <SelectItem value="12">12 שעות לפני</SelectItem>
+                  <SelectItem value="24">יום לפני (24 שעות)</SelectItem>
+                  <SelectItem value="48">יומיים לפני (48 שעות)</SelectItem>
+                  <SelectItem value="72">3 ימים לפני (72 שעות)</SelectItem>
+                  <SelectItem value="168">שבוע לפני (168 שעות)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                תזכורת תיווצר אוטומטית עבור כל אירוע חדש או מעודכן ביומן האירועים. תזכורות קיימות לא ישתנו.
+              </p>
+            </div>
+            <Button
+              onClick={() => saveEventReminderHoursMutation.mutate(eventReminderHours)}
+              disabled={saveEventReminderHoursMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור הגדרה
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Location */}
