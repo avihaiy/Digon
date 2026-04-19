@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -31,11 +32,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, MapPin, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  MapPin,
+  Clock,
+  Calendar as CalendarIcon,
+  Download,
+  List,
+  LayoutGrid,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import MonthCalendar from '@/components/events/MonthCalendar';
+import { buildIcs, downloadIcs } from '@/lib/ics-export';
 
 const EVENT_TYPES = [
   { value: 'wedding', label: 'חתונה', color: 'bg-pink-500/15 text-pink-700 dark:text-pink-300 border-pink-500/30' },
@@ -95,6 +108,19 @@ export default function Events() {
   const now = new Date();
   const upcoming = events.filter((e) => new Date(e.end_at || e.start_at) >= now);
   const past = events.filter((e) => new Date(e.end_at || e.start_at) < now).reverse();
+
+  const calendarEvents = events.map((e) => {
+    const meta = EVENT_TYPES.find((t) => t.value === e.event_type) || EVENT_TYPES[6];
+    return {
+      id: e.id,
+      title: e.title,
+      location: e.location,
+      start_at: e.start_at,
+      end_at: e.end_at,
+      event_type: meta.label,
+      color: meta.color,
+    };
+  });
 
   const openNew = () => {
     setForm(emptyForm);
@@ -169,17 +195,29 @@ export default function Events() {
     queryClient.invalidateQueries({ queryKey: ['events-widget'] });
   };
 
+  const exportIcs = (scope: 'upcoming' | 'all') => {
+    const list = scope === 'upcoming' ? upcoming : events;
+    if (list.length === 0) {
+      toast.error('אין אירועים לייצוא');
+      return;
+    }
+    const ics = buildIcs(list);
+    const filename = `events-${scope}-${format(new Date(), 'yyyy-MM-dd')}.ics`;
+    downloadIcs(ics, filename);
+    toast.success(`יוצא: ${list.length} אירועים`);
+  };
+
   const renderCard = (e: EventRow) => {
     const meta = EVENT_TYPES.find((t) => t.value === e.event_type) || EVENT_TYPES[6];
     const start = new Date(e.start_at);
     const end = e.end_at ? new Date(e.end_at) : null;
     return (
       <Card key={e.id} className="hover:shadow-md transition-shadow">
-        <CardContent className="p-4 space-y-2">
+        <CardContent className="p-3 md:p-4 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-lg">{e.title}</h3>
+                <h3 className="font-bold text-base md:text-lg">{e.title}</h3>
                 <Badge variant="outline" className={meta.color}>
                   {meta.label}
                 </Badge>
@@ -187,35 +225,35 @@ export default function Events() {
             </div>
             {canEdit && (
               <div className="flex gap-1 shrink-0">
-                <Button size="icon" variant="ghost" onClick={() => openEdit(e)}>
+                <Button size="icon" variant="ghost" onClick={() => openEdit(e)} className="h-8 w-8 md:h-9 md:w-9">
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => setDeleteId(e.id)}>
+                <Button size="icon" variant="ghost" onClick={() => setDeleteId(e.id)} className="h-8 w-8 md:h-9 md:w-9">
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CalendarIcon className="h-4 w-4" />
-            <span>{format(start, 'EEEE, d בMMMM yyyy', { locale: he })}</span>
+          <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+            <CalendarIcon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{format(start, 'EEEE, d בMMMM yyyy', { locale: he })}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
+          <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+            <Clock className="h-4 w-4 shrink-0" />
             <span>
               {format(start, 'HH:mm')}
               {end && ` - ${format(end, 'HH:mm')}`}
             </span>
           </div>
           {e.location && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>{e.location}</span>
+            <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="truncate">{e.location}</span>
             </div>
           )}
           {e.description && (
-            <p className="text-sm whitespace-pre-line pt-1 border-t">{e.description}</p>
+            <p className="text-xs md:text-sm whitespace-pre-line pt-1 border-t">{e.description}</p>
           )}
         </CardContent>
       </Card>
@@ -223,48 +261,84 @@ export default function Events() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-bold">יומן אירועים</h1>
-          <p className="text-muted-foreground">ניהול אירועי בית הכנסת</p>
+    <div className="container mx-auto p-3 md:p-6 space-y-4 md:space-y-6 max-w-5xl pb-24 md:pb-6">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold">יומן אירועים</h1>
+          <p className="text-sm text-muted-foreground">ניהול אירועי בית הכנסת</p>
         </div>
-        {canEdit && (
-          <Button onClick={openNew} className="gap-2">
-            <Plus className="h-4 w-4" />
-            אירוע חדש
-          </Button>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          <Select onValueChange={(v) => exportIcs(v as 'upcoming' | 'all')}>
+            <SelectTrigger className="w-auto gap-2 h-9">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">ייצוא ICS</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="upcoming">קרובים בלבד ({upcoming.length})</SelectItem>
+              <SelectItem value="all">כל האירועים ({events.length})</SelectItem>
+            </SelectContent>
+          </Select>
+          {canEdit && (
+            <Button onClick={openNew} className="gap-2 h-9">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">אירוע חדש</span>
+              <span className="sm:hidden">חדש</span>
+            </Button>
+          )}
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>אירועים קרובים ({upcoming.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {isLoading ? (
-            <p className="text-muted-foreground text-center py-6">טוען...</p>
-          ) : upcoming.length === 0 ? (
-            <p className="text-muted-foreground text-center py-6">אין אירועים קרובים</p>
-          ) : (
-            upcoming.map(renderCard)
-          )}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="list" className="space-y-4">
+        <TabsList className="grid grid-cols-2 w-full md:w-auto">
+          <TabsTrigger value="list" className="gap-2">
+            <List className="h-4 w-4" />
+            רשימה
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            לוח חודשי
+          </TabsTrigger>
+        </TabsList>
 
-      {past.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-muted-foreground">אירועים שעברו ({past.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 opacity-75">
-            {past.map(renderCard)}
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="list" className="space-y-4 md:space-y-6 mt-0">
+          <Card>
+            <CardHeader className="p-3 md:p-6">
+              <CardTitle className="text-base md:text-lg">
+                אירועים קרובים ({upcoming.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 p-3 md:p-6 pt-0 md:pt-0">
+              {isLoading ? (
+                <p className="text-muted-foreground text-center py-6">טוען...</p>
+              ) : upcoming.length === 0 ? (
+                <p className="text-muted-foreground text-center py-6">אין אירועים קרובים</p>
+              ) : (
+                upcoming.map(renderCard)
+              )}
+            </CardContent>
+          </Card>
+
+          {past.length > 0 && (
+            <Card>
+              <CardHeader className="p-3 md:p-6">
+                <CardTitle className="text-muted-foreground text-base md:text-lg">
+                  אירועים שעברו ({past.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 opacity-75 p-3 md:p-6 pt-0 md:pt-0">
+                {past.map(renderCard)}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="calendar" className="mt-0">
+          <MonthCalendar events={calendarEvents} />
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto w-[95vw] md:w-full">
           <DialogHeader>
             <DialogTitle>{form.id ? 'עריכת אירוע' : 'אירוע חדש'}</DialogTitle>
           </DialogHeader>
@@ -349,11 +423,11 @@ export default function Events() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
               ביטול
             </Button>
-            <Button onClick={save}>שמור</Button>
+            <Button onClick={save} className="w-full sm:w-auto">שמור</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
