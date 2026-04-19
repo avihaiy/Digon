@@ -140,6 +140,19 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     },
   });
 
+  // Load event reminder hours
+  const { data: eventReminderHoursSetting } = useQuery({
+    queryKey: ['app-settings-event-reminder-hours'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'event_reminder_hours_before')
+        .maybeSingle();
+      return data?.value || '24';
+    },
+  });
+
   useEffect(() => {
     if (nameSetting) {
       setSynagogueName(nameSetting);
