@@ -42,6 +42,8 @@ import {
   Download,
   List,
   LayoutGrid,
+  Search,
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
