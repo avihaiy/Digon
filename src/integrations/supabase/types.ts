@@ -438,6 +438,7 @@ export type Database = {
           event_type: Database["public"]["Enums"]["event_type"]
           id: string
           location: string | null
+          reminder_hours_before: number | null
           start_at: string
           title: string
           updated_at: string
@@ -450,6 +451,7 @@ export type Database = {
           event_type?: Database["public"]["Enums"]["event_type"]
           id?: string
           location?: string | null
+          reminder_hours_before?: number | null
           start_at: string
           title: string
           updated_at?: string
@@ -462,6 +464,7 @@ export type Database = {
           event_type?: Database["public"]["Enums"]["event_type"]
           id?: string
           location?: string | null
+          reminder_hours_before?: number | null
           start_at?: string
           title?: string
           updated_at?: string
