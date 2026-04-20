@@ -72,7 +72,21 @@ interface EventRow {
   event_type: EventType;
   start_at: string;
   end_at: string | null;
+  reminder_hours_before: number | null;
 }
+
+const REMINDER_OPTIONS = [
+  { value: 'default', label: 'ברירת מחדל של המערכת' },
+  { value: '1', label: 'שעה לפני' },
+  { value: '2', label: 'שעתיים לפני' },
+  { value: '3', label: '3 שעות לפני' },
+  { value: '6', label: '6 שעות לפני' },
+  { value: '12', label: '12 שעות לפני' },
+  { value: '24', label: 'יום לפני (24 שעות)' },
+  { value: '48', label: 'יומיים לפני (48 שעות)' },
+  { value: '72', label: '3 ימים לפני' },
+  { value: '168', label: 'שבוע לפני' },
+] as const;
 
 const emptyForm = {
   id: '',
@@ -84,6 +98,7 @@ const emptyForm = {
   start_time: '20:00',
   end_date: '',
   end_time: '',
+  reminder_override: 'default' as string,
 };
 
 export default function Events() {
@@ -157,6 +172,7 @@ export default function Events() {
       start_time: format(start, 'HH:mm'),
       end_date: end ? format(end, 'yyyy-MM-dd') : '',
       end_time: end ? format(end, 'HH:mm') : '',
+      reminder_override: e.reminder_hours_before != null ? String(e.reminder_hours_before) : 'default',
     });
     setDialogOpen(true);
   };
@@ -183,6 +199,8 @@ export default function Events() {
       event_type: form.event_type,
       start_at: startISO,
       end_at: endISO,
+      reminder_hours_before:
+        form.reminder_override === 'default' ? null : parseInt(form.reminder_override, 10),
     };
 
     const { error } = form.id
@@ -508,6 +526,27 @@ export default function Events() {
                 rows={3}
                 placeholder="פרטים נוספים..."
               />
+            </div>
+            <div>
+              <Label>זמן תזכורת לאירוע זה</Label>
+              <Select
+                value={form.reminder_override}
+                onValueChange={(v) => setForm({ ...form, reminder_override: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {REMINDER_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                עוקף את הגדרת ברירת המחדל של המערכת לאירוע זה בלבד
+              </p>
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
