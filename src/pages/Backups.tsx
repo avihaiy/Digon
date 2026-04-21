@@ -137,6 +137,78 @@ export default function Backups() {
     },
   });
 
+  // Helper: build XLSX workbook from table data and trigger download
+  const downloadAsExcel = (tables: Record<string, unknown[]>, fileName: string) => {
+    const wb = XLSX.utils.book_new();
+    const tableNames = Object.keys(tables);
+
+    // Summary sheet
+    const summaryRows = tableNames.map(name => ({
+      'טבלה': TABLES_LABELS[name] || name,
+      'שם טכני': name,
+      'מספר רשומות': Array.isArray(tables[name]) ? tables[name].length : 0,
+    }));
+    const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
+    summarySheet['!cols'] = [{ wch: 25 }, { wch: 25 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'סיכום');
+
+    // One sheet per table (Excel sheet name max 31 chars, no special chars)
+    for (const name of tableNames) {
+      const rows = (tables[name] as Record<string, unknown>[]) || [];
+      if (rows.length === 0) continue;
+      const sheet = XLSX.utils.json_to_sheet(rows);
+      const label = TABLES_LABELS[name] || name;
+      const safeName = label.replace(/[\\/*?[\]:]/g, '').slice(0, 31);
+      XLSX.utils.book_append_sheet(wb, sheet, safeName);
+    }
+
+    XLSX.writeFile(wb, fileName);
+  };
+
+  // Excel backup mutation - fetch all tables fresh and export as xlsx
+  const excelBackupMutation = useMutation({
+    mutationFn: async () => {
+      const tablesData: Record<string, unknown[]> = {};
+      const tableNames = Object.keys(TABLES_LABELS);
+      for (const tableName of tableNames) {
+        const { data, error } = await supabase.from(tableName as never).select('*');
+        if (!error && data) {
+          tablesData[tableName] = data;
+        } else {
+          tablesData[tableName] = [];
+        }
+      }
+      const ts = format(new Date(), 'yyyy-MM-dd-HHmm');
+      downloadAsExcel(tablesData, `backup-${ts}.xlsx`);
+      const totalRecords = Object.values(tablesData).reduce((s, arr) => s + arr.length, 0);
+      return { totalRecords };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'גיבוי Excel נוצר בהצלחה',
+        description: `הורדו ${data.totalRecords} רשומות`,
+      });
+    },
+    onError: () => {
+      toast({ title: 'שגיאה ביצירת גיבוי Excel', variant: 'destructive' });
+    },
+  });
+
+  // Download an existing JSON backup as Excel
+  const handleDownloadAsExcel = async (fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage.from('backups').download(fileName);
+      if (error) throw error;
+      const text = await data.text();
+      const parsed: BackupData = JSON.parse(text);
+      const xlsxName = fileName.replace(/\.json$/i, '') + '.xlsx';
+      downloadAsExcel(parsed.tables, xlsxName);
+      toast({ title: 'הורדת קובץ Excel החלה' });
+    } catch {
+      toast({ title: 'שגיאה בהמרה ל-Excel', variant: 'destructive' });
+    }
+  };
+
   // Email receipts backup mutation
   const emailBackupMutation = useMutation({
     mutationFn: async ({ email, startDate, endDate }: { email: string; startDate?: string; endDate?: string }) => {
