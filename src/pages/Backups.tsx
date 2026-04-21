@@ -418,6 +418,18 @@ export default function Backups() {
             <Mail className="w-4 h-4 ml-2" />
             שלח קבלות למייל
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => excelBackupMutation.mutate()}
+            disabled={excelBackupMutation.isPending}
+          >
+            {excelBackupMutation.isPending ? (
+              <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="w-4 h-4 ml-2" />
+            )}
+            גיבוי Excel
+          </Button>
           <Button 
             onClick={() => backupMutation.mutate()}
             disabled={backupMutation.isPending}
