@@ -554,7 +554,15 @@ export default function Backups() {
                       onClick={() => handleDownload(backup.name)}
                     >
                       <Download className="w-4 h-4 ml-1" />
-                      הורד
+                      הורד JSON
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadAsExcel(backup.name)}
+                    >
+                      <FileSpreadsheet className="w-4 h-4 ml-1" />
+                      Excel
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
