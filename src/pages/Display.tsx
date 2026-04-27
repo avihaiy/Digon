@@ -500,6 +500,20 @@ export default function Display() {
     };
   }, [showWeekBefore]);
 
+  // לפני כל reload — שמור שהיינו במסך מלא, כדי לחזור אליו אוטומטית אחרי טעינה
+  const markFullscreenBeforeReload = useCallback(() => {
+    try {
+      if (document.fullscreenElement) {
+        sessionStorage.setItem('display_was_fullscreen', '1');
+      }
+    } catch {}
+  }, []);
+
+  const safeReload = useCallback(() => {
+    markFullscreenBeforeReload();
+    window.location.reload();
+  }, [markFullscreenBeforeReload]);
+
   const { updateServiceWorker } = useRegisterSW({
     immediate: true,
     onRegistered(registration) {
@@ -509,6 +523,8 @@ export default function Display() {
       }
     },
     onNeedRefresh() {
+      // סמן שהיינו במסך מלא לפני העדכון, כדי שנחזור אליו אוטומטית
+      markFullscreenBeforeReload();
       // עדכון מיידי + ניקוי SW + reload
       void updateServiceWorker(true).then(
         () => {},
@@ -524,6 +540,7 @@ export default function Display() {
     const checkDailyReload = () => {
       const now = new Date();
       if (now.getHours() === 4 && now.getMinutes() === 0) {
+        markFullscreenBeforeReload();
         const w = window as Window;
         if (typeof w.caches !== 'undefined') {
           w.caches.keys()
@@ -536,7 +553,13 @@ export default function Display() {
     };
     const interval = setInterval(checkDailyReload, 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [markFullscreenBeforeReload]);
+
+  // לפני יציאה/רענון של המשתמש — שמור גם
+  useEffect(() => {
+    window.addEventListener('beforeunload', markFullscreenBeforeReload);
+    return () => window.removeEventListener('beforeunload', markFullscreenBeforeReload);
+  }, [markFullscreenBeforeReload]);
 
   const enterFullscreen = useCallback(async () => {
     try {
@@ -587,6 +610,57 @@ export default function Display() {
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
+
+  // אחרי רענון: אם היינו במסך מלא לפני הרענון, ננסה לחזור אוטומטית.
+  // הדפדפן בדרך כלל דורש "user gesture" — לכן ננסה גם בלחיצה/מגע ראשונים.
+  useEffect(() => {
+    const wasFullscreen = sessionStorage.getItem('display_was_fullscreen') === '1';
+    if (!wasFullscreen) return;
+
+    // אם האפליקציה רצה כ-PWA במצב fullscreen/standalone — אין צורך לבקש שוב, היא כבר במצב מלא
+    const isStandalone = window.matchMedia?.('(display-mode: fullscreen)').matches
+      || window.matchMedia?.('(display-mode: standalone)').matches
+      || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+    const tryRestore = async () => {
+      try {
+        if (containerRef.current && !document.fullscreenElement) {
+          await containerRef.current.requestFullscreen();
+        }
+        sessionStorage.removeItem('display_was_fullscreen');
+        cleanup();
+      } catch {
+        // ננסה שוב באירוע הבא
+      }
+    };
+
+    const onGesture = () => { void tryRestore(); };
+
+    const cleanup = () => {
+      window.removeEventListener('pointerdown', onGesture);
+      window.removeEventListener('keydown', onGesture);
+      window.removeEventListener('touchstart', onGesture);
+      window.removeEventListener('click', onGesture);
+    };
+
+    if (isStandalone) {
+      // ב-PWA המסך כבר במצב מלא בזכות display:fullscreen ב-manifest
+      sessionStorage.removeItem('display_was_fullscreen');
+      setIsFullscreen(true);
+      return;
+    }
+
+    // נסה ישירות (יעבוד אם יש user-activation שנשמר)
+    void tryRestore();
+
+    window.addEventListener('pointerdown', onGesture, { once: false });
+    window.addEventListener('keydown', onGesture, { once: false });
+    window.addEventListener('touchstart', onGesture, { once: false });
+    window.addEventListener('click', onGesture, { once: false });
+
+    return cleanup;
+  }, []);
+
 
   useEffect(() => {
     if (isLocked && isFullscreen) {
