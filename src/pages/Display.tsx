@@ -611,6 +611,57 @@ export default function Display() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // אחרי רענון: אם היינו במסך מלא לפני הרענון, ננסה לחזור אוטומטית.
+  // הדפדפן בדרך כלל דורש "user gesture" — לכן ננסה גם בלחיצה/מגע ראשונים.
+  useEffect(() => {
+    const wasFullscreen = sessionStorage.getItem('display_was_fullscreen') === '1';
+    if (!wasFullscreen) return;
+
+    // אם האפליקציה רצה כ-PWA במצב fullscreen/standalone — אין צורך לבקש שוב, היא כבר במצב מלא
+    const isStandalone = window.matchMedia?.('(display-mode: fullscreen)').matches
+      || window.matchMedia?.('(display-mode: standalone)').matches
+      || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+    const tryRestore = async () => {
+      try {
+        if (containerRef.current && !document.fullscreenElement) {
+          await containerRef.current.requestFullscreen();
+        }
+        sessionStorage.removeItem('display_was_fullscreen');
+        cleanup();
+      } catch {
+        // ננסה שוב באירוע הבא
+      }
+    };
+
+    const onGesture = () => { void tryRestore(); };
+
+    const cleanup = () => {
+      window.removeEventListener('pointerdown', onGesture);
+      window.removeEventListener('keydown', onGesture);
+      window.removeEventListener('touchstart', onGesture);
+      window.removeEventListener('click', onGesture);
+    };
+
+    if (isStandalone) {
+      // ב-PWA המסך כבר במצב מלא בזכות display:fullscreen ב-manifest
+      sessionStorage.removeItem('display_was_fullscreen');
+      setIsFullscreen(true);
+      return;
+    }
+
+    // נסה ישירות (יעבוד אם יש user-activation שנשמר)
+    void tryRestore();
+
+    window.addEventListener('pointerdown', onGesture, { once: false });
+    window.addEventListener('keydown', onGesture, { once: false });
+    window.addEventListener('touchstart', onGesture, { once: false });
+    window.addEventListener('click', onGesture, { once: false });
+
+    return cleanup;
+  }, []);
+
+
   useEffect(() => {
     if (isLocked && isFullscreen) {
       const preventKeys = (e: KeyboardEvent) => {
