@@ -500,6 +500,20 @@ export default function Display() {
     };
   }, [showWeekBefore]);
 
+  // לפני כל reload — שמור שהיינו במסך מלא, כדי לחזור אליו אוטומטית אחרי טעינה
+  const markFullscreenBeforeReload = useCallback(() => {
+    try {
+      if (document.fullscreenElement) {
+        sessionStorage.setItem('display_was_fullscreen', '1');
+      }
+    } catch {}
+  }, []);
+
+  const safeReload = useCallback(() => {
+    markFullscreenBeforeReload();
+    window.location.reload();
+  }, [markFullscreenBeforeReload]);
+
   const { updateServiceWorker } = useRegisterSW({
     immediate: true,
     onRegistered(registration) {
@@ -509,6 +523,8 @@ export default function Display() {
       }
     },
     onNeedRefresh() {
+      // סמן שהיינו במסך מלא לפני העדכון, כדי שנחזור אליו אוטומטית
+      markFullscreenBeforeReload();
       // עדכון מיידי + ניקוי SW + reload
       void updateServiceWorker(true).then(
         () => {},
@@ -524,6 +540,7 @@ export default function Display() {
     const checkDailyReload = () => {
       const now = new Date();
       if (now.getHours() === 4 && now.getMinutes() === 0) {
+        markFullscreenBeforeReload();
         const w = window as Window;
         if (typeof w.caches !== 'undefined') {
           w.caches.keys()
@@ -536,7 +553,13 @@ export default function Display() {
     };
     const interval = setInterval(checkDailyReload, 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [markFullscreenBeforeReload]);
+
+  // לפני יציאה/רענון של המשתמש — שמור גם
+  useEffect(() => {
+    window.addEventListener('beforeunload', markFullscreenBeforeReload);
+    return () => window.removeEventListener('beforeunload', markFullscreenBeforeReload);
+  }, [markFullscreenBeforeReload]);
 
   const enterFullscreen = useCallback(async () => {
     try {
