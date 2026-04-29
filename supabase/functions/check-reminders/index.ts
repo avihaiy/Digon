@@ -64,6 +64,27 @@ Deno.serve(async (req) => {
         else notificationsCreated += notifications.length;
       }
 
+      // Send Web Push notification to all manager devices (works when app is closed)
+      try {
+        const pushBody = (reminder.content || "").replace(/^\[event:[^\]]+\]\s*/, "");
+        await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({
+            title: reminder.is_important ? "⭐ תזכורת חשובה" : "⏰ תזכורת",
+            body: pushBody,
+            url: "/reminders",
+            tag: `reminder-${reminder.id}`,
+            user_ids: userIds,
+          }),
+        });
+      } catch (pushErr) {
+        console.error("Push send error:", pushErr);
+      }
+
       // Mark as notified
       await supabase
         .from("reminders")

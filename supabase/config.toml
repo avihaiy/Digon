@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.printnode-print]
 verify_jwt = false
+
+[functions.send-push]
+verify_jwt = false
+
+[functions.check-reminders]
+verify_jwt = false
