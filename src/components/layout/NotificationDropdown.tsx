@@ -12,12 +12,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bell, Check, CheckCheck, Trash2, AlertCircle, Info, CheckCircle } from 'lucide-react';
+import { Bell, BellOff, BellRing, Check, CheckCheck, Trash2, AlertCircle, Info, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { playNotificationSound } from '@/lib/notification-sounds';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface Notification {
   id: string;
@@ -44,6 +45,7 @@ export default function NotificationDropdown() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const { status: pushStatus, supported: pushSupported, subscribe, unsubscribe } = usePushNotifications();
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications', user?.id],
