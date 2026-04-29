@@ -249,7 +249,50 @@ export default function NotificationDropdown() {
             </Button>
           )}
         </div>
-        
+
+        {pushSupported && (
+          <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/30">
+            <div className="flex items-center gap-2 min-w-0">
+              {pushStatus === 'subscribed' ? (
+                <BellRing className="w-4 h-4 text-success shrink-0" />
+              ) : (
+                <BellOff className="w-4 h-4 text-muted-foreground shrink-0" />
+              )}
+              <div className="text-xs leading-tight min-w-0">
+                <p className="font-medium truncate">
+                  {pushStatus === 'subscribed' ? 'התראות לטלפון פעילות' : 'התראות לטלפון'}
+                </p>
+                <p className="text-muted-foreground truncate">
+                  {pushStatus === 'denied'
+                    ? 'חסומות בדפדפן - הפעל בהגדרות'
+                    : pushStatus === 'subscribed'
+                    ? 'יישלחו גם כשהאפליקציה סגורה'
+                    : 'הפעל לקבלה גם כשהאפליקציה סגורה'}
+                </p>
+              </div>
+            </div>
+            {pushStatus !== 'denied' && (
+              <Button
+                variant={pushStatus === 'subscribed' ? 'outline' : 'default'}
+                size="sm"
+                className="h-7 text-xs shrink-0"
+                onClick={async () => {
+                  if (pushStatus === 'subscribed') {
+                    const ok = await unsubscribe();
+                    if (ok) toast.success('התראות לטלפון בוטלו');
+                  } else {
+                    const ok = await subscribe();
+                    if (ok) toast.success('התראות לטלפון הופעלו ✨');
+                    else toast.error('לא הצלחנו להפעיל - בדוק הרשאות בדפדפן');
+                  }
+                }}
+              >
+                {pushStatus === 'subscribed' ? 'כבה' : 'הפעל'}
+              </Button>
+            )}
+          </div>
+        )}
+
         <ScrollArea className="h-[350px]">
           {/* Active Reminders */}
           {activeReminders.length > 0 && (
