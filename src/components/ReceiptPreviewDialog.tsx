@@ -5,7 +5,7 @@ import { Printer, X, FileDown, Loader2, Wifi, Share2, MessageCircle } from "luci
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { silentPrintReceipt } from "@/lib/thermal-print";
 import { remotePrintReceipt } from "@/lib/remote-print";
-import { prebuildReceiptPdf, shareReceiptWithPdf, shareReceipt, shareViaWhatsApp } from "@/lib/receipt-share";
+import { prebuildReceiptPdf, shareReceiptWithPdf, shareReceipt, sendReceiptToWhatsAppDirect } from "@/lib/receipt-share";
 import { Send } from "lucide-react";
 
 import html2pdf from "html2pdf.js";
