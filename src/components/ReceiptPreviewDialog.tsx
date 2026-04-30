@@ -282,6 +282,23 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
 
         {/* Action Buttons */}
         <div className="p-4 pt-0 flex flex-col gap-2">
+          {/* כפתור ראשי - שליחה ישירה למספר הוואטסאפ של החבר */}
+          <Button
+            onClick={handleSendToMemberWhatsApp}
+            disabled={isSendingToMember || !memberPhone}
+            className="w-full bg-green-600 hover:bg-green-700 text-white gap-2"
+            title={memberPhone ? `שליחה ל-${memberPhone}` : "לא הוגדר מספר טלפון לחבר"}
+          >
+            {isSendingToMember ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+            {memberPhone
+              ? `שליחה לוואטסאפ של ${memberName} (${memberPhone})`
+              : "שליחה לוואטסאפ — לא הוגדר טלפון לחבר"}
+          </Button>
+
           <div className="flex gap-2 justify-center flex-wrap">
             <Button size="sm" onClick={handlePrint} disabled={isPrinting} className="px-4">
               {isPrinting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Printer className="w-4 h-4 ml-2" />}
