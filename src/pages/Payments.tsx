@@ -99,7 +99,7 @@ export default function Payments() {
         .select(
           `
           *,
-          member:members(full_name),
+          member:members(full_name, phone),
           receipt:receipts(receipt_number)
         `,
         )
