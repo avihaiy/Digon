@@ -11,7 +11,9 @@ let cachedFontBytes: Uint8Array | null = null;
 
 async function loadFont(): Promise<Uint8Array> {
   if (cachedFontBytes) return cachedFontBytes;
-  const res = await fetch("https://fonts.gstatic.com/s/alef/v21/FeVQS0BTqb2d8FQRbhHiRRs.ttf");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const fontUrl = `${supabaseUrl}/storage/v1/object/public/expense-receipts/fonts/Alef-Regular.ttf`;
+  const res = await fetch(fontUrl);
   if (!res.ok) throw new Error("Failed to load font: " + res.status);
   cachedFontBytes = new Uint8Array(await res.arrayBuffer());
   return cachedFontBytes;
