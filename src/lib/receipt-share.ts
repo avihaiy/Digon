@@ -265,6 +265,40 @@ export function isReceiptPdfCached(receipt: any): boolean {
   return imageCache.has(cacheKey) || pdfCache.has(cacheKey);
 }
 
+/**
+ * Sends receipt directly to a specific WhatsApp number.
+ * Always opens a direct chat with the given phone (no share sheet).
+ * The PDF/JPEG is downloaded so the user can attach it in one tap.
+ * Works on iOS, Android and Desktop.
+ */
+export async function sendReceiptToWhatsAppDirect(receipt: any, phoneNumber: string): Promise<void> {
+  if (!phoneNumber) throw new Error('missing_phone');
+  const text = getShareText(receipt);
+  const isIOS = isIOSDevice();
+  const platform = isIOS ? 'iOS' : isMobileDevice() ? 'Android' : 'Desktop';
+  const cachedFile = getCachedShareFile(receipt);
+  const file = cachedFile || await getShareFile(receipt);
+  const fileType = file.type.includes('pdf') ? 'PDF' : 'JPEG';
+
+  // Always copy text to clipboard (helpful on all platforms)
+  await copyTextToClipboard(text);
+
+  // Download/save the file so the user can attach it in WhatsApp
+  downloadPdfFile(file);
+
+  // Open WhatsApp directly to the chat with this number
+  openWhatsAppDirect(text, phoneNumber);
+
+  debugLog({
+    receiptNumber: receipt.receipt_number,
+    platform,
+    method: 'direct_to_member',
+    fileType,
+    cached: Boolean(cachedFile),
+    result: 'opened_chat_with_file_download',
+  });
+}
+
 export function downloadPdfFile(file: File) {
   const url = URL.createObjectURL(file);
   const a = document.createElement('a');
