@@ -33,6 +33,29 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
   const [isRemotePrinting, setIsRemotePrinting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isGeneralSharing, setIsGeneralSharing] = useState(false);
+  const [isSendingToMember, setIsSendingToMember] = useState(false);
+
+  const memberPhone: string | undefined = receipt?.member?.phone;
+  const memberName: string = receipt?.member?.full_name || "החבר";
+
+  const handleSendToMemberWhatsApp = async () => {
+    if (!memberPhone) {
+      toast.error("לא הוגדר מספר טלפון לחבר זה");
+      return;
+    }
+    setIsSendingToMember(true);
+    try {
+      await shareViaWhatsApp(receipt, memberPhone);
+      toast.success(`הקבלה נשלחה ל${memberName}`);
+    } catch (error: any) {
+      if (error?.name !== "AbortError") {
+        console.error("Send to member WhatsApp error:", error);
+        toast.error("שגיאה בשליחת הקבלה");
+      }
+    } finally {
+      setIsSendingToMember(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !receipt) return;
