@@ -99,7 +99,7 @@ export default function Payments() {
         .select(
           `
           *,
-          member:members(full_name),
+          member:members(full_name, phone),
           receipt:receipts(receipt_number)
         `,
         )
@@ -280,7 +280,7 @@ export default function Payments() {
         try {
           const { data: receipt } = await supabase
             .from("receipts")
-            .select("*, member:members(full_name), payment:payments(method, reference)")
+            .select("*, member:members(full_name, phone), payment:payments(method, reference)")
             .eq("payment_id", payment.id)
             .single();
           if (receipt) {
@@ -491,7 +491,7 @@ export default function Payments() {
       // Fetch the receipt for this payment
       const { data: receipt } = await supabase
         .from("receipts")
-        .select("*, member:members(full_name), payment:payments(method, reference)")
+        .select("*, member:members(full_name, phone), payment:payments(method, reference)")
         .eq("payment_id", payment.id)
         .single();
 
