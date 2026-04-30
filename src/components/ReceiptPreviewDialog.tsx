@@ -45,8 +45,8 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
     }
     setIsSendingToMember(true);
     try {
-      await shareViaWhatsApp(receipt, memberPhone);
-      toast.success(`הקבלה נשלחה ל${memberName}`);
+      await sendReceiptToWhatsAppDirect(receipt, memberPhone);
+      toast.success(`וואטסאפ נפתח עם ${memberName} • הקבלה ירדה — צרף אותה בצ'אט`);
     } catch (error: any) {
       if (error?.name !== "AbortError") {
         console.error("Send to member WhatsApp error:", error);
