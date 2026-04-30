@@ -5,7 +5,8 @@ import { Printer, X, FileDown, Loader2, Wifi, Share2, MessageCircle } from "luci
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { silentPrintReceipt } from "@/lib/thermal-print";
 import { remotePrintReceipt } from "@/lib/remote-print";
-import { prebuildReceiptPdf, shareReceiptWithPdf, shareReceipt } from "@/lib/receipt-share";
+import { prebuildReceiptPdf, shareReceiptWithPdf, shareReceipt, shareViaWhatsApp } from "@/lib/receipt-share";
+import { Send } from "lucide-react";
 
 import html2pdf from "html2pdf.js";
 import { toast } from "sonner";
@@ -32,6 +33,29 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
   const [isRemotePrinting, setIsRemotePrinting] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isGeneralSharing, setIsGeneralSharing] = useState(false);
+  const [isSendingToMember, setIsSendingToMember] = useState(false);
+
+  const memberPhone: string | undefined = receipt?.member?.phone;
+  const memberName: string = receipt?.member?.full_name || "החבר";
+
+  const handleSendToMemberWhatsApp = async () => {
+    if (!memberPhone) {
+      toast.error("לא הוגדר מספר טלפון לחבר זה");
+      return;
+    }
+    setIsSendingToMember(true);
+    try {
+      await shareViaWhatsApp(receipt, memberPhone);
+      toast.success(`הקבלה נשלחה ל${memberName}`);
+    } catch (error: any) {
+      if (error?.name !== "AbortError") {
+        console.error("Send to member WhatsApp error:", error);
+        toast.error("שגיאה בשליחת הקבלה");
+      }
+    } finally {
+      setIsSendingToMember(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !receipt) return;
@@ -258,6 +282,23 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
 
         {/* Action Buttons */}
         <div className="p-4 pt-0 flex flex-col gap-2">
+          {/* כפתור ראשי - שליחה ישירה למספר הוואטסאפ של החבר */}
+          <Button
+            onClick={handleSendToMemberWhatsApp}
+            disabled={isSendingToMember || !memberPhone}
+            className="w-full bg-green-600 hover:bg-green-700 text-white gap-2"
+            title={memberPhone ? `שליחה ל-${memberPhone}` : "לא הוגדר מספר טלפון לחבר"}
+          >
+            {isSendingToMember ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+            {memberPhone
+              ? `שליחה לוואטסאפ של ${memberName} (${memberPhone})`
+              : "שליחה לוואטסאפ — לא הוגדר טלפון לחבר"}
+          </Button>
+
           <div className="flex gap-2 justify-center flex-wrap">
             <Button size="sm" onClick={handlePrint} disabled={isPrinting} className="px-4">
               {isPrinting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Printer className="w-4 h-4 ml-2" />}
