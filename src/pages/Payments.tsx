@@ -491,7 +491,7 @@ export default function Payments() {
       // Fetch the receipt for this payment
       const { data: receipt } = await supabase
         .from("receipts")
-        .select("*, member:members(full_name), payment:payments(method, reference)")
+        .select("*, member:members(full_name, phone), payment:payments(method, reference)")
         .eq("payment_id", payment.id)
         .single();
 
