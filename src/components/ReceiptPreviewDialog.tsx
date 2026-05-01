@@ -61,10 +61,9 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
     setIsSendingToMember(true);
     try {
       await sendReceiptToWhatsAppDirect(receipt, memberPhone);
-      toast.success(`וואטסאפ נפתח עם ${memberName} • הקבלה ירדה — צרף אותה בצ'אט`);
-      // Show visual attach guide after a short delay so it surfaces when user
-      // returns from WhatsApp (or right away on desktop).
-      setTimeout(() => setShowAttachGuide(true), platform === "desktop" ? 400 : 1500);
+      toast.success(
+        `וואטסאפ נפתח עם ${memberName} • ההודעה כוללת קישור לקבלה — החבר לוחץ ורואה אותה`,
+      );
     } catch (error: any) {
       if (error?.name !== "AbortError") {
         console.error("Send to member WhatsApp error:", error);

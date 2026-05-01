@@ -38,6 +38,7 @@ import Display from "@/pages/Display";
 import SettingsPage from "@/pages/SettingsPage";
 import Reminders from "@/pages/Reminders";
 import Events from "@/pages/Events";
+import PublicReceipt from "@/pages/PublicReceipt";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 
@@ -327,6 +328,7 @@ const AnimatedRoutes = () => {
           }
         />
         <Route path="/display" element={<Display />} />
+        <Route path="/r/:receiptNumber" element={<PublicReceipt />} />
         <Route
           path="*"
           element={

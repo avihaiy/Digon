@@ -1,8 +1,50 @@
 import html2pdf from 'html2pdf.js';
 import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
+import { supabase } from '@/integrations/supabase/client';
 
 const pdfCache = new Map<string, File>();
 const imageCache = new Map<string, File>();
+const linkCache = new Map<string, string>();
+
+/**
+ * Returns a short, public web URL for the receipt that anyone can open.
+ * Format: https://<host>/r/<receipt_number>
+ * The page itself fetches the receipt from the public DB view.
+ */
+export function getReceiptShareLink(receipt: any): string {
+  const num = receipt?.receipt_number;
+  if (!num) return '';
+  const cached = linkCache.get(String(num));
+  if (cached) return cached;
+  // Use published domain when accessed from there; otherwise use current origin.
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const link = `${origin}/r/${num}`;
+  linkCache.set(String(num), link);
+  return link;
+}
+
+/**
+ * Uploads receipt PDF to public storage bucket and returns its public URL.
+ * Useful when you want a direct PDF link instead of the view page.
+ */
+export async function uploadReceiptPdfToStorage(receipt: any): Promise<string | null> {
+  try {
+    const file = await buildReceiptPdfFile(receipt);
+    const path = `receipt-${receipt.receipt_number}.pdf`;
+    const { error: upErr } = await supabase.storage
+      .from('receipt-pdfs')
+      .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+    if (upErr) {
+      console.warn('Receipt PDF upload failed', upErr);
+      return null;
+    }
+    const { data } = supabase.storage.from('receipt-pdfs').getPublicUrl(path);
+    return data?.publicUrl || null;
+  } catch (e) {
+    console.warn('uploadReceiptPdfToStorage error', e);
+    return null;
+  }
+}
 
 // Debug log for share attempts
 export interface ShareDebugEntry {
@@ -276,85 +318,43 @@ export async function sendReceiptToWhatsAppDirect(receipt: any, phoneNumber: str
   const text = getShareText(receipt);
   const isIOS = isIOSDevice();
   const platform = isIOS ? 'iOS' : isMobileDevice() ? 'Android' : 'Desktop';
-  const cachedFile = getCachedShareFile(receipt);
-  const fileType = cachedFile?.type.includes('pdf') ? 'PDF' : cachedFile ? 'JPEG' : 'pending';
+
+  // The text now includes a public link to the receipt page (/r/<num>),
+  // so the recipient can open it with one tap inside WhatsApp — no file
+  // attachment needed.
 
   if (isIOS) {
-    // === iOS flow ===
-    // Safari blocks navigation/window.open after async awaits inside a user
-    // gesture handler. So:
-    // 1) Open a placeholder tab synchronously (kept inside the gesture)
-    // 2) Copy text to clipboard synchronously (still inside gesture)
-    // 3) If file is cached → download immediately, then redirect placeholder
-    //    to WhatsApp. If not cached → redirect placeholder right away to the
-    //    chat, build the file in background and trigger download when ready.
-
-    // Open placeholder tab synchronously to preserve gesture
+    // iOS: must navigate synchronously inside the user gesture
     const waPlaceholder = window.open('about:blank', '_blank');
-
-    // Sync clipboard write (best effort)
     copyTextToClipboard(text).catch(() => {});
-
     const waUrl = getWhatsAppUrl(text, phoneNumber);
-
-    if (cachedFile) {
-      // File is ready: download first so it lands in Files before chat opens
-      downloadPdfFile(cachedFile);
-      if (waPlaceholder) {
-        waPlaceholder.location.href = waUrl;
-      } else {
-        window.location.href = waUrl;
-      }
-      debugLog({
-        receiptNumber: receipt.receipt_number,
-        platform,
-        method: 'direct_to_member_ios_cached',
-        fileType,
-        cached: true,
-        result: 'downloaded_then_opened_chat',
-      });
-      return;
-    }
-
-    // File not cached: open chat immediately, build file in background
     if (waPlaceholder) {
       waPlaceholder.location.href = waUrl;
     } else {
       window.location.href = waUrl;
     }
-
-    // Build & download in background — Safari may still surface the download
-    // when user returns from WhatsApp.
-    getShareFile(receipt)
-      .then((file) => downloadPdfFile(file))
-      .catch((err) => console.warn('iOS background file build failed', err));
-
     debugLog({
       receiptNumber: receipt.receipt_number,
       platform,
-      method: 'direct_to_member_ios_uncached',
-      fileType: 'pending',
+      method: 'direct_to_member_with_link',
+      fileType: 'link',
       cached: false,
-      result: 'opened_chat_file_in_background',
+      result: 'opened_chat_with_link',
     });
     return;
   }
 
-  // === Android / Desktop flow ===
-  const file = cachedFile || await getShareFile(receipt);
-  const resolvedFileType = file.type.includes('pdf') ? 'PDF' : 'JPEG';
-
+  // Android / Desktop
   await copyTextToClipboard(text);
-  downloadPdfFile(file);
   openWhatsAppDirect(text, phoneNumber);
 
   debugLog({
     receiptNumber: receipt.receipt_number,
     platform,
-    method: 'direct_to_member',
-    fileType: resolvedFileType,
-    cached: Boolean(cachedFile),
-    result: 'opened_chat_with_file_download',
+    method: 'direct_to_member_with_link',
+    fileType: 'link',
+    cached: false,
+    result: 'opened_chat_with_link',
   });
 }
 
@@ -375,6 +375,8 @@ function getShareText(receipt: any): string {
   const methodStr = methodLabel
     ? `💳 אופן תשלום: ${methodLabel}${reference ? ` (${reference})` : ''}`
     : '';
+  const link = getReceiptShareLink(receipt);
+  const linkLine = link ? `🔗 לצפייה והורדת הקבלה:\n${link}` : '';
 
   return [
     `🧾 קבלה מס׳ ${receipt.receipt_number}`,
@@ -383,6 +385,8 @@ function getShareText(receipt: any): string {
     `📅 תאריך: ${formatDate(receipt.created_at)}`,
     `${receipt.description ? `📝 עבור: ${receipt.description}` : ''}`,
     methodStr,
+    '',
+    linkLine,
     '',
     'תודה רבה! 🙏',
     'בית כנסת "ברית שלום" עכו',
