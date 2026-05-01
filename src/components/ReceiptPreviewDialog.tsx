@@ -6,10 +6,18 @@ import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from "@/lib
 import { silentPrintReceipt } from "@/lib/thermal-print";
 import { remotePrintReceipt } from "@/lib/remote-print";
 import { prebuildReceiptPdf, shareReceiptWithPdf, shareReceipt, sendReceiptToWhatsAppDirect } from "@/lib/receipt-share";
+import { WhatsAppAttachGuide } from "@/components/WhatsAppAttachGuide";
 import { Send } from "lucide-react";
 
 import html2pdf from "html2pdf.js";
 import { toast } from "sonner";
+
+function detectPlatform(): "ios" | "android" | "desktop" {
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/.test(ua)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  return "desktop";
+}
 
 interface ReceiptPreviewDialogProps {
   receipt: any;
