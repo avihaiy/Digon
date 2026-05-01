@@ -6,10 +6,18 @@ import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from "@/lib
 import { silentPrintReceipt } from "@/lib/thermal-print";
 import { remotePrintReceipt } from "@/lib/remote-print";
 import { prebuildReceiptPdf, shareReceiptWithPdf, shareReceipt, sendReceiptToWhatsAppDirect } from "@/lib/receipt-share";
+import { WhatsAppAttachGuide } from "@/components/WhatsAppAttachGuide";
 import { Send } from "lucide-react";
 
 import html2pdf from "html2pdf.js";
 import { toast } from "sonner";
+
+function detectPlatform(): "ios" | "android" | "desktop" {
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/.test(ua)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  return "desktop";
+}
 
 interface ReceiptPreviewDialogProps {
   receipt: any;
@@ -34,9 +42,16 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
   const [isSharing, setIsSharing] = useState(false);
   const [isGeneralSharing, setIsGeneralSharing] = useState(false);
   const [isSendingToMember, setIsSendingToMember] = useState(false);
+  const [showAttachGuide, setShowAttachGuide] = useState(false);
 
   const memberPhone: string | undefined = receipt?.member?.phone;
   const memberName: string = receipt?.member?.full_name || "החבר";
+  const platform = typeof navigator !== "undefined" ? detectPlatform() : "desktop";
+  const guideFileName = receipt
+    ? platform === "ios"
+      ? `receipt-${receipt.receipt_number}.pdf`
+      : `receipt-${receipt.receipt_number}.jpg`
+    : undefined;
 
   const handleSendToMemberWhatsApp = async () => {
     if (!memberPhone) {
@@ -47,6 +62,9 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
     try {
       await sendReceiptToWhatsAppDirect(receipt, memberPhone);
       toast.success(`וואטסאפ נפתח עם ${memberName} • הקבלה ירדה — צרף אותה בצ'אט`);
+      // Show visual attach guide after a short delay so it surfaces when user
+      // returns from WhatsApp (or right away on desktop).
+      setTimeout(() => setShowAttachGuide(true), platform === "desktop" ? 400 : 1500);
     } catch (error: any) {
       if (error?.name !== "AbortError") {
         console.error("Send to member WhatsApp error:", error);
@@ -375,6 +393,14 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
           </Button>
         </div>
       </DialogContent>
+
+      <WhatsAppAttachGuide
+        open={showAttachGuide}
+        onOpenChange={setShowAttachGuide}
+        memberName={memberName}
+        fileName={guideFileName}
+        platform={platform}
+      />
     </Dialog>
   );
 }
