@@ -328,6 +328,7 @@ const AnimatedRoutes = () => {
           }
         />
         <Route path="/display" element={<Display />} />
+        <Route path="/r/:receiptNumber" element={<PublicReceipt />} />
         <Route
           path="*"
           element={
