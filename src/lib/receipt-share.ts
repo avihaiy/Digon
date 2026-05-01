@@ -1,8 +1,50 @@
 import html2pdf from 'html2pdf.js';
 import { formatCurrency, formatDate, getHebrewDate } from '@/lib/hebrew-utils';
+import { supabase } from '@/integrations/supabase/client';
 
 const pdfCache = new Map<string, File>();
 const imageCache = new Map<string, File>();
+const linkCache = new Map<string, string>();
+
+/**
+ * Returns a short, public web URL for the receipt that anyone can open.
+ * Format: https://<host>/r/<receipt_number>
+ * The page itself fetches the receipt from the public DB view.
+ */
+export function getReceiptShareLink(receipt: any): string {
+  const num = receipt?.receipt_number;
+  if (!num) return '';
+  const cached = linkCache.get(String(num));
+  if (cached) return cached;
+  // Use published domain when accessed from there; otherwise use current origin.
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const link = `${origin}/r/${num}`;
+  linkCache.set(String(num), link);
+  return link;
+}
+
+/**
+ * Uploads receipt PDF to public storage bucket and returns its public URL.
+ * Useful when you want a direct PDF link instead of the view page.
+ */
+export async function uploadReceiptPdfToStorage(receipt: any): Promise<string | null> {
+  try {
+    const file = await buildReceiptPdfFile(receipt);
+    const path = `receipt-${receipt.receipt_number}.pdf`;
+    const { error: upErr } = await supabase.storage
+      .from('receipt-pdfs')
+      .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+    if (upErr) {
+      console.warn('Receipt PDF upload failed', upErr);
+      return null;
+    }
+    const { data } = supabase.storage.from('receipt-pdfs').getPublicUrl(path);
+    return data?.publicUrl || null;
+  } catch (e) {
+    console.warn('uploadReceiptPdfToStorage error', e);
+    return null;
+  }
+}
 
 // Debug log for share attempts
 export interface ShareDebugEntry {
