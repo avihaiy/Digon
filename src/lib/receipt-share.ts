@@ -277,23 +277,82 @@ export async function sendReceiptToWhatsAppDirect(receipt: any, phoneNumber: str
   const isIOS = isIOSDevice();
   const platform = isIOS ? 'iOS' : isMobileDevice() ? 'Android' : 'Desktop';
   const cachedFile = getCachedShareFile(receipt);
+  const fileType = cachedFile?.type.includes('pdf') ? 'PDF' : cachedFile ? 'JPEG' : 'pending';
+
+  if (isIOS) {
+    // === iOS flow ===
+    // Safari blocks navigation/window.open after async awaits inside a user
+    // gesture handler. So:
+    // 1) Open a placeholder tab synchronously (kept inside the gesture)
+    // 2) Copy text to clipboard synchronously (still inside gesture)
+    // 3) If file is cached → download immediately, then redirect placeholder
+    //    to WhatsApp. If not cached → redirect placeholder right away to the
+    //    chat, build the file in background and trigger download when ready.
+
+    // Open placeholder tab synchronously to preserve gesture
+    const waPlaceholder = window.open('about:blank', '_blank');
+
+    // Sync clipboard write (best effort)
+    copyTextToClipboard(text).catch(() => {});
+
+    const waUrl = getWhatsAppUrl(text, phoneNumber);
+
+    if (cachedFile) {
+      // File is ready: download first so it lands in Files before chat opens
+      downloadPdfFile(cachedFile);
+      if (waPlaceholder) {
+        waPlaceholder.location.href = waUrl;
+      } else {
+        window.location.href = waUrl;
+      }
+      debugLog({
+        receiptNumber: receipt.receipt_number,
+        platform,
+        method: 'direct_to_member_ios_cached',
+        fileType,
+        cached: true,
+        result: 'downloaded_then_opened_chat',
+      });
+      return;
+    }
+
+    // File not cached: open chat immediately, build file in background
+    if (waPlaceholder) {
+      waPlaceholder.location.href = waUrl;
+    } else {
+      window.location.href = waUrl;
+    }
+
+    // Build & download in background — Safari may still surface the download
+    // when user returns from WhatsApp.
+    getShareFile(receipt)
+      .then((file) => downloadPdfFile(file))
+      .catch((err) => console.warn('iOS background file build failed', err));
+
+    debugLog({
+      receiptNumber: receipt.receipt_number,
+      platform,
+      method: 'direct_to_member_ios_uncached',
+      fileType: 'pending',
+      cached: false,
+      result: 'opened_chat_file_in_background',
+    });
+    return;
+  }
+
+  // === Android / Desktop flow ===
   const file = cachedFile || await getShareFile(receipt);
-  const fileType = file.type.includes('pdf') ? 'PDF' : 'JPEG';
+  const resolvedFileType = file.type.includes('pdf') ? 'PDF' : 'JPEG';
 
-  // Always copy text to clipboard (helpful on all platforms)
   await copyTextToClipboard(text);
-
-  // Download/save the file so the user can attach it in WhatsApp
   downloadPdfFile(file);
-
-  // Open WhatsApp directly to the chat with this number
   openWhatsAppDirect(text, phoneNumber);
 
   debugLog({
     receiptNumber: receipt.receipt_number,
     platform,
     method: 'direct_to_member',
-    fileType,
+    fileType: resolvedFileType,
     cached: Boolean(cachedFile),
     result: 'opened_chat_with_file_download',
   });
