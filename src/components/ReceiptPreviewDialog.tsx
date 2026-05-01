@@ -393,6 +393,14 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
           </Button>
         </div>
       </DialogContent>
+
+      <WhatsAppAttachGuide
+        open={showAttachGuide}
+        onOpenChange={setShowAttachGuide}
+        memberName={memberName}
+        fileName={guideFileName}
+        platform={platform}
+      />
     </Dialog>
   );
 }
