@@ -417,6 +417,8 @@ function getShareText(receipt: any): string {
   const methodStr = methodLabel
     ? `💳 אופן תשלום: ${methodLabel}${reference ? ` (${reference})` : ''}`
     : '';
+  const link = getReceiptShareLink(receipt);
+  const linkLine = link ? `🔗 לצפייה והורדת הקבלה:\n${link}` : '';
 
   return [
     `🧾 קבלה מס׳ ${receipt.receipt_number}`,
@@ -425,6 +427,8 @@ function getShareText(receipt: any): string {
     `📅 תאריך: ${formatDate(receipt.created_at)}`,
     `${receipt.description ? `📝 עבור: ${receipt.description}` : ''}`,
     methodStr,
+    '',
+    linkLine,
     '',
     'תודה רבה! 🙏',
     'בית כנסת "ברית שלום" עכו',
