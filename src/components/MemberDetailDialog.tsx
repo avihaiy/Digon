@@ -29,6 +29,7 @@ import {
   Plus,
   Trash2,
   Minus,
+  Send,
 } from 'lucide-react';
 import {
   formatCurrency,
@@ -36,7 +37,7 @@ import {
   PAYMENT_METHOD,
   
 } from '@/lib/hebrew-utils';
-import { shareReceiptWithPdf } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, sendReceiptToWhatsAppDirect } from '@/lib/receipt-share';
 import { toast } from 'sonner';
 import html2pdf from 'html2pdf.js';
 
@@ -102,6 +103,22 @@ export function MemberDetailDialog({
     enabled: !!memberId && open,
   });
 
+  // Fetch member info (phone)
+  const { data: memberInfo } = useQuery({
+    queryKey: ['member-info', memberId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('phone, email')
+        .eq('id', memberId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!memberId && open,
+  });
+
+  const memberPhone = memberInfo?.phone;
 
   // Fetch receipts
   const { data: receipts, isLoading: loadingReceipts } = useQuery({
@@ -891,12 +908,37 @@ export function MemberDetailDialog({
                         <div className="flex items-center gap-2">
                           <span className="font-bold">{formatCurrency(Number(r.total_amount))}</span>
                           <Button
+                            variant="default"
+                            size="icon"
+                            disabled={!memberPhone}
+                            title={memberPhone ? `שלח ל-${memberName} (${memberPhone})` : 'אין מספר טלפון'}
+                            className="h-8 w-8 bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                            onClick={async () => {
+                              if (!memberPhone) {
+                                toast.error('לא הוגדר מספר טלפון לחבר זה');
+                                return;
+                              }
+                              try {
+                                const receiptWithMember = { ...r, member: { full_name: memberName, phone: memberPhone } };
+                                await sendReceiptToWhatsAppDirect(receiptWithMember, memberPhone);
+                                toast.success(`וואטסאפ נפתח עם ${memberName} • ההודעה כוללת קישור לקבלה`);
+                              } catch (error: any) {
+                                if (error?.name !== 'AbortError') {
+                                  console.error('Send direct error:', error);
+                                  toast.error('שגיאה בשליחת הקבלה');
+                                }
+                              }
+                            }}
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                          <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
                             onClick={async () => {
                               try {
-                                const receiptWithMember = { ...r, member: { full_name: memberName } };
+                                const receiptWithMember = { ...r, member: { full_name: memberName, phone: memberPhone } };
                                 const result = await shareReceiptWithPdf(receiptWithMember);
                                 if (result === 'shared_with_file') toast.success('הקבלה שותפה');
                                 else if (result === 'shared_with_file_clipboard') toast.success('הקבלה שותפה! הטקסט הועתק - הדבק בצ׳אט');

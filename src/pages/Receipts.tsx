@@ -44,6 +44,7 @@ import {
   Wifi,
   Share2,
   MoreVertical,
+  Send,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -60,7 +61,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { DeleteCodeDialog } from '@/components/DeleteCodeDialog';
-import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs, sendReceiptToWhatsAppDirect } from '@/lib/receipt-share';
 import { ShareDebugPanel } from '@/components/ShareDebugPanel';
 
 export default function Receipts() {
@@ -263,6 +264,23 @@ export default function Receipts() {
   const handleWhatsAppShare = (receipt: any) => {
     const phone = receipt.member?.phone;
     shareViaWhatsApp(receipt, phone);
+  };
+
+  const handleSendDirectToMember = async (receipt: any) => {
+    const phone = receipt.member?.phone;
+    if (!phone) {
+      toast.error('לא הוגדר מספר טלפון לחבר זה');
+      return;
+    }
+    try {
+      await sendReceiptToWhatsAppDirect(receipt, phone);
+      toast.success(`וואטסאפ נפתח עם ${receipt.member?.full_name || 'החבר'} • ההודעה כוללת קישור לקבלה`);
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        console.error('Send direct error:', error);
+        toast.error('שגיאה בשליחת הקבלה');
+      }
+    }
   };
 
   // Filter receipts
@@ -631,6 +649,16 @@ export default function Receipts() {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => handleSendDirectToMember(receipt)}
+                          disabled={!receipt.member?.phone}
+                          title={receipt.member?.phone ? `שלח ל-${receipt.member?.full_name}` : 'אין טלפון'}
+                          className="h-8 w-8 p-0 bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-600 disabled:opacity-50"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleShareReceipt(receipt)}
                           className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
                         >
@@ -690,6 +718,16 @@ export default function Receipts() {
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => handleRemotePrint(receipt)} title="הדפס מרחוק" className="h-8 w-8 p-0">
                           <Wifi className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSendDirectToMember(receipt)}
+                          disabled={!receipt.member?.phone}
+                          title={receipt.member?.phone ? `שלח ל-${receipt.member?.full_name} (${receipt.member?.phone})` : 'אין מספר טלפון'}
+                          className="h-8 w-8 p-0 bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-600 disabled:opacity-50"
+                        >
+                          <Send className="w-4 h-4" />
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => handleShareReceipt(receipt)} title="שתף לווצאפ" className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
                           <MessageCircle className="w-4 h-4" />
