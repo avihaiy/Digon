@@ -786,9 +786,6 @@ export function MemberDetailDialog({
     }
   };
 
-  const [isSendingSummaryDirect, setIsSendingSummaryDirect] = useState(false);
-  const [isSendingLedgerDirect, setIsSendingLedgerDirect] = useState(false);
-
 
   const tabs = [
     { key: 'summary' as const, label: 'סיכום', icon: AlertCircle },
