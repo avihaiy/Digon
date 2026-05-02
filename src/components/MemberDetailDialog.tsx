@@ -103,6 +103,22 @@ export function MemberDetailDialog({
     enabled: !!memberId && open,
   });
 
+  // Fetch member info (phone)
+  const { data: memberInfo } = useQuery({
+    queryKey: ['member-info', memberId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('members')
+        .select('phone, email')
+        .eq('id', memberId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!memberId && open,
+  });
+
+  const memberPhone = memberInfo?.phone;
 
   // Fetch receipts
   const { data: receipts, isLoading: loadingReceipts } = useQuery({
