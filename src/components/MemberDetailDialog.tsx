@@ -37,7 +37,7 @@ import {
   PAYMENT_METHOD,
   
 } from '@/lib/hebrew-utils';
-import { shareReceiptWithPdf } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, sendReceiptToWhatsAppDirect } from '@/lib/receipt-share';
 import { toast } from 'sonner';
 import html2pdf from 'html2pdf.js';
 
