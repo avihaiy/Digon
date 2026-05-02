@@ -82,6 +82,8 @@ export function MemberDetailDialog({
   const [payAmount, setPayAmount] = useState('');
   const [isSharingLedgerText, setIsSharingLedgerText] = useState(false);
   const [isSharingLedgerPdf, setIsSharingLedgerPdf] = useState(false);
+  const [isSendingSummaryDirect, setIsSendingSummaryDirect] = useState(false);
+  const [isSendingLedgerDirect, setIsSendingLedgerDirect] = useState(false);
   const [shareFileStatus, setShareFileStatus] = useState<Record<ShareFileKey, ShareFileStatus>>({ ...DEFAULT_SHARE_FILE_STATUS });
   const shareFileCacheRef = useRef<Partial<Record<ShareFileKey, File>>>({});
   const shareFileSignatureRef = useRef<Partial<Record<ShareFileKey, string>>>({});
@@ -735,6 +737,58 @@ export function MemberDetailDialog({
     }
   };
 
+  const sendDirectToMemberPhone = async (
+    key: ShareFileKey,
+    payload: SharePayload,
+    setLoading: (v: boolean) => void,
+  ) => {
+    if (!memberPhone) {
+      toast.error('לא הוגדר מספר טלפון לחבר זה');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Open WhatsApp chat immediately to keep iOS user gesture alive
+      const phone = memberPhone.replace(/\D/g, '');
+      const intl = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
+      const waUrl = `https://wa.me/${intl}?text=${encodeURIComponent(payload.shareText)}`;
+      const waWindow = window.open(waUrl, '_blank', 'noopener,noreferrer');
+      if (!waWindow) {
+        // Fallback for popup blockers
+        window.location.href = waUrl;
+      }
+
+      // Get/build the file and trigger a local download for manual attachment
+      let file = getReadyShareFile(key, payload.signature);
+      if (!file) {
+        file = await getCachedOrBuildShareFile(key, payload.signature, () =>
+          buildShareImageFile(generateShareElement(payload.html), payload.fileName),
+        );
+      }
+
+      if (file) {
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+
+      toast.success(`וואטסאפ נפתח עם ${memberName} • הקובץ הורד — צרף אותו בצ׳אט`);
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        console.error('Direct send error:', error);
+        toast.error('שגיאה בשליחה לוואטסאפ');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const tabs = [
     { key: 'summary' as const, label: 'סיכום', icon: AlertCircle },
     { key: 'ledger' as const, label: 'כרטיסיה', icon: Wallet },
@@ -835,11 +889,11 @@ export function MemberDetailDialog({
                   </div>
 
                   {/* Share Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-2"
+                      className="flex-1 min-w-[45%] gap-2"
                       onClick={handleShareText}
                       disabled={isSharingText}
                     >
@@ -849,7 +903,7 @@ export function MemberDetailDialog({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-2"
+                      className="flex-1 min-w-[45%] gap-2"
                       onClick={handleSharePdf}
                       disabled={isSharingPdf || shareFileStatus.summary === 'building'}
                     >
@@ -857,6 +911,18 @@ export function MemberDetailDialog({
                         ? <Loader2 className="w-4 h-4 animate-spin" />
                         : <FileDown className="w-4 h-4" />}
                       {shareFileStatus.summary === 'building' ? 'מכין קובץ...' : 'שתף PDF'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                      onClick={() => sendDirectToMemberPhone('summary', summarySharePayload, setIsSendingSummaryDirect)}
+                      disabled={!memberPhone || isSendingSummaryDirect}
+                      title={memberPhone ? `שליחה ישירה ל-${memberName} (${memberPhone})` : 'לא הוגדר מספר טלפון'}
+                    >
+                      {isSendingSummaryDirect ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {memberPhone
+                        ? `שלח לוואטסאפ של ${memberName}`
+                        : 'שלח לוואטסאפ — אין טלפון'}
                     </Button>
                   </div>
                 </div>
@@ -1033,11 +1099,11 @@ export function MemberDetailDialog({
 
                   {/* Share Ledger Buttons */}
                   {charges && charges.length > 0 && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 gap-2"
+                        className="flex-1 min-w-[45%] gap-2"
                         disabled={isSharingLedgerText}
                         onClick={async () => {
                           setIsSharingLedgerText(true);
@@ -1085,7 +1151,7 @@ export function MemberDetailDialog({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 gap-2"
+                        className="flex-1 min-w-[45%] gap-2"
                         disabled={isSharingLedgerPdf || shareFileStatus.ledger === 'building'}
                         onClick={handleShareLedgerPdf}
                       >
@@ -1093,6 +1159,18 @@ export function MemberDetailDialog({
                           ? <Loader2 className="w-4 h-4 animate-spin" />
                           : <FileDown className="w-4 h-4" />}
                         {shareFileStatus.ledger === 'building' ? 'מכין קובץ...' : 'שתף PDF'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                        onClick={() => sendDirectToMemberPhone('ledger', ledgerSharePayload, setIsSendingLedgerDirect)}
+                        disabled={!memberPhone || isSendingLedgerDirect}
+                        title={memberPhone ? `שליחה ישירה ל-${memberName} (${memberPhone})` : 'לא הוגדר מספר טלפון'}
+                      >
+                        {isSendingLedgerDirect ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {memberPhone
+                          ? `שלח לוואטסאפ של ${memberName}`
+                          : 'שלח לוואטסאפ — אין טלפון'}
                       </Button>
                     </div>
                   )}
