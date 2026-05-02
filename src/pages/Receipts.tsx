@@ -266,6 +266,23 @@ export default function Receipts() {
     shareViaWhatsApp(receipt, phone);
   };
 
+  const handleSendDirectToMember = async (receipt: any) => {
+    const phone = receipt.member?.phone;
+    if (!phone) {
+      toast.error('לא הוגדר מספר טלפון לחבר זה');
+      return;
+    }
+    try {
+      await sendReceiptToWhatsAppDirect(receipt, phone);
+      toast.success(`וואטסאפ נפתח עם ${receipt.member?.full_name || 'החבר'} • ההודעה כוללת קישור לקבלה`);
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        console.error('Send direct error:', error);
+        toast.error('שגיאה בשליחת הקבלה');
+      }
+    }
+  };
+
   // Filter receipts
   const filteredReceipts = receipts?.filter((r: any) => {
     // Text search
