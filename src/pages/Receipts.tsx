@@ -44,6 +44,7 @@ import {
   Wifi,
   Share2,
   MoreVertical,
+  Send,
 } from 'lucide-react';
 import {
   DropdownMenu,
