@@ -889,11 +889,11 @@ export function MemberDetailDialog({
                   </div>
 
                   {/* Share Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-2"
+                      className="flex-1 min-w-[45%] gap-2"
                       onClick={handleShareText}
                       disabled={isSharingText}
                     >
@@ -903,7 +903,7 @@ export function MemberDetailDialog({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 gap-2"
+                      className="flex-1 min-w-[45%] gap-2"
                       onClick={handleSharePdf}
                       disabled={isSharingPdf || shareFileStatus.summary === 'building'}
                     >
@@ -911,6 +911,18 @@ export function MemberDetailDialog({
                         ? <Loader2 className="w-4 h-4 animate-spin" />
                         : <FileDown className="w-4 h-4" />}
                       {shareFileStatus.summary === 'building' ? 'מכין קובץ...' : 'שתף PDF'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                      onClick={() => sendDirectToMemberPhone('summary', summarySharePayload, setIsSendingSummaryDirect)}
+                      disabled={!memberPhone || isSendingSummaryDirect}
+                      title={memberPhone ? `שליחה ישירה ל-${memberName} (${memberPhone})` : 'לא הוגדר מספר טלפון'}
+                    >
+                      {isSendingSummaryDirect ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {memberPhone
+                        ? `שלח לוואטסאפ של ${memberName}`
+                        : 'שלח לוואטסאפ — אין טלפון'}
                     </Button>
                   </div>
                 </div>
