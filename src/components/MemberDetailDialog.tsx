@@ -735,6 +735,61 @@ export function MemberDetailDialog({
     }
   };
 
+  const sendDirectToMemberPhone = async (
+    key: ShareFileKey,
+    payload: SharePayload,
+    setLoading: (v: boolean) => void,
+  ) => {
+    if (!memberPhone) {
+      toast.error('לא הוגדר מספר טלפון לחבר זה');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Open WhatsApp chat immediately to keep iOS user gesture alive
+      const phone = memberPhone.replace(/\D/g, '');
+      const intl = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
+      const waUrl = `https://wa.me/${intl}?text=${encodeURIComponent(payload.shareText)}`;
+      const waWindow = window.open(waUrl, '_blank', 'noopener,noreferrer');
+      if (!waWindow) {
+        // Fallback for popup blockers
+        window.location.href = waUrl;
+      }
+
+      // Get/build the file and trigger a local download for manual attachment
+      let file = getReadyShareFile(key, payload.signature);
+      if (!file) {
+        file = await getCachedOrBuildShareFile(key, payload.signature, () =>
+          buildShareImageFile(generateShareElement(payload.html), payload.fileName),
+        );
+      }
+
+      if (file) {
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+
+      toast.success(`וואטסאפ נפתח עם ${memberName} • הקובץ הורד — צרף אותו בצ׳אט`);
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        console.error('Direct send error:', error);
+        toast.error('שגיאה בשליחה לוואטסאפ');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [isSendingSummaryDirect, setIsSendingSummaryDirect] = useState(false);
+  const [isSendingLedgerDirect, setIsSendingLedgerDirect] = useState(false);
+
+
   const tabs = [
     { key: 'summary' as const, label: 'סיכום', icon: AlertCircle },
     { key: 'ledger' as const, label: 'כרטיסיה', icon: Wallet },
