@@ -60,7 +60,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { DeleteCodeDialog } from '@/components/DeleteCodeDialog';
-import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs, sendReceiptToWhatsAppDirect } from '@/lib/receipt-share';
 import { ShareDebugPanel } from '@/components/ShareDebugPanel';
 
 export default function Receipts() {
