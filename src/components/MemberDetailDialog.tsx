@@ -82,6 +82,8 @@ export function MemberDetailDialog({
   const [payAmount, setPayAmount] = useState('');
   const [isSharingLedgerText, setIsSharingLedgerText] = useState(false);
   const [isSharingLedgerPdf, setIsSharingLedgerPdf] = useState(false);
+  const [isSendingSummaryDirect, setIsSendingSummaryDirect] = useState(false);
+  const [isSendingLedgerDirect, setIsSendingLedgerDirect] = useState(false);
   const [shareFileStatus, setShareFileStatus] = useState<Record<ShareFileKey, ShareFileStatus>>({ ...DEFAULT_SHARE_FILE_STATUS });
   const shareFileCacheRef = useRef<Partial<Record<ShareFileKey, File>>>({});
   const shareFileSignatureRef = useRef<Partial<Record<ShareFileKey, string>>>({});
