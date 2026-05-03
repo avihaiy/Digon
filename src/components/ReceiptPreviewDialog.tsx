@@ -75,6 +75,20 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
     }
   };
 
+  const handleSendToMemberSMS = () => {
+    if (!memberPhone) {
+      toast.error("לא הוגדר מספר טלפון לחבר זה");
+      return;
+    }
+    const link = getReceiptShareLink(receipt);
+    const text = `קבלה מס׳ ${receipt.receipt_number} עבור ${memberName}\nסכום: ${formatCurrency(Number(receipt.total_amount))}\n\nלצפייה והורדת הקבלה:\n${link}\n\nבית כנסת "ברית שלום" עכו`;
+    const cleanPhone = memberPhone.replace(/[\s\-()]/g, "");
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIOS ? "&" : "?";
+    window.location.href = `sms:${cleanPhone}${separator}body=${encodeURIComponent(text)}`;
+    toast.success(`נפתח SMS עם ${memberName}`);
+  };
+
   useEffect(() => {
     if (!open || !receipt) return;
     prebuildReceiptPdf(receipt);
