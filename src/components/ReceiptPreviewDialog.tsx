@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, X, FileDown, Loader2, Wifi, Share2, MessageCircle } from "lucide-react";
+import { Printer, X, FileDown, Loader2, Wifi, Share2, MessageCircle, MessageSquare } from "lucide-react";
+import { getReceiptShareLink } from "@/lib/receipt-share";
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { silentPrintReceipt } from "@/lib/thermal-print";
 import { remotePrintReceipt } from "@/lib/remote-print";
@@ -72,6 +73,20 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
     } finally {
       setIsSendingToMember(false);
     }
+  };
+
+  const handleSendToMemberSMS = () => {
+    if (!memberPhone) {
+      toast.error("לא הוגדר מספר טלפון לחבר זה");
+      return;
+    }
+    const link = getReceiptShareLink(receipt);
+    const text = `קבלה מס׳ ${receipt.receipt_number} עבור ${memberName}\nסכום: ${formatCurrency(Number(receipt.total_amount))}\n\nלצפייה והורדת הקבלה:\n${link}\n\nבית כנסת "ברית שלום" עכו`;
+    const cleanPhone = memberPhone.replace(/[\s\-()]/g, "");
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIOS ? "&" : "?";
+    window.location.href = `sms:${cleanPhone}${separator}body=${encodeURIComponent(text)}`;
+    toast.success(`נפתח SMS עם ${memberName}`);
   };
 
   useEffect(() => {
@@ -314,6 +329,19 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
             {memberPhone
               ? `שליחה לוואטסאפ של ${memberName} (${memberPhone})`
               : "שליחה לוואטסאפ — לא הוגדר טלפון לחבר"}
+          </Button>
+
+          <Button
+            onClick={handleSendToMemberSMS}
+            disabled={!memberPhone}
+            variant="outline"
+            className="w-full gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+            title={memberPhone ? `שליחת SMS ל-${memberPhone}` : "לא הוגדר מספר טלפון לחבר"}
+          >
+            <MessageSquare className="w-4 h-4" />
+            {memberPhone
+              ? `שליחת SMS עם קישור לקבלה`
+              : "SMS — לא הוגדר טלפון לחבר"}
           </Button>
 
           <div className="flex gap-2 justify-center flex-wrap">
