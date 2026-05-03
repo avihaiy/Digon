@@ -331,6 +331,19 @@ export function ReceiptPreviewDialog({ receipt, open, onOpenChange, onPrint }: R
               : "שליחה לוואטסאפ — לא הוגדר טלפון לחבר"}
           </Button>
 
+          <Button
+            onClick={handleSendToMemberSMS}
+            disabled={!memberPhone}
+            variant="outline"
+            className="w-full gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+            title={memberPhone ? `שליחת SMS ל-${memberPhone}` : "לא הוגדר מספר טלפון לחבר"}
+          >
+            <MessageSquare className="w-4 h-4" />
+            {memberPhone
+              ? `שליחת SMS עם קישור לקבלה`
+              : "SMS — לא הוגדר טלפון לחבר"}
+          </Button>
+
           <div className="flex gap-2 justify-center flex-wrap">
             <Button size="sm" onClick={handlePrint} disabled={isPrinting} className="px-4">
               {isPrinting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Printer className="w-4 h-4 ml-2" />}
