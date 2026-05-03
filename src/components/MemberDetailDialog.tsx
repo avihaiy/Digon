@@ -924,6 +924,30 @@ export function MemberDetailDialog({
                         ? `שלח לוואטסאפ של ${memberName}`
                         : 'שלח לוואטסאפ — אין טלפון'}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full gap-2 border-emerald-600/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                      onClick={async () => {
+                        if (!memberId) return;
+                        const url = `${window.location.origin}/d/${memberId}`;
+                        const text = `סיכום חוב פתוח עבור ${memberName}\n${url}\n\nבית כנסת "ברית שלום" עכו`;
+                        const phone = memberPhone?.replace(/\D/g, '');
+                        if (phone) {
+                          const intl = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
+                          window.open(`https://wa.me/${intl}?text=${encodeURIComponent(text)}`, '_blank');
+                          toast.success('נפתח וואטסאפ עם הקישור');
+                        } else if (navigator.share) {
+                          try { await navigator.share({ text }); } catch {}
+                        } else {
+                          await navigator.clipboard.writeText(url);
+                          toast.success('הקישור הועתק ללוח');
+                        }
+                      }}
+                    >
+                      <Send className="w-4 h-4" />
+                      שלח קישור לדף חובות (PDF)
+                    </Button>
                   </div>
                 </div>
               )}
