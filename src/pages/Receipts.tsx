@@ -675,6 +675,16 @@ export default function Receipts() {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => handleSendSMS(receipt)}
+                          disabled={!receipt.member?.phone}
+                          title={receipt.member?.phone ? 'שלח SMS עם קישור לקבלה' : 'אין טלפון'}
+                          className="h-8 w-8 p-0 bg-blue-600 text-white hover:bg-blue-700 hover:text-white border-blue-600 disabled:opacity-50"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleShareReceipt(receipt)}
                           className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
                         >
