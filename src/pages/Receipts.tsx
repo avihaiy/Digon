@@ -45,6 +45,7 @@ import {
   Share2,
   MoreVertical,
   Send,
+  MessageSquare,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -61,7 +62,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ReceiptPreviewDialog } from '@/components/ReceiptPreviewDialog';
 import { DeleteCodeDialog } from '@/components/DeleteCodeDialog';
-import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs, sendReceiptToWhatsAppDirect } from '@/lib/receipt-share';
+import { shareReceiptWithPdf, shareReceipt, shareViaWhatsApp, buildReceiptPdfFile, downloadPdfFile, prebuildReceiptPdfs, sendReceiptToWhatsAppDirect, getReceiptShareLink } from '@/lib/receipt-share';
 import { ShareDebugPanel } from '@/components/ShareDebugPanel';
 
 export default function Receipts() {
@@ -281,6 +282,21 @@ export default function Receipts() {
         toast.error('שגיאה בשליחת הקבלה');
       }
     }
+  };
+
+  const handleSendSMS = (receipt: any) => {
+    const phone = receipt.member?.phone;
+    if (!phone) {
+      toast.error('לא הוגדר מספר טלפון לחבר זה');
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, '');
+    const link = getReceiptShareLink(receipt);
+    const text = `שלום ${receipt.member?.full_name || ''},\nקבלה מס׳ ${receipt.receipt_number} ע״ס ${formatCurrency(Number(receipt.total_amount))}\nלצפייה והורדה:\n${link}`;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIOS ? '&' : '?';
+    window.location.href = `sms:${cleanPhone}${separator}body=${encodeURIComponent(text)}`;
+    toast.success('נפתחת הודעת SMS עם קישור לקבלה');
   };
 
   // Filter receipts
@@ -659,6 +675,16 @@ export default function Receipts() {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => handleSendSMS(receipt)}
+                          disabled={!receipt.member?.phone}
+                          title={receipt.member?.phone ? 'שלח SMS עם קישור לקבלה' : 'אין טלפון'}
+                          className="h-8 w-8 p-0 bg-blue-600 text-white hover:bg-blue-700 hover:text-white border-blue-600 disabled:opacity-50"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => handleShareReceipt(receipt)}
                           className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
                         >
@@ -728,6 +754,9 @@ export default function Receipts() {
                           className="h-8 w-8 p-0 bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-600 disabled:opacity-50"
                         >
                           <Send className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleSendSMS(receipt)} disabled={!receipt.member?.phone} title={receipt.member?.phone ? 'שלח SMS עם קישור לקבלה' : 'אין מספר טלפון'} className="h-8 w-8 p-0 bg-blue-600 text-white hover:bg-blue-700 hover:text-white border-blue-600 disabled:opacity-50">
+                          <MessageSquare className="w-4 h-4" />
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => handleShareReceipt(receipt)} title="שתף לווצאפ" className="h-8 w-8 p-0 text-green-600 hover:text-green-700">
                           <MessageCircle className="w-4 h-4" />
