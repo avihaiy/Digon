@@ -45,6 +45,7 @@ import {
   Share2,
   MoreVertical,
   Send,
+  MessageSquare,
 } from 'lucide-react';
 import {
   DropdownMenu,
