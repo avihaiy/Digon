@@ -284,6 +284,21 @@ export default function Receipts() {
     }
   };
 
+  const handleSendSMS = (receipt: any) => {
+    const phone = receipt.member?.phone;
+    if (!phone) {
+      toast.error('לא הוגדר מספר טלפון לחבר זה');
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, '');
+    const link = getReceiptShareLink(receipt);
+    const text = `שלום ${receipt.member?.full_name || ''},\nקבלה מס׳ ${receipt.receipt_number} ע״ס ${formatCurrency(Number(receipt.total_amount))}\nלצפייה והורדה:\n${link}`;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIOS ? '&' : '?';
+    window.location.href = `sms:${cleanPhone}${separator}body=${encodeURIComponent(text)}`;
+    toast.success('נפתחת הודעת SMS עם קישור לקבלה');
+  };
+
   // Filter receipts
   const filteredReceipts = receipts?.filter((r: any) => {
     // Text search
