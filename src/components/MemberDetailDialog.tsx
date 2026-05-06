@@ -948,6 +948,30 @@ export function MemberDetailDialog({
                       <Send className="w-4 h-4" />
                       שלח קישור לדף חובות (PDF)
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full gap-2 border-blue-600/40 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                      onClick={async () => {
+                        if (!memberId) return;
+                        const url = `${window.location.origin}/my/${memberId}`;
+                        const text = `שלום ${memberName},\nהאזור האישי שלך בבית כנסת "ברית שלום" עכו — צפייה בחובות וקבלות:\n${url}`;
+                        const phone = memberPhone?.replace(/\D/g, '');
+                        if (phone) {
+                          const intl = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
+                          window.open(`https://wa.me/${intl}?text=${encodeURIComponent(text)}`, '_blank');
+                          toast.success('נפתח וואטסאפ עם קישור לאזור האישי');
+                        } else if (navigator.share) {
+                          try { await navigator.share({ text }); } catch {}
+                        } else {
+                          await navigator.clipboard.writeText(url);
+                          toast.success('הקישור הועתק ללוח');
+                        }
+                      }}
+                    >
+                      <Send className="w-4 h-4" />
+                      שלח קישור לאזור אישי
+                    </Button>
                   </div>
                 </div>
               )}
