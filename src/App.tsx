@@ -332,6 +332,7 @@ const AnimatedRoutes = () => {
         <Route path="/display" element={<Display />} />
         <Route path="/r/:receiptNumber" element={<PublicReceipt />} />
         <Route path="/d/:memberId" element={<PublicMemberDebts />} />
+        <Route path="/my/:memberId" element={<PublicMemberArea />} />
         <Route
           path="*"
           element={
