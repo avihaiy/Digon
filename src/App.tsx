@@ -40,6 +40,7 @@ import Reminders from "@/pages/Reminders";
 import Events from "@/pages/Events";
 import PublicReceipt from "@/pages/PublicReceipt";
 import PublicMemberDebts from "@/pages/PublicMemberDebts";
+import PublicMemberArea from "@/pages/PublicMemberArea";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 
