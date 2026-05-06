@@ -105,10 +105,24 @@ export default function PublicMemberArea() {
     return () => { cancelled = true; };
   }, [memberId]);
 
-  const totalOwed = useMemo(() => {
-    return charges.reduce((s, c) => s + c.remaining_balance, 0)
-      + pending.reduce((s, p) => s + p.amount, 0);
-  }, [charges, pending]);
+  const totalCharges = useMemo(
+    () => charges.reduce((s, c) => s + c.remaining_balance, 0),
+    [charges]
+  );
+  const totalPending = useMemo(
+    () => pending.reduce((s, p) => s + p.amount, 0),
+    [pending]
+  );
+  // יתרה נטו: חיובים פתוחים פחות תשלומים ממתינים (אם יאושרו, יקזזו חיובים)
+  const netOwed = useMemo(
+    () => Math.max(0, totalCharges - totalPending),
+    [totalCharges, totalPending]
+  );
+  const pendingCredit = useMemo(
+    () => Math.max(0, totalPending - totalCharges),
+    [totalCharges, totalPending]
+  );
+  const totalOwed = netOwed;
 
   const totalReceipts = useMemo(
     () => receipts.reduce((s, r) => s + r.total_amount, 0),
