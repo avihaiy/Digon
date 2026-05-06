@@ -190,7 +190,7 @@ export default function PublicMemberArea() {
           </TabsList>
 
           <TabsContent value="debts" className="mt-4 space-y-3">
-            {totalOwed === 0 ? (
+            {charges.length === 0 && pending.length === 0 ? (
               <Card className="p-8 text-center">
                 <div className="text-4xl mb-2">🎉</div>
                 <div className="font-bold text-foreground">אין חובות פתוחים</div>
@@ -198,9 +198,39 @@ export default function PublicMemberArea() {
               </Card>
             ) : (
               <>
+                {/* סיכום מפורט */}
+                <Card className="p-4 space-y-2">
+                  <div className="font-bold mb-1">סיכום</div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">סה״כ חיובים פתוחים</span>
+                    <span className="font-bold">{formatCurrency(totalCharges)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">סה״כ תשלומים ממתינים לאישור</span>
+                    <span className="font-bold text-amber-600">{formatCurrency(totalPending)}</span>
+                  </div>
+                  <div className="border-t pt-2 mt-1 flex items-center justify-between">
+                    <span className="font-bold">יתרת חוב מחושבת</span>
+                    <span className={`font-extrabold text-lg ${netOwed > 0 ? "text-destructive" : "text-emerald-600"}`}>
+                      {formatCurrency(netOwed)}
+                    </span>
+                  </div>
+                  {pendingCredit > 0 && (
+                    <div className="flex items-center justify-between text-xs text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 rounded-md p-2 mt-1">
+                      <span>זיכוי צפוי לאחר אישור התשלומים</span>
+                      <span className="font-bold">{formatCurrency(pendingCredit)}</span>
+                    </div>
+                  )}
+                  {totalPending > 0 && netOwed > 0 && (
+                    <p className="text-[11px] text-muted-foreground pt-1">
+                      * תשלומים ממתינים לאישור הגזבר ויקזזו את החוב לאחר אישורם.
+                    </p>
+                  )}
+                </Card>
+
                 {charges.length > 0 && (
                   <Card className="p-4">
-                    <div className="font-bold mb-3">חיובים פתוחים</div>
+                    <div className="font-bold mb-3">חיובים פתוחים ({charges.length})</div>
                     <div className="space-y-2">
                       {charges.map((c) => (
                         <div key={c.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/40">
@@ -216,7 +246,7 @@ export default function PublicMemberArea() {
                 )}
                 {pending.length > 0 && (
                   <Card className="p-4">
-                    <div className="font-bold mb-3">תשלומים ממתינים</div>
+                    <div className="font-bold mb-3">תשלומים ממתינים לאישור ({pending.length})</div>
                     <div className="space-y-2">
                       {pending.map((p) => (
                         <div key={p.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/40">
@@ -226,7 +256,7 @@ export default function PublicMemberArea() {
                             </div>
                             <div className="text-xs text-muted-foreground">{formatShortDate(p.created_at)}</div>
                           </div>
-                          <div className="font-bold text-destructive">{formatCurrency(p.amount)}</div>
+                          <div className="font-bold text-amber-600">{formatCurrency(p.amount)}</div>
                         </div>
                       ))}
                     </div>
