@@ -3,9 +3,13 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown } from "lucide-react";
+import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
+
+const normalizePhone = (s: string) => (s || "").replace(/\D/g, "");
 
 interface ChargeRow {
   id: string;
@@ -34,11 +38,15 @@ interface ReceiptRow {
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
   const [memberName, setMemberName] = useState<string>("");
+  const [memberPhone, setMemberPhone] = useState<string>("");
   const [charges, setCharges] = useState<ChargeRow[]>([]);
   const [pending, setPending] = useState<PendingPaymentRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authed, setAuthed] = useState(false);
+  const [pwd, setPwd] = useState("");
+  const [pwdError, setPwdError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,55 +55,16 @@ export default function PublicMemberArea() {
       try {
         const { data: m, error: mErr } = await supabase
           .from("members")
-          .select("full_name")
+          .select("full_name, phone")
           .eq("id", memberId)
           .maybeSingle();
         if (mErr || !m) throw new Error("החבר לא נמצא");
-
-        const [{ data: c }, { data: p }, { data: r }] = await Promise.all([
-          supabase
-            .from("member_charges" as any)
-            .select("id, amount, remaining_balance, description, charge_date")
-            .eq("member_id", memberId)
-            .gt("remaining_balance", 0)
-            .order("charge_date", { ascending: false }),
-          supabase
-            .from("payments")
-            .select("id, amount, method, created_at, receipt:receipts(description)")
-            .eq("member_id", memberId)
-            .eq("status", "pending")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("receipts")
-            .select("id, receipt_number, total_amount, description, created_at")
-            .eq("member_id", memberId)
-            .order("created_at", { ascending: false })
-            .limit(100),
-        ]);
-
         if (cancelled) return;
         setMemberName(m.full_name);
-        setCharges(((c as any) || []).map((row: any) => ({
-          id: row.id,
-          amount: Number(row.amount),
-          remaining_balance: Number(row.remaining_balance),
-          description: row.description,
-          charge_date: row.charge_date,
-        })));
-        setPending(((p as any) || []).map((row: any) => ({
-          id: row.id,
-          amount: Number(row.amount),
-          method: row.method,
-          created_at: row.created_at,
-          description: row.receipt?.[0]?.description,
-        })));
-        setReceipts(((r as any) || []).map((row: any) => ({
-          id: row.id,
-          receipt_number: Number(row.receipt_number),
-          total_amount: Number(row.total_amount),
-          description: row.description,
-          created_at: row.created_at,
-        })));
+        setMemberPhone(m.phone || "");
+        if (sessionStorage.getItem(`member_area_auth_${memberId}`) === "1") {
+          setAuthed(true);
+        }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "שגיאה בטעינה");
       } finally {
@@ -104,6 +73,75 @@ export default function PublicMemberArea() {
     })();
     return () => { cancelled = true; };
   }, [memberId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!memberId || !authed) return;
+    (async () => {
+      const [{ data: c }, { data: p }, { data: r }] = await Promise.all([
+        supabase
+          .from("member_charges" as any)
+          .select("id, amount, remaining_balance, description, charge_date")
+          .eq("member_id", memberId)
+          .gt("remaining_balance", 0)
+          .order("charge_date", { ascending: false }),
+        supabase
+          .from("payments")
+          .select("id, amount, method, created_at, receipt:receipts(description)")
+          .eq("member_id", memberId)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("receipts")
+          .select("id, receipt_number, total_amount, description, created_at")
+          .eq("member_id", memberId)
+          .order("created_at", { ascending: false })
+          .limit(100),
+      ]);
+      if (cancelled) return;
+      setCharges(((c as any) || []).map((row: any) => ({
+        id: row.id,
+        amount: Number(row.amount),
+        remaining_balance: Number(row.remaining_balance),
+        description: row.description,
+        charge_date: row.charge_date,
+      })));
+      setPending(((p as any) || []).map((row: any) => ({
+        id: row.id,
+        amount: Number(row.amount),
+        method: row.method,
+        created_at: row.created_at,
+        description: row.receipt?.[0]?.description,
+      })));
+      setReceipts(((r as any) || []).map((row: any) => ({
+        id: row.id,
+        receipt_number: Number(row.receipt_number),
+        total_amount: Number(row.total_amount),
+        description: row.description,
+        created_at: row.created_at,
+      })));
+    })();
+    return () => { cancelled = true; };
+  }, [memberId, authed]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwdError(null);
+    const expected = normalizePhone(memberPhone);
+    const provided = normalizePhone(pwd);
+    if (!expected) {
+      setPwdError("לא הוגדר מספר טלפון לחבר. פנה לגזבר.");
+      return;
+    }
+    const tail = (s: string) => s.slice(-9);
+    if (provided && tail(provided) === tail(expected)) {
+      sessionStorage.setItem(`member_area_auth_${memberId}`, "1");
+      setAuthed(true);
+      setPwd("");
+    } else {
+      setPwdError("מספר הטלפון שהוזן אינו נכון");
+    }
+  };
 
   const totalCharges = useMemo(
     () => charges.reduce((s, c) => s + c.remaining_balance, 0),
@@ -148,6 +186,41 @@ export default function PublicMemberArea() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center" dir="rtl">
         <h1 className="text-2xl font-bold text-foreground mb-2">לא נמצא</h1>
         <p className="text-muted-foreground">{error}</p>
+      </div>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-background to-muted/30 p-4" dir="rtl">
+        <Card className="w-full max-w-sm p-6 space-y-4">
+          <div className="text-center space-y-1">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Lock className="w-6 h-6 text-primary" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground">אזור אישי</h1>
+            <p className="text-sm text-muted-foreground">שלום {memberName}</p>
+            <p className="text-xs text-muted-foreground">להתחברות, הזן את מספר הטלפון שלך</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="phone-pwd">מספר טלפון</Label>
+              <Input
+                id="phone-pwd"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
+                placeholder="050-1234567"
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                dir="ltr"
+                className="text-center text-lg tracking-wider"
+              />
+              {pwdError && <p className="text-xs text-destructive">{pwdError}</p>}
+            </div>
+            <Button type="submit" className="w-full">כניסה</Button>
+          </form>
+        </Card>
       </div>
     );
   }
