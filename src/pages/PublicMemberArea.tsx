@@ -3,9 +3,13 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown } from "lucide-react";
+import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
+
+const normalizePhone = (s: string) => (s || "").replace(/\D/g, "");
 
 interface ChargeRow {
   id: string;
