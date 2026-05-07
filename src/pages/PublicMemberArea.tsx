@@ -38,11 +38,15 @@ interface ReceiptRow {
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
   const [memberName, setMemberName] = useState<string>("");
+  const [memberPhone, setMemberPhone] = useState<string>("");
   const [charges, setCharges] = useState<ChargeRow[]>([]);
   const [pending, setPending] = useState<PendingPaymentRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authed, setAuthed] = useState(false);
+  const [pwd, setPwd] = useState("");
+  const [pwdError, setPwdError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,55 +55,16 @@ export default function PublicMemberArea() {
       try {
         const { data: m, error: mErr } = await supabase
           .from("members")
-          .select("full_name")
+          .select("full_name, phone")
           .eq("id", memberId)
           .maybeSingle();
         if (mErr || !m) throw new Error("החבר לא נמצא");
-
-        const [{ data: c }, { data: p }, { data: r }] = await Promise.all([
-          supabase
-            .from("member_charges" as any)
-            .select("id, amount, remaining_balance, description, charge_date")
-            .eq("member_id", memberId)
-            .gt("remaining_balance", 0)
-            .order("charge_date", { ascending: false }),
-          supabase
-            .from("payments")
-            .select("id, amount, method, created_at, receipt:receipts(description)")
-            .eq("member_id", memberId)
-            .eq("status", "pending")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("receipts")
-            .select("id, receipt_number, total_amount, description, created_at")
-            .eq("member_id", memberId)
-            .order("created_at", { ascending: false })
-            .limit(100),
-        ]);
-
         if (cancelled) return;
         setMemberName(m.full_name);
-        setCharges(((c as any) || []).map((row: any) => ({
-          id: row.id,
-          amount: Number(row.amount),
-          remaining_balance: Number(row.remaining_balance),
-          description: row.description,
-          charge_date: row.charge_date,
-        })));
-        setPending(((p as any) || []).map((row: any) => ({
-          id: row.id,
-          amount: Number(row.amount),
-          method: row.method,
-          created_at: row.created_at,
-          description: row.receipt?.[0]?.description,
-        })));
-        setReceipts(((r as any) || []).map((row: any) => ({
-          id: row.id,
-          receipt_number: Number(row.receipt_number),
-          total_amount: Number(row.total_amount),
-          description: row.description,
-          created_at: row.created_at,
-        })));
+        setMemberPhone(m.phone || "");
+        if (sessionStorage.getItem(`member_area_auth_${memberId}`) === "1") {
+          setAuthed(true);
+        }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "שגיאה בטעינה");
       } finally {
@@ -108,6 +73,75 @@ export default function PublicMemberArea() {
     })();
     return () => { cancelled = true; };
   }, [memberId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!memberId || !authed) return;
+    (async () => {
+      const [{ data: c }, { data: p }, { data: r }] = await Promise.all([
+        supabase
+          .from("member_charges" as any)
+          .select("id, amount, remaining_balance, description, charge_date")
+          .eq("member_id", memberId)
+          .gt("remaining_balance", 0)
+          .order("charge_date", { ascending: false }),
+        supabase
+          .from("payments")
+          .select("id, amount, method, created_at, receipt:receipts(description)")
+          .eq("member_id", memberId)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("receipts")
+          .select("id, receipt_number, total_amount, description, created_at")
+          .eq("member_id", memberId)
+          .order("created_at", { ascending: false })
+          .limit(100),
+      ]);
+      if (cancelled) return;
+      setCharges(((c as any) || []).map((row: any) => ({
+        id: row.id,
+        amount: Number(row.amount),
+        remaining_balance: Number(row.remaining_balance),
+        description: row.description,
+        charge_date: row.charge_date,
+      })));
+      setPending(((p as any) || []).map((row: any) => ({
+        id: row.id,
+        amount: Number(row.amount),
+        method: row.method,
+        created_at: row.created_at,
+        description: row.receipt?.[0]?.description,
+      })));
+      setReceipts(((r as any) || []).map((row: any) => ({
+        id: row.id,
+        receipt_number: Number(row.receipt_number),
+        total_amount: Number(row.total_amount),
+        description: row.description,
+        created_at: row.created_at,
+      })));
+    })();
+    return () => { cancelled = true; };
+  }, [memberId, authed]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwdError(null);
+    const expected = normalizePhone(memberPhone);
+    const provided = normalizePhone(pwd);
+    if (!expected) {
+      setPwdError("לא הוגדר מספר טלפון לחבר. פנה לגזבר.");
+      return;
+    }
+    const tail = (s: string) => s.slice(-9);
+    if (provided && tail(provided) === tail(expected)) {
+      sessionStorage.setItem(`member_area_auth_${memberId}`, "1");
+      setAuthed(true);
+      setPwd("");
+    } else {
+      setPwdError("מספר הטלפון שהוזן אינו נכון");
+    }
+  };
 
   const totalCharges = useMemo(
     () => charges.reduce((s, c) => s + c.remaining_balance, 0),
