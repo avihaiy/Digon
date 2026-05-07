@@ -613,6 +613,30 @@ export type Database = {
         }
         Relationships: []
       }
+      member_area_logins: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       member_charges: {
         Row: {
           amount: number
