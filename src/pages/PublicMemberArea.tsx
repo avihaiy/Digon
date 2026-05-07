@@ -190,6 +190,41 @@ export default function PublicMemberArea() {
     );
   }
 
+  if (!authed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-background to-muted/30 p-4" dir="rtl">
+        <Card className="w-full max-w-sm p-6 space-y-4">
+          <div className="text-center space-y-1">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Lock className="w-6 h-6 text-primary" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground">אזור אישי</h1>
+            <p className="text-sm text-muted-foreground">שלום {memberName}</p>
+            <p className="text-xs text-muted-foreground">להתחברות, הזן את מספר הטלפון שלך</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="phone-pwd">מספר טלפון</Label>
+              <Input
+                id="phone-pwd"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
+                placeholder="050-1234567"
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                dir="ltr"
+                className="text-center text-lg tracking-wider"
+              />
+              {pwdError && <p className="text-xs text-destructive">{pwdError}</p>}
+            </div>
+            <Button type="submit" className="w-full">כניסה</Button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 py-6 px-4" dir="rtl">
       <div className="max-w-2xl mx-auto space-y-4">
