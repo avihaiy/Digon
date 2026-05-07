@@ -6,10 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock } from "lucide-react";
+import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock, LogOut, AlertTriangle } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
+import { toast } from "sonner";
 
 const normalizePhone = (s: string) => (s || "").replace(/\D/g, "");
+
+// תוקף סשן: 24 שעות
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+// חסימה: 5 ניסיונות, נעילה ל-15 דקות
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000;
+
+const authKey = (id: string) => `member_area_auth_${id}`;
+const attemptsKey = (id: string) => `member_area_attempts_${id}`;
+const lockoutKey = (id: string) => `member_area_lockout_${id}`;
 
 interface ChargeRow {
   id: string;
@@ -35,6 +46,18 @@ interface ReceiptRow {
   created_at: string;
 }
 
+const logLogin = async (memberId: string, success: boolean) => {
+  try {
+    await supabase.from("member_area_logins" as any).insert({
+      member_id: memberId,
+      success,
+      user_agent: navigator.userAgent.slice(0, 500),
+    });
+  } catch (e) {
+    console.warn("Failed to log login attempt", e);
+  }
+};
+
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
   const [memberName, setMemberName] = useState<string>("");
@@ -47,6 +70,15 @@ export default function PublicMemberArea() {
   const [authed, setAuthed] = useState(false);
   const [pwd, setPwd] = useState("");
   const [pwdError, setPwdError] = useState<string | null>(null);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  // טיק לעדכון תצוגת זמן הנעילה
+  useEffect(() => {
+    if (!lockedUntil) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [lockedUntil]);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,8 +94,28 @@ export default function PublicMemberArea() {
         if (cancelled) return;
         setMemberName(m.full_name);
         setMemberPhone(m.phone || "");
-        if (sessionStorage.getItem(`member_area_auth_${memberId}`) === "1") {
-          setAuthed(true);
+
+        // בדיקת סשן קיים + תוקף
+        const raw = sessionStorage.getItem(authKey(memberId));
+        if (raw) {
+          const ts = parseInt(raw, 10);
+          if (!isNaN(ts) && Date.now() - ts < SESSION_TTL_MS) {
+            setAuthed(true);
+          } else {
+            sessionStorage.removeItem(authKey(memberId));
+          }
+        }
+
+        // בדיקת נעילה קיימת
+        const lockRaw = localStorage.getItem(lockoutKey(memberId));
+        if (lockRaw) {
+          const until = parseInt(lockRaw, 10);
+          if (!isNaN(until) && until > Date.now()) {
+            setLockedUntil(until);
+          } else {
+            localStorage.removeItem(lockoutKey(memberId));
+            localStorage.removeItem(attemptsKey(memberId));
+          }
         }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "שגיאה בטעינה");
@@ -124,23 +176,58 @@ export default function PublicMemberArea() {
     return () => { cancelled = true; };
   }, [memberId, authed]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwdError(null);
+    if (!memberId) return;
+
+    // בדיקת נעילה
+    if (lockedUntil && lockedUntil > Date.now()) {
+      return;
+    }
+
     const expected = normalizePhone(memberPhone);
     const provided = normalizePhone(pwd);
     if (!expected) {
-      setPwdError("לא הוגדר מספר טלפון לחבר. פנה לגזבר.");
+      setPwdError("לא הוגדר מספר טלפון לחבר במערכת");
       return;
     }
     const tail = (s: string) => s.slice(-9);
     if (provided && tail(provided) === tail(expected)) {
-      sessionStorage.setItem(`member_area_auth_${memberId}`, "1");
+      // הצלחה
+      sessionStorage.setItem(authKey(memberId), String(Date.now()));
+      localStorage.removeItem(attemptsKey(memberId));
+      localStorage.removeItem(lockoutKey(memberId));
       setAuthed(true);
       setPwd("");
+      setLockedUntil(null);
+      logLogin(memberId, true);
     } else {
-      setPwdError("מספר הטלפון שהוזן אינו נכון");
+      // כישלון - הוסף ניסיון
+      const prev = parseInt(localStorage.getItem(attemptsKey(memberId)) || "0", 10) || 0;
+      const next = prev + 1;
+      localStorage.setItem(attemptsKey(memberId), String(next));
+      logLogin(memberId, false);
+
+      if (next >= MAX_ATTEMPTS) {
+        const until = Date.now() + LOCKOUT_MS;
+        localStorage.setItem(lockoutKey(memberId), String(until));
+        setLockedUntil(until);
+        setPwdError(`חרגת ממספר הניסיונות המותר. נסה שוב בעוד 15 דקות.`);
+      } else {
+        setPwdError(`מספר הטלפון שהוזן אינו נכון. נותרו ${MAX_ATTEMPTS - next} ניסיונות.`);
+      }
     }
+  };
+
+  const handleLogout = () => {
+    if (!memberId) return;
+    sessionStorage.removeItem(authKey(memberId));
+    setAuthed(false);
+    setCharges([]);
+    setPending([]);
+    setReceipts([]);
+    toast.success("התנתקת מהאזור האישי");
   };
 
   const totalCharges = useMemo(
@@ -151,7 +238,6 @@ export default function PublicMemberArea() {
     () => pending.reduce((s, p) => s + p.amount, 0),
     [pending]
   );
-  // יתרה נטו: חיובים פתוחים פחות תשלומים ממתינים (אם יאושרו, יקזזו חיובים)
   const netOwed = useMemo(
     () => Math.max(0, totalCharges - totalPending),
     [totalCharges, totalPending]
@@ -191,6 +277,12 @@ export default function PublicMemberArea() {
   }
 
   if (!authed) {
+    const noPhone = !normalizePhone(memberPhone);
+    const isLocked = !!(lockedUntil && lockedUntil > now);
+    const remainingSec = isLocked ? Math.ceil(((lockedUntil as number) - now) / 1000) : 0;
+    const remainingMin = Math.floor(remainingSec / 60);
+    const remainingSecPart = remainingSec % 60;
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-background to-muted/30 p-4" dir="rtl">
         <Card className="w-full max-w-sm p-6 space-y-4">
@@ -200,26 +292,55 @@ export default function PublicMemberArea() {
             </div>
             <h1 className="text-xl font-bold text-foreground">אזור אישי</h1>
             <p className="text-sm text-muted-foreground">שלום {memberName}</p>
-            <p className="text-xs text-muted-foreground">להתחברות, הזן את מספר הטלפון שלך</p>
+            {!noPhone && !isLocked && (
+              <p className="text-xs text-muted-foreground">להתחברות, הזן את מספר הטלפון שלך</p>
+            )}
           </div>
-          <form onSubmit={handleLogin} className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="phone-pwd">מספר טלפון</Label>
-              <Input
-                id="phone-pwd"
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel"
-                placeholder="050-1234567"
-                value={pwd}
-                onChange={(e) => setPwd(e.target.value)}
-                dir="ltr"
-                className="text-center text-lg tracking-wider"
-              />
-              {pwdError && <p className="text-xs text-destructive">{pwdError}</p>}
+
+          {noPhone ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 p-4 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-bold text-amber-900 dark:text-amber-200 text-sm">
+                    לא ניתן להתחבר
+                  </div>
+                  <p className="text-xs text-amber-800 dark:text-amber-300">
+                    לא הוגדר מספר טלפון בכרטיס שלך במערכת. כדי להפעיל את האזור האישי, יש לפנות לגזבר בית הכנסת ולבקש לעדכן את מספר הטלפון.
+                  </p>
+                </div>
+              </div>
             </div>
-            <Button type="submit" className="w-full">כניסה</Button>
-          </form>
+          ) : isLocked ? (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center space-y-1">
+              <div className="font-bold text-destructive text-sm">הכניסה נחסמה זמנית</div>
+              <p className="text-xs text-destructive/90">
+                בשל ניסיונות כניסה רבים מדי. נסה שוב בעוד{" "}
+                <span className="font-bold tabular-nums">
+                  {remainingMin}:{String(remainingSecPart).padStart(2, "0")}
+                </span>
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="phone-pwd">מספר טלפון</Label>
+                <Input
+                  id="phone-pwd"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  placeholder="050-1234567"
+                  value={pwd}
+                  onChange={(e) => setPwd(e.target.value)}
+                  dir="ltr"
+                  className="text-center text-lg tracking-wider"
+                />
+                {pwdError && <p className="text-xs text-destructive">{pwdError}</p>}
+              </div>
+              <Button type="submit" className="w-full">כניסה</Button>
+            </form>
+          )}
         </Card>
       </div>
     );
@@ -228,10 +349,19 @@ export default function PublicMemberArea() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 py-6 px-4" dir="rtl">
       <div className="max-w-2xl mx-auto space-y-4">
-        <header className="text-center space-y-1">
+        <header className="text-center space-y-1 relative">
           <p className="text-xs font-semibold text-muted-foreground">בית כנסת "ברית שלום" עכו</p>
           <h1 className="text-2xl font-bold text-foreground">שלום {memberName}</h1>
           <p className="text-sm text-muted-foreground">האזור האישי שלך</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="absolute top-0 left-0 gap-1.5 text-muted-foreground hover:text-destructive"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">התנתק</span>
+          </Button>
         </header>
 
         <div className="grid grid-cols-2 gap-3">
@@ -271,7 +401,6 @@ export default function PublicMemberArea() {
               </Card>
             ) : (
               <>
-                {/* סיכום מפורט */}
                 <Card className="p-4 space-y-2">
                   <div className="font-bold mb-1">סיכום</div>
                   <div className="flex items-center justify-between text-sm">
