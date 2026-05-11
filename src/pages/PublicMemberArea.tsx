@@ -46,17 +46,7 @@ interface ReceiptRow {
   created_at: string;
 }
 
-const logLogin = async (memberId: string, success: boolean) => {
-  try {
-    await supabase.from("member_area_logins" as any).insert({
-      member_id: memberId,
-      success,
-      user_agent: navigator.userAgent.slice(0, 500),
-    });
-  } catch (e) {
-    console.warn("Failed to log login attempt", e);
-  }
-};
+// Note: login attempts are logged server-side by get_member_area_data RPC.
 
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
