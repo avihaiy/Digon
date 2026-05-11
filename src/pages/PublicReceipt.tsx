@@ -34,28 +34,23 @@ export default function PublicReceipt() {
         return;
       }
       try {
-        const { data: r, error: rErr } = await supabase
-          .from("receipts")
-          .select("id, receipt_number, total_amount, description, created_at, member_id, payment_id")
-          .eq("receipt_number", num)
-          .maybeSingle();
-        if (rErr || !r) throw new Error("הקבלה לא נמצאה");
-        const { data: member } = await supabase
-          .from("members")
-          .select("full_name")
-          .eq("id", r.member_id)
-          .maybeSingle();
-        let payment: any = null;
-        if (r.payment_id) {
-          const { data: p } = await supabase
-            .from("payments")
-            .select("method, reference")
-            .eq("id", r.payment_id)
-            .maybeSingle();
-          payment = p;
-        }
+        const { data, error: rErr } = await supabase.rpc("get_public_receipt", {
+          _receipt_number: num,
+        });
+        if (rErr || !data) throw new Error("הקבלה לא נמצאה");
+        const r: any = data;
         if (cancelled) return;
-        setReceipt({ ...r, member, payment });
+        setReceipt({
+          id: r.id,
+          receipt_number: r.receipt_number,
+          total_amount: r.total_amount,
+          description: r.description,
+          created_at: r.created_at,
+          member: { full_name: r.member_name },
+          payment: r.payment_method
+            ? { method: r.payment_method, reference: r.payment_reference }
+            : null,
+        });
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "שגיאה בטעינת הקבלה");
       } finally {
