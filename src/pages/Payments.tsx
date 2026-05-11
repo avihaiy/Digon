@@ -255,14 +255,28 @@ export default function Payments() {
 
         if (receiptError) throw receiptError;
 
-        // Send receipt via email
+        // Auto-send receipt per member preference
         if (receiptData) {
           try {
-            await supabase.functions.invoke("send-receipt-email", {
-              body: { receiptId: receiptData.id },
-            });
-          } catch (emailError) {
-            console.warn("Failed to send receipt email:", emailError);
+            const { data: memberPref } = await supabase
+              .from("members")
+              .select("notification_preference, phone, email, full_name")
+              .eq("id", formData.member_id)
+              .maybeSingle();
+            const pref = (memberPref as any)?.notification_preference || "none";
+            if (pref === "email" && (memberPref as any)?.email) {
+              await supabase.functions.invoke("send-receipt-email", {
+                body: { receiptId: receiptData.id, email: (memberPref as any).email },
+              });
+            } else if (pref === "whatsapp" && (memberPref as any)?.phone) {
+              const phone = String((memberPref as any).phone).replace(/\D/g, "");
+              const intl = phone.startsWith("0") ? "972" + phone.slice(1) : phone;
+              const link = `${window.location.origin}/r/${receiptData.receipt_number}`;
+              const msg = encodeURIComponent(`שלום ${(memberPref as any).full_name},\nמצורפת קבלה #${receiptData.receipt_number} בסך ${formData.amount} ש"ח.\n${link}\nתודה — בית הכנסת ברית שלום עכו`);
+              window.open(`https://wa.me/${intl}?text=${msg}`, "_blank", "noopener,noreferrer");
+            }
+          } catch (sendErr) {
+            console.warn("Failed to auto-send receipt:", sendErr);
           }
         }
 
