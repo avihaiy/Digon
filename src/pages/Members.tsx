@@ -95,7 +95,8 @@ export default function Members() {
             phone: data.phone || null,
             email: data.email || null,
             notes: data.notes || null,
-          })
+            notification_preference: data.notification_preference,
+          } as any)
           .eq('id', data.id);
         if (error) throw error;
       } else {
@@ -106,7 +107,8 @@ export default function Members() {
             phone: data.phone || null,
             email: data.email || null,
             notes: data.notes || null,
-          });
+            notification_preference: data.notification_preference,
+          } as any);
         if (error) throw error;
       }
     },
