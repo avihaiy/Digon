@@ -488,6 +488,18 @@ export default function PublicMemberArea() {
                     </div>
                   </Card>
                 )}
+                {bitEnabled && bitPhone && netOwed > 0 && (
+                  <a
+                    href={`https://www.bitpay.co.il/app/me/${bitPhone}?amount=${netOwed}&description=${encodeURIComponent(`תשלום מ${memberName}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
+                  >
+                    <Smartphone className="w-5 h-5" />
+                    שלם {formatCurrency(netOwed)} בביט
+                  </a>
+                )}
                 <Button asChild variant="outline" className="w-full gap-2">
                   <Link to={`/d/${memberId}`}>
                     <FileDown className="w-4 h-4" />
