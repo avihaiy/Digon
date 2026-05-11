@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock, LogOut, AlertTriangle } from "lucide-react";
+import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock, LogOut, AlertTriangle, Smartphone } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
 
@@ -72,6 +72,8 @@ export default function PublicMemberArea() {
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [bitPhone, setBitPhone] = useState<string>("");
+  const [bitEnabled, setBitEnabled] = useState(false);
 
   // טיק לעדכון תצוגת זמן הנעילה
   useEffect(() => {
@@ -175,6 +177,28 @@ export default function PublicMemberArea() {
     })();
     return () => { cancelled = true; };
   }, [memberId, authed]);
+
+  // Load Bit payment settings (for the personal area button)
+  useEffect(() => {
+    let cancelled = false;
+    if (!authed) return;
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .in("key", ["bit_phone", "bit_enabled"]);
+      if (cancelled || !data) return;
+      let phone = "";
+      let enabled = false;
+      data.forEach((row: any) => {
+        if (row.key === "bit_phone") phone = row.value || "";
+        if (row.key === "bit_enabled") enabled = row.value === "true";
+      });
+      setBitPhone(phone);
+      setBitEnabled(enabled);
+    })();
+    return () => { cancelled = true; };
+  }, [authed]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -463,6 +487,18 @@ export default function PublicMemberArea() {
                       ))}
                     </div>
                   </Card>
+                )}
+                {bitEnabled && bitPhone && netOwed > 0 && (
+                  <a
+                    href={`https://www.bitpay.co.il/app/me/${bitPhone}?amount=${netOwed}&description=${encodeURIComponent(`תשלום מ${memberName}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                    style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
+                  >
+                    <Smartphone className="w-5 h-5" />
+                    שלם {formatCurrency(netOwed)} בביט
+                  </a>
                 )}
                 <Button asChild variant="outline" className="w-full gap-2">
                   <Link to={`/d/${memberId}`}>

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send, Bell, Volume2, VolumeX, Calendar } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send, Bell, Volume2, VolumeX, Calendar, Smartphone } from 'lucide-react';
 import { playNotificationSound, getSelectedSound, setSelectedSound, SOUND_PRESETS, type SoundPreset } from '@/lib/notification-sounds';
 import { Link } from 'react-router-dom';
 
@@ -37,6 +37,8 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [displayRotation, setDisplayRotation] = useState('0');
   const [eventReminderHours, setEventReminderHours] = useState('24');
   const [notificationSound, setNotificationSound] = useState<SoundPreset>(getSelectedSound());
+  const [bitPhone, setBitPhone] = useState('');
+  const [bitEnabled, setBitEnabled] = useState(false);
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
@@ -341,6 +343,50 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Load Bit settings
+  const { data: bitSettings } = useQuery({
+    queryKey: ['app-settings-bit'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['bit_phone', 'bit_enabled']);
+      const result = { phone: '', enabled: false };
+      data?.forEach(item => {
+        if (item.key === 'bit_phone') result.phone = item.value || '';
+        if (item.key === 'bit_enabled') result.enabled = item.value === 'true';
+      });
+      return result;
+    },
+  });
+
+  useEffect(() => {
+    if (bitSettings) {
+      setBitPhone(bitSettings.phone);
+      setBitEnabled(bitSettings.enabled);
+    }
+  }, [bitSettings]);
+
+  const saveBitMutation = useMutation({
+    mutationFn: async ({ phone, enabled }: { phone: string; enabled: boolean }) => {
+      const updates = [
+        { key: 'bit_phone', value: phone },
+        { key: 'bit_enabled', value: String(enabled) },
+      ];
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('app_settings')
+          .upsert(update, { onConflict: 'key' });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-bit'] });
+      toast({ title: 'הגדרות תשלום בביט נשמרו בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Count enabled screens
   const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
@@ -575,6 +621,44 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             >
               <Save className="w-4 h-4 ml-2" />
               שמור הגדרה
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Bit Payment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5" />
+              תשלום בביט (Bit)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>הצג כפתור תשלום בביט באזור האישי</Label>
+              <Switch checked={bitEnabled} onCheckedChange={setBitEnabled} />
+            </div>
+            <div className="space-y-2">
+              <Label>מספר טלפון לקבלת תשלומים בביט</Label>
+              <Input
+                type="tel"
+                inputMode="numeric"
+                value={bitPhone}
+                onChange={e => setBitPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="0501234567"
+                dir="ltr"
+                className="font-mono text-center tracking-wider"
+              />
+              <p className="text-xs text-muted-foreground">
+                מספר הטלפון שמחובר לחשבון הביט של בית הכנסת. הסכום ייפתח אוטומטית באפליקציית ביט עם יתרת החוב של החבר.
+              </p>
+            </div>
+            <Button
+              onClick={() => saveBitMutation.mutate({ phone: bitPhone, enabled: bitEnabled })}
+              disabled={saveBitMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור הגדרות ביט
             </Button>
           </CardContent>
         </Card>
