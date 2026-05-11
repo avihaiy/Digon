@@ -178,6 +178,28 @@ export default function PublicMemberArea() {
     return () => { cancelled = true; };
   }, [memberId, authed]);
 
+  // Load Bit payment settings (for the personal area button)
+  useEffect(() => {
+    let cancelled = false;
+    if (!authed) return;
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .in("key", ["bit_phone", "bit_enabled"]);
+      if (cancelled || !data) return;
+      let phone = "";
+      let enabled = false;
+      data.forEach((row: any) => {
+        if (row.key === "bit_phone") phone = row.value || "";
+        if (row.key === "bit_enabled") enabled = row.value === "true";
+      });
+      setBitPhone(phone);
+      setBitEnabled(enabled);
+    })();
+    return () => { cancelled = true; };
+  }, [authed]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwdError(null);
