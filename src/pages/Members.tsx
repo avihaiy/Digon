@@ -152,6 +152,8 @@ export default function Members() {
     },
   });
 
+  const emptyForm = { full_name: '', phone: '', email: '', notes: '', notification_preference: 'none' as const };
+
   const handleOpenDialog = (member?: Member) => {
     if (member) {
       setEditingMember(member);
@@ -160,10 +162,11 @@ export default function Members() {
         phone: member.phone || '',
         email: member.email || '',
         notes: member.notes || '',
+        notification_preference: (member.notification_preference || 'none') as 'none' | 'email' | 'whatsapp',
       });
     } else {
       setEditingMember(null);
-      setFormData({ full_name: '', phone: '', email: '', notes: '' });
+      setFormData(emptyForm);
     }
     setDialogOpen(true);
   };
@@ -171,7 +174,7 @@ export default function Members() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingMember(null);
-    setFormData({ full_name: '', phone: '', email: '', notes: '' });
+    setFormData(emptyForm);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
