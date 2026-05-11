@@ -689,6 +689,7 @@ export type Database = {
           full_name: string
           id: string
           notes: string | null
+          notification_preference: string
           phone: string | null
           updated_at: string | null
         }
@@ -699,6 +700,7 @@ export type Database = {
           full_name: string
           id?: string
           notes?: string | null
+          notification_preference?: string
           phone?: string | null
           updated_at?: string | null
         }
@@ -709,6 +711,7 @@ export type Database = {
           full_name?: string
           id?: string
           notes?: string | null
+          notification_preference?: string
           phone?: string | null
           updated_at?: string | null
         }
@@ -1173,6 +1176,10 @@ export type Database = {
         Returns: boolean
       }
       is_manager: { Args: { _user_id: string }; Returns: boolean }
+      record_bit_payment_intent: {
+        Args: { _amount: number; _member_id: string; _user_agent?: string }
+        Returns: Json
+      }
     }
     Enums: {
       aliya_status: "pending" | "paid" | "waived"

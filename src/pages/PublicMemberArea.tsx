@@ -432,16 +432,30 @@ export default function PublicMemberArea() {
                   </Card>
                 )}
                 {bitEnabled && bitPhone && netOwed > 0 && (
-                  <a
-                    href={`https://www.bitpay.co.il/app/me/${bitPhone}?amount=${netOwed}&description=${encodeURIComponent(`תשלום מ${memberName}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await supabase.rpc("record_bit_payment_intent", {
+                          _member_id: memberId!,
+                          _amount: netOwed,
+                          _user_agent: navigator.userAgent.slice(0, 500),
+                        });
+                      } catch (e) {
+                        console.warn("Failed to record bit intent", e);
+                      }
+                      const url = `https://www.bitpay.co.il/app/me/${bitPhone}?amount=${netOwed}&description=${encodeURIComponent(`תשלום מ${memberName}`)}`;
+                      window.open(url, "_blank", "noopener,noreferrer");
+                      toast.success("נרשמה בקשת תשלום בביט", {
+                        description: "תשלומך יאושר על ידי הגזבר לאחר קבלתו",
+                      });
+                    }}
                     className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
                     style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
                   >
                     <Smartphone className="w-5 h-5" />
                     שלם {formatCurrency(netOwed)} בביט
-                  </a>
+                  </button>
                 )}
                 <Button asChild variant="outline" className="w-full gap-2">
                   <Link to={`/d/${memberId}`}>

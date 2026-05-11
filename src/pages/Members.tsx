@@ -45,6 +45,7 @@ interface Member {
   email: string | null;
   notes: string | null;
   active: boolean;
+  notification_preference?: 'none' | 'email' | 'whatsapp' | null;
   created_at: string;
 }
 
@@ -61,6 +62,7 @@ export default function Members() {
     phone: '',
     email: '',
     notes: '',
+    notification_preference: 'none' as 'none' | 'email' | 'whatsapp',
   });
 
   // Fetch members
@@ -93,7 +95,8 @@ export default function Members() {
             phone: data.phone || null,
             email: data.email || null,
             notes: data.notes || null,
-          })
+            notification_preference: data.notification_preference,
+          } as any)
           .eq('id', data.id);
         if (error) throw error;
       } else {
@@ -104,7 +107,8 @@ export default function Members() {
             phone: data.phone || null,
             email: data.email || null,
             notes: data.notes || null,
-          });
+            notification_preference: data.notification_preference,
+          } as any);
         if (error) throw error;
       }
     },
@@ -148,6 +152,8 @@ export default function Members() {
     },
   });
 
+  const emptyForm = { full_name: '', phone: '', email: '', notes: '', notification_preference: 'none' as const };
+
   const handleOpenDialog = (member?: Member) => {
     if (member) {
       setEditingMember(member);
@@ -156,10 +162,11 @@ export default function Members() {
         phone: member.phone || '',
         email: member.email || '',
         notes: member.notes || '',
+        notification_preference: (member.notification_preference || 'none') as 'none' | 'email' | 'whatsapp',
       });
     } else {
       setEditingMember(null);
-      setFormData({ full_name: '', phone: '', email: '', notes: '' });
+      setFormData(emptyForm);
     }
     setDialogOpen(true);
   };
@@ -167,7 +174,7 @@ export default function Members() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingMember(null);
-    setFormData({ full_name: '', phone: '', email: '', notes: '' });
+    setFormData(emptyForm);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -354,6 +361,23 @@ export default function Members() {
                 dir="ltr"
                 className="text-left"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notify-pref">שליחת קבלה אוטומטית</Label>
+              <select
+                id="notify-pref"
+                value={formData.notification_preference}
+                onChange={(e) => setFormData({ ...formData, notification_preference: e.target.value as any })}
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="none">לא לשלוח</option>
+                <option value="email">דוא״ל</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                לאחר הפקת קבלה ע״י הגזבר, היא תישלח אוטומטית באפיק הנבחר.
+              </p>
             </div>
 
             <div className="space-y-2">

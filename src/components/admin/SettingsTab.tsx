@@ -369,6 +369,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
 
   const saveBitMutation = useMutation({
     mutationFn: async ({ phone, enabled }: { phone: string; enabled: boolean }) => {
+      const previous = bitSettings || { phone: '', enabled: false };
       const updates = [
         { key: 'bit_phone', value: phone },
         { key: 'bit_enabled', value: String(enabled) },
@@ -379,6 +380,15 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
           .upsert(update, { onConflict: 'key' });
         if (error) throw error;
       }
+      // Audit log entry
+      const { data: u } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        user_id: u.user?.id ?? null,
+        action: 'bit_settings_changed',
+        table_name: 'app_settings',
+        old_data: { bit_phone: previous.phone, bit_enabled: previous.enabled },
+        new_data: { bit_phone: phone, bit_enabled: enabled },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-settings-bit'] });
