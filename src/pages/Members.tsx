@@ -62,6 +62,7 @@ export default function Members() {
     phone: '',
     email: '',
     notes: '',
+    notification_preference: 'none' as 'none' | 'email' | 'whatsapp',
   });
 
   // Fetch members
