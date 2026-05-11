@@ -45,6 +45,7 @@ interface Member {
   email: string | null;
   notes: string | null;
   active: boolean;
+  notification_preference?: 'none' | 'email' | 'whatsapp' | null;
   created_at: string;
 }
 
