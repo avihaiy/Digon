@@ -72,6 +72,8 @@ export default function PublicMemberArea() {
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [bitPhone, setBitPhone] = useState<string>("");
+  const [bitEnabled, setBitEnabled] = useState(false);
 
   // טיק לעדכון תצוגת זמן הנעילה
   useEffect(() => {
