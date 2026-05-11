@@ -51,7 +51,7 @@ interface ReceiptRow {
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
   const [memberName, setMemberName] = useState<string>("");
-  const [memberPhone, setMemberPhone] = useState<string>("");
+  
   const [charges, setCharges] = useState<ChargeRow[]>([]);
   const [pending, setPending] = useState<PendingPaymentRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
