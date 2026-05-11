@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock, LogOut, AlertTriangle } from "lucide-react";
+import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock, LogOut, AlertTriangle, Smartphone } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
 
