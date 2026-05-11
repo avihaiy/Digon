@@ -244,7 +244,7 @@ export default function PublicMemberArea() {
   }
 
   if (!authed) {
-    const noPhone = !normalizePhone(memberPhone);
+    const noPhone = !hasPhone;
     const isLocked = !!(lockedUntil && lockedUntil > now);
     const remainingSec = isLocked ? Math.ceil(((lockedUntil as number) - now) / 1000) : 0;
     const remainingMin = Math.floor(remainingSec / 60);
