@@ -624,6 +624,44 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             </Button>
           </CardContent>
         </Card>
+
+        {/* Bit Payment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5" />
+              תשלום בביט (Bit)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>הצג כפתור תשלום בביט באזור האישי</Label>
+              <Switch checked={bitEnabled} onCheckedChange={setBitEnabled} />
+            </div>
+            <div className="space-y-2">
+              <Label>מספר טלפון לקבלת תשלומים בביט</Label>
+              <Input
+                type="tel"
+                inputMode="numeric"
+                value={bitPhone}
+                onChange={e => setBitPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="0501234567"
+                dir="ltr"
+                className="font-mono text-center tracking-wider"
+              />
+              <p className="text-xs text-muted-foreground">
+                מספר הטלפון שמחובר לחשבון הביט של בית הכנסת. הסכום ייפתח אוטומטית באפליקציית ביט עם יתרת החוב של החבר.
+              </p>
+            </div>
+            <Button
+              onClick={() => saveBitMutation.mutate({ phone: bitPhone, enabled: bitEnabled })}
+              disabled={saveBitMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור הגדרות ביט
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Location */}
