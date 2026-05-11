@@ -10,7 +10,7 @@ import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
 
-const normalizePhone = (s: string) => (s || "").replace(/\D/g, "");
+
 
 // תוקף סשן: 24 שעות
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -46,22 +46,12 @@ interface ReceiptRow {
   created_at: string;
 }
 
-const logLogin = async (memberId: string, success: boolean) => {
-  try {
-    await supabase.from("member_area_logins" as any).insert({
-      member_id: memberId,
-      success,
-      user_agent: navigator.userAgent.slice(0, 500),
-    });
-  } catch (e) {
-    console.warn("Failed to log login attempt", e);
-  }
-};
+// Note: login attempts are logged server-side by get_member_area_data RPC.
 
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
   const [memberName, setMemberName] = useState<string>("");
-  const [memberPhone, setMemberPhone] = useState<string>("");
+  
   const [charges, setCharges] = useState<ChargeRow[]>([]);
   const [pending, setPending] = useState<PendingPaymentRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
@@ -82,33 +72,33 @@ export default function PublicMemberArea() {
     return () => clearInterval(t);
   }, [lockedUntil]);
 
+  const [hasPhone, setHasPhone] = useState(true);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (!memberId) return;
       try {
-        const { data: m, error: mErr } = await supabase
-          .from("members")
-          .select("full_name, phone")
-          .eq("id", memberId)
-          .maybeSingle();
-        if (mErr || !m) throw new Error("החבר לא נמצא");
+        const { data, error: mErr } = await supabase.rpc("get_public_member_profile", {
+          _member_id: memberId,
+        });
+        if (mErr || !data) throw new Error("החבר לא נמצא");
         if (cancelled) return;
-        setMemberName(m.full_name);
-        setMemberPhone(m.phone || "");
+        const d: any = data;
+        setMemberName(d.member_name);
+        setHasPhone(!!d.has_phone);
 
-        // בדיקת סשן קיים + תוקף
+        // session check (UI hint only — server still re-verifies on data fetch)
         const raw = sessionStorage.getItem(authKey(memberId));
         if (raw) {
           const ts = parseInt(raw, 10);
           if (!isNaN(ts) && Date.now() - ts < SESSION_TTL_MS) {
-            setAuthed(true);
-          } else {
+            // session expired or no cached phone — require re-login for security
             sessionStorage.removeItem(authKey(memberId));
           }
         }
 
-        // בדיקת נעילה קיימת
+        // lockout check
         const lockRaw = localStorage.getItem(lockoutKey(memberId));
         if (lockRaw) {
           const until = parseInt(lockRaw, 10);
@@ -128,120 +118,73 @@ export default function PublicMemberArea() {
     return () => { cancelled = true; };
   }, [memberId]);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!memberId || !authed) return;
-    (async () => {
-      const [{ data: c }, { data: p }, { data: r }] = await Promise.all([
-        supabase
-          .from("member_charges" as any)
-          .select("id, amount, remaining_balance, description, charge_date")
-          .eq("member_id", memberId)
-          .gt("remaining_balance", 0)
-          .order("charge_date", { ascending: false }),
-        supabase
-          .from("payments")
-          .select("id, amount, method, created_at, receipt:receipts(description)")
-          .eq("member_id", memberId)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("receipts")
-          .select("id, receipt_number, total_amount, description, created_at")
-          .eq("member_id", memberId)
-          .order("created_at", { ascending: false })
-          .limit(100),
-      ]);
-      if (cancelled) return;
-      setCharges(((c as any) || []).map((row: any) => ({
-        id: row.id,
-        amount: Number(row.amount),
-        remaining_balance: Number(row.remaining_balance),
-        description: row.description,
-        charge_date: row.charge_date,
-      })));
-      setPending(((p as any) || []).map((row: any) => ({
-        id: row.id,
-        amount: Number(row.amount),
-        method: row.method,
-        created_at: row.created_at,
-        description: row.receipt?.[0]?.description,
-      })));
-      setReceipts(((r as any) || []).map((row: any) => ({
-        id: row.id,
-        receipt_number: Number(row.receipt_number),
-        total_amount: Number(row.total_amount),
-        description: row.description,
-        created_at: row.created_at,
-      })));
-    })();
-    return () => { cancelled = true; };
-  }, [memberId, authed]);
-
-  // Load Bit payment settings (for the personal area button)
-  useEffect(() => {
-    let cancelled = false;
-    if (!authed) return;
-    (async () => {
-      const { data } = await supabase
-        .from("app_settings")
-        .select("key, value")
-        .in("key", ["bit_phone", "bit_enabled"]);
-      if (cancelled || !data) return;
-      let phone = "";
-      let enabled = false;
-      data.forEach((row: any) => {
-        if (row.key === "bit_phone") phone = row.value || "";
-        if (row.key === "bit_enabled") enabled = row.value === "true";
-      });
-      setBitPhone(phone);
-      setBitEnabled(enabled);
-    })();
-    return () => { cancelled = true; };
-  }, [authed]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwdError(null);
     if (!memberId) return;
 
-    // בדיקת נעילה
+    // local lockout check
     if (lockedUntil && lockedUntil > Date.now()) {
       return;
     }
 
-    const expected = normalizePhone(memberPhone);
-    const provided = normalizePhone(pwd);
-    if (!expected) {
+    if (!hasPhone) {
       setPwdError("לא הוגדר מספר טלפון לחבר במערכת");
       return;
     }
-    const tail = (s: string) => s.slice(-9);
-    if (provided && tail(provided) === tail(expected)) {
-      // הצלחה
-      sessionStorage.setItem(authKey(memberId), String(Date.now()));
-      localStorage.removeItem(attemptsKey(memberId));
-      localStorage.removeItem(lockoutKey(memberId));
-      setAuthed(true);
-      setPwd("");
-      setLockedUntil(null);
-      logLogin(memberId, true);
-    } else {
-      // כישלון - הוסף ניסיון
+
+    const { data, error: rpcErr } = await supabase.rpc("get_member_area_data", {
+      _member_id: memberId,
+      _phone: pwd,
+      _user_agent: navigator.userAgent.slice(0, 500),
+    });
+
+    if (rpcErr || !data || !(data as any).success) {
       const prev = parseInt(localStorage.getItem(attemptsKey(memberId)) || "0", 10) || 0;
       const next = prev + 1;
       localStorage.setItem(attemptsKey(memberId), String(next));
-      logLogin(memberId, false);
-
       if (next >= MAX_ATTEMPTS) {
         const until = Date.now() + LOCKOUT_MS;
         localStorage.setItem(lockoutKey(memberId), String(until));
         setLockedUntil(until);
-        setPwdError(`חרגת ממספר הניסיונות המותר. נסה שוב בעוד 15 דקות.`);
+        setPwdError("חרגת ממספר הניסיונות המותר. נסה שוב בעוד 15 דקות.");
       } else {
         setPwdError(`מספר הטלפון שהוזן אינו נכון. נותרו ${MAX_ATTEMPTS - next} ניסיונות.`);
       }
+      return;
     }
+
+    const d: any = data;
+    setCharges((d.charges || []).map((row: any) => ({
+      id: row.id,
+      amount: Number(row.amount),
+      remaining_balance: Number(row.remaining_balance),
+      description: row.description,
+      charge_date: row.charge_date,
+    })));
+    setPending((d.pending || []).map((row: any) => ({
+      id: row.id,
+      amount: Number(row.amount),
+      method: row.method,
+      created_at: row.created_at,
+      description: row.description,
+    })));
+    setReceipts((d.receipts || []).map((row: any) => ({
+      id: row.id,
+      receipt_number: Number(row.receipt_number),
+      total_amount: Number(row.total_amount),
+      description: row.description,
+      created_at: row.created_at,
+    })));
+    setBitPhone(d.bit_phone || "");
+    setBitEnabled(!!d.bit_enabled);
+
+    sessionStorage.setItem(authKey(memberId), String(Date.now()));
+    localStorage.removeItem(attemptsKey(memberId));
+    localStorage.removeItem(lockoutKey(memberId));
+    setAuthed(true);
+    setPwd("");
+    setLockedUntil(null);
   };
 
   const handleLogout = () => {
@@ -301,7 +244,7 @@ export default function PublicMemberArea() {
   }
 
   if (!authed) {
-    const noPhone = !normalizePhone(memberPhone);
+    const noPhone = !hasPhone;
     const isLocked = !!(lockedUntil && lockedUntil > now);
     const remainingSec = isLocked ? Math.ceil(((lockedUntil as number) - now) / 1000) : 0;
     const remainingMin = Math.floor(remainingSec / 60);

@@ -202,15 +202,12 @@ export default function Expenses() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('expense-receipts')
-        .getPublicUrl(fileName);
-
+      // Store the path (not a public URL) since the bucket is private.
       const { error: attachmentError } = await supabase
         .from('expense_attachments')
         .insert({
           expense_id: expenseId,
-          file_url: publicUrl,
+          file_url: fileName,
           file_name: file.name,
           file_type: file.type,
           file_size: file.size,
@@ -288,8 +285,20 @@ export default function Expenses() {
     });
   };
 
-  const openPreview = (attachment: ExpenseAttachment) => {
-    setSelectedAttachment(attachment);
+  const openPreview = async (attachment: ExpenseAttachment) => {
+    // Bucket is private — generate a short-lived signed URL for viewing
+    try {
+      const path = attachment.file_url.includes('/expense-receipts/')
+        ? attachment.file_url.split('/expense-receipts/')[1]
+        : attachment.file_url;
+      const { data, error } = await supabase.storage
+        .from('expense-receipts')
+        .createSignedUrl(path, 60 * 10); // 10 minutes
+      if (error || !data?.signedUrl) throw error || new Error('signed url failed');
+      setSelectedAttachment({ ...attachment, file_url: data.signedUrl });
+    } catch {
+      setSelectedAttachment(attachment);
+    }
     setIsPreviewOpen(true);
   };
 

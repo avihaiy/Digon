@@ -39,42 +39,26 @@ export default function PublicMemberDebts() {
     (async () => {
       if (!memberId) return;
       try {
-        const { data: m, error: mErr } = await supabase
-          .from("members")
-          .select("full_name")
-          .eq("id", memberId)
-          .maybeSingle();
-        if (mErr || !m) throw new Error("החבר לא נמצא");
-
-        const { data: c } = await supabase
-          .from("member_charges" as any)
-          .select("id, amount, remaining_balance, description, charge_date")
-          .eq("member_id", memberId)
-          .gt("remaining_balance", 0)
-          .order("charge_date", { ascending: false });
-
-        const { data: p } = await supabase
-          .from("payments")
-          .select("id, amount, method, created_at, receipt:receipts(description)")
-          .eq("member_id", memberId)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false });
-
+        const { data, error: err } = await supabase.rpc("get_public_member_debts", {
+          _member_id: memberId,
+        });
+        if (err || !data) throw new Error("החבר לא נמצא");
         if (cancelled) return;
-        setMemberName(m.full_name);
-        setCharges(((c as any) || []).map((row: any) => ({
+        const d: any = data;
+        setMemberName(d.member_name);
+        setCharges((d.charges || []).map((row: any) => ({
           id: row.id,
           amount: Number(row.amount),
           remaining_balance: Number(row.remaining_balance),
           description: row.description,
           charge_date: row.charge_date,
         })));
-        setPending(((p as any) || []).map((row: any) => ({
+        setPending((d.pending || []).map((row: any) => ({
           id: row.id,
           amount: Number(row.amount),
           method: row.method,
           created_at: row.created_at,
-          description: row.receipt?.[0]?.description,
+          description: row.description,
         })));
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "שגיאה בטעינה");

@@ -1154,10 +1154,17 @@ export type Database = {
     }
     Functions: {
       get_email_by_username: { Args: { _username: string }; Returns: string }
+      get_member_area_data: {
+        Args: { _member_id: string; _phone: string; _user_agent?: string }
+        Returns: Json
+      }
       get_public_finance_display_stats: {
         Args: { months_count?: number }
         Returns: Json
       }
+      get_public_member_debts: { Args: { _member_id: string }; Returns: Json }
+      get_public_member_profile: { Args: { _member_id: string }; Returns: Json }
+      get_public_receipt: { Args: { _receipt_number: number }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
