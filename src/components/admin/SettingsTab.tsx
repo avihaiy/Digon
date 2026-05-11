@@ -343,6 +343,50 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Load Bit settings
+  const { data: bitSettings } = useQuery({
+    queryKey: ['app-settings-bit'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['bit_phone', 'bit_enabled']);
+      const result = { phone: '', enabled: false };
+      data?.forEach(item => {
+        if (item.key === 'bit_phone') result.phone = item.value || '';
+        if (item.key === 'bit_enabled') result.enabled = item.value === 'true';
+      });
+      return result;
+    },
+  });
+
+  useEffect(() => {
+    if (bitSettings) {
+      setBitPhone(bitSettings.phone);
+      setBitEnabled(bitSettings.enabled);
+    }
+  }, [bitSettings]);
+
+  const saveBitMutation = useMutation({
+    mutationFn: async ({ phone, enabled }: { phone: string; enabled: boolean }) => {
+      const updates = [
+        { key: 'bit_phone', value: phone },
+        { key: 'bit_enabled', value: String(enabled) },
+      ];
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('app_settings')
+          .upsert(update, { onConflict: 'key' });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-bit'] });
+      toast({ title: 'הגדרות תשלום בביט נשמרו בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Count enabled screens
   const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
