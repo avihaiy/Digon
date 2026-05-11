@@ -202,15 +202,16 @@ export default function Expenses() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('expense-receipts')
-        .getPublicUrl(fileName);
-
+      // Store the path (not a public URL) since the bucket is private.
       const { error: attachmentError } = await supabase
         .from('expense_attachments')
         .insert({
           expense_id: expenseId,
-          file_url: publicUrl,
+          file_url: fileName,
+          file_name: file.name,
+          file_type: file.type,
+          file_size: file.size,
+        });
           file_name: file.name,
           file_type: file.type,
           file_size: file.size,
