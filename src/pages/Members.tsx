@@ -364,6 +364,23 @@ export default function Members() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="notify-pref">שליחת קבלה אוטומטית</Label>
+              <select
+                id="notify-pref"
+                value={formData.notification_preference}
+                onChange={(e) => setFormData({ ...formData, notification_preference: e.target.value as any })}
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="none">לא לשלוח</option>
+                <option value="email">דוא״ל</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                לאחר הפקת קבלה ע״י הגזבר, היא תישלח אוטומטית באפיק הנבחר.
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="notes">הערות</Label>
               <Textarea
                 id="notes"
