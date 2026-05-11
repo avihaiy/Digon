@@ -212,10 +212,6 @@ export default function Expenses() {
           file_type: file.type,
           file_size: file.size,
         });
-          file_name: file.name,
-          file_type: file.type,
-          file_size: file.size,
-        });
 
       if (attachmentError) throw attachmentError;
 
