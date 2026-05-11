@@ -37,6 +37,8 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [displayRotation, setDisplayRotation] = useState('0');
   const [eventReminderHours, setEventReminderHours] = useState('24');
   const [notificationSound, setNotificationSound] = useState<SoundPreset>(getSelectedSound());
+  const [bitPhone, setBitPhone] = useState('');
+  const [bitEnabled, setBitEnabled] = useState(false);
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
