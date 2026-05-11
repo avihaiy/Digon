@@ -10,7 +10,7 @@ import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
 
-const normalizePhone = (s: string) => (s || "").replace(/\D/g, "");
+
 
 // תוקף סשן: 24 שעות
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
