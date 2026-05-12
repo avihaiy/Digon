@@ -19,6 +19,7 @@ import {
   Smartphone,
   Copy,
   Check,
+  MessageCircle,
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
@@ -73,6 +74,8 @@ export default function PublicMemberArea() {
   const [now, setNow] = useState(Date.now());
   const [bitPhone, setBitPhone] = useState<string>("");
   const [bitEnabled, setBitEnabled] = useState(false);
+  const [bitDialogOpen, setBitDialogOpen] = useState(false);
+  const [copiedField, setCopiedField] = useState<"phone" | "amount" | null>(null);
   const [sendingPayment, setSendingPayment] = useState(false);
 
   // טיק לעדכון תצוגת זמן הנעילה
@@ -429,15 +432,15 @@ export default function PublicMemberArea() {
                   </Card>
                 )}
 
-                {/* כפתור הביט - תשלום ישיר עם הפרטים */}
+                {/* כפתור הביט - תשלום דרך WhatsApp */}
                 {bitEnabled &&
                   bitPhone &&
                   netOwed > 0 &&
                   (() => {
-                    const handleDirectPayment = async () => {
+                    const handleBitPayment = async () => {
                       setSendingPayment(true);
 
-                      // נרמל את מספר הביט לפורמט ישראלי (05...)
+                      // נרמל את מספר הביט
                       let cleanPhone = (bitPhone || "").replace(/\D/g, "");
                       if (cleanPhone.startsWith("972")) cleanPhone = "0" + cleanPhone.slice(3);
                       if (!cleanPhone.startsWith("0")) cleanPhone = "0" + cleanPhone;
@@ -449,7 +452,6 @@ export default function PublicMemberArea() {
                       }
 
                       try {
-                        // רשום בסיס נתונים שניסיון תשלום
                         await supabase.rpc("record_bit_payment_intent", {
                           _member_id: memberId!,
                           _amount: netOwed,
@@ -459,42 +461,37 @@ export default function PublicMemberArea() {
                         console.warn("Failed to record bit intent", e);
                       }
 
-                      // סכום בשקלים
                       const amount = Math.round(netOwed * 100) / 100;
 
-                      const ua = navigator.userAgent.toLowerCase();
-                      const isAndroid = /android/.test(ua);
-                      const isIOS = /iphone|ipad|ipod/.test(ua);
+                      // הודעה לWhatsApp עם הנחיות ברורות
+                      const message = `בקשת תשלום לביט 📱
 
-                      if (isAndroid) {
-                        // Android Intent URI - פותח את ביט עם intent וההפרטים
-                        const intent = `intent://send?amount=${amount}&phone=${encodeURIComponent(cleanPhone)}#Intent;scheme=bit;package=com.bnhp.payments.paymentsapp;end`;
-                        window.location.href = intent;
-                      } else if (isIOS) {
-                        // iOS URL scheme - bit://send?...
-                        const iosLink = `bit://send?amount=${amount}&phone=${cleanPhone}`;
-                        window.location.href = iosLink;
+💰 סכום: ${amount} ₪
+📞 מספר טלפון: ${cleanPhone}
 
-                        // Fallback אחרי 2 שניות - אם לא פתחה
-                        setTimeout(() => {
-                          window.open("https://apps.apple.com/il/app/bit-%D7%91%D7%99%D7%98/id1182007739", "_blank");
-                        }, 2000);
-                      } else {
-                        // Desktop - פתח את אתר ביט
-                        window.open("https://www.bitpay.co.il/", "_blank", "noopener,noreferrer");
-                      }
+איך לשלם:
+1️⃣ פתח את אפליקציית ביט
+2️⃣ לחץ "שליחת כסף"
+3️⃣ הדבק את המספר: ${cleanPhone}
+4️⃣ הזן את הסכום: ${amount} ₪
+5️⃣ שלח את התשלום
 
-                      toast.success("מעביר לביט...");
+תודה! 🙏`;
+
+                      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                      window.open(whatsappUrl, "_blank");
+
+                      toast.success("נפתח WhatsApp עם ההנחיות");
                       setSendingPayment(false);
                     };
 
                     return (
                       <button
                         type="button"
-                        onClick={handleDirectPayment}
+                        onClick={handleBitPayment}
                         disabled={sendingPayment}
                         className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
+                        style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}
                       >
                         {sendingPayment ? (
                           <>
@@ -503,8 +500,8 @@ export default function PublicMemberArea() {
                           </>
                         ) : (
                           <>
-                            <Smartphone className="w-5 h-5" />
-                            שלם {formatCurrency(netOwed)} בביט
+                            <MessageCircle className="w-5 h-5" />
+                            שלח בקשת תשלום בביט דרך WhatsApp
                           </>
                         )}
                       </button>
