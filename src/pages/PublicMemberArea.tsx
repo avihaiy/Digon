@@ -19,7 +19,7 @@ import {
   Smartphone,
   Copy,
   Check,
-  MessageCircle,
+  QrCode,
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
@@ -74,8 +74,7 @@ export default function PublicMemberArea() {
   const [now, setNow] = useState(Date.now());
   const [bitPhone, setBitPhone] = useState<string>("");
   const [bitEnabled, setBitEnabled] = useState(false);
-  const [bitDialogOpen, setBitDialogOpen] = useState(false);
-  const [copiedField, setCopiedField] = useState<"phone" | "amount" | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [sendingPayment, setSendingPayment] = useState(false);
 
   // טיק לעדכון תצוגת זמן הנעילה
@@ -432,12 +431,12 @@ export default function PublicMemberArea() {
                   </Card>
                 )}
 
-                {/* כפתור הביט - תשלום דרך WhatsApp */}
+                {/* QR Code לתשלום בביט */}
                 {bitEnabled &&
                   bitPhone &&
                   netOwed > 0 &&
                   (() => {
-                    const handleBitPayment = async () => {
+                    const handleShowQR = async () => {
                       setSendingPayment(true);
 
                       // נרמל את מספר הביט
@@ -461,50 +460,91 @@ export default function PublicMemberArea() {
                         console.warn("Failed to record bit intent", e);
                       }
 
-                      const amount = Math.round(netOwed * 100) / 100;
-
-                      // הודעה לWhatsApp עם הנחיות ברורות
-                      const message = `בקשת תשלום לביט 📱
-
-💰 סכום: ${amount} ₪
-📞 מספר טלפון: ${cleanPhone}
-
-איך לשלם:
-1️⃣ פתח את אפליקציית ביט
-2️⃣ לחץ "שליחת כסף"
-3️⃣ הדבק את המספר: ${cleanPhone}
-4️⃣ הזן את הסכום: ${amount} ₪
-5️⃣ שלח את התשלום
-
-תודה! 🙏`;
-
-                      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-                      window.open(whatsappUrl, "_blank");
-
-                      toast.success("נפתח WhatsApp עם ההנחיות");
                       setSendingPayment(false);
+                      setQrDialogOpen(true);
                     };
 
+                    const amount = Math.round(netOwed * 100) / 100;
+                    let cleanPhone = (bitPhone || "").replace(/\D/g, "");
+                    if (cleanPhone.startsWith("972")) cleanPhone = "0" + cleanPhone.slice(3);
+                    if (!cleanPhone.startsWith("0")) cleanPhone = "0" + cleanPhone;
+
+                    // QR Code URL - בנוי מהסכום ומספר הטלפון
+                    const bitPaymentUrl = `https://bitpay.co.il/pay?phone=${cleanPhone}&amount=${amount}`;
+                    const qrData = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(bitPaymentUrl)}`;
+
                     return (
-                      <button
-                        type="button"
-                        onClick={handleBitPayment}
-                        disabled={sendingPayment}
-                        className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}
-                      >
-                        {sendingPayment ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            מעבד...
-                          </>
-                        ) : (
-                          <>
-                            <MessageCircle className="w-5 h-5" />
-                            שלח בקשת תשלום בביט דרך WhatsApp
-                          </>
-                        )}
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleShowQR}
+                          disabled={sendingPayment}
+                          className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
+                        >
+                          {sendingPayment ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              מעבד...
+                            </>
+                          ) : (
+                            <>
+                              <QrCode className="w-5 h-5" />
+                              QR Code לתשלום בביט
+                            </>
+                          )}
+                        </button>
+
+                        <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+                          <DialogContent dir="rtl" className="max-w-sm">
+                            <DialogHeader>
+                              <DialogTitle className="text-center">תשלום בביט</DialogTitle>
+                              <DialogDescription className="text-center">
+                                לחץ על QR Code להעברה ישירה לביט
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-4 flex flex-col items-center">
+                              {/* QR Code - ניתן ללחוץ עליו */}
+                              <a
+                                href={bitPaymentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-white p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer"
+                              >
+                                <img src={qrData} alt="QR Code לתשלום בביט" className="w-56 h-56" />
+                              </a>
+
+                              {/* פרטים */}
+                              <div className="w-full space-y-3 text-center">
+                                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4">
+                                  <div className="text-sm text-muted-foreground mb-1">סכום לתשלום</div>
+                                  <div className="text-3xl font-bold text-blue-600">{formatCurrency(netOwed)}</div>
+                                </div>
+
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                  <div className="text-sm text-muted-foreground mb-1">מספר טלפון</div>
+                                  <div className="text-lg font-mono font-bold">{cleanPhone}</div>
+                                </div>
+                              </div>
+
+                              {/* הנחיות */}
+                              <div className="w-full bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                                <div className="font-bold text-amber-900 text-sm">איך לשלם:</div>
+                                <ol className="text-xs text-amber-900 space-y-1 list-decimal pr-4">
+                                  <li>לחץ על QR Code למעלה</li>
+                                  <li>זה יעביר ישירות לביט</li>
+                                  <li>אשר את התשלום בביט</li>
+                                </ol>
+                              </div>
+
+                              <Button onClick={() => setQrDialogOpen(false)} variant="outline" className="w-full">
+                                סגור
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </>
                     );
                   })()}
 
