@@ -65,6 +65,8 @@ export default function PublicMemberArea() {
   const [now, setNow] = useState(Date.now());
   const [bitPhone, setBitPhone] = useState<string>("");
   const [bitEnabled, setBitEnabled] = useState(false);
+  const [bitDialogOpen, setBitDialogOpen] = useState(false);
+  const [copiedField, setCopiedField] = useState<"phone" | "amount" | null>(null);
 
   // טיק לעדכון תצוגת זמן הנעילה
   useEffect(() => {
