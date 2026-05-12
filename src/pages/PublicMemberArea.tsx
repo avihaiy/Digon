@@ -7,11 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, FileText, Receipt as ReceiptIcon, ExternalLink, FileDown, Lock, LogOut, AlertTriangle, Smartphone, Copy, Check } from "lucide-react";
+import {
+  Loader2,
+  FileText,
+  Receipt as ReceiptIcon,
+  ExternalLink,
+  FileDown,
+  Lock,
+  LogOut,
+  AlertTriangle,
+  Smartphone,
+  Copy,
+  Check,
+} from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
-
-
 
 // תוקף סשן: 24 שעות
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -52,7 +62,7 @@ interface ReceiptRow {
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
   const [memberName, setMemberName] = useState<string>("");
-  
+
   const [charges, setCharges] = useState<ChargeRow[]>([]);
   const [pending, setPending] = useState<PendingPaymentRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
@@ -118,7 +128,9 @@ export default function PublicMemberArea() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [memberId]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -158,27 +170,33 @@ export default function PublicMemberArea() {
     }
 
     const d: any = data;
-    setCharges((d.charges || []).map((row: any) => ({
-      id: row.id,
-      amount: Number(row.amount),
-      remaining_balance: Number(row.remaining_balance),
-      description: row.description,
-      charge_date: row.charge_date,
-    })));
-    setPending((d.pending || []).map((row: any) => ({
-      id: row.id,
-      amount: Number(row.amount),
-      method: row.method,
-      created_at: row.created_at,
-      description: row.description,
-    })));
-    setReceipts((d.receipts || []).map((row: any) => ({
-      id: row.id,
-      receipt_number: Number(row.receipt_number),
-      total_amount: Number(row.total_amount),
-      description: row.description,
-      created_at: row.created_at,
-    })));
+    setCharges(
+      (d.charges || []).map((row: any) => ({
+        id: row.id,
+        amount: Number(row.amount),
+        remaining_balance: Number(row.remaining_balance),
+        description: row.description,
+        charge_date: row.charge_date,
+      })),
+    );
+    setPending(
+      (d.pending || []).map((row: any) => ({
+        id: row.id,
+        amount: Number(row.amount),
+        method: row.method,
+        created_at: row.created_at,
+        description: row.description,
+      })),
+    );
+    setReceipts(
+      (d.receipts || []).map((row: any) => ({
+        id: row.id,
+        receipt_number: Number(row.receipt_number),
+        total_amount: Number(row.total_amount),
+        description: row.description,
+        created_at: row.created_at,
+      })),
+    );
     setBitPhone(d.bit_phone || "");
     setBitEnabled(!!d.bit_enabled);
 
@@ -200,33 +218,16 @@ export default function PublicMemberArea() {
     toast.success("התנתקת מהאזור האישי");
   };
 
-  const totalCharges = useMemo(
-    () => charges.reduce((s, c) => s + c.remaining_balance, 0),
-    [charges]
-  );
-  const totalPending = useMemo(
-    () => pending.reduce((s, p) => s + p.amount, 0),
-    [pending]
-  );
-  const netOwed = useMemo(
-    () => Math.max(0, totalCharges - totalPending),
-    [totalCharges, totalPending]
-  );
-  const pendingCredit = useMemo(
-    () => Math.max(0, totalPending - totalCharges),
-    [totalCharges, totalPending]
-  );
+  const totalCharges = useMemo(() => charges.reduce((s, c) => s + c.remaining_balance, 0), [charges]);
+  const totalPending = useMemo(() => pending.reduce((s, p) => s + p.amount, 0), [pending]);
+  const netOwed = useMemo(() => Math.max(0, totalCharges - totalPending), [totalCharges, totalPending]);
+  const pendingCredit = useMemo(() => Math.max(0, totalPending - totalCharges), [totalCharges, totalPending]);
   const totalOwed = netOwed;
 
-  const totalReceipts = useMemo(
-    () => receipts.reduce((s, r) => s + r.total_amount, 0),
-    [receipts]
-  );
+  const totalReceipts = useMemo(() => receipts.reduce((s, r) => s + r.total_amount, 0), [receipts]);
 
   useEffect(() => {
-    document.title = memberName
-      ? `אזור אישי — ${memberName} • ברית שלום עכו`
-      : "אזור אישי • ברית שלום עכו";
+    document.title = memberName ? `אזור אישי — ${memberName} • ברית שלום עכו` : "אזור אישי • ברית שלום עכו";
   }, [memberName]);
 
   if (loading) {
@@ -254,7 +255,10 @@ export default function PublicMemberArea() {
     const remainingSecPart = remainingSec % 60;
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-background to-muted/30 p-4" dir="rtl">
+      <div
+        className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-background to-muted/30 p-4"
+        dir="rtl"
+      >
         <Card className="w-full max-w-sm p-6 space-y-4">
           <div className="text-center space-y-1">
             <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -262,9 +266,7 @@ export default function PublicMemberArea() {
             </div>
             <h1 className="text-xl font-bold text-foreground">אזור אישי</h1>
             <p className="text-sm text-muted-foreground">שלום {memberName}</p>
-            {!noPhone && !isLocked && (
-              <p className="text-xs text-muted-foreground">להתחברות, הזן את מספר הטלפון שלך</p>
-            )}
+            {!noPhone && !isLocked && <p className="text-xs text-muted-foreground">להתחברות, הזן את מספר הטלפון שלך</p>}
           </div>
 
           {noPhone ? (
@@ -272,11 +274,10 @@ export default function PublicMemberArea() {
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <div className="font-bold text-amber-900 dark:text-amber-200 text-sm">
-                    לא ניתן להתחבר
-                  </div>
+                  <div className="font-bold text-amber-900 dark:text-amber-200 text-sm">לא ניתן להתחבר</div>
                   <p className="text-xs text-amber-800 dark:text-amber-300">
-                    לא הוגדר מספר טלפון בכרטיס שלך במערכת. כדי להפעיל את האזור האישי, יש לפנות לגזבר בית הכנסת ולבקש לעדכן את מספר הטלפון.
+                    לא הוגדר מספר טלפון בכרטיס שלך במערכת. כדי להפעיל את האזור האישי, יש לפנות לגזבר בית הכנסת ולבקש
+                    לעדכן את מספר הטלפון.
                   </p>
                 </div>
               </div>
@@ -308,7 +309,9 @@ export default function PublicMemberArea() {
                 />
                 {pwdError && <p className="text-xs text-destructive">{pwdError}</p>}
               </div>
-              <Button type="submit" className="w-full">כניסה</Button>
+              <Button type="submit" className="w-full">
+                כניסה
+              </Button>
             </form>
           )}
         </Card>
@@ -343,9 +346,7 @@ export default function PublicMemberArea() {
           </Card>
           <Card className="p-4 text-center">
             <div className="text-xs text-muted-foreground mb-1">סה״כ קבלות</div>
-            <div className="text-2xl font-extrabold text-foreground">
-              {formatCurrency(totalReceipts)}
-            </div>
+            <div className="text-2xl font-extrabold text-foreground">{formatCurrency(totalReceipts)}</div>
             <div className="text-[10px] text-muted-foreground mt-1">{receipts.length} קבלות</div>
           </Card>
         </div>
@@ -434,145 +435,168 @@ export default function PublicMemberArea() {
                     </div>
                   </Card>
                 )}
-                {bitEnabled && bitPhone && netOwed > 0 && (() => {
-                  // נרמל את מספר הביט לפורמט ישראלי 0XXXXXXXXX
-                  let cleanPhone = (bitPhone || "").replace(/\D/g, "");
-                  if (cleanPhone.startsWith("972")) cleanPhone = "0" + cleanPhone.slice(3);
-                  if (cleanPhone.length === 9 && !cleanPhone.startsWith("0")) cleanPhone = "0" + cleanPhone;
-                  const phoneFormatted = cleanPhone.length === 10
-                    ? `${cleanPhone.slice(0, 3)}-${cleanPhone.slice(3)}`
-                    : cleanPhone;
-                  const amountStr = String(Math.round(netOwed * 100) / 100);
+                {bitEnabled &&
+                  bitPhone &&
+                  netOwed > 0 &&
+                  (() => {
+                    // נרמל את מספר הביט לפורמט ישראלי 0XXXXXXXXX
+                    let cleanPhone = (bitPhone || "").replace(/\D/g, "");
+                    if (cleanPhone.startsWith("972")) cleanPhone = "0" + cleanPhone.slice(3);
+                    if (cleanPhone.length === 9 && !cleanPhone.startsWith("0")) cleanPhone = "0" + cleanPhone;
+                    const phoneFormatted =
+                      cleanPhone.length === 10 ? `${cleanPhone.slice(0, 3)}-${cleanPhone.slice(3)}` : cleanPhone;
+                    const amountStr = String(Math.round(netOwed * 100) / 100);
 
-                  const handleCopy = async (text: string, field: "phone" | "amount") => {
-                    try {
-                      await navigator.clipboard.writeText(text);
-                      setCopiedField(field);
-                      setTimeout(() => setCopiedField(null), 2000);
-                      toast.success("הועתק");
-                    } catch {
-                      toast.error("העתקה נכשלה");
-                    }
-                  };
+                    const handleCopy = async (text: string, field: "phone" | "amount") => {
+                      try {
+                        await navigator.clipboard.writeText(text);
+                        setCopiedField(field);
+                        setTimeout(() => setCopiedField(null), 2000);
+                        toast.success("הועתק");
+                      } catch {
+                        toast.error("העתקה נכשלה");
+                      }
+                    };
 
-                  const openBitApp = () => {
-                    // פתיחת אפליקציית ביט במכשירי מובייל (אנדרואיד/iOS)
-                    const ua = navigator.userAgent;
-                    const isAndroid = /android/i.test(ua);
-                    const isIOS = /iphone|ipad|ipod/i.test(ua);
-                    if (isAndroid) {
-                      window.location.href = "intent://#Intent;scheme=https;package=com.bnhp.payments.paymentsapp;end";
-                    } else if (isIOS) {
-                      window.location.href = "https://apps.apple.com/il/app/bit/id950356826";
-                    } else {
-                      window.open("https://bitpay.co.il/", "_blank", "noopener,noreferrer");
-                    }
-                  };
+                    const openBitApp = () => {
+                      const ua = navigator.userAgent.toLowerCase();
+                      const isAndroid = /android/.test(ua);
+                      const isIOS = /iphone|ipad|ipod/.test(ua);
 
-                  return (
-                    <>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (!cleanPhone || cleanPhone.length < 9) {
-                            toast.error("מספר טלפון של ביט אינו תקין", {
-                              description: "פנה לגזבר לעדכון מספר ביט בהגדרות",
-                            });
-                            return;
-                          }
-                          try {
-                            await supabase.rpc("record_bit_payment_intent", {
-                              _member_id: memberId!,
-                              _amount: netOwed,
-                              _user_agent: navigator.userAgent.slice(0, 500),
-                            });
-                          } catch (e) {
-                            console.warn("Failed to record bit intent", e);
-                          }
-                          setBitDialogOpen(true);
-                        }}
-                        className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
-                        style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
-                      >
-                        <Smartphone className="w-5 h-5" />
-                        שלם {formatCurrency(netOwed)} בביט
-                      </button>
+                      if (isAndroid) {
+                        // Android: פתח את אפליקציית ביט אם מותקנת
+                        window.location.href =
+                          "intent://bit#Intent;scheme=bit;package=com.bnhp.payments.paymentsapp;end";
+                      } else if (isIOS) {
+                        // iOS: פתח את אפליקציית ביט אם מותקנת, אחרת לחנות
+                        window.location.href = "bit://";
+                        // Fallback אחרי 2 שניות
+                        setTimeout(() => {
+                          window.location.href = "https://apps.apple.com/il/app/bit-%D7%91%D7%99%D7%98/id1182007739";
+                        }, 2000);
+                      } else {
+                        // Desktop: פתח את אתר ביט
+                        window.open("https://www.bitpay.co.il/", "_blank", "noopener,noreferrer");
+                      }
+                    };
 
-                      <Dialog open={bitDialogOpen} onOpenChange={setBitDialogOpen}>
-                        <DialogContent dir="rtl" className="max-w-sm">
-                          <DialogHeader>
-                            <DialogTitle className="text-center">תשלום בביט</DialogTitle>
-                            <DialogDescription className="text-center">
-                              העתק את הפרטים, פתח את אפליקציית ביט והעבר תשלום
-                            </DialogDescription>
-                          </DialogHeader>
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!cleanPhone || cleanPhone.length < 9) {
+                              toast.error("מספר טלפון של ביט אינו תקין", {
+                                description: "פנה לגזבר לעדכון מספר ביט בהגדרות",
+                              });
+                              return;
+                            }
+                            try {
+                              await supabase.rpc("record_bit_payment_intent", {
+                                _member_id: memberId!,
+                                _amount: netOwed,
+                                _user_agent: navigator.userAgent.slice(0, 500),
+                              });
+                            } catch (e) {
+                              console.warn("Failed to record bit intent", e);
+                            }
+                            setBitDialogOpen(true);
+                          }}
+                          className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                          style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
+                        >
+                          <Smartphone className="w-5 h-5" />
+                          שלם {formatCurrency(netOwed)} בביט
+                        </button>
 
-                          <div className="space-y-3">
-                            <div className="rounded-lg border p-3 space-y-1">
-                              <div className="text-xs text-muted-foreground">מספר טלפון לביט</div>
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="text-xl font-bold tabular-nums" dir="ltr">
-                                  {phoneFormatted}
+                        <Dialog open={bitDialogOpen} onOpenChange={setBitDialogOpen}>
+                          <DialogContent dir="rtl" className="max-w-sm">
+                            <DialogHeader>
+                              <DialogTitle className="text-center">תשלום בביט</DialogTitle>
+                              <DialogDescription className="text-center">
+                                העתק את הפרטים, פתח את אפליקציית ביט והעבר תשלום
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-3">
+                              <div className="rounded-lg border p-3 space-y-1">
+                                <div className="text-xs text-muted-foreground">מספר טלפון לביט</div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="text-xl font-bold tabular-nums" dir="ltr">
+                                    {phoneFormatted}
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleCopy(cleanPhone, "phone")}
+                                    className="gap-1.5"
+                                  >
+                                    {copiedField === "phone" ? (
+                                      <Check className="w-4 h-4" />
+                                    ) : (
+                                      <Copy className="w-4 h-4" />
+                                    )}
+                                    העתק
+                                  </Button>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleCopy(cleanPhone, "phone")}
-                                  className="gap-1.5"
-                                >
-                                  {copiedField === "phone" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                  העתק
-                                </Button>
                               </div>
-                            </div>
 
-                            <div className="rounded-lg border p-3 space-y-1">
-                              <div className="text-xs text-muted-foreground">סכום לתשלום</div>
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="text-xl font-bold text-primary">
-                                  {formatCurrency(netOwed)}
+                              <div className="rounded-lg border p-3 space-y-1">
+                                <div className="text-xs text-muted-foreground">סכום לתשלום</div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="text-xl font-bold text-primary">{formatCurrency(netOwed)}</div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleCopy(amountStr, "amount")}
+                                    className="gap-1.5"
+                                  >
+                                    {copiedField === "amount" ? (
+                                      <Check className="w-4 h-4" />
+                                    ) : (
+                                      <Copy className="w-4 h-4" />
+                                    )}
+                                    העתק
+                                  </Button>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleCopy(amountStr, "amount")}
-                                  className="gap-1.5"
-                                >
-                                  {copiedField === "amount" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                  העתק
-                                </Button>
                               </div>
+
+                              <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                                <div className="font-bold text-foreground">איך לשלם:</div>
+                                <ol className="list-decimal pr-5 space-y-0.5">
+                                  <li>פתח את אפליקציית ביט</li>
+                                  <li>בחר "שליחת כסף"</li>
+                                  <li>
+                                    הדבק את מספר הטלפון:{" "}
+                                    <span dir="ltr" className="font-bold">
+                                      {phoneFormatted}
+                                    </span>
+                                  </li>
+                                  <li>
+                                    הזן את הסכום: <span className="font-bold">{formatCurrency(netOwed)}</span>
+                                  </li>
+                                </ol>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={openBitApp}
+                                className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                                style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
+                              >
+                                <Smartphone className="w-5 h-5" />
+                                פתח אפליקציית ביט
+                              </button>
+
+                              <p className="text-center text-[11px] text-muted-foreground">
+                                לאחר ביצוע התשלום, הוא ימתין לאישור הגזבר
+                              </p>
                             </div>
-
-                            <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
-                              <div className="font-bold text-foreground">איך לשלם:</div>
-                              <ol className="list-decimal pr-5 space-y-0.5">
-                                <li>פתח את אפליקציית ביט</li>
-                                <li>בחר "שליחת כסף"</li>
-                                <li>הדבק את מספר הטלפון: <span dir="ltr" className="font-bold">{phoneFormatted}</span></li>
-                                <li>הזן את הסכום: <span className="font-bold">{formatCurrency(netOwed)}</span></li>
-                              </ol>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={openBitApp}
-                              className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
-                              style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
-                            >
-                              <Smartphone className="w-5 h-5" />
-                              פתח אפליקציית ביט
-                            </button>
-
-                            <p className="text-center text-[11px] text-muted-foreground">
-                              לאחר ביצוע התשלום, הוא ימתין לאישור הגזבר
-                            </p>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </>
-                  );
-                })()}
+                          </DialogContent>
+                        </Dialog>
+                      </>
+                    );
+                  })()}
                 <Button asChild variant="outline" className="w-full gap-2">
                   <Link to={`/d/${memberId}`}>
                     <FileDown className="w-4 h-4" />
@@ -598,9 +622,7 @@ export default function PublicMemberArea() {
                       className="flex items-center justify-between p-3 hover:bg-muted/40 rounded-lg transition-colors"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-bold truncate">
-                          קבלה #{r.receipt_number}
-                        </div>
+                        <div className="text-sm font-bold truncate">קבלה #{r.receipt_number}</div>
                         <div className="text-xs text-muted-foreground truncate">
                           {r.description || "תרומה"} • {formatShortDate(r.created_at)}
                         </div>
@@ -617,9 +639,7 @@ export default function PublicMemberArea() {
           </TabsContent>
         </Tabs>
 
-        <p className="text-center text-xs text-muted-foreground pt-2">
-          האזור האישי שלך בבית כנסת ברית שלום עכו
-        </p>
+        <p className="text-center text-xs text-muted-foreground pt-2">האזור האישי שלך בבית כנסת ברית שלום עכו</p>
       </div>
     </div>
   );
