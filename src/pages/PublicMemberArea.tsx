@@ -434,57 +434,145 @@ export default function PublicMemberArea() {
                     </div>
                   </Card>
                 )}
-                {bitEnabled && bitPhone && netOwed > 0 && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      // נקה את מספר הטלפון - השאר רק ספרות, ודא פורמט ישראלי 0XXXXXXXXX
-                      let cleanPhone = (bitPhone || "").replace(/\D/g, "");
-                      // אם מתחיל ב-972, החלף ב-0
-                      if (cleanPhone.startsWith("972")) {
-                        cleanPhone = "0" + cleanPhone.slice(3);
-                      }
-                      // ודא שמתחיל ב-0
-                      if (cleanPhone.length === 9 && !cleanPhone.startsWith("0")) {
-                        cleanPhone = "0" + cleanPhone;
-                      }
+                {bitEnabled && bitPhone && netOwed > 0 && (() => {
+                  // נרמל את מספר הביט לפורמט ישראלי 0XXXXXXXXX
+                  let cleanPhone = (bitPhone || "").replace(/\D/g, "");
+                  if (cleanPhone.startsWith("972")) cleanPhone = "0" + cleanPhone.slice(3);
+                  if (cleanPhone.length === 9 && !cleanPhone.startsWith("0")) cleanPhone = "0" + cleanPhone;
+                  const phoneFormatted = cleanPhone.length === 10
+                    ? `${cleanPhone.slice(0, 3)}-${cleanPhone.slice(3)}`
+                    : cleanPhone;
+                  const amountStr = String(Math.round(netOwed * 100) / 100);
 
-                      if (!cleanPhone || cleanPhone.length < 9) {
-                        toast.error("מספר טלפון של ביט אינו תקין", {
-                          description: "פנה לגזבר לעדכון מספר ביט בהגדרות",
-                        });
-                        return;
-                      }
+                  const handleCopy = async (text: string, field: "phone" | "amount") => {
+                    try {
+                      await navigator.clipboard.writeText(text);
+                      setCopiedField(field);
+                      setTimeout(() => setCopiedField(null), 2000);
+                      toast.success("הועתק");
+                    } catch {
+                      toast.error("העתקה נכשלה");
+                    }
+                  };
 
-                      try {
-                        await supabase.rpc("record_bit_payment_intent", {
-                          _member_id: memberId!,
-                          _amount: netOwed,
-                          _user_agent: navigator.userAgent.slice(0, 500),
-                        });
-                      } catch (e) {
-                        console.warn("Failed to record bit intent", e);
-                      }
+                  const openBitApp = () => {
+                    // פתיחת אפליקציית ביט במכשירי מובייל (אנדרואיד/iOS)
+                    const ua = navigator.userAgent;
+                    const isAndroid = /android/i.test(ua);
+                    const isIOS = /iphone|ipad|ipod/i.test(ua);
+                    if (isAndroid) {
+                      window.location.href = "intent://#Intent;scheme=https;package=com.bnhp.payments.paymentsapp;end";
+                    } else if (isIOS) {
+                      window.location.href = "https://apps.apple.com/il/app/bit/id950356826";
+                    } else {
+                      window.open("https://bitpay.co.il/", "_blank", "noopener,noreferrer");
+                    }
+                  };
 
-                      const description = encodeURIComponent(`תשלום מ${memberName}`);
-                      const amountStr = String(Math.round(netOwed * 100) / 100);
-                      // קישור Universal Link של ביט - פותח את האפליקציה במובייל אם מותקנת
-                      const bitUrl = `https://www.bitpay.co.il/app/share-money/${cleanPhone}?amount=${amountStr}&description=${description}`;
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!cleanPhone || cleanPhone.length < 9) {
+                            toast.error("מספר טלפון של ביט אינו תקין", {
+                              description: "פנה לגזבר לעדכון מספר ביט בהגדרות",
+                            });
+                            return;
+                          }
+                          try {
+                            await supabase.rpc("record_bit_payment_intent", {
+                              _member_id: memberId!,
+                              _amount: netOwed,
+                              _user_agent: navigator.userAgent.slice(0, 500),
+                            });
+                          } catch (e) {
+                            console.warn("Failed to record bit intent", e);
+                          }
+                          setBitDialogOpen(true);
+                        }}
+                        className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                        style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
+                      >
+                        <Smartphone className="w-5 h-5" />
+                        שלם {formatCurrency(netOwed)} בביט
+                      </button>
 
-                      // ניסיון פתיחה ישירה (במובייל זה יפעיל את האפליקציה)
-                      window.location.href = bitUrl;
+                      <Dialog open={bitDialogOpen} onOpenChange={setBitDialogOpen}>
+                        <DialogContent dir="rtl" className="max-w-sm">
+                          <DialogHeader>
+                            <DialogTitle className="text-center">תשלום בביט</DialogTitle>
+                            <DialogDescription className="text-center">
+                              העתק את הפרטים, פתח את אפליקציית ביט והעבר תשלום
+                            </DialogDescription>
+                          </DialogHeader>
 
-                      toast.success("נרשמה בקשת תשלום בביט", {
-                        description: "תשלומך יאושר על ידי הגזבר לאחר קבלתו",
-                      });
-                    }}
-                    className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
-                    style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
-                  >
-                    <Smartphone className="w-5 h-5" />
-                    שלם {formatCurrency(netOwed)} בביט
-                  </button>
-                )}
+                          <div className="space-y-3">
+                            <div className="rounded-lg border p-3 space-y-1">
+                              <div className="text-xs text-muted-foreground">מספר טלפון לביט</div>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="text-xl font-bold tabular-nums" dir="ltr">
+                                  {phoneFormatted}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCopy(cleanPhone, "phone")}
+                                  className="gap-1.5"
+                                >
+                                  {copiedField === "phone" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                  העתק
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg border p-3 space-y-1">
+                              <div className="text-xs text-muted-foreground">סכום לתשלום</div>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="text-xl font-bold text-primary">
+                                  {formatCurrency(netOwed)}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCopy(amountStr, "amount")}
+                                  className="gap-1.5"
+                                >
+                                  {copiedField === "amount" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                  העתק
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                              <div className="font-bold text-foreground">איך לשלם:</div>
+                              <ol className="list-decimal pr-5 space-y-0.5">
+                                <li>פתח את אפליקציית ביט</li>
+                                <li>בחר "שליחת כסף"</li>
+                                <li>הדבק את מספר הטלפון: <span dir="ltr" className="font-bold">{phoneFormatted}</span></li>
+                                <li>הזן את הסכום: <span className="font-bold">{formatCurrency(netOwed)}</span></li>
+                              </ol>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={openBitApp}
+                              className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                              style={{ background: "linear-gradient(135deg, #0066ff, #00aaff)" }}
+                            >
+                              <Smartphone className="w-5 h-5" />
+                              פתח אפליקציית ביט
+                            </button>
+
+                            <p className="text-center text-[11px] text-muted-foreground">
+                              לאחר ביצוע התשלום, הוא ימתין לאישור הגזבר
+                            </p>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  );
+                })()}
                 <Button asChild variant="outline" className="w-full gap-2">
                   <Link to={`/d/${memberId}`}>
                     <FileDown className="w-4 h-4" />
