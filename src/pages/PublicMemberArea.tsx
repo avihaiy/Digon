@@ -435,6 +435,24 @@ export default function PublicMemberArea() {
                   <button
                     type="button"
                     onClick={async () => {
+                      // נקה את מספר הטלפון - השאר רק ספרות, ודא פורמט ישראלי 0XXXXXXXXX
+                      let cleanPhone = (bitPhone || "").replace(/\D/g, "");
+                      // אם מתחיל ב-972, החלף ב-0
+                      if (cleanPhone.startsWith("972")) {
+                        cleanPhone = "0" + cleanPhone.slice(3);
+                      }
+                      // ודא שמתחיל ב-0
+                      if (cleanPhone.length === 9 && !cleanPhone.startsWith("0")) {
+                        cleanPhone = "0" + cleanPhone;
+                      }
+
+                      if (!cleanPhone || cleanPhone.length < 9) {
+                        toast.error("מספר טלפון של ביט אינו תקין", {
+                          description: "פנה לגזבר לעדכון מספר ביט בהגדרות",
+                        });
+                        return;
+                      }
+
                       try {
                         await supabase.rpc("record_bit_payment_intent", {
                           _member_id: memberId!,
@@ -444,8 +462,15 @@ export default function PublicMemberArea() {
                       } catch (e) {
                         console.warn("Failed to record bit intent", e);
                       }
-                      const url = `https://www.bitpay.co.il/app/me/${bitPhone}?amount=${netOwed}&description=${encodeURIComponent(`תשלום מ${memberName}`)}`;
-                      window.open(url, "_blank", "noopener,noreferrer");
+
+                      const description = encodeURIComponent(`תשלום מ${memberName}`);
+                      const amountStr = String(Math.round(netOwed * 100) / 100);
+                      // קישור Universal Link של ביט - פותח את האפליקציה במובייל אם מותקנת
+                      const bitUrl = `https://www.bitpay.co.il/app/share-money/${cleanPhone}?amount=${amountStr}&description=${description}`;
+
+                      // ניסיון פתיחה ישירה (במובייל זה יפעיל את האפליקציה)
+                      window.location.href = bitUrl;
+
                       toast.success("נרשמה בקשת תשלום בביט", {
                         description: "תשלומך יאושר על ידי הגזבר לאחר קבלתו",
                       });
