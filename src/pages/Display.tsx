@@ -501,6 +501,45 @@ export default function Display() {
     };
   }, [showWeekBefore]);
 
+  // ספר התורה הפעיל לשבת/חג — שם להצגה בכותרת
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = supabase as any;
+    const fetchActiveSefer = async () => {
+      const { data: setting } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "active_sefer_torah_id")
+        .maybeSingle();
+      const id = setting?.value;
+      if (!id) {
+        setActiveSeferTorahName(null);
+        return;
+      }
+      const { data: sefer } = await db
+        .from("sifrei_torah")
+        .select("name, is_active")
+        .eq("id", id)
+        .maybeSingle();
+      setActiveSeferTorahName(sefer && sefer.is_active ? sefer.name : null);
+    };
+    fetchActiveSefer();
+    const channel = supabase
+      .channel("sefer-torah-display")
+      .on("postgres_changes", { event: "*", schema: "public", table: "sifrei_torah" }, () => fetchActiveSefer())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.active_sefer_torah_id" },
+        () => fetchActiveSefer(),
+      )
+      .subscribe();
+    const interval = setInterval(fetchActiveSefer, 60 * 1000);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+  }, []);
+
   // לפני כל reload — שמור שהיינו במסך מלא, כדי לחזור אליו אוטומטית אחרי טעינה
   const markFullscreenBeforeReload = useCallback(() => {
     try {
