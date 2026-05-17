@@ -187,85 +187,120 @@ export default function SifreiTorahManager() {
 
         <div className="border-t pt-4 space-y-3">
           <Label className="text-sm font-semibold">הוספת ספר תורה חדש</Label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <Input
-              placeholder="שם הספר (לדוג' ספר רבי יוסף)"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="md:col-span-1"
-            />
-            <Input
-              placeholder="הערות (אופציונלי)"
-              value={newNotes}
-              onChange={(e) => setNewNotes(e.target.value)}
-              className="md:col-span-1"
-            />
-            <Button onClick={addSefer} disabled={loading || !newName.trim()}>
-              <Plus className="w-4 h-4 ml-1" />
-              הוסף
-            </Button>
-          </div>
+          <Input
+            placeholder="שם הספר (לדוג' ספר רבי יוסף)"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+          />
+          <Textarea
+            placeholder="הערות (אופציונלי) — תיאור, מקור, מצב הספר וכו'"
+            value={newNotes}
+            onChange={(e) => setNewNotes(e.target.value)}
+            rows={3}
+          />
+          <Button onClick={addSefer} disabled={loading || !newName.trim()}>
+            <Plus className="w-4 h-4 ml-1" />
+            הוסף
+          </Button>
         </div>
 
-        <div className="border-t pt-4 space-y-2">
+        <div className="border-t pt-4 space-y-3">
           <Label className="text-sm font-semibold">רשימת ספרי התורה</Label>
+
+          {list.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="חיפוש לפי שם או הערות..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pr-9"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name_asc">שם — א׳-ת׳</SelectItem>
+                    <SelectItem value="name_desc">שם — ת׳-א׳</SelectItem>
+                    <SelectItem value="created_desc">חדש → ישן</SelectItem>
+                    <SelectItem value="created_asc">ישן → חדש</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {list.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">אין ספרי תורה. הוסף את הראשון למעלה.</p>
+          ) : displayList.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">לא נמצאו תוצאות לחיפוש "{search}".</p>
           ) : (
             <div className="space-y-2">
-              {list.map((s) => (
+              {displayList.map((s) => (
                 <div
                   key={s.id}
-                  className={`flex items-center gap-2 p-3 rounded-lg border ${
+                  className={`p-3 rounded-lg border ${
                     activeId === s.id ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/20' : 'bg-background'
                   }`}
                 >
                   {editingId === s.id ? (
-                    <>
+                    <div className="space-y-2">
                       <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="flex-1"
-                        placeholder="שם"
+                        placeholder="שם הספר"
                       />
-                      <Input
+                      <Textarea
                         value={editNotes}
                         onChange={(e) => setEditNotes(e.target.value)}
-                        className="flex-1"
                         placeholder="הערות"
+                        rows={4}
                       />
-                      <Button size="icon" variant="ghost" onClick={saveEdit}>
-                        <Check className="w-4 h-4 text-green-600" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setEditingId(null)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </>
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
+                          <X className="w-4 h-4 ml-1" />
+                          ביטול
+                        </Button>
+                        <Button size="sm" onClick={saveEdit}>
+                          <Check className="w-4 h-4 ml-1" />
+                          שמור
+                        </Button>
+                      </div>
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex items-start gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          {activeId === s.id && <Star className="w-4 h-4 text-amber-500 fill-amber-400" />}
-                          <p className={`font-medium truncate ${!s.is_active ? 'line-through text-muted-foreground' : ''}`}>
+                          {activeId === s.id && <Star className="w-4 h-4 text-amber-500 fill-amber-400 shrink-0" />}
+                          <p className={`font-medium ${!s.is_active ? 'line-through text-muted-foreground' : ''}`}>
                             {s.name}
                           </p>
                         </div>
-                        {s.notes && <p className="text-xs text-muted-foreground truncate">{s.notes}</p>}
+                        {s.notes && (
+                          <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">{s.notes}</p>
+                        )}
                       </div>
-                      <Button
-                        size="sm"
-                        variant={s.is_active ? 'outline' : 'secondary'}
-                        onClick={() => toggleActive(s)}
-                      >
-                        {s.is_active ? 'פעיל' : 'מושבת'}
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => startEdit(s)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => remove(s.id)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          size="sm"
+                          variant={s.is_active ? 'outline' : 'secondary'}
+                          onClick={() => toggleActive(s)}
+                        >
+                          {s.is_active ? 'פעיל' : 'מושבת'}
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => startEdit(s)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => remove(s.id)}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
               ))}
