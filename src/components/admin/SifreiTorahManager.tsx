@@ -16,6 +16,7 @@ interface SeferTorah {
   name: string;
   notes: string | null;
   is_active: boolean;
+  created_at: string;
 }
 
 const ACTIVE_KEY = 'active_sefer_torah_id';
@@ -31,6 +32,8 @@ export default function SifreiTorahManager() {
   const [editName, setEditName] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortMode>('name_asc');
 
   const load = async () => {
     const [{ data: items }, { data: setting }] = await Promise.all([
