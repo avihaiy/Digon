@@ -192,6 +192,7 @@ export default function Display() {
   const [synagogueName, setSynagogueName] = useState<string>("");
   const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
   const [tickerSpeed, setTickerSpeed] = useState("medium");
+  const [activeSeferTorahName, setActiveSeferTorahName] = useState<string | null>(null);
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
   const [showOmer, setShowOmer] = useState(true);
