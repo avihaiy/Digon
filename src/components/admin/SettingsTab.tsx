@@ -12,6 +12,7 @@ import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
 import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send, Bell, Volume2, VolumeX, Calendar, Smartphone } from 'lucide-react';
 import { playNotificationSound, getSelectedSound, setSelectedSound, SOUND_PRESETS, type SoundPreset } from '@/lib/notification-sounds';
 import { Link } from 'react-router-dom';
+import SifreiTorahManager from './SifreiTorahManager';
 
 interface SettingsTabProps {
   selectedLocation: string;
@@ -591,6 +592,8 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             </Button>
           </CardContent>
         </Card>
+
+        <SifreiTorahManager />
 
         {/* Event Reminder Hours */}
         <Card>
