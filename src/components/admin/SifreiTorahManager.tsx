@@ -127,6 +127,30 @@ export default function SifreiTorahManager() {
     load();
   };
 
+  const displayList = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q
+      ? list.filter(
+          (s) =>
+            s.name.toLowerCase().includes(q) ||
+            (s.notes || '').toLowerCase().includes(q),
+        )
+      : list;
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sort) {
+        case 'name_asc':
+          return a.name.localeCompare(b.name, 'he');
+        case 'name_desc':
+          return b.name.localeCompare(a.name, 'he');
+        case 'created_asc':
+          return (a.created_at || '').localeCompare(b.created_at || '');
+        case 'created_desc':
+          return (b.created_at || '').localeCompare(a.created_at || '');
+      }
+    });
+    return sorted;
+  }, [list, search, sort]);
+
   return (
     <Card>
       <CardHeader>
