@@ -593,6 +593,8 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
           </CardContent>
         </Card>
 
+        <SifreiTorahManager />
+
         {/* Event Reminder Hours */}
         <Card>
           <CardHeader>
