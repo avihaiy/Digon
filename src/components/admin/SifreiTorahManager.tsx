@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { ScrollText, Plus, Pencil, Trash2, Check, X, Star } from 'lucide-react';
+import { ScrollText, Plus, Pencil, Trash2, Check, X, Star, Search, ArrowUpDown } from 'lucide-react';
+
+type SortMode = 'name_asc' | 'name_desc' | 'created_asc' | 'created_desc';
 
 interface SeferTorah {
   id: string;
