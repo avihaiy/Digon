@@ -185,8 +185,10 @@ export default function SifreiTorahManager() {
     load();
   };
 
-  const remove = async (id: string) => {
-    if (!confirm('למחוק ספר תורה זה?')) return;
+  const confirmRemove = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await db.from('sifrei_torah').delete().eq('id', id);
     if (error) {
       toast({ title: 'שגיאה במחיקה', variant: 'destructive' });
