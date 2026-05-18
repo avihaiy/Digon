@@ -13,6 +13,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type SortMode = 'name_asc' | 'name_desc' | 'created_asc' | 'created_desc';
 
@@ -55,6 +65,7 @@ export default function SifreiTorahManager() {
   const [schedDate, setSchedDate] = useState<Date | undefined>(undefined);
   const [schedSeferId, setSchedSeferId] = useState<string>('');
   const [schedLabel, setSchedLabel] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const load = async () => {
     const todayIso = toIsoDate(new Date());
@@ -174,8 +185,10 @@ export default function SifreiTorahManager() {
     load();
   };
 
-  const remove = async (id: string) => {
-    if (!confirm('למחוק ספר תורה זה?')) return;
+  const confirmRemove = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await db.from('sifrei_torah').delete().eq('id', id);
     if (error) {
       toast({ title: 'שגיאה במחיקה', variant: 'destructive' });
@@ -303,7 +316,7 @@ export default function SifreiTorahManager() {
             />
           </div>
 
-          <Button onClick={addSchedule} disabled={!schedDate || !schedSeferId}>
+          <Button onClick={addSchedule} disabled={!schedDate || !schedSeferId} className="w-full sm:w-auto">
             <Plus className="w-4 h-4 ml-1" />
             הוסף שיוך
           </Button>
@@ -374,7 +387,7 @@ export default function SifreiTorahManager() {
               <div className="flex items-center gap-2">
                 <ArrowUpDown className="w-4 h-4 text-muted-foreground shrink-0" />
                 <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -426,7 +439,7 @@ export default function SifreiTorahManager() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           {activeId === s.id && <Star className="w-4 h-4 text-amber-500 fill-amber-400 shrink-0" />}
@@ -438,7 +451,7 @@ export default function SifreiTorahManager() {
                           <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">{s.notes}</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0 self-end sm:self-start">
                         <Button
                           size="sm"
                           variant={s.is_active ? 'outline' : 'secondary'}
@@ -449,7 +462,7 @@ export default function SifreiTorahManager() {
                         <Button size="icon" variant="ghost" onClick={() => startEdit(s)}>
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => remove(s.id)}>
+                        <Button size="icon" variant="ghost" onClick={() => setDeleteId(s.id)}>
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       </div>
@@ -461,6 +474,31 @@ export default function SifreiTorahManager() {
           )}
         </div>
       </CardContent>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת ספר תורה</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                const s = list.find((x) => x.id === deleteId);
+                return s
+                  ? `האם למחוק את "${s.name}"? לא ניתן לשחזר פעולה זו, וכל השיוכים העתידיים לתאריכים שמשתמשים בספר זה יימחקו אף הם.`
+                  : 'האם למחוק ספר תורה זה?';
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemove}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
