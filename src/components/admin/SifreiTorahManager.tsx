@@ -316,7 +316,7 @@ export default function SifreiTorahManager() {
             />
           </div>
 
-          <Button onClick={addSchedule} disabled={!schedDate || !schedSeferId}>
+          <Button onClick={addSchedule} disabled={!schedDate || !schedSeferId} className="w-full sm:w-auto">
             <Plus className="w-4 h-4 ml-1" />
             הוסף שיוך
           </Button>
