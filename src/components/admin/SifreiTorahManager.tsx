@@ -250,6 +250,95 @@ export default function SifreiTorahManager() {
         </div>
 
         <div className="border-t pt-4 space-y-3">
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4 text-amber-500" />
+            שיוך ספר תורה לתאריך (שבת/חג)
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            בתאריך שנבחר — המסך יציג אוטומטית את הספר המשויך, גם בלי לשנות את הספר הקבוע למעלה.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn('justify-start text-right font-normal', !schedDate && 'text-muted-foreground')}
+                >
+                  <CalendarIcon className="w-4 h-4 ml-2" />
+                  {schedDate ? format(schedDate, 'PPP', { locale: he }) : 'בחר תאריך'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={schedDate}
+                  onSelect={setSchedDate}
+                  initialFocus
+                  locale={he}
+                  className={cn('p-3 pointer-events-auto')}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Select value={schedSeferId || undefined} onValueChange={setSchedSeferId}>
+              <SelectTrigger>
+                <SelectValue placeholder="בחר ספר תורה" />
+              </SelectTrigger>
+              <SelectContent>
+                {list
+                  .filter((s) => s.is_active)
+                  .map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              placeholder="תיאור (למשל: פרשת בראשית) — אופציונלי"
+              value={schedLabel}
+              onChange={(e) => setSchedLabel(e.target.value)}
+            />
+          </div>
+
+          <Button onClick={addSchedule} disabled={!schedDate || !schedSeferId}>
+            <Plus className="w-4 h-4 ml-1" />
+            הוסף שיוך
+          </Button>
+
+          {schedule.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <Label className="text-xs text-muted-foreground">שיוכים עתידיים</Label>
+              {schedule.map((row) => {
+                const sefer = list.find((s) => s.id === row.sefer_id);
+                const d = new Date(row.scheduled_date + 'T00:00:00');
+                return (
+                  <div
+                    key={row.id}
+                    className="flex items-center justify-between gap-2 p-2 rounded-lg border bg-background"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">
+                        {format(d, 'EEEE, d בMMMM yyyy', { locale: he })}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        📜 {sefer?.name || '—'}
+                        {row.label ? ` • ${row.label}` : ''}
+                      </p>
+                    </div>
+                    <Button size="icon" variant="ghost" onClick={() => removeSchedule(row.id)}>
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="border-t pt-4 space-y-3">
           <Label className="text-sm font-semibold">הוספת ספר תורה חדש</Label>
           <Input
             placeholder="שם הספר (לדוג' ספר רבי יוסף)"
