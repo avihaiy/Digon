@@ -1136,6 +1136,44 @@ export type Database = {
         }
         Relationships: []
       }
+      sifrei_torah_schedule: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          scheduled_date: string
+          sefer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          scheduled_date: string
+          sefer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          scheduled_date?: string
+          sefer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sifrei_torah_schedule_sefer_id_fkey"
+            columns: ["sefer_id"]
+            isOneToOne: false
+            referencedRelation: "sifrei_torah"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticker_items: {
         Row: {
           created_at: string | null

@@ -7,7 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { ScrollText, Plus, Pencil, Trash2, Check, X, Star, Search, ArrowUpDown } from 'lucide-react';
+import { ScrollText, Plus, Pencil, Trash2, Check, X, Star, Search, ArrowUpDown, Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 type SortMode = 'name_asc' | 'name_desc' | 'created_asc' | 'created_desc';
 
@@ -19,9 +24,19 @@ interface SeferTorah {
   created_at: string;
 }
 
+interface ScheduleRow {
+  id: string;
+  scheduled_date: string;
+  sefer_id: string;
+  label: string | null;
+}
+
 const ACTIVE_KEY = 'active_sefer_torah_id';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
+
+const toIsoDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function SifreiTorahManager() {
   const [list, setList] = useState<SeferTorah[]>([]);
@@ -35,13 +50,26 @@ export default function SifreiTorahManager() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('name_asc');
 
+  // שיוך לפי תאריך
+  const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
+  const [schedDate, setSchedDate] = useState<Date | undefined>(undefined);
+  const [schedSeferId, setSchedSeferId] = useState<string>('');
+  const [schedLabel, setSchedLabel] = useState('');
+
   const load = async () => {
-    const [{ data: items }, { data: setting }] = await Promise.all([
+    const todayIso = toIsoDate(new Date());
+    const [{ data: items }, { data: setting }, { data: sched }] = await Promise.all([
       db.from('sifrei_torah').select('*').order('created_at', { ascending: true }),
       supabase.from('app_settings').select('value').eq('key', ACTIVE_KEY).maybeSingle(),
+      db
+        .from('sifrei_torah_schedule')
+        .select('*')
+        .gte('scheduled_date', todayIso)
+        .order('scheduled_date', { ascending: true }),
     ]);
     setList((items || []) as SeferTorah[]);
     setActiveId(setting?.value || 'none');
+    setSchedule((sched || []) as ScheduleRow[]);
   };
 
   useEffect(() => {
@@ -49,11 +77,47 @@ export default function SifreiTorahManager() {
     const channel = supabase
       .channel('sifrei-torah-manager')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sifrei_torah' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sifrei_torah_schedule' }, () => load())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const addSchedule = async () => {
+    if (!schedDate || !schedSeferId) {
+      toast({ title: 'יש לבחור תאריך וספר תורה', variant: 'destructive' });
+      return;
+    }
+    const { error } = await db.from('sifrei_torah_schedule').upsert(
+      {
+        scheduled_date: toIsoDate(schedDate),
+        sefer_id: schedSeferId,
+        label: schedLabel.trim() || null,
+      },
+      { onConflict: 'scheduled_date' },
+    );
+    if (error) {
+      toast({ title: 'שגיאה בשמירת השיוך', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setSchedDate(undefined);
+    setSchedSeferId('');
+    setSchedLabel('');
+    toast({ title: 'השיוך נשמר' });
+    load();
+  };
+
+  const removeSchedule = async (id: string) => {
+    if (!confirm('למחוק שיוך זה?')) return;
+    const { error } = await db.from('sifrei_torah_schedule').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'שגיאה במחיקה', variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'נמחק' });
+    load();
+  };
 
   const saveActive = async (id: string) => {
     setActiveId(id);
@@ -183,6 +247,95 @@ export default function SifreiTorahManager() {
           <p className="text-xs text-muted-foreground">
             השם יופיע במסך התצוגה הציבורי בכותרת.
           </p>
+        </div>
+
+        <div className="border-t pt-4 space-y-3">
+          <Label className="text-sm font-semibold flex items-center gap-2">
+            <CalendarIcon className="w-4 h-4 text-amber-500" />
+            שיוך ספר תורה לתאריך (שבת/חג)
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            בתאריך שנבחר — המסך יציג אוטומטית את הספר המשויך, גם בלי לשנות את הספר הקבוע למעלה.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn('justify-start text-right font-normal', !schedDate && 'text-muted-foreground')}
+                >
+                  <CalendarIcon className="w-4 h-4 ml-2" />
+                  {schedDate ? format(schedDate, 'PPP', { locale: he }) : 'בחר תאריך'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={schedDate}
+                  onSelect={setSchedDate}
+                  initialFocus
+                  locale={he}
+                  className={cn('p-3 pointer-events-auto')}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Select value={schedSeferId || undefined} onValueChange={setSchedSeferId}>
+              <SelectTrigger>
+                <SelectValue placeholder="בחר ספר תורה" />
+              </SelectTrigger>
+              <SelectContent>
+                {list
+                  .filter((s) => s.is_active)
+                  .map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              placeholder="תיאור (למשל: פרשת בראשית) — אופציונלי"
+              value={schedLabel}
+              onChange={(e) => setSchedLabel(e.target.value)}
+            />
+          </div>
+
+          <Button onClick={addSchedule} disabled={!schedDate || !schedSeferId}>
+            <Plus className="w-4 h-4 ml-1" />
+            הוסף שיוך
+          </Button>
+
+          {schedule.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <Label className="text-xs text-muted-foreground">שיוכים עתידיים</Label>
+              {schedule.map((row) => {
+                const sefer = list.find((s) => s.id === row.sefer_id);
+                const d = new Date(row.scheduled_date + 'T00:00:00');
+                return (
+                  <div
+                    key={row.id}
+                    className="flex items-center justify-between gap-2 p-2 rounded-lg border bg-background"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">
+                        {format(d, 'EEEE, d בMMMM yyyy', { locale: he })}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        📜 {sefer?.name || '—'}
+                        {row.label ? ` • ${row.label}` : ''}
+                      </p>
+                    </div>
+                    <Button size="icon" variant="ghost" onClick={() => removeSchedule(row.id)}>
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="border-t pt-4 space-y-3">
