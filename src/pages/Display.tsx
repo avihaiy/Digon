@@ -506,6 +506,20 @@ export default function Display() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any;
     const fetchActiveSefer = async () => {
+      // 1) קודם בודקים שיוך לתאריך של היום (שבת/חג)
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      const { data: scheduled } = await db
+        .from("sifrei_torah_schedule")
+        .select("sefer_id, sifrei_torah:sefer_id(name, is_active)")
+        .eq("scheduled_date", todayStr)
+        .maybeSingle();
+      if (scheduled?.sifrei_torah?.is_active) {
+        setActiveSeferTorahName(scheduled.sifrei_torah.name);
+        return;
+      }
+
+      // 2) fallback — הספר הפעיל הקבוע מההגדרות
       const { data: setting } = await supabase
         .from("app_settings")
         .select("value")
@@ -527,6 +541,7 @@ export default function Display() {
     const channel = supabase
       .channel("sefer-torah-display")
       .on("postgres_changes", { event: "*", schema: "public", table: "sifrei_torah" }, () => fetchActiveSefer())
+      .on("postgres_changes", { event: "*", schema: "public", table: "sifrei_torah_schedule" }, () => fetchActiveSefer())
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "app_settings", filter: "key=eq.active_sefer_torah_id" },
