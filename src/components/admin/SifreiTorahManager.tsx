@@ -24,9 +24,19 @@ interface SeferTorah {
   created_at: string;
 }
 
+interface ScheduleRow {
+  id: string;
+  scheduled_date: string;
+  sefer_id: string;
+  label: string | null;
+}
+
 const ACTIVE_KEY = 'active_sefer_torah_id';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
+
+const toIsoDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function SifreiTorahManager() {
   const [list, setList] = useState<SeferTorah[]>([]);
@@ -40,13 +50,26 @@ export default function SifreiTorahManager() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('name_asc');
 
+  // שיוך לפי תאריך
+  const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
+  const [schedDate, setSchedDate] = useState<Date | undefined>(undefined);
+  const [schedSeferId, setSchedSeferId] = useState<string>('');
+  const [schedLabel, setSchedLabel] = useState('');
+
   const load = async () => {
-    const [{ data: items }, { data: setting }] = await Promise.all([
+    const todayIso = toIsoDate(new Date());
+    const [{ data: items }, { data: setting }, { data: sched }] = await Promise.all([
       db.from('sifrei_torah').select('*').order('created_at', { ascending: true }),
       supabase.from('app_settings').select('value').eq('key', ACTIVE_KEY).maybeSingle(),
+      db
+        .from('sifrei_torah_schedule')
+        .select('*')
+        .gte('scheduled_date', todayIso)
+        .order('scheduled_date', { ascending: true }),
     ]);
     setList((items || []) as SeferTorah[]);
     setActiveId(setting?.value || 'none');
+    setSchedule((sched || []) as ScheduleRow[]);
   };
 
   useEffect(() => {
@@ -54,11 +77,47 @@ export default function SifreiTorahManager() {
     const channel = supabase
       .channel('sifrei-torah-manager')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sifrei_torah' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sifrei_torah_schedule' }, () => load())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const addSchedule = async () => {
+    if (!schedDate || !schedSeferId) {
+      toast({ title: 'יש לבחור תאריך וספר תורה', variant: 'destructive' });
+      return;
+    }
+    const { error } = await db.from('sifrei_torah_schedule').upsert(
+      {
+        scheduled_date: toIsoDate(schedDate),
+        sefer_id: schedSeferId,
+        label: schedLabel.trim() || null,
+      },
+      { onConflict: 'scheduled_date' },
+    );
+    if (error) {
+      toast({ title: 'שגיאה בשמירת השיוך', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setSchedDate(undefined);
+    setSchedSeferId('');
+    setSchedLabel('');
+    toast({ title: 'השיוך נשמר' });
+    load();
+  };
+
+  const removeSchedule = async (id: string) => {
+    if (!confirm('למחוק שיוך זה?')) return;
+    const { error } = await db.from('sifrei_torah_schedule').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'שגיאה במחיקה', variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'נמחק' });
+    load();
+  };
 
   const saveActive = async (id: string) => {
     setActiveId(id);
