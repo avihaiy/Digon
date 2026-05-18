@@ -387,7 +387,7 @@ export default function SifreiTorahManager() {
               <div className="flex items-center gap-2">
                 <ArrowUpDown className="w-4 h-4 text-muted-foreground shrink-0" />
                 <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
