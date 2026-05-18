@@ -439,7 +439,7 @@ export default function SifreiTorahManager() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           {activeId === s.id && <Star className="w-4 h-4 text-amber-500 fill-amber-400 shrink-0" />}
@@ -451,7 +451,7 @@ export default function SifreiTorahManager() {
                           <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">{s.notes}</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0 self-end sm:self-start">
                         <Button
                           size="sm"
                           variant={s.is_active ? 'outline' : 'secondary'}
@@ -462,7 +462,7 @@ export default function SifreiTorahManager() {
                         <Button size="icon" variant="ghost" onClick={() => startEdit(s)}>
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => remove(s.id)}>
+                        <Button size="icon" variant="ghost" onClick={() => setDeleteId(s.id)}>
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       </div>
@@ -474,6 +474,31 @@ export default function SifreiTorahManager() {
           )}
         </div>
       </CardContent>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת ספר תורה</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                const s = list.find((x) => x.id === deleteId);
+                return s
+                  ? `האם למחוק את "${s.name}"? לא ניתן לשחזר פעולה זו, וכל השיוכים העתידיים לתאריכים שמשתמשים בספר זה יימחקו אף הם.`
+                  : 'האם למחוק ספר תורה זה?';
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemove}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
