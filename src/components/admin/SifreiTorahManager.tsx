@@ -65,6 +65,7 @@ export default function SifreiTorahManager() {
   const [schedDate, setSchedDate] = useState<Date | undefined>(undefined);
   const [schedSeferId, setSchedSeferId] = useState<string>('');
   const [schedLabel, setSchedLabel] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const load = async () => {
     const todayIso = toIsoDate(new Date());
