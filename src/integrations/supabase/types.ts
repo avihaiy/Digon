@@ -1221,6 +1221,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_credit_fifo: { Args: { _member_id: string }; Returns: Json }
       get_email_by_username: { Args: { _username: string }; Returns: string }
       get_member_area_data: {
         Args: { _member_id: string; _phone: string; _user_agent?: string }
