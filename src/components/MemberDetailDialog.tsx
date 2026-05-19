@@ -248,6 +248,49 @@ export function MemberDetailDialog({
 
   const isLoading = loadingPayments || loadingReceipts || loadingCharges;
 
+  // Realtime: refresh data when payments/charges/receipts change for this member
+  useEffect(() => {
+    if (!memberId || !open) return;
+    const refreshAll = () => {
+      queryClient.invalidateQueries({ queryKey: ['member-payments', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['member-receipts', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['charge-payments', memberId] });
+    };
+    const ch = supabase
+      .channel(`member-detail-${memberId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `member_id=eq.${memberId}` }, refreshAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'member_charges', filter: `member_id=eq.${memberId}` }, refreshAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'receipts', filter: `member_id=eq.${memberId}` }, refreshAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'charge_payments' }, refreshAll)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [memberId, open, queryClient]);
+
+  // Apply credit FIFO mutation
+  const applyCreditMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('apply_credit_fifo' as any, { _member_id: memberId });
+      if (error) throw error;
+      return data as any;
+    },
+    onSuccess: (data: any) => {
+      if (data?.success) {
+        const applied = Number(data.total_applied || 0);
+        if (applied > 0) {
+          toast.success(`קוזזו ${formatCurrency(applied)} מהזיכוי לחיובים`);
+        } else {
+          toast.info('אין מה לקזז – אין זיכוי פנוי או אין חיובים פתוחים');
+        }
+        queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+        queryClient.invalidateQueries({ queryKey: ['charge-payments', memberId] });
+      } else {
+        toast.error('שגיאה בקיזוז');
+      }
+    },
+    onError: () => toast.error('שגיאה בקיזוז זיכויים'),
+  });
+
   const handleShareText = async () => {
     setIsSharingText(true);
     try {
