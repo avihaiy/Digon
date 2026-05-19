@@ -252,20 +252,40 @@ export default function PublicMemberArea() {
   }
 
   if (error) {
+    const fullUrl = typeof window !== "undefined" ? window.location.href : "";
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center" dir="rtl">
+        <AlertTriangle className="w-10 h-10 text-destructive mb-3" />
         <h1 className="text-2xl font-bold text-foreground mb-2">לא ניתן לטעון את האזור האישי</h1>
         <p className="text-muted-foreground mb-1">{error}</p>
-        <p className="text-xs text-muted-foreground mt-4">
-          הקישור אינו תקין או שכרטיס החבר לא קיים במערכת.<br />
+        <p className="text-xs text-muted-foreground mt-4 max-w-md">
+          ייתכן שהקישור שגוי, שכרטיס החבר נמחק, או שהקישור לא הועתק במלואו.<br />
           אנא פנה לגזבר בית הכנסת לקבלת קישור חדש.
         </p>
         {memberId && (
-          <p className="text-[10px] text-muted-foreground/70 mt-3 font-mono">מזהה: {memberId}</p>
+          <div className="mt-4 text-[11px] text-muted-foreground/80 font-mono break-all max-w-md space-y-1">
+            <div>מזהה בקישור: {memberId}</div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs gap-1"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(fullUrl || memberId);
+                  toast.success("הקישור הועתק");
+                } catch {
+                  toast.error("שגיאה בהעתקה");
+                }
+              }}
+            >
+              <Copy className="w-3 h-3" /> העתק קישור לשליחה לגזבר
+            </Button>
+          </div>
         )}
       </div>
     );
   }
+
 
 
   if (!authed) {
