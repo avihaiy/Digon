@@ -248,6 +248,49 @@ export function MemberDetailDialog({
 
   const isLoading = loadingPayments || loadingReceipts || loadingCharges;
 
+  // Realtime: refresh data when payments/charges/receipts change for this member
+  useEffect(() => {
+    if (!memberId || !open) return;
+    const refreshAll = () => {
+      queryClient.invalidateQueries({ queryKey: ['member-payments', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['member-receipts', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['charge-payments', memberId] });
+    };
+    const ch = supabase
+      .channel(`member-detail-${memberId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `member_id=eq.${memberId}` }, refreshAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'member_charges', filter: `member_id=eq.${memberId}` }, refreshAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'receipts', filter: `member_id=eq.${memberId}` }, refreshAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'charge_payments' }, refreshAll)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [memberId, open, queryClient]);
+
+  // Apply credit FIFO mutation
+  const applyCreditMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('apply_credit_fifo' as any, { _member_id: memberId });
+      if (error) throw error;
+      return data as any;
+    },
+    onSuccess: (data: any) => {
+      if (data?.success) {
+        const applied = Number(data.total_applied || 0);
+        if (applied > 0) {
+          toast.success(`קוזזו ${formatCurrency(applied)} מהזיכוי לחיובים`);
+        } else {
+          toast.info('אין מה לקזז – אין זיכוי פנוי או אין חיובים פתוחים');
+        }
+        queryClient.invalidateQueries({ queryKey: ['member-charges', memberId] });
+        queryClient.invalidateQueries({ queryKey: ['charge-payments', memberId] });
+      } else {
+        toast.error('שגיאה בקיזוז');
+      }
+    },
+    onError: () => toast.error('שגיאה בקיזוז זיכויים'),
+  });
+
   const handleShareText = async () => {
     setIsSharingText(true);
     try {
@@ -1088,12 +1131,38 @@ export function MemberDetailDialog({
                     </Card>
                   )}
 
-                  {creditBalance > 0 && (
+                  {(creditBalance > 0 || allocatedToCharges > 0) && (
                     <Card className="border-2 border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/20">
-                      <CardContent className="p-3 text-center">
-                        <p className="text-xs text-emerald-700 dark:text-emerald-400">יתרת זכות (זיכוי)</p>
-                        <p className="text-2xl font-black text-emerald-600">{formatCurrency(creditBalance)}</p>
-                        <p className="text-[11px] text-muted-foreground mt-1">תקוזז אוטומטית מחיובים חדשים</p>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="text-center">
+                          <p className="text-xs text-emerald-700 dark:text-emerald-400">יתרת זכות (זיכוי)</p>
+                          <p className="text-2xl font-black text-emerald-600">{formatCurrency(creditBalance)}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-emerald-500/20">
+                          <div className="text-center">
+                            <p className="text-muted-foreground">סה״כ שולם</p>
+                            <p className="font-bold">{formatCurrency(totalPaid)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-muted-foreground">כבר קוזז לחיובים</p>
+                            <p className="font-bold">{formatCurrency(allocatedToCharges)}</p>
+                          </div>
+                        </div>
+                        {creditBalance > 0 && chargesDebt > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full gap-2 border-emerald-600/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/40"
+                            disabled={applyCreditMutation.isPending}
+                            onClick={() => applyCreditMutation.mutate()}
+                          >
+                            {applyCreditMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                            קזז זיכוי לחיובים פתוחים (FIFO)
+                          </Button>
+                        )}
+                        {creditBalance > 0 && chargesDebt === 0 && (
+                          <p className="text-[11px] text-center text-muted-foreground">תקוזז אוטומטית מחיובים חדשים</p>
+                        )}
                       </CardContent>
                     </Card>
                   )}

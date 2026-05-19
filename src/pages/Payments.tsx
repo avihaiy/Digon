@@ -287,6 +287,12 @@ export default function Payments() {
       toast.success(editingPayment ? "התשלום עודכן בהצלחה" : "התשלום נקלט והקבלה הונפקה");
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       queryClient.invalidateQueries({ queryKey: ["receipts"] });
+      queryClient.invalidateQueries({ queryKey: ["member-debts"] });
+      const mid = formData.member_id;
+      queryClient.invalidateQueries({ queryKey: ["member-payments", mid] });
+      queryClient.invalidateQueries({ queryKey: ["member-charges", mid] });
+      queryClient.invalidateQueries({ queryKey: ["member-receipts", mid] });
+      queryClient.invalidateQueries({ queryKey: ["charge-payments", mid] });
       handleCloseDialog();
 
       // Auto-print receipt for new payments
