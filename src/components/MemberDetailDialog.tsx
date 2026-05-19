@@ -242,6 +242,8 @@ export function MemberDetailDialog({
   const totalDebt = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const chargesDebt = charges?.reduce((sum: number, c: any) => sum + Number(c.remaining_balance || 0), 0) || 0;
+  const allocatedToCharges = charges?.reduce((sum: number, c: any) => sum + (Number(c.amount || 0) - Number(c.remaining_balance || 0)), 0) || 0;
+  const creditBalance = Math.max(0, totalPaid - allocatedToCharges);
   const totalOwed = totalDebt + chargesDebt;
 
   const isLoading = loadingPayments || loadingReceipts || loadingCharges;
