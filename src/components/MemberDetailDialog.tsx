@@ -242,6 +242,8 @@ export function MemberDetailDialog({
   const totalDebt = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const chargesDebt = charges?.reduce((sum: number, c: any) => sum + Number(c.remaining_balance || 0), 0) || 0;
+  const allocatedToCharges = charges?.reduce((sum: number, c: any) => sum + (Number(c.amount || 0) - Number(c.remaining_balance || 0)), 0) || 0;
+  const creditBalance = Math.max(0, totalPaid - allocatedToCharges);
   const totalOwed = totalDebt + chargesDebt;
 
   const isLoading = loadingPayments || loadingReceipts || loadingCharges;
@@ -1085,6 +1087,17 @@ export function MemberDetailDialog({
                       </CardContent>
                     </Card>
                   )}
+
+                  {creditBalance > 0 && (
+                    <Card className="border-2 border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/20">
+                      <CardContent className="p-3 text-center">
+                        <p className="text-xs text-emerald-700 dark:text-emerald-400">יתרת זכות (זיכוי)</p>
+                        <p className="text-2xl font-black text-emerald-600">{formatCurrency(creditBalance)}</p>
+                        <p className="text-[11px] text-muted-foreground mt-1">תקוזז אוטומטית מחיובים חדשים</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
 
                   {/* Add Charge Button */}
                   {!showAddCharge ? (

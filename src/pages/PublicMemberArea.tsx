@@ -236,11 +236,19 @@ export default function PublicMemberArea() {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center" dir="rtl">
-        <h1 className="text-2xl font-bold text-foreground mb-2">לא נמצא</h1>
-        <p className="text-muted-foreground">{error}</p>
+        <h1 className="text-2xl font-bold text-foreground mb-2">לא ניתן לטעון את האזור האישי</h1>
+        <p className="text-muted-foreground mb-1">{error}</p>
+        <p className="text-xs text-muted-foreground mt-4">
+          הקישור אינו תקין או שכרטיס החבר לא קיים במערכת.<br />
+          אנא פנה לגזבר בית הכנסת לקבלת קישור חדש.
+        </p>
+        {memberId && (
+          <p className="text-[10px] text-muted-foreground/70 mt-3 font-mono">מזהה: {memberId}</p>
+        )}
       </div>
     );
   }
+
 
   if (!authed) {
     const noPhone = !hasPhone;
