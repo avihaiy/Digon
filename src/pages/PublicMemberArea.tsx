@@ -89,12 +89,30 @@ export default function PublicMemberArea() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!memberId) return;
+      if (!memberId) {
+        setError("חסר מזהה חבר בקישור");
+        setLoading(false);
+        return;
+      }
+      // Validate UUID format before hitting the DB
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRe.test(memberId)) {
+        setError("הקישור אינו תקין (מזהה חבר לא חוקי)");
+        setLoading(false);
+        return;
+      }
       try {
         const { data, error: mErr } = await supabase.rpc("get_public_member_profile", {
           _member_id: memberId,
         });
-        if (mErr || !data) throw new Error("החבר לא נמצא");
+        if (mErr) {
+          console.error("[PublicMemberArea] RPC error:", mErr);
+          throw new Error("שגיאת שרת בטעינת פרטי החבר");
+        }
+        if (!data) {
+          console.warn("[PublicMemberArea] Member not found for id:", memberId);
+          throw new Error("החבר לא נמצא במערכת");
+        }
         if (cancelled) return;
         const d: any = data;
         setMemberName(d.member_name);
