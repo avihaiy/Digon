@@ -1131,12 +1131,38 @@ export function MemberDetailDialog({
                     </Card>
                   )}
 
-                  {creditBalance > 0 && (
+                  {(creditBalance > 0 || allocatedToCharges > 0) && (
                     <Card className="border-2 border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/20">
-                      <CardContent className="p-3 text-center">
-                        <p className="text-xs text-emerald-700 dark:text-emerald-400">יתרת זכות (זיכוי)</p>
-                        <p className="text-2xl font-black text-emerald-600">{formatCurrency(creditBalance)}</p>
-                        <p className="text-[11px] text-muted-foreground mt-1">תקוזז אוטומטית מחיובים חדשים</p>
+                      <CardContent className="p-3 space-y-2">
+                        <div className="text-center">
+                          <p className="text-xs text-emerald-700 dark:text-emerald-400">יתרת זכות (זיכוי)</p>
+                          <p className="text-2xl font-black text-emerald-600">{formatCurrency(creditBalance)}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-emerald-500/20">
+                          <div className="text-center">
+                            <p className="text-muted-foreground">סה״כ שולם</p>
+                            <p className="font-bold">{formatCurrency(totalPaid)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-muted-foreground">כבר קוזז לחיובים</p>
+                            <p className="font-bold">{formatCurrency(allocatedToCharges)}</p>
+                          </div>
+                        </div>
+                        {creditBalance > 0 && chargesDebt > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full gap-2 border-emerald-600/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/40"
+                            disabled={applyCreditMutation.isPending}
+                            onClick={() => applyCreditMutation.mutate()}
+                          >
+                            {applyCreditMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                            קזז זיכוי לחיובים פתוחים (FIFO)
+                          </Button>
+                        )}
+                        {creditBalance > 0 && chargesDebt === 0 && (
+                          <p className="text-[11px] text-center text-muted-foreground">תקוזז אוטומטית מחיובים חדשים</p>
+                        )}
                       </CardContent>
                     </Card>
                   )}
