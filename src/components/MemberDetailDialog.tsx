@@ -926,13 +926,21 @@ export function MemberDetailDialog({
 
 
                   {/* Quick Stats */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid gap-2 ${creditBalance > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                     <Card>
                       <CardContent className="p-3 text-center">
                         <p className="text-xs text-muted-foreground">סה״כ שולם</p>
                         <p className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</p>
                       </CardContent>
                     </Card>
+                    {creditBalance > 0 && (
+                      <Card className="border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/20">
+                        <CardContent className="p-3 text-center">
+                          <p className="text-xs text-emerald-700 dark:text-emerald-400">יתרת זכות</p>
+                          <p className="text-lg font-bold text-emerald-600">{formatCurrency(creditBalance)}</p>
+                        </CardContent>
+                      </Card>
+                    )}
                     <Card>
                       <CardContent className="p-3 text-center">
                         <p className="text-xs text-muted-foreground">סה״כ קבלות</p>
