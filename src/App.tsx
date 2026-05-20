@@ -231,6 +231,16 @@ const AnimatedRoutes = () => {
           }
         />
         <Route
+          path="/weekly-balance"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <WeeklyBalanceReport />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin"
           element={
             <ProtectedRoute>
