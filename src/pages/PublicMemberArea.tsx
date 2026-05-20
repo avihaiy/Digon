@@ -213,6 +213,7 @@ export default function PublicMemberArea() {
     );
     setBitPhone(d.bit_phone || "");
     setBitEnabled(!!d.bit_enabled);
+    setCreditBalance(Number(d.credit_balance || 0));
 
     sessionStorage.setItem(authKey(memberId), String(Date.now()));
     localStorage.removeItem(attemptsKey(memberId));
