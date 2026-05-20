@@ -239,11 +239,19 @@ export function MemberDetailDialog({
 
   const pendingPayments = payments?.filter(p => p.status === 'pending') || [];
   const confirmedPayments = payments?.filter(p => p.status === 'confirmed') || [];
+  // Hall payments are direct purchases and don't create credit on the member's card
+  const creditEligiblePayments = confirmedPayments.filter((p: any) => (p.payment_type || '') !== 'hall');
   const totalDebt = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalPaidCreditEligible = creditEligiblePayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
   const chargesDebt = charges?.reduce((sum: number, c: any) => sum + Number(c.remaining_balance || 0), 0) || 0;
-  const allocatedToCharges = charges?.reduce((sum: number, c: any) => sum + (Number(c.amount || 0) - Number(c.remaining_balance || 0)), 0) || 0;
-  const creditBalance = Math.max(0, totalPaid - allocatedToCharges);
+  // Credit comes only from non-hall confirmed payments minus what was already applied to charges from those payments
+  const creditEligibleIds = new Set(creditEligiblePayments.map((p: any) => p.id));
+  const allocatedFromCreditEligible = (chargePayments || []).reduce(
+    (sum: number, cp: any) => sum + (creditEligibleIds.has(cp.payment_id) ? Number(cp.amount || 0) : 0),
+    0,
+  );
+  const creditBalance = Math.max(0, totalPaidCreditEligible - allocatedFromCreditEligible);
   const totalOwed = totalDebt + chargesDebt;
 
   const isLoading = loadingPayments || loadingReceipts || loadingCharges;
