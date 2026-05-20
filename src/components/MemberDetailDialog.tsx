@@ -239,11 +239,19 @@ export function MemberDetailDialog({
 
   const pendingPayments = payments?.filter(p => p.status === 'pending') || [];
   const confirmedPayments = payments?.filter(p => p.status === 'confirmed') || [];
+  // Hall payments are direct purchases and don't create credit on the member's card
+  const creditEligiblePayments = confirmedPayments.filter((p: any) => (p.payment_type || '') !== 'hall');
   const totalDebt = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalPaid = confirmedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalPaidCreditEligible = creditEligiblePayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
   const chargesDebt = charges?.reduce((sum: number, c: any) => sum + Number(c.remaining_balance || 0), 0) || 0;
-  const allocatedToCharges = charges?.reduce((sum: number, c: any) => sum + (Number(c.amount || 0) - Number(c.remaining_balance || 0)), 0) || 0;
-  const creditBalance = Math.max(0, totalPaid - allocatedToCharges);
+  // Credit comes only from non-hall confirmed payments minus what was already applied to charges from those payments
+  const creditEligibleIds = new Set(creditEligiblePayments.map((p: any) => p.id));
+  const allocatedFromCreditEligible = (chargePayments || []).reduce(
+    (sum: number, cp: any) => sum + (creditEligibleIds.has(cp.payment_id) ? Number(cp.amount || 0) : 0),
+    0,
+  );
+  const creditBalance = Math.max(0, totalPaidCreditEligible - allocatedFromCreditEligible);
   const totalOwed = totalDebt + chargesDebt;
 
   const isLoading = loadingPayments || loadingReceipts || loadingCharges;
@@ -918,13 +926,21 @@ export function MemberDetailDialog({
 
 
                   {/* Quick Stats */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid gap-2 ${creditBalance > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                     <Card>
                       <CardContent className="p-3 text-center">
                         <p className="text-xs text-muted-foreground">סה״כ שולם</p>
                         <p className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</p>
                       </CardContent>
                     </Card>
+                    {creditBalance > 0 && (
+                      <Card className="border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/20">
+                        <CardContent className="p-3 text-center">
+                          <p className="text-xs text-emerald-700 dark:text-emerald-400">יתרת זכות</p>
+                          <p className="text-lg font-bold text-emerald-600">{formatCurrency(creditBalance)}</p>
+                        </CardContent>
+                      </Card>
+                    )}
                     <Card>
                       <CardContent className="p-3 text-center">
                         <p className="text-xs text-muted-foreground">סה״כ קבלות</p>
@@ -1131,7 +1147,7 @@ export function MemberDetailDialog({
                     </Card>
                   )}
 
-                  {(creditBalance > 0 || allocatedToCharges > 0) && (
+                  {(creditBalance > 0 || allocatedFromCreditEligible > 0) && (
                     <Card className="border-2 border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/20">
                       <CardContent className="p-3 space-y-2">
                         <div className="text-center">
@@ -1140,12 +1156,12 @@ export function MemberDetailDialog({
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-emerald-500/20">
                           <div className="text-center">
-                            <p className="text-muted-foreground">סה״כ שולם</p>
-                            <p className="font-bold">{formatCurrency(totalPaid)}</p>
+                            <p className="text-muted-foreground">סה״כ שולם (לא כולל אולם)</p>
+                            <p className="font-bold">{formatCurrency(totalPaidCreditEligible)}</p>
                           </div>
                           <div className="text-center">
                             <p className="text-muted-foreground">כבר קוזז לחיובים</p>
-                            <p className="font-bold">{formatCurrency(allocatedToCharges)}</p>
+                            <p className="font-bold">{formatCurrency(allocatedFromCreditEligible)}</p>
                           </div>
                         </div>
                         {creditBalance > 0 && chargesDebt > 0 && (

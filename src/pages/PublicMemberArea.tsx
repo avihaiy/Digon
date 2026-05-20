@@ -74,6 +74,7 @@ export default function PublicMemberArea() {
   const [now, setNow] = useState(Date.now());
   const [bitPhone, setBitPhone] = useState<string>("");
   const [bitEnabled, setBitEnabled] = useState(false);
+  const [creditBalance, setCreditBalance] = useState<number>(0);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [sendingPayment, setSendingPayment] = useState(false);
 
@@ -212,6 +213,7 @@ export default function PublicMemberArea() {
     );
     setBitPhone(d.bit_phone || "");
     setBitEnabled(!!d.bit_enabled);
+    setCreditBalance(Number(d.credit_balance || 0));
 
     sessionStorage.setItem(authKey(memberId), String(Date.now()));
     localStorage.removeItem(attemptsKey(memberId));
@@ -377,6 +379,33 @@ export default function PublicMemberArea() {
             <span className="hidden sm:inline">התנתק</span>
           </Button>
         </header>
+
+        {/* Status banner: credit vs debt */}
+        {(creditBalance > 0 || totalOwed > 0) && (
+          <Card className={`p-3 text-center border-2 ${
+            creditBalance > 0 && totalOwed === 0
+              ? "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/20"
+              : "border-destructive/40 bg-destructive/5"
+          }`}>
+            {creditBalance > 0 && totalOwed === 0 ? (
+              <>
+                <div className="text-xs text-emerald-700 dark:text-emerald-400">יש לך יתרת זכות</div>
+                <div className="text-2xl font-extrabold text-emerald-600">{formatCurrency(creditBalance)}</div>
+                <div className="text-[11px] text-muted-foreground mt-1">היתרה תקוזז אוטומטית מחיובים חדשים</div>
+              </>
+            ) : (
+              <>
+                <div className="text-xs text-destructive">יש לך יתרת חוב</div>
+                <div className="text-2xl font-extrabold text-destructive">{formatCurrency(totalOwed)}</div>
+                {creditBalance > 0 && (
+                  <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-1">
+                    (קיים גם זיכוי בסך {formatCurrency(creditBalance)})
+                  </div>
+                )}
+              </>
+            )}
+          </Card>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-4 text-center">

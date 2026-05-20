@@ -641,6 +641,7 @@ export type Database = {
         Row: {
           amount: number
           charge_date: string
+          charge_type: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -652,6 +653,7 @@ export type Database = {
         Insert: {
           amount: number
           charge_date?: string
+          charge_type?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -663,6 +665,7 @@ export type Database = {
         Update: {
           amount?: number
           charge_date?: string
+          charge_type?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
