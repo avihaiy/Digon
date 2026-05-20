@@ -168,7 +168,14 @@ export default function Reports() {
             סקירה כללית של פעילות בית הכנסת
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/weekly-balance">
+              <PieChartIcon className="w-4 h-4" />
+              דוח מאזני חברים
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          </Button>
           <Button asChild variant="outline" className="gap-2">
             <Link to="/expense-reports">
               <PieChartIcon className="w-4 h-4" />
