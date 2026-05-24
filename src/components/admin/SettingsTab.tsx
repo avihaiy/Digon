@@ -400,6 +400,59 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Load PayBox settings
+  const { data: payboxSettings } = useQuery({
+    queryKey: ['app-settings-paybox'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['paybox_phone', 'paybox_enabled']);
+      const result = { phone: '', enabled: false };
+      data?.forEach(item => {
+        if (item.key === 'paybox_phone') result.phone = item.value || '';
+        if (item.key === 'paybox_enabled') result.enabled = item.value === 'true';
+      });
+      return result;
+    },
+  });
+
+  useEffect(() => {
+    if (payboxSettings) {
+      setPayboxPhone(payboxSettings.phone);
+      setPayboxEnabled(payboxSettings.enabled);
+    }
+  }, [payboxSettings]);
+
+  const savePayboxMutation = useMutation({
+    mutationFn: async ({ phone, enabled }: { phone: string; enabled: boolean }) => {
+      const previous = payboxSettings || { phone: '', enabled: false };
+      const updates = [
+        { key: 'paybox_phone', value: phone },
+        { key: 'paybox_enabled', value: String(enabled) },
+      ];
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('app_settings')
+          .upsert(update, { onConflict: 'key' });
+        if (error) throw error;
+      }
+      const { data: u } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        user_id: u.user?.id ?? null,
+        action: 'paybox_settings_changed',
+        table_name: 'app_settings',
+        old_data: { paybox_phone: previous.phone, paybox_enabled: previous.enabled },
+        new_data: { paybox_phone: phone, paybox_enabled: enabled },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-paybox'] });
+      toast({ title: 'הגדרות תשלום ב-PayBox נשמרו בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Count enabled screens
   const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
