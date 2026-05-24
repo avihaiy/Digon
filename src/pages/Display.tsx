@@ -506,16 +506,19 @@ export default function Display() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any;
     const fetchActiveSefer = async () => {
-      // 1) קודם בודקים שיוך לתאריך של היום (שבת/חג)
+      // 1) קודם בודקים שיוך לתאריך של היום (שבת/חג) — תומך במספר ספרים
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const { data: scheduled } = await db
         .from("sifrei_torah_schedule")
-        .select("sefer_id, sifrei_torah:sefer_id(name, is_active)")
+        .select("sefer_id, position, sifrei_torah:sefer_id(name, is_active)")
         .eq("scheduled_date", todayStr)
-        .maybeSingle();
-      if (scheduled?.sifrei_torah?.is_active) {
-        setActiveSeferTorahName(scheduled.sifrei_torah.name);
+        .order("position", { ascending: true });
+      const scheduledNames = (scheduled || [])
+        .filter((r: { sifrei_torah?: { is_active?: boolean } }) => r.sifrei_torah?.is_active)
+        .map((r: { sifrei_torah: { name: string } }) => r.sifrei_torah.name);
+      if (scheduledNames.length > 0) {
+        setActiveSeferTorahName(scheduledNames.join(" · "));
         return;
       }
 
@@ -537,6 +540,7 @@ export default function Display() {
         .maybeSingle();
       setActiveSeferTorahName(sefer && sefer.is_active ? sefer.name : null);
     };
+
     fetchActiveSefer();
     const channel = supabase
       .channel("sefer-torah-display")
@@ -1170,7 +1174,7 @@ export default function Display() {
             todayHoliday ? { icon: "⭐", text: todayHoliday } : null,
             sefiratHaOmer ? { icon: "🌾", text: sefiratHaOmer } : null,
             parasha ? { icon: "📖", text: `פרשת ${parasha}` } : null,
-            activeSeferTorahName ? { icon: "📜", text: `ספר תורה: ${activeSeferTorahName}` } : null,
+            activeSeferTorahName ? { icon: "📜", text: `${activeSeferTorahName.includes(" · ") ? "ספרי תורה" : "ספר תורה"}: ${activeSeferTorahName}` } : null,
           ]
             .filter(Boolean)
             .map((item, i) => (
