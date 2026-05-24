@@ -216,6 +216,8 @@ export default function PublicMemberArea() {
     );
     setBitPhone(d.bit_phone || "");
     setBitEnabled(!!d.bit_enabled);
+    setPayboxPhone(d.paybox_phone || "");
+    setPayboxEnabled(!!d.paybox_enabled);
     setCreditBalance(Number(d.credit_balance || 0));
 
     sessionStorage.setItem(authKey(memberId), String(Date.now()));
