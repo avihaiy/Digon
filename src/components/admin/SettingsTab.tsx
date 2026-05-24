@@ -40,6 +40,8 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [notificationSound, setNotificationSound] = useState<SoundPreset>(getSelectedSound());
   const [bitPhone, setBitPhone] = useState('');
   const [bitEnabled, setBitEnabled] = useState(false);
+  const [payboxPhone, setPayboxPhone] = useState('');
+  const [payboxEnabled, setPayboxEnabled] = useState(false);
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
@@ -398,6 +400,59 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Load PayBox settings
+  const { data: payboxSettings } = useQuery({
+    queryKey: ['app-settings-paybox'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .in('key', ['paybox_phone', 'paybox_enabled']);
+      const result = { phone: '', enabled: false };
+      data?.forEach(item => {
+        if (item.key === 'paybox_phone') result.phone = item.value || '';
+        if (item.key === 'paybox_enabled') result.enabled = item.value === 'true';
+      });
+      return result;
+    },
+  });
+
+  useEffect(() => {
+    if (payboxSettings) {
+      setPayboxPhone(payboxSettings.phone);
+      setPayboxEnabled(payboxSettings.enabled);
+    }
+  }, [payboxSettings]);
+
+  const savePayboxMutation = useMutation({
+    mutationFn: async ({ phone, enabled }: { phone: string; enabled: boolean }) => {
+      const previous = payboxSettings || { phone: '', enabled: false };
+      const updates = [
+        { key: 'paybox_phone', value: phone },
+        { key: 'paybox_enabled', value: String(enabled) },
+      ];
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('app_settings')
+          .upsert(update, { onConflict: 'key' });
+        if (error) throw error;
+      }
+      const { data: u } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        user_id: u.user?.id ?? null,
+        action: 'paybox_settings_changed',
+        table_name: 'app_settings',
+        old_data: { paybox_phone: previous.phone, paybox_enabled: previous.enabled },
+        new_data: { paybox_phone: phone, paybox_enabled: enabled },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-paybox'] });
+      toast({ title: 'הגדרות תשלום ב-PayBox נשמרו בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Count enabled screens
   const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
@@ -675,7 +730,46 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             </Button>
           </CardContent>
         </Card>
+
+        {/* PayBox Payment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5" />
+              תשלום ב-PayBox
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>הצג כפתור תשלום ב-PayBox באזור האישי</Label>
+              <Switch checked={payboxEnabled} onCheckedChange={setPayboxEnabled} />
+            </div>
+            <div className="space-y-2">
+              <Label>מספר טלפון לקבלת תשלומים ב-PayBox</Label>
+              <Input
+                type="tel"
+                inputMode="numeric"
+                value={payboxPhone}
+                onChange={e => setPayboxPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="0501234567"
+                dir="ltr"
+                className="font-mono text-center tracking-wider"
+              />
+              <p className="text-xs text-muted-foreground">
+                מספר הטלפון המחובר לחשבון PayBox של בית הכנסת. החבר יוכל לשלוח תשלום ישירות אליו דרך האפליקציה.
+              </p>
+            </div>
+            <Button
+              onClick={() => savePayboxMutation.mutate({ phone: payboxPhone, enabled: payboxEnabled })}
+              disabled={savePayboxMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור הגדרות PayBox
+            </Button>
+          </CardContent>
+        </Card>
       </div>
+
 
       {/* Location */}
       <Card>
