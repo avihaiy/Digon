@@ -1145,6 +1145,7 @@ export type Database = {
           created_by: string | null
           id: string
           label: string | null
+          position: number
           scheduled_date: string
           sefer_id: string
           updated_at: string
@@ -1154,6 +1155,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           label?: string | null
+          position?: number
           scheduled_date: string
           sefer_id: string
           updated_at?: string
@@ -1163,6 +1165,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           label?: string | null
+          position?: number
           scheduled_date?: string
           sefer_id?: string
           updated_at?: string
