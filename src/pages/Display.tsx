@@ -1174,7 +1174,7 @@ export default function Display() {
             todayHoliday ? { icon: "⭐", text: todayHoliday } : null,
             sefiratHaOmer ? { icon: "🌾", text: sefiratHaOmer } : null,
             parasha ? { icon: "📖", text: `פרשת ${parasha}` } : null,
-            activeSeferTorahName ? { icon: "📜", text: `ספר תורה: ${activeSeferTorahName}` } : null,
+            activeSeferTorahName ? { icon: "📜", text: `${activeSeferTorahName.includes(" · ") ? "ספרי תורה" : "ספר תורה"}: ${activeSeferTorahName}` } : null,
           ]
             .filter(Boolean)
             .map((item, i) => (
