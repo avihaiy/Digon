@@ -279,10 +279,10 @@ export default function SifreiTorahManager() {
             שיוך ספר תורה לתאריך (שבת/חג)
           </Label>
           <p className="text-xs text-muted-foreground">
-            בתאריך שנבחר — המסך יציג אוטומטית את הספר המשויך, גם בלי לשנות את הספר הקבוע למעלה.
+            בתאריך שנבחר — המסך יציג אוטומטית את הספרים המשויכים, כולל מקרים של 2 או 3 ספרי תורה (כמו ראש חודש, חנוכה, פרשת שקלים וכו').
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -305,62 +305,119 @@ export default function SifreiTorahManager() {
               </PopoverContent>
             </Popover>
 
-            <Select value={schedSeferId || undefined} onValueChange={setSchedSeferId}>
-              <SelectTrigger>
-                <SelectValue placeholder="בחר ספר תורה" />
-              </SelectTrigger>
-              <SelectContent>
-                {list
+            <div className="border rounded-lg p-2 space-y-1 max-h-56 overflow-y-auto bg-background">
+              <p className="text-xs text-muted-foreground px-1 pb-1">
+                סמן את הספרים שיוצאו (סדר הסימון = סדר ההצגה)
+              </p>
+              {list.filter((s) => s.is_active).length === 0 ? (
+                <p className="text-xs text-muted-foreground p-2">אין ספרי תורה פעילים.</p>
+              ) : (
+                list
                   .filter((s) => s.is_active)
-                  .map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+                  .map((s) => {
+                    const idx = schedSeferIds.indexOf(s.id);
+                    const checked = idx !== -1;
+                    return (
+                      <label
+                        key={s.id}
+                        className={cn(
+                          'flex items-center justify-between gap-2 p-2 rounded cursor-pointer hover:bg-muted/50',
+                          checked && 'bg-amber-50 dark:bg-amber-950/20',
+                        )}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSchedSeferIds((prev) => [...prev, s.id]);
+                              } else {
+                                setSchedSeferIds((prev) => prev.filter((id) => id !== s.id));
+                              }
+                            }}
+                            className="w-4 h-4 accent-amber-500"
+                          />
+                          <span className="text-sm truncate">{s.name}</span>
+                        </div>
+                        {checked && (
+                          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 shrink-0">
+                            #{idx + 1}
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })
+              )}
+            </div>
 
             <Input
-              placeholder="תיאור (למשל: פרשת בראשית) — אופציונלי"
+              placeholder="תיאור (למשל: פרשת שקלים / ראש חודש) — אופציונלי"
               value={schedLabel}
               onChange={(e) => setSchedLabel(e.target.value)}
             />
           </div>
 
-          <Button onClick={addSchedule} disabled={!schedDate || !schedSeferId} className="w-full sm:w-auto">
+          <Button
+            onClick={addSchedule}
+            disabled={!schedDate || schedSeferIds.length === 0}
+            className="w-full sm:w-auto"
+          >
             <Plus className="w-4 h-4 ml-1" />
-            הוסף שיוך
+            הוסף שיוך ({schedSeferIds.length} ספרים)
           </Button>
 
           {schedule.length > 0 && (
             <div className="space-y-2 pt-2">
               <Label className="text-xs text-muted-foreground">שיוכים עתידיים</Label>
-              {schedule.map((row) => {
-                const sefer = list.find((s) => s.id === row.sefer_id);
-                const d = new Date(row.scheduled_date + 'T00:00:00');
-                return (
-                  <div
-                    key={row.id}
-                    className="flex items-center justify-between gap-2 p-2 rounded-lg border bg-background"
-                  >
-                    <div className="flex-1 min-w-0">
+              {(() => {
+                const grouped = new Map<string, ScheduleRow[]>();
+                schedule.forEach((row) => {
+                  const arr = grouped.get(row.scheduled_date) || [];
+                  arr.push(row);
+                  grouped.set(row.scheduled_date, arr);
+                });
+                return Array.from(grouped.entries()).map(([date, rows]) => {
+                  const d = new Date(date + 'T00:00:00');
+                  const sorted = [...rows].sort((a, b) => (a.position || 0) - (b.position || 0));
+                  const label = sorted.find((r) => r.label)?.label;
+                  return (
+                    <div key={date} className="p-2 rounded-lg border bg-background space-y-1">
                       <p className="text-sm font-medium">
                         {format(d, 'EEEE, d בMMMM yyyy', { locale: he })}
+                        {label ? <span className="text-muted-foreground"> • {label}</span> : null}
+                        {sorted.length > 1 && (
+                          <span className="mr-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                            {sorted.length} ספרים
+                          </span>
+                        )}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        📜 {sefer?.name || '—'}
-                        {row.label ? ` • ${row.label}` : ''}
-                      </p>
+                      <div className="space-y-1">
+                        {sorted.map((row, i) => {
+                          const sefer = list.find((s) => s.id === row.sefer_id);
+                          return (
+                            <div
+                              key={row.id}
+                              className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                            >
+                              <span className="truncate">
+                                📜 #{i + 1} {sefer?.name || '—'}
+                              </span>
+                              <Button size="icon" variant="ghost" onClick={() => removeSchedule(row.id)}>
+                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <Button size="icon" variant="ghost" onClick={() => removeSchedule(row.id)}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           )}
         </div>
+
 
         <div className="border-t pt-4 space-y-3">
           <Label className="text-sm font-semibold">הוספת ספר תורה חדש</Label>
