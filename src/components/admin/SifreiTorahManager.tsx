@@ -39,7 +39,9 @@ interface ScheduleRow {
   scheduled_date: string;
   sefer_id: string;
   label: string | null;
+  position: number;
 }
+
 
 const ACTIVE_KEY = 'active_sefer_torah_id';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
