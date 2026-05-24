@@ -100,31 +100,37 @@ export default function SifreiTorahManager() {
   }, []);
 
   const addSchedule = async () => {
-    if (!schedDate || !schedSeferId) {
-      toast({ title: 'יש לבחור תאריך וספר תורה', variant: 'destructive' });
+    if (!schedDate || schedSeferIds.length === 0) {
+      toast({ title: 'יש לבחור תאריך ולפחות ספר תורה אחד', variant: 'destructive' });
       return;
     }
-    const { error } = await db.from('sifrei_torah_schedule').upsert(
-      {
-        scheduled_date: toIsoDate(schedDate),
-        sefer_id: schedSeferId,
-        label: schedLabel.trim() || null,
-      },
-      { onConflict: 'scheduled_date' },
-    );
+    const dateIso = toIsoDate(schedDate);
+    const rows = schedSeferIds.map((sefer_id, idx) => ({
+      scheduled_date: dateIso,
+      sefer_id,
+      label: schedLabel.trim() || null,
+      position: idx + 1,
+    }));
+    const { error } = await db
+      .from('sifrei_torah_schedule')
+      .upsert(rows, { onConflict: 'scheduled_date,sefer_id' });
     if (error) {
       toast({ title: 'שגיאה בשמירת השיוך', description: error.message, variant: 'destructive' });
       return;
     }
     setSchedDate(undefined);
-    setSchedSeferId('');
+    setSchedSeferIds([]);
     setSchedLabel('');
-    toast({ title: 'השיוך נשמר' });
+    toast({ title: `נשמרו ${rows.length} ספרים לתאריך` });
     load();
   };
 
-  const removeSchedule = async (id: string) => {
-    if (!confirm('למחוק שיוך זה?')) return;
+  const removeSchedule = (id: string) => setDeleteScheduleId(id);
+
+  const confirmRemoveSchedule = async () => {
+    if (!deleteScheduleId) return;
+    const id = deleteScheduleId;
+    setDeleteScheduleId(null);
     const { error } = await db.from('sifrei_torah_schedule').delete().eq('id', id);
     if (error) {
       toast({ title: 'שגיאה במחיקה', variant: 'destructive' });
@@ -133,6 +139,7 @@ export default function SifreiTorahManager() {
     toast({ title: 'נמחק' });
     load();
   };
+
 
   const saveActive = async (id: string) => {
     setActiveId(id);
