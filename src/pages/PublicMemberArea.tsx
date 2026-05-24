@@ -628,6 +628,93 @@ export default function PublicMemberArea() {
                     );
                   })()}
 
+                {/* תשלום ב-PayBox */}
+                {payboxEnabled && payboxPhone && netOwed > 0 && (() => {
+                  let cleanPhone = (payboxPhone || "").replace(/\D/g, "");
+                  if (cleanPhone.startsWith("972")) cleanPhone = "0" + cleanPhone.slice(3);
+                  if (!cleanPhone.startsWith("0")) cleanPhone = "0" + cleanPhone;
+                  const amount = Math.round(netOwed * 100) / 100;
+                  const payboxUrl = `https://link.payboxapp.com/business?phone=${cleanPhone}&amount=${amount}`;
+                  const fallbackUrl = `https://payboxapp.page.link/?link=${encodeURIComponent(payboxUrl)}`;
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setPayboxDialogOpen(true)}
+                        className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                        style={{ background: "linear-gradient(135deg, #00c47a, #00a86b)" }}
+                      >
+                        <Smartphone className="w-5 h-5" />
+                        תשלום ב-PayBox
+                      </button>
+
+                      <Dialog open={payboxDialogOpen} onOpenChange={setPayboxDialogOpen}>
+                        <DialogContent dir="rtl" className="max-w-sm">
+                          <DialogHeader>
+                            <DialogTitle className="text-center">תשלום ב-PayBox</DialogTitle>
+                            <DialogDescription className="text-center">
+                              שליחת תשלום ישירה למספר הטלפון של בית הכנסת
+                            </DialogDescription>
+                          </DialogHeader>
+
+                          <div className="space-y-4">
+                            <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg p-4 text-center">
+                              <div className="text-sm text-muted-foreground mb-1">סכום לתשלום</div>
+                              <div className="text-3xl font-bold text-emerald-600">{formatCurrency(netOwed)}</div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 text-center">
+                              <div className="text-sm text-muted-foreground mb-1">מספר טלפון של בית הכנסת</div>
+                              <div className="text-lg font-mono font-bold tracking-wider">{cleanPhone}</div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-2"
+                                onClick={async () => {
+                                  try {
+                                    await navigator.clipboard.writeText(cleanPhone);
+                                    toast.success("מספר הטלפון הועתק");
+                                  } catch {
+                                    toast.error("העתקה נכשלה");
+                                  }
+                                }}
+                              >
+                                העתק מספר
+                              </Button>
+                            </div>
+
+                            <a
+                              href={fallbackUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center gap-2 w-full h-11 rounded-md font-bold text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                              style={{ background: "linear-gradient(135deg, #00c47a, #00a86b)" }}
+                            >
+                              <Smartphone className="w-5 h-5" />
+                              פתח באפליקציית PayBox
+                            </a>
+
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                              <div className="font-bold text-amber-900 text-sm">איך לשלם:</div>
+                              <ol className="text-xs text-amber-900 space-y-1 list-decimal pr-4">
+                                <li>לחץ "פתח באפליקציית PayBox"</li>
+                                <li>אם האפליקציה לא נפתחה אוטומטית – פתח אותה ידנית ובחר "שלח כסף" למספר שמופיע למעלה</li>
+                                <li>הזן את הסכום ואשר את התשלום</li>
+                              </ol>
+                            </div>
+
+                            <Button onClick={() => setPayboxDialogOpen(false)} variant="outline" className="w-full">
+                              סגור
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  );
+                })()}
+
+
+
                 <Button asChild variant="outline" className="w-full gap-2">
                   <Link to={`/d/${memberId}`}>
                     <FileDown className="w-4 h-4" />
