@@ -730,7 +730,46 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             </Button>
           </CardContent>
         </Card>
+
+        {/* PayBox Payment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="w-5 h-5" />
+              תשלום ב-PayBox
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>הצג כפתור תשלום ב-PayBox באזור האישי</Label>
+              <Switch checked={payboxEnabled} onCheckedChange={setPayboxEnabled} />
+            </div>
+            <div className="space-y-2">
+              <Label>מספר טלפון לקבלת תשלומים ב-PayBox</Label>
+              <Input
+                type="tel"
+                inputMode="numeric"
+                value={payboxPhone}
+                onChange={e => setPayboxPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="0501234567"
+                dir="ltr"
+                className="font-mono text-center tracking-wider"
+              />
+              <p className="text-xs text-muted-foreground">
+                מספר הטלפון המחובר לחשבון PayBox של בית הכנסת. החבר יוכל לשלוח תשלום ישירות אליו דרך האפליקציה.
+              </p>
+            </div>
+            <Button
+              onClick={() => savePayboxMutation.mutate({ phone: payboxPhone, enabled: payboxEnabled })}
+              disabled={savePayboxMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור הגדרות PayBox
+            </Button>
+          </CardContent>
+        </Card>
       </div>
+
 
       {/* Location */}
       <Card>
