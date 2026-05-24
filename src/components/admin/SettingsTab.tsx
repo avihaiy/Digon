@@ -40,6 +40,8 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [notificationSound, setNotificationSound] = useState<SoundPreset>(getSelectedSound());
   const [bitPhone, setBitPhone] = useState('');
   const [bitEnabled, setBitEnabled] = useState(false);
+  const [payboxPhone, setPayboxPhone] = useState('');
+  const [payboxEnabled, setPayboxEnabled] = useState(false);
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
