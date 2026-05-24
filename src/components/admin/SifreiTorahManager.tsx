@@ -567,6 +567,26 @@ export default function SifreiTorahManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!deleteScheduleId} onOpenChange={(open) => !open && setDeleteScheduleId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת שיוך</AlertDialogTitle>
+            <AlertDialogDescription>
+              למחוק שיוך זה? אם יש מספר ספרים לאותו תאריך, רק שורה זו תוסר.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveSchedule}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              מחק
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
