@@ -375,6 +375,12 @@ export default function Admin() {
             >
               🕯️ לוח אזכרות
             </a>
+            <a
+              href="/prayer-poster"
+              className="block w-full text-center px-4 py-2 rounded-lg bg-emerald-600/30 text-emerald-200 hover:bg-emerald-600/50 transition-colors"
+            >
+              📜 טופס זמני תפילות
+            </a>
           </div>
         </div>
       </aside>

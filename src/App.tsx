@@ -39,6 +39,7 @@ import Display from "@/pages/Display";
 import SettingsPage from "@/pages/SettingsPage";
 import Reminders from "@/pages/Reminders";
 import Events from "@/pages/Events";
+import PrayerPoster from "@/pages/PrayerPoster";
 import PublicReceipt from "@/pages/PublicReceipt";
 import PublicMemberDebts from "@/pages/PublicMemberDebts";
 import PublicMemberArea from "@/pages/PublicMemberArea";
@@ -306,6 +307,16 @@ const AnimatedRoutes = () => {
             <PageTransition>
               <AdminMobile />
             </PageTransition>
+          }
+        />
+        <Route
+          path="/prayer-poster"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <PrayerPoster />
+              </PageTransition>
+            </ProtectedRoute>
           }
         />
         <Route
