@@ -42,7 +42,7 @@ import {
   Filter,
   Trash2,
   Edit,
-  Shekel,
+  
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
