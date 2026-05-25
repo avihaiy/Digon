@@ -353,7 +353,7 @@ export default function Budget() {
           <CardContent className="p-3 sm:p-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4">
               <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center ${balance >= 0 ? 'bg-emerald-500/10' : 'bg-destructive/10'}`}>
-                <PiggyBank className={`w-4 h-4 sm:w-6 sm:h-6 ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`} />
+                <span className={`text-base sm:text-2xl font-bold leading-none ${balance >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>₪</span>
               </div>
               <div className="text-center sm:text-right">
                 <p className="text-[10px] sm:text-sm text-muted-foreground">יתרה</p>
