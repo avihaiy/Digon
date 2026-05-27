@@ -43,7 +43,7 @@ const DEFAULT_SHABBAT: PosterData = {
     { id: "7", label: 'ערבית מוצ"ש', time: "20:00" },
     { id: "8", label: "יציאת שבת", time: "20:14" },
   ],
-  footer: "שבת שלום",
+  footer: "שבת שלום ומבורך",
   bottomImage: null,
 };
 
@@ -70,7 +70,22 @@ function loadData(key: string, fallback: PosterData): PosterData {
   return fallback;
 }
 
+// Inject Google Fonts once
+function useGoogleFonts() {
+  useEffect(() => {
+    const id = "poster-google-fonts";
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=David+Libre:wght@400;500;700&family=Heebo:wght@400;700;900&display=swap";
+    document.head.appendChild(link);
+  }, []);
+}
+
 export default function PrayerPoster() {
+  useGoogleFonts();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"shabbat" | "weekday">("shabbat");
   const [shabbatData, setShabbatData] = useState<PosterData>(() => loadData("poster-shabbat", DEFAULT_SHABBAT));
@@ -79,7 +94,6 @@ export default function PrayerPoster() {
   const data = tab === "shabbat" ? shabbatData : weekdayData;
   const setData = tab === "shabbat" ? setShabbatData : setWeekdayData;
 
-  // Load synagogue name from settings (default suggestion only)
   const { data: synagogueName } = useQuery({
     queryKey: ["app-settings-synagogue-name"],
     queryFn: async () => {
@@ -98,7 +112,6 @@ export default function PrayerPoster() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [synagogueName]);
 
-  // Auto-suggest parasha for shabbat
   useEffect(() => {
     if (!shabbatData.parasha) {
       setShabbatData((d) => ({ ...d, parasha: getCurrentParasha() }));
@@ -141,9 +154,27 @@ export default function PrayerPoster() {
     toast({ title: "נשמר בהצלחה" });
   };
 
+  // Open print in a new window — bypasses AppLayout chrome and ensures the poster renders correctly
   const handlePrint = () => {
     handleSave();
-    window.print();
+    const html = buildPrintHtml(data);
+    const w = window.open("", "_blank", "width=900,height=1200");
+    if (!w) {
+      toast({ title: "החלון נחסם — אשר חלונות קופצים", variant: "destructive" });
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    // Wait for fonts/images before printing
+    const doPrint = () => {
+      try { w.focus(); w.print(); } catch (e) { /* ignore */ }
+    };
+    if ((w.document as any).fonts?.ready) {
+      (w.document as any).fonts.ready.then(() => setTimeout(doPrint, 250));
+    } else {
+      w.onload = () => setTimeout(doPrint, 400);
+    }
   };
 
   const fillFromShabbatTimes = () => {
@@ -173,9 +204,8 @@ export default function PrayerPoster() {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-muted/30 p-4 md:p-6 print:p-0 print:bg-white">
-      {/* Toolbar — hidden when printing */}
-      <div className="print:hidden max-w-7xl mx-auto mb-4 flex items-center gap-2 flex-wrap">
+    <div dir="rtl" className="min-h-screen bg-muted/30 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto mb-4 flex items-center gap-2 flex-wrap">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
           <ArrowRight className="w-4 h-4 ml-1" /> חזרה
         </Button>
@@ -188,7 +218,7 @@ export default function PrayerPoster() {
         </Button>
       </div>
 
-      <div className="print:hidden max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <Tabs value={tab} onValueChange={(v) => setTab(v as "shabbat" | "weekday")}>
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="shabbat">שבת וחג</TabsTrigger>
@@ -225,18 +255,6 @@ export default function PrayerPoster() {
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Print-only poster */}
-      <div className="hidden print:block">
-        <PosterPreview data={data} />
-      </div>
-
-      <style>{`
-        @media print {
-          @page { size: A4 portrait; margin: 0; }
-          body { margin: 0; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -259,7 +277,6 @@ function EditorAndPreview({
 }: EAPProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Editor */}
       <Card className="p-4 space-y-4">
         <div className="space-y-2">
           <Label>שם בית הכנסת</Label>
@@ -353,72 +370,174 @@ function EditorAndPreview({
         </div>
       </Card>
 
-      {/* Preview */}
-      <div className="flex justify-center">
-        <PosterPreview data={data} />
+      <div className="flex justify-center overflow-auto">
+        <div style={{ transform: "scale(0.55)", transformOrigin: "top center" }}>
+          <PosterPreview data={data} />
+        </div>
       </div>
     </div>
   );
 }
 
 function PosterPreview({ data }: { data: PosterData }) {
+  const nameParts = splitName(data.synagogueName);
   return (
     <div
-      className="poster-page bg-[#fdf6e3] relative shadow-2xl print:shadow-none"
+      className="poster-page relative shadow-2xl"
       style={{
         width: "210mm",
         minHeight: "297mm",
-        padding: "18mm 16mm",
+        padding: "20mm 18mm",
         boxSizing: "border-box",
-        fontFamily: '"Heebo", "Frank Ruhl Libre", serif',
-        backgroundImage:
-          "radial-gradient(ellipse at top left, rgba(218,165,32,0.15), transparent 60%), radial-gradient(ellipse at bottom right, rgba(218,165,32,0.12), transparent 60%)",
+        fontFamily: '"Frank Ruhl Libre", "David Libre", "Heebo", serif',
+        background:
+          "radial-gradient(ellipse at 30% 10%, #fffaf0 0%, #fbf3df 45%, #f6e9c5 100%)",
+        color: "#2a1d0a",
       }}
     >
-      {/* Ornate double border */}
+      {/* Outer ornate border */}
       <div
-        className="absolute inset-[8mm] pointer-events-none"
+        className="absolute inset-[10mm] pointer-events-none"
         style={{
-          border: "4px double #b08d3d",
-          borderRadius: "10px",
-          boxShadow: "inset 0 0 0 2px #f5e6b0, inset 0 0 0 6px #b08d3d33",
+          border: "3px double #a8842c",
+          borderRadius: "6px",
+          boxShadow:
+            "inset 0 0 0 1px #f1dca0, inset 0 0 0 4px rgba(168,132,44,0.18), 0 0 0 1px rgba(168,132,44,0.2)",
         }}
       />
-      {/* Corner flourishes */}
-      <div className="absolute top-[6mm] right-[6mm] text-[#b08d3d] text-4xl leading-none">❦</div>
-      <div className="absolute top-[6mm] left-[6mm] text-[#b08d3d] text-4xl leading-none rotate-90">❦</div>
-      <div className="absolute bottom-[6mm] right-[6mm] text-[#b08d3d] text-4xl leading-none -rotate-90">❦</div>
-      <div className="absolute bottom-[6mm] left-[6mm] text-[#b08d3d] text-4xl leading-none rotate-180">❦</div>
+      {/* Inner thin frame */}
+      <div
+        className="absolute inset-[14mm] pointer-events-none"
+        style={{ border: "1px solid rgba(168,132,44,0.45)", borderRadius: "3px" }}
+      />
 
-      {/* בס"ד */}
-      <div className="text-right text-sm text-[#3a2a10] font-bold mb-2 relative">בס"ד</div>
-
-      <div className="relative text-center space-y-4">
-        <div>
-          <div className="text-2xl text-[#3a2a10] font-bold">{data.synagogueName.split('"')[0]}</div>
-          {data.synagogueName.includes('"') && (
-            <div className="text-4xl font-extrabold text-[#3a2a10] tracking-wide">
-              "{data.synagogueName.split('"')[1]}"
-            </div>
-          )}
-          {data.subtitle && <div className="text-sm text-[#3a2a10] mt-1">{data.subtitle}</div>}
+      {/* Corner ornaments */}
+      {[
+        { top: "8mm", right: "8mm", rotate: "0deg" },
+        { top: "8mm", left: "8mm", rotate: "90deg" },
+        { bottom: "8mm", right: "8mm", rotate: "-90deg" },
+        { bottom: "8mm", left: "8mm", rotate: "180deg" },
+      ].map((pos, i) => (
+        <div
+          key={i}
+          className="absolute pointer-events-none"
+          style={{
+            ...pos,
+            transform: `rotate(${pos.rotate})`,
+            color: "#a8842c",
+            fontSize: "28px",
+            lineHeight: 1,
+            letterSpacing: "-2px",
+          }}
+        >
+          ❦
         </div>
+      ))}
 
-        <div className="text-4xl font-extrabold text-[#3a2a10] py-2">{data.title}</div>
+      <div className="absolute right-[20mm] top-[18mm] text-sm font-bold" style={{ color: "#5a4015" }}>
+        בס"ד
+      </div>
 
-        {data.parasha && (
-          <div className="text-3xl font-bold text-[#7a1818] py-3">פרשת : {data.parasha}</div>
+      <div className="relative text-center" style={{ paddingTop: "8mm" }}>
+        {/* Synagogue name */}
+        <div style={{ fontSize: "20px", fontWeight: 500, letterSpacing: "1px", color: "#5a4015" }}>
+          {nameParts.prefix}
+        </div>
+        {nameParts.quoted && (
+          <div
+            style={{
+              fontSize: "44px",
+              fontWeight: 900,
+              letterSpacing: "2px",
+              color: "#2a1d0a",
+              marginTop: "2px",
+              textShadow: "0 1px 0 rgba(168,132,44,0.15)",
+            }}
+          >
+            “{nameParts.quoted}”
+          </div>
+        )}
+        {data.subtitle && (
+          <div style={{ fontSize: "13px", color: "#7a5a20", marginTop: "6px", letterSpacing: "0.5px" }}>
+            {data.subtitle}
+          </div>
         )}
 
-        <div className="space-y-3 px-4 text-right pt-2">
-          {data.rows.map((row) => (
+        {/* Divider */}
+        <Divider />
+
+        {/* Main title */}
+        <div
+          style={{
+            fontSize: "38px",
+            fontWeight: 900,
+            color: "#2a1d0a",
+            margin: "6mm 0 4mm",
+            letterSpacing: "1px",
+          }}
+        >
+          {data.title}
+        </div>
+
+        {data.parasha && (
+          <div
+            style={{
+              fontSize: "30px",
+              fontWeight: 700,
+              color: "#8a1818",
+              margin: "0 0 4mm",
+              letterSpacing: "1px",
+            }}
+          >
+            פרשת {data.parasha}
+          </div>
+        )}
+
+        <Divider />
+
+        {/* Rows */}
+        <div style={{ padding: "6mm 6mm 0", textAlign: "right" }}>
+          {data.rows.map((row, idx) => (
             <div key={row.id}>
               {row.isHeader ? (
-                <div className="text-2xl font-bold text-[#7a1818] text-center py-1">{row.label}</div>
+                <div
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: 700,
+                    color: "#8a1818",
+                    textAlign: "center",
+                    margin: "4mm 0 2mm",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  ❖ {row.label} ❖
+                </div>
               ) : (
-                <div className="flex items-center justify-between text-2xl font-bold text-[#1a1a1a]">
-                  <span>{row.label}:</span>
-                  <span dir="ltr" className="tabular-nums">{row.time}</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    justifyContent: "space-between",
+                    fontSize: "22px",
+                    fontWeight: 700,
+                    color: "#1a1208",
+                    padding: "3mm 0",
+                    borderBottom:
+                      idx < data.rows.length - 1 ? "1px dotted rgba(168,132,44,0.4)" : "none",
+                  }}
+                >
+                  <span>{row.label}</span>
+                  <span
+                    dir="ltr"
+                    style={{
+                      fontFamily: '"Heebo", sans-serif',
+                      fontWeight: 900,
+                      color: "#5a4015",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {row.time}
+                  </span>
                 </div>
               )}
             </div>
@@ -426,15 +545,150 @@ function PosterPreview({ data }: { data: PosterData }) {
         </div>
 
         {data.footer && (
-          <div className="text-xl text-[#3a2a10] pt-6">{data.footer}</div>
+          <>
+            <Divider />
+            <div
+              style={{
+                fontSize: "26px",
+                fontWeight: 700,
+                color: "#8a1818",
+                marginTop: "4mm",
+                letterSpacing: "1px",
+              }}
+            >
+              {data.footer}
+            </div>
+          </>
         )}
 
         {data.bottomImage && (
-          <div className="flex justify-center pt-2">
-            <img src={data.bottomImage} alt="" className="max-h-[40mm] object-contain" />
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "6mm" }}>
+            <img src={data.bottomImage} alt="" style={{ maxHeight: "40mm", objectFit: "contain" }} />
           </div>
         )}
       </div>
     </div>
   );
+}
+
+function Divider() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
+        margin: "4mm 0",
+        color: "#a8842c",
+      }}
+    >
+      <span style={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, #a8842c, transparent)" }} />
+      <span style={{ fontSize: "18px" }}>✦</span>
+      <span style={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, #a8842c, transparent)" }} />
+    </div>
+  );
+}
+
+function splitName(name: string): { prefix: string; quoted: string } {
+  const m = name.match(/^(.*?)["“]([^"”]+)["”](.*)$/);
+  if (m) return { prefix: m[1].trim(), quoted: m[2].trim() };
+  return { prefix: name, quoted: "" };
+}
+
+// Build standalone HTML for print window
+function buildPrintHtml(data: PosterData): string {
+  const nameParts = splitName(data.synagogueName);
+  const rowsHtml = data.rows
+    .map((row, idx) => {
+      if (row.isHeader) {
+        return `<div class="hdr">❖ ${escapeHtml(row.label)} ❖</div>`;
+      }
+      const border =
+        idx < data.rows.length - 1 ? "border-bottom:1px dotted rgba(168,132,44,0.4);" : "";
+      return `<div class="row" style="${border}">
+        <span>${escapeHtml(row.label)}</span>
+        <span class="time" dir="ltr">${escapeHtml(row.time)}</span>
+      </div>`;
+    })
+    .join("");
+
+  const divider = `<div class="divider"><span class="line"></span><span class="star">✦</span><span class="line"></span></div>`;
+
+  return `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>${escapeHtml(data.title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=David+Libre:wght@400;500;700&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin:0; padding:0; background:#e9e4d4; font-family:"Frank Ruhl Libre","David Libre","Heebo",serif; color:#2a1d0a; }
+  .page {
+    width:210mm; min-height:297mm; padding:20mm 18mm; position:relative;
+    background: radial-gradient(ellipse at 30% 10%, #fffaf0 0%, #fbf3df 45%, #f6e9c5 100%);
+    margin:0 auto;
+  }
+  .border-outer { position:absolute; inset:10mm; border:3px double #a8842c; border-radius:6px;
+    box-shadow: inset 0 0 0 1px #f1dca0, inset 0 0 0 4px rgba(168,132,44,0.18); pointer-events:none; }
+  .border-inner { position:absolute; inset:14mm; border:1px solid rgba(168,132,44,0.45); border-radius:3px; pointer-events:none; }
+  .corner { position:absolute; color:#a8842c; font-size:28px; line-height:1; }
+  .c1 { top:8mm; right:8mm; }
+  .c2 { top:8mm; left:8mm; transform:rotate(90deg); }
+  .c3 { bottom:8mm; right:8mm; transform:rotate(-90deg); }
+  .c4 { bottom:8mm; left:8mm; transform:rotate(180deg); }
+  .bsd { position:absolute; right:20mm; top:18mm; font-size:14px; font-weight:700; color:#5a4015; }
+  .content { position:relative; text-align:center; padding-top:8mm; }
+  .name-prefix { font-size:20px; font-weight:500; letter-spacing:1px; color:#5a4015; }
+  .name-quoted { font-size:44px; font-weight:900; letter-spacing:2px; color:#2a1d0a; margin-top:2px; }
+  .subtitle { font-size:13px; color:#7a5a20; margin-top:6px; letter-spacing:0.5px; }
+  .title { font-size:38px; font-weight:900; color:#2a1d0a; margin:6mm 0 4mm; letter-spacing:1px; }
+  .parasha { font-size:30px; font-weight:700; color:#8a1818; margin:0 0 4mm; letter-spacing:1px; }
+  .rows { padding:6mm 6mm 0; text-align:right; }
+  .row { display:flex; align-items:baseline; justify-content:space-between; font-size:22px; font-weight:700; color:#1a1208; padding:3mm 0; }
+  .row .time { font-family:"Heebo",sans-serif; font-weight:900; color:#5a4015; font-variant-numeric: tabular-nums; }
+  .hdr { font-size:24px; font-weight:700; color:#8a1818; text-align:center; margin:4mm 0 2mm; letter-spacing:0.5px; }
+  .footer { font-size:26px; font-weight:700; color:#8a1818; margin-top:4mm; letter-spacing:1px; }
+  .divider { display:flex; align-items:center; justify-content:center; gap:10px; margin:4mm 0; color:#a8842c; }
+  .divider .line { flex:1; height:1px; background:linear-gradient(to right, transparent, #a8842c, transparent); }
+  .divider .star { font-size:18px; }
+  .img-wrap { display:flex; justify-content:center; margin-top:6mm; }
+  .img-wrap img { max-height:40mm; object-fit:contain; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="border-outer"></div>
+    <div class="border-inner"></div>
+    <div class="corner c1">❦</div>
+    <div class="corner c2">❦</div>
+    <div class="corner c3">❦</div>
+    <div class="corner c4">❦</div>
+    <div class="bsd">בס"ד</div>
+    <div class="content">
+      <div class="name-prefix">${escapeHtml(nameParts.prefix)}</div>
+      ${nameParts.quoted ? `<div class="name-quoted">“${escapeHtml(nameParts.quoted)}”</div>` : ""}
+      ${data.subtitle ? `<div class="subtitle">${escapeHtml(data.subtitle)}</div>` : ""}
+      ${divider}
+      <div class="title">${escapeHtml(data.title)}</div>
+      ${data.parasha ? `<div class="parasha">פרשת ${escapeHtml(data.parasha)}</div>` : ""}
+      ${divider}
+      <div class="rows">${rowsHtml}</div>
+      ${data.footer ? `${divider}<div class="footer">${escapeHtml(data.footer)}</div>` : ""}
+      ${data.bottomImage ? `<div class="img-wrap"><img src="${data.bottomImage}" alt="" /></div>` : ""}
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
