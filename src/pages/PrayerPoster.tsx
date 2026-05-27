@@ -673,6 +673,7 @@ function buildPrintHtml(data: PosterData): string {
     <div class="corner c4">❦</div>
     <div class="bsd">בס"ד</div>
     <div class="content">
+      <div class="logo-wrap"><img src="${new URL(posterLogo, window.location.origin).href}" alt="לוגו" /></div>
       <div class="name-prefix">${escapeHtml(nameParts.prefix)}</div>
       ${nameParts.quoted ? `<div class="name-quoted">“${escapeHtml(nameParts.quoted)}”</div>` : ""}
       ${data.subtitle ? `<div class="subtitle">${escapeHtml(data.subtitle)}</div>` : ""}
