@@ -646,6 +646,8 @@ function buildPrintHtml(data: PosterData): string {
   .c4 { bottom:8mm; left:8mm; transform:rotate(180deg); }
   .bsd { position:absolute; right:20mm; top:18mm; font-size:14px; font-weight:700; color:#5a4015; }
   .content { position:relative; text-align:center; padding-top:8mm; }
+  .logo-wrap { display:flex; justify-content:center; margin-bottom:4mm; }
+  .logo-wrap img { height:32mm; object-fit:contain; }
   .name-prefix { font-size:20px; font-weight:500; letter-spacing:1px; color:#5a4015; }
   .name-quoted { font-size:44px; font-weight:900; letter-spacing:2px; color:#2a1d0a; margin-top:2px; }
   .subtitle { font-size:13px; color:#7a5a20; margin-top:6px; letter-spacing:0.5px; }
