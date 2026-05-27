@@ -10,6 +10,7 @@ import { Plus, Trash2, Printer, Save, ArrowRight, Image as ImageIcon, X } from "
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { getCurrentParasha, getShabbatTimes, formatTimeOnly } from "@/lib/hebrew-utils";
+import posterLogo from "@/assets/brit-shalom-poster-logo.png";
 
 interface PosterRow {
   id: string;
