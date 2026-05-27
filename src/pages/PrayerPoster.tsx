@@ -10,6 +10,7 @@ import { Plus, Trash2, Printer, Save, ArrowRight, Image as ImageIcon, X } from "
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { getCurrentParasha, getShabbatTimes, formatTimeOnly } from "@/lib/hebrew-utils";
+import posterLogo from "@/assets/brit-shalom-poster-logo.png";
 
 interface PosterRow {
   id: string;
@@ -439,6 +440,9 @@ function PosterPreview({ data }: { data: PosterData }) {
       </div>
 
       <div className="relative text-center" style={{ paddingTop: "8mm" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "4mm" }}>
+          <img src={posterLogo} alt="לוגו" style={{ height: "32mm", objectFit: "contain" }} />
+        </div>
         {/* Synagogue name */}
         <div style={{ fontSize: "20px", fontWeight: 500, letterSpacing: "1px", color: "#5a4015" }}>
           {nameParts.prefix}
@@ -642,6 +646,8 @@ function buildPrintHtml(data: PosterData): string {
   .c4 { bottom:8mm; left:8mm; transform:rotate(180deg); }
   .bsd { position:absolute; right:20mm; top:18mm; font-size:14px; font-weight:700; color:#5a4015; }
   .content { position:relative; text-align:center; padding-top:8mm; }
+  .logo-wrap { display:flex; justify-content:center; margin-bottom:4mm; }
+  .logo-wrap img { height:32mm; object-fit:contain; }
   .name-prefix { font-size:20px; font-weight:500; letter-spacing:1px; color:#5a4015; }
   .name-quoted { font-size:44px; font-weight:900; letter-spacing:2px; color:#2a1d0a; margin-top:2px; }
   .subtitle { font-size:13px; color:#7a5a20; margin-top:6px; letter-spacing:0.5px; }
@@ -669,6 +675,7 @@ function buildPrintHtml(data: PosterData): string {
     <div class="corner c4">❦</div>
     <div class="bsd">בס"ד</div>
     <div class="content">
+      <div class="logo-wrap"><img src="${new URL(posterLogo, window.location.origin).href}" alt="לוגו" /></div>
       <div class="name-prefix">${escapeHtml(nameParts.prefix)}</div>
       ${nameParts.quoted ? `<div class="name-quoted">“${escapeHtml(nameParts.quoted)}”</div>` : ""}
       ${data.subtitle ? `<div class="subtitle">${escapeHtml(data.subtitle)}</div>` : ""}
