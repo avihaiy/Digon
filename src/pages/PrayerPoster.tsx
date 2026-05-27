@@ -440,6 +440,9 @@ function PosterPreview({ data }: { data: PosterData }) {
       </div>
 
       <div className="relative text-center" style={{ paddingTop: "8mm" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "4mm" }}>
+          <img src={posterLogo} alt="לוגו" style={{ height: "32mm", objectFit: "contain" }} />
+        </div>
         {/* Synagogue name */}
         <div style={{ fontSize: "20px", fontWeight: 500, letterSpacing: "1px", color: "#5a4015" }}>
           {nameParts.prefix}
