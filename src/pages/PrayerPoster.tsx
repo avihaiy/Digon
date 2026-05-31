@@ -158,7 +158,7 @@ export default function PrayerPoster() {
   // Open print in a new window — bypasses AppLayout chrome and ensures the poster renders correctly
   const handlePrint = () => {
     handleSave();
-    const html = buildPrintHtml(data);
+    const html = buildPrintHtml(data, tab === "shabbat" ? "shabbat" : "weekday");
     const w = window.open("", "_blank", "width=900,height=1200");
     if (!w) {
       toast({ title: "החלון נחסם — אשר חלונות קופצים", variant: "destructive" });
@@ -172,11 +172,12 @@ export default function PrayerPoster() {
       try { w.focus(); w.print(); } catch (e) { /* ignore */ }
     };
     if ((w.document as any).fonts?.ready) {
-      (w.document as any).fonts.ready.then(() => setTimeout(doPrint, 250));
+      (w.document as any).fonts.ready.then(() => setTimeout(doPrint, 350));
     } else {
-      w.onload = () => setTimeout(doPrint, 400);
+      w.onload = () => setTimeout(doPrint, 500);
     }
   };
+
 
   const fillFromShabbatTimes = () => {
     if (tab !== "shabbat") return;
