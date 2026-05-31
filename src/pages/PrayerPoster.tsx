@@ -473,10 +473,10 @@ function PosterPreview({ data }: { data: PosterData }) {
         {/* Main title */}
         <div
           style={{
-            fontSize: "38px",
+            fontSize: "19px",
             fontWeight: 900,
             color: "#2a1d0a",
-            margin: "6mm 0 4mm",
+            margin: "2mm 0 1mm",
             letterSpacing: "1px",
           }}
         >
@@ -486,10 +486,10 @@ function PosterPreview({ data }: { data: PosterData }) {
         {data.parasha && (
           <div
             style={{
-              fontSize: "30px",
+              fontSize: "19px",
               fontWeight: 700,
               color: "#8a1818",
-              margin: "0 0 4mm",
+              margin: "0 0 2mm",
               letterSpacing: "1px",
             }}
           >
@@ -500,17 +500,17 @@ function PosterPreview({ data }: { data: PosterData }) {
         <Divider />
 
         {/* Rows */}
-        <div style={{ padding: "6mm 6mm 0", textAlign: "right" }}>
+        <div style={{ padding: "3mm 3mm 0", textAlign: "right" }}>
           {data.rows.map((row, idx) => (
             <div key={row.id}>
               {row.isHeader ? (
                 <div
                   style={{
-                    fontSize: "24px",
+                    fontSize: "20px",
                     fontWeight: 700,
                     color: "#8a1818",
                     textAlign: "center",
-                    margin: "4mm 0 2mm",
+                    margin: "2mm 0 1mm",
                     letterSpacing: "0.5px",
                   }}
                 >
@@ -522,10 +522,10 @@ function PosterPreview({ data }: { data: PosterData }) {
                     display: "flex",
                     alignItems: "baseline",
                     justifyContent: "space-between",
-                    fontSize: "22px",
+                    fontSize: "19px",
                     fontWeight: 700,
                     color: "#1a1208",
-                    padding: "3mm 0",
+                    padding: "2mm 0",
                     borderBottom:
                       idx < data.rows.length - 1 ? "1px dotted rgba(168,132,44,0.4)" : "none",
                   }}
@@ -553,7 +553,7 @@ function PosterPreview({ data }: { data: PosterData }) {
             <Divider />
             <div
               style={{
-                fontSize: "26px",
+                fontSize: "20px",
                 fontWeight: 700,
                 color: "#8a1818",
                 marginTop: "4mm",
@@ -566,8 +566,8 @@ function PosterPreview({ data }: { data: PosterData }) {
         )}
 
         {data.bottomImage && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "6mm" }}>
-            <img src={data.bottomImage} alt="" style={{ maxHeight: "40mm", objectFit: "contain" }} />
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "3mm" }}>
+            <img src={data.bottomImage} alt="" style={{ maxHeight: "22mm", objectFit: "contain" }} />
           </div>
         )}
       </div>
@@ -583,7 +583,7 @@ function Divider() {
         alignItems: "center",
         justifyContent: "center",
         gap: "10px",
-        margin: "4mm 0",
+        margin: "2mm 0",
         color: "#a8842c",
       }}
     >
