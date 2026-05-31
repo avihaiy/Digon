@@ -382,7 +382,56 @@ function EditorAndPreview({
 }
 
 
-function PosterPreview({ data }: { data: PosterData }) {
+type Variant = "shabbat" | "weekday";
+
+interface Theme {
+  bg: string;
+  borderColor: string;
+  borderShadow: string;
+  innerBorder: string;
+  accent: string;
+  accentSoft: string;
+  textPrimary: string;
+  textSecondary: string;
+  highlight: string;
+  corner: string;
+  divider: string;
+  fontFamily: string;
+}
+
+const THEMES: Record<Variant, Theme> = {
+  shabbat: {
+    bg: "radial-gradient(ellipse at 30% 10%, #fffaf0 0%, #fbf3df 45%, #f6e9c5 100%)",
+    borderColor: "#a8842c",
+    borderShadow: "inset 0 0 0 1px #f1dca0, inset 0 0 0 4px rgba(168,132,44,0.18)",
+    innerBorder: "1px solid rgba(168,132,44,0.45)",
+    accent: "#a8842c",
+    accentSoft: "rgba(168,132,44,0.4)",
+    textPrimary: "#2a1d0a",
+    textSecondary: "#5a4015",
+    highlight: "#8a1818",
+    corner: "❦",
+    divider: "✦",
+    fontFamily: '"Frank Ruhl Libre", "David Libre", "Heebo", serif',
+  },
+  weekday: {
+    bg: "linear-gradient(180deg, #f7f9fc 0%, #eef2f8 100%)",
+    borderColor: "#2d4a6b",
+    borderShadow: "inset 0 0 0 1px #c4d3e5, inset 0 0 0 3px rgba(45,74,107,0.12)",
+    innerBorder: "1px solid rgba(45,74,107,0.35)",
+    accent: "#2d4a6b",
+    accentSoft: "rgba(45,74,107,0.35)",
+    textPrimary: "#0f1b2d",
+    textSecondary: "#3a5470",
+    highlight: "#1f4068",
+    corner: "✡",
+    divider: "◆",
+    fontFamily: '"Heebo", "Frank Ruhl Libre", sans-serif',
+  },
+};
+
+function PosterPreview({ data, variant }: { data: PosterData; variant: Variant }) {
+  const t = THEMES[variant];
   const nameParts = splitName(data.synagogueName);
   return (
     <div
@@ -392,26 +441,24 @@ function PosterPreview({ data }: { data: PosterData }) {
         minHeight: "297mm",
         padding: "20mm 18mm",
         boxSizing: "border-box",
-        fontFamily: '"Frank Ruhl Libre", "David Libre", "Heebo", serif',
-        background:
-          "radial-gradient(ellipse at 30% 10%, #fffaf0 0%, #fbf3df 45%, #f6e9c5 100%)",
-        color: "#2a1d0a",
+        fontFamily: t.fontFamily,
+        background: t.bg,
+        color: t.textPrimary,
       }}
     >
-      {/* Outer ornate border */}
+      {/* Outer border */}
       <div
         className="absolute inset-[10mm] pointer-events-none"
         style={{
-          border: "3px double #a8842c",
-          borderRadius: "6px",
-          boxShadow:
-            "inset 0 0 0 1px #f1dca0, inset 0 0 0 4px rgba(168,132,44,0.18), 0 0 0 1px rgba(168,132,44,0.2)",
+          border: `3px ${variant === "shabbat" ? "double" : "solid"} ${t.borderColor}`,
+          borderRadius: variant === "shabbat" ? "6px" : "2px",
+          boxShadow: t.borderShadow,
         }}
       />
       {/* Inner thin frame */}
       <div
         className="absolute inset-[14mm] pointer-events-none"
-        style={{ border: "1px solid rgba(168,132,44,0.45)", borderRadius: "3px" }}
+        style={{ border: t.innerBorder, borderRadius: "2px" }}
       />
 
       {/* Corner ornaments */}
@@ -427,17 +474,16 @@ function PosterPreview({ data }: { data: PosterData }) {
           style={{
             ...pos,
             transform: `rotate(${pos.rotate})`,
-            color: "#a8842c",
-            fontSize: "28px",
+            color: t.accent,
+            fontSize: "26px",
             lineHeight: 1,
-            letterSpacing: "-2px",
           }}
         >
-          ❦
+          {t.corner}
         </div>
       ))}
 
-      <div className="absolute right-[20mm] top-[18mm] text-sm font-bold" style={{ color: "#5a4015" }}>
+      <div className="absolute right-[20mm] top-[18mm] text-sm font-bold" style={{ color: t.textSecondary }}>
         בס"ד
       </div>
 
@@ -445,8 +491,7 @@ function PosterPreview({ data }: { data: PosterData }) {
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm" }}>
           <img src={posterLogo} alt="לוגו" style={{ height: "14mm", objectFit: "contain" }} />
         </div>
-        {/* Synagogue name */}
-        <div style={{ fontSize: "18px", fontWeight: 500, letterSpacing: "1px", color: "#5a4015" }}>
+        <div style={{ fontSize: "18px", fontWeight: 500, letterSpacing: "1px", color: t.textSecondary }}>
           {nameParts.prefix}
         </div>
         {nameParts.quoted && (
@@ -454,43 +499,40 @@ function PosterPreview({ data }: { data: PosterData }) {
             style={{
               fontSize: "34px",
               fontWeight: 900,
-              letterSpacing: "2px",
-              color: "#2a1d0a",
+              letterSpacing: variant === "shabbat" ? "2px" : "1px",
+              color: t.textPrimary,
               marginTop: "2px",
-              textShadow: "0 1px 0 rgba(168,132,44,0.15)",
             }}
           >
-            “{nameParts.quoted}”
+            "{nameParts.quoted}"
           </div>
         )}
         {data.subtitle && (
-          <div style={{ fontSize: "13px", color: "#7a5a20", marginTop: "6px", letterSpacing: "0.5px" }}>
+          <div style={{ fontSize: "13px", color: t.textSecondary, marginTop: "6px", letterSpacing: "0.5px" }}>
             {data.subtitle}
           </div>
         )}
 
-        {/* Divider */}
-        <Divider />
+        <Divider theme={t} />
 
-        {/* Main title */}
         <div
           style={{
-            fontSize: "19px",
+            fontSize: "30px",
             fontWeight: 900,
-            color: "#2a1d0a",
-            margin: "2mm 0 1mm",
+            color: t.textPrimary,
+            margin: "4mm 0 2mm",
             letterSpacing: "1px",
           }}
         >
           {data.title}
         </div>
 
-        {data.parasha && (
+        {data.parasha && variant === "shabbat" && (
           <div
             style={{
-              fontSize: "19px",
+              fontSize: "22px",
               fontWeight: 700,
-              color: "#8a1818",
+              color: t.highlight,
               margin: "0 0 2mm",
               letterSpacing: "1px",
             }}
@@ -499,9 +541,8 @@ function PosterPreview({ data }: { data: PosterData }) {
           </div>
         )}
 
-        <Divider />
+        <Divider theme={t} />
 
-        {/* Rows */}
         <div style={{ padding: "3mm 3mm 0", textAlign: "right" }}>
           {data.rows.map((row, idx) => (
             <div key={row.id}>
@@ -510,13 +551,13 @@ function PosterPreview({ data }: { data: PosterData }) {
                   style={{
                     fontSize: "20px",
                     fontWeight: 700,
-                    color: "#8a1818",
+                    color: t.highlight,
                     textAlign: "center",
                     margin: "2mm 0 1mm",
                     letterSpacing: "0.5px",
                   }}
                 >
-                  ❖ {row.label} ❖
+                  {variant === "shabbat" ? `❖ ${row.label} ❖` : `— ${row.label} —`}
                 </div>
               ) : (
                 <div
@@ -526,10 +567,14 @@ function PosterPreview({ data }: { data: PosterData }) {
                     justifyContent: "space-between",
                     fontSize: "19px",
                     fontWeight: 700,
-                    color: "#1a1208",
+                    color: t.textPrimary,
                     padding: "2mm 0",
                     borderBottom:
-                      idx < data.rows.length - 1 ? "1px dotted rgba(168,132,44,0.4)" : "none",
+                      idx < data.rows.length - 1
+                        ? variant === "shabbat"
+                          ? `1px dotted ${t.accentSoft}`
+                          : `1px solid ${t.accentSoft}`
+                        : "none",
                   }}
                 >
                   <span>{row.label}</span>
@@ -538,7 +583,7 @@ function PosterPreview({ data }: { data: PosterData }) {
                     style={{
                       fontFamily: '"Heebo", sans-serif',
                       fontWeight: 900,
-                      color: "#5a4015",
+                      color: t.textSecondary,
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
@@ -552,13 +597,13 @@ function PosterPreview({ data }: { data: PosterData }) {
 
         {data.footer && (
           <>
-            <Divider />
+            <Divider theme={t} />
             <div
               style={{
                 fontSize: "20px",
                 fontWeight: 700,
-                color: "#8a1818",
-                marginTop: "4mm",
+                color: t.highlight,
+                marginTop: "2mm",
                 letterSpacing: "1px",
               }}
             >
@@ -577,7 +622,7 @@ function PosterPreview({ data }: { data: PosterData }) {
   );
 }
 
-function Divider() {
+function Divider({ theme }: { theme: Theme }) {
   return (
     <div
       style={{
@@ -586,12 +631,12 @@ function Divider() {
         justifyContent: "center",
         gap: "10px",
         margin: "2mm 0",
-        color: "#a8842c",
+        color: theme.accent,
       }}
     >
-      <span style={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, #a8842c, transparent)" }} />
-      <span style={{ fontSize: "18px" }}>✦</span>
-      <span style={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, #a8842c, transparent)" }} />
+      <span style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${theme.accent}, transparent)` }} />
+      <span style={{ fontSize: "16px" }}>{theme.divider}</span>
+      <span style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${theme.accent}, transparent)` }} />
     </div>
   );
 }
@@ -603,15 +648,18 @@ function splitName(name: string): { prefix: string; quoted: string } {
 }
 
 // Build standalone HTML for print window
-function buildPrintHtml(data: PosterData): string {
+function buildPrintHtml(data: PosterData, variant: Variant): string {
+  const t = THEMES[variant];
   const nameParts = splitName(data.synagogueName);
   const rowsHtml = data.rows
     .map((row, idx) => {
       if (row.isHeader) {
-        return `<div class="hdr">❖ ${escapeHtml(row.label)} ❖</div>`;
+        const label = variant === "shabbat" ? `❖ ${escapeHtml(row.label)} ❖` : `— ${escapeHtml(row.label)} —`;
+        return `<div class="hdr">${label}</div>`;
       }
+      const borderStyle = variant === "shabbat" ? "dotted" : "solid";
       const border =
-        idx < data.rows.length - 1 ? "border-bottom:1px dotted rgba(168,132,44,0.4);" : "";
+        idx < data.rows.length - 1 ? `border-bottom:1px ${borderStyle} ${t.accentSoft};` : "";
       return `<div class="row" style="${border}">
         <span>${escapeHtml(row.label)}</span>
         <span class="time" dir="ltr">${escapeHtml(row.time)}</span>
@@ -619,7 +667,8 @@ function buildPrintHtml(data: PosterData): string {
     })
     .join("");
 
-  const divider = `<div class="divider"><span class="line"></span><span class="star">✦</span><span class="line"></span></div>`;
+  const divider = `<div class="divider"><span class="line"></span><span class="star">${t.divider}</span><span class="line"></span></div>`;
+  const borderStyleOuter = variant === "shabbat" ? "double" : "solid";
 
   return `<!doctype html>
 <html lang="he" dir="rtl">
@@ -630,66 +679,99 @@ function buildPrintHtml(data: PosterData): string {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=David+Libre:wght@400;500;700&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
+  /* Zero printer margins — our own padding handles whitespace, and auto-fit ensures content never overflows */
   @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html, body { margin:0; padding:0; background:#e9e4d4; font-family:"Frank Ruhl Libre","David Libre","Heebo",serif; color:#2a1d0a; }
-  .page {
-    width:210mm; min-height:297mm; padding:20mm 18mm; position:relative;
-    background: radial-gradient(ellipse at 30% 10%, #fffaf0 0%, #fbf3df 45%, #f6e9c5 100%);
+  html, body { margin:0; padding:0; background:#e9e4d4; font-family:${t.fontFamily}; color:${t.textPrimary}; }
+  .sheet {
+    width:210mm; height:297mm; position:relative; overflow:hidden;
+    background: ${t.bg};
     margin:0 auto;
   }
-  .border-outer { position:absolute; inset:10mm; border:3px double #a8842c; border-radius:6px;
-    box-shadow: inset 0 0 0 1px #f1dca0, inset 0 0 0 4px rgba(168,132,44,0.18); pointer-events:none; }
-  .border-inner { position:absolute; inset:14mm; border:1px solid rgba(168,132,44,0.45); border-radius:3px; pointer-events:none; }
-  .corner { position:absolute; color:#a8842c; font-size:28px; line-height:1; }
+  .page {
+    width:210mm; padding:20mm 18mm; position:relative;
+    transform-origin: top center;
+  }
+  .border-outer { position:absolute; inset:10mm; border:3px ${borderStyleOuter} ${t.borderColor}; border-radius:${variant === "shabbat" ? "6px" : "2px"};
+    box-shadow: ${t.borderShadow}; pointer-events:none; }
+  .border-inner { position:absolute; inset:14mm; border:${t.innerBorder}; border-radius:2px; pointer-events:none; }
+  .corner { position:absolute; color:${t.accent}; font-size:26px; line-height:1; }
   .c1 { top:8mm; right:8mm; }
   .c2 { top:8mm; left:8mm; transform:rotate(90deg); }
   .c3 { bottom:8mm; right:8mm; transform:rotate(-90deg); }
   .c4 { bottom:8mm; left:8mm; transform:rotate(180deg); }
-  .bsd { position:absolute; right:20mm; top:18mm; font-size:14px; font-weight:700; color:#5a4015; }
+  .bsd { position:absolute; right:20mm; top:18mm; font-size:14px; font-weight:700; color:${t.textSecondary}; }
   .content { position:relative; text-align:center; padding-top:4mm; }
-  .logo-wrap { display:flex; justify-content:center; margin-bottom:4mm; }
+  .logo-wrap { display:flex; justify-content:center; margin-bottom:3mm; }
   .logo-wrap img { height:14mm; object-fit:contain; }
-  .name-prefix { font-size:18px; font-weight:500; letter-spacing:1px; color:#5a4015; }
-  .name-quoted { font-size:34px; font-weight:900; letter-spacing:2px; color:#2a1d0a; margin-top:2px; }
-  .subtitle { font-size:13px; color:#7a5a20; margin-top:6px; letter-spacing:0.5px; }
-  .title { font-size:19px; font-weight:900; color:#2a1d0a; margin:2mm 0 1mm; letter-spacing:1px; }
-  .parasha { font-size:19px; font-weight:700; color:#8a1818; margin:0 0 2mm; letter-spacing:1px; }
+  .name-prefix { font-size:18px; font-weight:500; letter-spacing:1px; color:${t.textSecondary}; }
+  .name-quoted { font-size:34px; font-weight:900; letter-spacing:${variant === "shabbat" ? "2px" : "1px"}; color:${t.textPrimary}; margin-top:2px; }
+  .subtitle { font-size:13px; color:${t.textSecondary}; margin-top:6px; letter-spacing:0.5px; }
+  .title { font-size:30px; font-weight:900; color:${t.textPrimary}; margin:4mm 0 2mm; letter-spacing:1px; }
+  .parasha { font-size:22px; font-weight:700; color:${t.highlight}; margin:0 0 2mm; letter-spacing:1px; }
   .rows { padding:3mm 3mm 0; text-align:right; }
-  .row { display:flex; align-items:baseline; justify-content:space-between; font-size:19px; font-weight:700; color:#1a1208; padding:2mm 0; }
-  .row .time { font-family:"Heebo",sans-serif; font-weight:900; color:#5a4015; font-variant-numeric: tabular-nums; }
-  .hdr { font-size:20px; font-weight:700; color:#8a1818; text-align:center; margin:2mm 0 1mm; letter-spacing:0.5px; }
-  .footer { font-size:20px; font-weight:700; color:#8a1818; margin-top:2mm; letter-spacing:1px; }
-  .divider { display:flex; align-items:center; justify-content:center; gap:10px; margin:2mm 0; color:#a8842c; }
-  .divider .line { flex:1; height:1px; background:linear-gradient(to right, transparent, #a8842c, transparent); }
-  .divider .star { font-size:18px; }
+  .row { display:flex; align-items:baseline; justify-content:space-between; font-size:19px; font-weight:700; color:${t.textPrimary}; padding:2mm 0; }
+  .row .time { font-family:"Heebo",sans-serif; font-weight:900; color:${t.textSecondary}; font-variant-numeric: tabular-nums; }
+  .hdr { font-size:20px; font-weight:700; color:${t.highlight}; text-align:center; margin:2mm 0 1mm; letter-spacing:0.5px; }
+  .footer { font-size:20px; font-weight:700; color:${t.highlight}; margin-top:2mm; letter-spacing:1px; }
+  .divider { display:flex; align-items:center; justify-content:center; gap:10px; margin:2mm 0; color:${t.accent}; }
+  .divider .line { flex:1; height:1px; background:linear-gradient(to right, transparent, ${t.accent}, transparent); }
+  .divider .star { font-size:16px; }
   .img-wrap { display:flex; justify-content:center; margin-top:3mm; }
   .img-wrap img { max-height:22mm; object-fit:contain; }
 </style>
 </head>
 <body>
-  <div class="page">
-    <div class="border-outer"></div>
-    <div class="border-inner"></div>
-    <div class="corner c1">❦</div>
-    <div class="corner c2">❦</div>
-    <div class="corner c3">❦</div>
-    <div class="corner c4">❦</div>
-    <div class="bsd">בס"ד</div>
-    <div class="content">
-      <div class="logo-wrap"><img src="${new URL(posterLogo, window.location.origin).href}" alt="לוגו" /></div>
-      <div class="name-prefix">${escapeHtml(nameParts.prefix)}</div>
-      ${nameParts.quoted ? `<div class="name-quoted">“${escapeHtml(nameParts.quoted)}”</div>` : ""}
-      ${data.subtitle ? `<div class="subtitle">${escapeHtml(data.subtitle)}</div>` : ""}
-      ${divider}
-      <div class="title">${escapeHtml(data.title)}</div>
-      ${data.parasha ? `<div class="parasha">פרשת ${escapeHtml(data.parasha)}</div>` : ""}
-      ${divider}
-      <div class="rows">${rowsHtml}</div>
-      ${data.footer ? `${divider}<div class="footer">${escapeHtml(data.footer)}</div>` : ""}
-      ${data.bottomImage ? `<div class="img-wrap"><img src="${data.bottomImage}" alt="" /></div>` : ""}
+  <div class="sheet" id="sheet">
+    <div class="page" id="page">
+      <div class="border-outer"></div>
+      <div class="border-inner"></div>
+      <div class="corner c1">${t.corner}</div>
+      <div class="corner c2">${t.corner}</div>
+      <div class="corner c3">${t.corner}</div>
+      <div class="corner c4">${t.corner}</div>
+      <div class="bsd">בס"ד</div>
+      <div class="content">
+        <div class="logo-wrap"><img src="${new URL(posterLogo, window.location.origin).href}" alt="לוגו" /></div>
+        <div class="name-prefix">${escapeHtml(nameParts.prefix)}</div>
+        ${nameParts.quoted ? `<div class="name-quoted">"${escapeHtml(nameParts.quoted)}"</div>` : ""}
+        ${data.subtitle ? `<div class="subtitle">${escapeHtml(data.subtitle)}</div>` : ""}
+        ${divider}
+        <div class="title">${escapeHtml(data.title)}</div>
+        ${data.parasha && variant === "shabbat" ? `<div class="parasha">פרשת ${escapeHtml(data.parasha)}</div>` : ""}
+        ${divider}
+        <div class="rows">${rowsHtml}</div>
+        ${data.footer ? `${divider}<div class="footer">${escapeHtml(data.footer)}</div>` : ""}
+        ${data.bottomImage ? `<div class="img-wrap"><img src="${data.bottomImage}" alt="" /></div>` : ""}
+      </div>
     </div>
   </div>
+<script>
+  // Auto-fit: shrink the page proportionally if content exceeds A4 (297mm).
+  // This guarantees nothing spills onto a second page regardless of printer margins.
+  (function () {
+    function fit() {
+      var sheet = document.getElementById('sheet');
+      var page = document.getElementById('page');
+      if (!sheet || !page) return;
+      page.style.transform = 'scale(1)';
+      var sheetH = sheet.getBoundingClientRect().height;
+      var pageH = page.getBoundingClientRect().height;
+      if (pageH > sheetH) {
+        var scale = sheetH / pageH;
+        page.style.transform = 'scale(' + scale + ')';
+        // After scaling down, give the page the original width so it remains centered correctly
+        page.style.width = '210mm';
+      }
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function(){ setTimeout(fit, 50); });
+    } else {
+      window.addEventListener('load', function(){ setTimeout(fit, 100); });
+    }
+    window.addEventListener('beforeprint', fit);
+  })();
+</script>
 </body>
 </html>`;
 }
@@ -701,3 +783,4 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
