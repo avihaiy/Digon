@@ -374,12 +374,13 @@ function EditorAndPreview({
 
       <div className="flex justify-center overflow-auto">
         <div style={{ transform: "scale(0.55)", transformOrigin: "top center" }}>
-          <PosterPreview data={data} />
+          <PosterPreview data={data} variant={isShabbat ? "shabbat" : "weekday"} />
         </div>
       </div>
     </div>
   );
 }
+
 
 function PosterPreview({ data }: { data: PosterData }) {
   const nameParts = splitName(data.synagogueName);
