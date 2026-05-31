@@ -444,13 +444,13 @@ function PosterPreview({ data }: { data: PosterData }) {
           <img src={posterLogo} alt="לוגו" style={{ height: "14mm", objectFit: "contain" }} />
         </div>
         {/* Synagogue name */}
-        <div style={{ fontSize: "20px", fontWeight: 500, letterSpacing: "1px", color: "#5a4015" }}>
+        <div style={{ fontSize: "18px", fontWeight: 500, letterSpacing: "1px", color: "#5a4015" }}>
           {nameParts.prefix}
         </div>
         {nameParts.quoted && (
           <div
             style={{
-              fontSize: "44px",
+              fontSize: "34px",
               fontWeight: 900,
               letterSpacing: "2px",
               color: "#2a1d0a",
