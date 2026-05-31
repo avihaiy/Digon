@@ -439,7 +439,7 @@ function PosterPreview({ data }: { data: PosterData }) {
         בס"ד
       </div>
 
-      <div className="relative text-center" style={{ paddingTop: "8mm" }}>
+      <div className="relative text-center" style={{ paddingTop: "4mm" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm" }}>
           <img src={posterLogo} alt="לוגו" style={{ height: "14mm", objectFit: "contain" }} />
         </div>
