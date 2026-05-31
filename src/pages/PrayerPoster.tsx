@@ -439,18 +439,18 @@ function PosterPreview({ data }: { data: PosterData }) {
         בס"ד
       </div>
 
-      <div className="relative text-center" style={{ paddingTop: "8mm" }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "4mm" }}>
-          <img src={posterLogo} alt="לוגו" style={{ height: "32mm", objectFit: "contain" }} />
+      <div className="relative text-center" style={{ paddingTop: "4mm" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm" }}>
+          <img src={posterLogo} alt="לוגו" style={{ height: "14mm", objectFit: "contain" }} />
         </div>
         {/* Synagogue name */}
-        <div style={{ fontSize: "20px", fontWeight: 500, letterSpacing: "1px", color: "#5a4015" }}>
+        <div style={{ fontSize: "18px", fontWeight: 500, letterSpacing: "1px", color: "#5a4015" }}>
           {nameParts.prefix}
         </div>
         {nameParts.quoted && (
           <div
             style={{
-              fontSize: "44px",
+              fontSize: "34px",
               fontWeight: 900,
               letterSpacing: "2px",
               color: "#2a1d0a",
@@ -473,10 +473,10 @@ function PosterPreview({ data }: { data: PosterData }) {
         {/* Main title */}
         <div
           style={{
-            fontSize: "38px",
+            fontSize: "19px",
             fontWeight: 900,
             color: "#2a1d0a",
-            margin: "6mm 0 4mm",
+            margin: "2mm 0 1mm",
             letterSpacing: "1px",
           }}
         >
@@ -486,10 +486,10 @@ function PosterPreview({ data }: { data: PosterData }) {
         {data.parasha && (
           <div
             style={{
-              fontSize: "30px",
+              fontSize: "19px",
               fontWeight: 700,
               color: "#8a1818",
-              margin: "0 0 4mm",
+              margin: "0 0 2mm",
               letterSpacing: "1px",
             }}
           >
@@ -500,17 +500,17 @@ function PosterPreview({ data }: { data: PosterData }) {
         <Divider />
 
         {/* Rows */}
-        <div style={{ padding: "6mm 6mm 0", textAlign: "right" }}>
+        <div style={{ padding: "3mm 3mm 0", textAlign: "right" }}>
           {data.rows.map((row, idx) => (
             <div key={row.id}>
               {row.isHeader ? (
                 <div
                   style={{
-                    fontSize: "24px",
+                    fontSize: "20px",
                     fontWeight: 700,
                     color: "#8a1818",
                     textAlign: "center",
-                    margin: "4mm 0 2mm",
+                    margin: "2mm 0 1mm",
                     letterSpacing: "0.5px",
                   }}
                 >
@@ -522,10 +522,10 @@ function PosterPreview({ data }: { data: PosterData }) {
                     display: "flex",
                     alignItems: "baseline",
                     justifyContent: "space-between",
-                    fontSize: "22px",
+                    fontSize: "19px",
                     fontWeight: 700,
                     color: "#1a1208",
-                    padding: "3mm 0",
+                    padding: "2mm 0",
                     borderBottom:
                       idx < data.rows.length - 1 ? "1px dotted rgba(168,132,44,0.4)" : "none",
                   }}
@@ -553,7 +553,7 @@ function PosterPreview({ data }: { data: PosterData }) {
             <Divider />
             <div
               style={{
-                fontSize: "26px",
+                fontSize: "20px",
                 fontWeight: 700,
                 color: "#8a1818",
                 marginTop: "4mm",
@@ -566,8 +566,8 @@ function PosterPreview({ data }: { data: PosterData }) {
         )}
 
         {data.bottomImage && (
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "6mm" }}>
-            <img src={data.bottomImage} alt="" style={{ maxHeight: "40mm", objectFit: "contain" }} />
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "3mm" }}>
+            <img src={data.bottomImage} alt="" style={{ maxHeight: "22mm", objectFit: "contain" }} />
           </div>
         )}
       </div>
@@ -583,7 +583,7 @@ function Divider() {
         alignItems: "center",
         justifyContent: "center",
         gap: "10px",
-        margin: "4mm 0",
+        margin: "2mm 0",
         color: "#a8842c",
       }}
     >
@@ -645,24 +645,24 @@ function buildPrintHtml(data: PosterData): string {
   .c3 { bottom:8mm; right:8mm; transform:rotate(-90deg); }
   .c4 { bottom:8mm; left:8mm; transform:rotate(180deg); }
   .bsd { position:absolute; right:20mm; top:18mm; font-size:14px; font-weight:700; color:#5a4015; }
-  .content { position:relative; text-align:center; padding-top:8mm; }
+  .content { position:relative; text-align:center; padding-top:4mm; }
   .logo-wrap { display:flex; justify-content:center; margin-bottom:4mm; }
-  .logo-wrap img { height:32mm; object-fit:contain; }
-  .name-prefix { font-size:20px; font-weight:500; letter-spacing:1px; color:#5a4015; }
-  .name-quoted { font-size:44px; font-weight:900; letter-spacing:2px; color:#2a1d0a; margin-top:2px; }
+  .logo-wrap img { height:14mm; object-fit:contain; }
+  .name-prefix { font-size:18px; font-weight:500; letter-spacing:1px; color:#5a4015; }
+  .name-quoted { font-size:34px; font-weight:900; letter-spacing:2px; color:#2a1d0a; margin-top:2px; }
   .subtitle { font-size:13px; color:#7a5a20; margin-top:6px; letter-spacing:0.5px; }
-  .title { font-size:38px; font-weight:900; color:#2a1d0a; margin:6mm 0 4mm; letter-spacing:1px; }
-  .parasha { font-size:30px; font-weight:700; color:#8a1818; margin:0 0 4mm; letter-spacing:1px; }
-  .rows { padding:6mm 6mm 0; text-align:right; }
-  .row { display:flex; align-items:baseline; justify-content:space-between; font-size:22px; font-weight:700; color:#1a1208; padding:3mm 0; }
+  .title { font-size:19px; font-weight:900; color:#2a1d0a; margin:2mm 0 1mm; letter-spacing:1px; }
+  .parasha { font-size:19px; font-weight:700; color:#8a1818; margin:0 0 2mm; letter-spacing:1px; }
+  .rows { padding:3mm 3mm 0; text-align:right; }
+  .row { display:flex; align-items:baseline; justify-content:space-between; font-size:19px; font-weight:700; color:#1a1208; padding:2mm 0; }
   .row .time { font-family:"Heebo",sans-serif; font-weight:900; color:#5a4015; font-variant-numeric: tabular-nums; }
-  .hdr { font-size:24px; font-weight:700; color:#8a1818; text-align:center; margin:4mm 0 2mm; letter-spacing:0.5px; }
-  .footer { font-size:26px; font-weight:700; color:#8a1818; margin-top:4mm; letter-spacing:1px; }
-  .divider { display:flex; align-items:center; justify-content:center; gap:10px; margin:4mm 0; color:#a8842c; }
+  .hdr { font-size:20px; font-weight:700; color:#8a1818; text-align:center; margin:2mm 0 1mm; letter-spacing:0.5px; }
+  .footer { font-size:20px; font-weight:700; color:#8a1818; margin-top:2mm; letter-spacing:1px; }
+  .divider { display:flex; align-items:center; justify-content:center; gap:10px; margin:2mm 0; color:#a8842c; }
   .divider .line { flex:1; height:1px; background:linear-gradient(to right, transparent, #a8842c, transparent); }
   .divider .star { font-size:18px; }
-  .img-wrap { display:flex; justify-content:center; margin-top:6mm; }
-  .img-wrap img { max-height:40mm; object-fit:contain; }
+  .img-wrap { display:flex; justify-content:center; margin-top:3mm; }
+  .img-wrap img { max-height:22mm; object-fit:contain; }
 </style>
 </head>
 <body>
