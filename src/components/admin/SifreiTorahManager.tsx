@@ -118,10 +118,11 @@ export default function SifreiTorahManager() {
       sefer_id,
       label: schedLabel.trim() || null,
       position: idx + 1,
+      time_slot: schedSlot,
     }));
     const { error } = await db
       .from('sifrei_torah_schedule')
-      .upsert(rows, { onConflict: 'scheduled_date,sefer_id' });
+      .upsert(rows, { onConflict: 'scheduled_date,time_slot,sefer_id' });
     if (error) {
       toast({ title: 'שגיאה בשמירת השיוך', description: error.message, variant: 'destructive' });
       return;
@@ -129,7 +130,8 @@ export default function SifreiTorahManager() {
     setSchedDate(undefined);
     setSchedSeferIds([]);
     setSchedLabel('');
-    toast({ title: `נשמרו ${rows.length} ספרים לתאריך` });
+    setSchedSlot('all');
+    toast({ title: `נשמרו ${rows.length} ספרים לתאריך (${TIME_SLOT_LABELS[schedSlot]})` });
     load();
   };
 
