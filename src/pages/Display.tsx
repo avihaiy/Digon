@@ -573,6 +573,23 @@ export default function Display() {
     };
   }, []);
 
+  // הדגשה (באנר + פולס) ברגע ששם ספר התורה משתנה באמת
+  useEffect(() => {
+    const prev = prevSeferRef.current;
+    if (isFirstSeferLoadRef.current) {
+      isFirstSeferLoadRef.current = false;
+      prevSeferRef.current = activeSeferTorahName;
+      return;
+    }
+    if (activeSeferTorahName && activeSeferTorahName !== prev) {
+      setSeferHighlight(activeSeferTorahName);
+      const t = setTimeout(() => setSeferHighlight(null), 7000);
+      prevSeferRef.current = activeSeferTorahName;
+      return () => clearTimeout(t);
+    }
+    prevSeferRef.current = activeSeferTorahName;
+  }, [activeSeferTorahName]);
+
   // לפני כל reload — שמור שהיינו במסך מלא, כדי לחזור אליו אוטומטית אחרי טעינה
   const markFullscreenBeforeReload = useCallback(() => {
     try {
