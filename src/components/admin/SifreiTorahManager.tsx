@@ -40,7 +40,14 @@ interface ScheduleRow {
   sefer_id: string;
   label: string | null;
   position: number;
+  time_slot: string; // 'all' | 'morning' | 'mincha'
 }
+
+const TIME_SLOT_LABELS: Record<string, string> = {
+  all: 'כל היום',
+  morning: 'שחרית (בוקר)',
+  mincha: 'מנחה (אחה״צ)',
+};
 
 
 const ACTIVE_KEY = 'active_sefer_torah_id';
@@ -67,6 +74,7 @@ export default function SifreiTorahManager() {
   const [schedDate, setSchedDate] = useState<Date | undefined>(undefined);
   const [schedSeferIds, setSchedSeferIds] = useState<string[]>([]);
   const [schedLabel, setSchedLabel] = useState('');
+  const [schedSlot, setSchedSlot] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteScheduleId, setDeleteScheduleId] = useState<string | null>(null);
 
@@ -110,10 +118,11 @@ export default function SifreiTorahManager() {
       sefer_id,
       label: schedLabel.trim() || null,
       position: idx + 1,
+      time_slot: schedSlot,
     }));
     const { error } = await db
       .from('sifrei_torah_schedule')
-      .upsert(rows, { onConflict: 'scheduled_date,sefer_id' });
+      .upsert(rows, { onConflict: 'scheduled_date,time_slot,sefer_id' });
     if (error) {
       toast({ title: 'שגיאה בשמירת השיוך', description: error.message, variant: 'destructive' });
       return;
@@ -121,7 +130,8 @@ export default function SifreiTorahManager() {
     setSchedDate(undefined);
     setSchedSeferIds([]);
     setSchedLabel('');
-    toast({ title: `נשמרו ${rows.length} ספרים לתאריך` });
+    setSchedSlot('all');
+    toast({ title: `נשמרו ${rows.length} ספרים לתאריך (${TIME_SLOT_LABELS[schedSlot]})` });
     load();
   };
 
@@ -356,6 +366,23 @@ export default function SifreiTorahManager() {
               value={schedLabel}
               onChange={(e) => setSchedLabel(e.target.value)}
             />
+
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">מועד היציאה</Label>
+              <Select value={schedSlot} onValueChange={setSchedSlot}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל היום (ברירת מחדל)</SelectItem>
+                  <SelectItem value="morning">שחרית (בוקר)</SelectItem>
+                  <SelectItem value="mincha">מנחה (אחר הצהריים)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                בשבת ניתן להגדיר ספר אחד לשחרית וספר אחר למנחה — המסך יחליף ביניהם אוטומטית. בראש חודש/חנוכה/שקלים: בחרו "כל היום" וסמנו 2-3 ספרים.
+              </p>
+            </div>
           </div>
 
           <Button
@@ -364,7 +391,7 @@ export default function SifreiTorahManager() {
             className="w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 ml-1" />
-            הוסף שיוך ({schedSeferIds.length} ספרים)
+            הוסף שיוך ({schedSeferIds.length} ספרים · {TIME_SLOT_LABELS[schedSlot]})
           </Button>
 
           {schedule.length > 0 && (
@@ -373,21 +400,34 @@ export default function SifreiTorahManager() {
               {(() => {
                 const grouped = new Map<string, ScheduleRow[]>();
                 schedule.forEach((row) => {
-                  const arr = grouped.get(row.scheduled_date) || [];
+                  const key = `${row.scheduled_date}__${row.time_slot || 'all'}`;
+                  const arr = grouped.get(key) || [];
                   arr.push(row);
-                  grouped.set(row.scheduled_date, arr);
+                  grouped.set(key, arr);
                 });
-                return Array.from(grouped.entries()).map(([date, rows]) => {
+                const entries = Array.from(grouped.entries()).sort(([a], [b]) => a.localeCompare(b));
+                return entries.map(([key, rows]) => {
+                  const [date, slot] = key.split('__');
                   const d = new Date(date + 'T00:00:00');
                   const sorted = [...rows].sort((a, b) => (a.position || 0) - (b.position || 0));
                   const label = sorted.find((r) => r.label)?.label;
+                  const slotLabel = TIME_SLOT_LABELS[slot] || slot;
+                  const slotColor =
+                    slot === 'mincha'
+                      ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300'
+                      : slot === 'morning'
+                      ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
+                      : 'bg-muted text-foreground';
                   return (
-                    <div key={date} className="p-2 rounded-lg border bg-background space-y-1">
-                      <p className="text-sm font-medium">
-                        {format(d, 'EEEE, d בMMMM yyyy', { locale: he })}
+                    <div key={key} className="p-2 rounded-lg border bg-background space-y-1">
+                      <p className="text-sm font-medium flex flex-wrap items-center gap-2">
+                        <span>{format(d, 'EEEE, d בMMMM yyyy', { locale: he })}</span>
+                        <span className={cn('text-xs px-2 py-0.5 rounded-full', slotColor)}>
+                          {slotLabel}
+                        </span>
                         {label ? <span className="text-muted-foreground"> • {label}</span> : null}
                         {sorted.length > 1 && (
-                          <span className="mr-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                             {sorted.length} ספרים
                           </span>
                         )}

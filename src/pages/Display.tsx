@@ -511,12 +511,23 @@ export default function Display() {
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const { data: scheduled } = await db
         .from("sifrei_torah_schedule")
-        .select("sefer_id, position, sifrei_torah:sefer_id(name, is_active)")
+        .select("sefer_id, position, time_slot, sifrei_torah:sefer_id(name, is_active)")
         .eq("scheduled_date", todayStr)
         .order("position", { ascending: true });
-      const scheduledNames = (scheduled || [])
-        .filter((r: { sifrei_torah?: { is_active?: boolean } }) => r.sifrei_torah?.is_active)
-        .map((r: { sifrei_torah: { name: string } }) => r.sifrei_torah.name);
+      // לפני 12:30 — שחרית, אחרי — מנחה. "כל היום" תמיד מוצג.
+      const now = new Date();
+      const minutes = now.getHours() * 60 + now.getMinutes();
+      const currentSlot = minutes < 12 * 60 + 30 ? "morning" : "mincha";
+      const allRows = (scheduled || []) as Array<{
+        sefer_id: string;
+        position: number;
+        time_slot?: string;
+        sifrei_torah?: { name?: string; is_active?: boolean };
+      }>;
+      const slotRows = allRows.filter(
+        (r) => r.sifrei_torah?.is_active && (!r.time_slot || r.time_slot === "all" || r.time_slot === currentSlot),
+      );
+      const scheduledNames = slotRows.map((r) => r.sifrei_torah!.name as string);
       if (scheduledNames.length > 0) {
         setActiveSeferTorahName(scheduledNames.join(" · "));
         return;

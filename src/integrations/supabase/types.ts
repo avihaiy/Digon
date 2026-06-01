@@ -1148,6 +1148,7 @@ export type Database = {
           position: number
           scheduled_date: string
           sefer_id: string
+          time_slot: string
           updated_at: string
         }
         Insert: {
@@ -1158,6 +1159,7 @@ export type Database = {
           position?: number
           scheduled_date: string
           sefer_id: string
+          time_slot?: string
           updated_at?: string
         }
         Update: {
@@ -1168,6 +1170,7 @@ export type Database = {
           position?: number
           scheduled_date?: string
           sefer_id?: string
+          time_slot?: string
           updated_at?: string
         }
         Relationships: [
