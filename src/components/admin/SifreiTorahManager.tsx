@@ -400,21 +400,34 @@ export default function SifreiTorahManager() {
               {(() => {
                 const grouped = new Map<string, ScheduleRow[]>();
                 schedule.forEach((row) => {
-                  const arr = grouped.get(row.scheduled_date) || [];
+                  const key = `${row.scheduled_date}__${row.time_slot || 'all'}`;
+                  const arr = grouped.get(key) || [];
                   arr.push(row);
-                  grouped.set(row.scheduled_date, arr);
+                  grouped.set(key, arr);
                 });
-                return Array.from(grouped.entries()).map(([date, rows]) => {
+                const entries = Array.from(grouped.entries()).sort(([a], [b]) => a.localeCompare(b));
+                return entries.map(([key, rows]) => {
+                  const [date, slot] = key.split('__');
                   const d = new Date(date + 'T00:00:00');
                   const sorted = [...rows].sort((a, b) => (a.position || 0) - (b.position || 0));
                   const label = sorted.find((r) => r.label)?.label;
+                  const slotLabel = TIME_SLOT_LABELS[slot] || slot;
+                  const slotColor =
+                    slot === 'mincha'
+                      ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300'
+                      : slot === 'morning'
+                      ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
+                      : 'bg-muted text-foreground';
                   return (
-                    <div key={date} className="p-2 rounded-lg border bg-background space-y-1">
-                      <p className="text-sm font-medium">
-                        {format(d, 'EEEE, d בMMMM yyyy', { locale: he })}
+                    <div key={key} className="p-2 rounded-lg border bg-background space-y-1">
+                      <p className="text-sm font-medium flex flex-wrap items-center gap-2">
+                        <span>{format(d, 'EEEE, d בMMMM yyyy', { locale: he })}</span>
+                        <span className={cn('text-xs px-2 py-0.5 rounded-full', slotColor)}>
+                          {slotLabel}
+                        </span>
                         {label ? <span className="text-muted-foreground"> • {label}</span> : null}
                         {sorted.length > 1 && (
-                          <span className="mr-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                             {sorted.length} ספרים
                           </span>
                         )}
