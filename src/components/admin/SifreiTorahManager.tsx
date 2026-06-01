@@ -366,6 +366,23 @@ export default function SifreiTorahManager() {
               value={schedLabel}
               onChange={(e) => setSchedLabel(e.target.value)}
             />
+
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">מועד היציאה</Label>
+              <Select value={schedSlot} onValueChange={setSchedSlot}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל היום (ברירת מחדל)</SelectItem>
+                  <SelectItem value="morning">שחרית (בוקר)</SelectItem>
+                  <SelectItem value="mincha">מנחה (אחר הצהריים)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                בשבת ניתן להגדיר ספר אחד לשחרית וספר אחר למנחה — המסך יחליף ביניהם אוטומטית. בראש חודש/חנוכה/שקלים: בחרו "כל היום" וסמנו 2-3 ספרים.
+              </p>
+            </div>
           </div>
 
           <Button
@@ -374,7 +391,7 @@ export default function SifreiTorahManager() {
             className="w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 ml-1" />
-            הוסף שיוך ({schedSeferIds.length} ספרים)
+            הוסף שיוך ({schedSeferIds.length} ספרים · {TIME_SLOT_LABELS[schedSlot]})
           </Button>
 
           {schedule.length > 0 && (
