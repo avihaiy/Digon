@@ -1208,21 +1208,75 @@ export default function Display() {
             activeSeferTorahName ? { icon: "📜", text: `${activeSeferTorahName.includes(" · ") ? "ספרי תורה" : "ספר תורה"}: ${activeSeferTorahName}` } : null,
           ]
             .filter(Boolean)
-            .map((item, i) => (
-              <span
-                key={i}
-                className="flex items-center gap-[0.5vw] bg-black/30 backdrop-blur-sm rounded-full text-white/90 border border-white/10"
-                style={{
-                  fontSize: "clamp(13px, 2vh, 22px)",
-                  padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.5vw, 20px)",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.8)",
-                }}
-              >
-                {item!.icon} {item!.text}
-              </span>
-            ))}
+            .map((item, i) => {
+              const isSefer = typeof item!.text === "string" && item!.text.startsWith("ספר");
+              const pulse = isSefer && seferHighlight !== null;
+              return (
+                <motion.span
+                  key={i}
+                  animate={
+                    pulse
+                      ? { scale: [1, 1.12, 1], boxShadow: ["0 0 0 rgba(212,175,55,0)", "0 0 24px rgba(212,175,55,0.9)", "0 0 0 rgba(212,175,55,0)"] }
+                      : { scale: 1 }
+                  }
+                  transition={pulse ? { duration: 1.4, repeat: 4, ease: "easeInOut" } : { duration: 0.2 }}
+                  className={`flex items-center gap-[0.5vw] backdrop-blur-sm rounded-full border ${pulse ? "bg-amber-500/40 border-amber-300/70 text-white" : "bg-black/30 border-white/10 text-white/90"}`}
+                  style={{
+                    fontSize: "clamp(13px, 2vh, 22px)",
+                    padding: "clamp(4px, 0.6vh, 8px) clamp(10px, 1.5vw, 20px)",
+                    textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+                  }}
+                >
+                  {item!.icon} {item!.text}
+                </motion.span>
+              );
+            })}
         </div>
       </header>
+
+      {/* Highlight banner — מופיע כשמשייכים ספר תורה חדש */}
+      <AnimatePresence>
+        {seferHighlight && (
+          <motion.div
+            key={seferHighlight}
+            initial={{ opacity: 0, y: -40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -40, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 220, damping: 22 }}
+            className="pointer-events-none absolute z-50 left-1/2 -translate-x-1/2 top-[14vh] flex flex-col items-center gap-[1vh] text-center"
+            style={{ direction: "rtl" }}
+          >
+            <div
+              className="rounded-3xl border-2 border-amber-300/80 px-[3vw] py-[2vh] shadow-[0_10px_60px_rgba(212,175,55,0.55)]"
+              style={{
+                background: "linear-gradient(135deg, rgba(120,53,15,0.92), rgba(180,83,9,0.92))",
+              }}
+            >
+              <div
+                className="text-amber-100/90 mb-[0.6vh] tracking-wide"
+                style={{ fontSize: "clamp(14px, 2vh, 22px)", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
+              >
+                ✨ עודכן זה עתה ✨
+              </div>
+              <div
+                className="text-white font-bold flex items-center gap-[1vw] justify-center"
+                style={{ fontSize: "clamp(22px, 4.5vh, 56px)", textShadow: "0 2px 10px rgba(0,0,0,0.7)" }}
+              >
+                <motion.span
+                  animate={{ rotate: [0, -10, 10, -6, 0] }}
+                  transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1 }}
+                >
+                  📜
+                </motion.span>
+                <span>
+                  {seferHighlight.includes(" · ") ? "ספרי תורה: " : "ספר תורה: "}
+                  {seferHighlight}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 overflow-hidden relative z-10" style={{ height: 0 }}>
