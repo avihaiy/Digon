@@ -40,7 +40,14 @@ interface ScheduleRow {
   sefer_id: string;
   label: string | null;
   position: number;
+  time_slot: string; // 'all' | 'morning' | 'mincha'
 }
+
+const TIME_SLOT_LABELS: Record<string, string> = {
+  all: 'כל היום',
+  morning: 'שחרית (בוקר)',
+  mincha: 'מנחה (אחה״צ)',
+};
 
 
 const ACTIVE_KEY = 'active_sefer_torah_id';
