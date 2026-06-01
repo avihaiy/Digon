@@ -193,6 +193,9 @@ export default function Display() {
   const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
   const [tickerSpeed, setTickerSpeed] = useState("medium");
   const [activeSeferTorahName, setActiveSeferTorahName] = useState<string | null>(null);
+  const [seferHighlight, setSeferHighlight] = useState<string | null>(null);
+  const prevSeferRef = useRef<string | null>(null);
+  const isFirstSeferLoadRef = useRef(true);
   const [showMemorial, setShowMemorial] = useState(true);
   const [showFinance, setShowFinance] = useState(false);
   const [showOmer, setShowOmer] = useState(true);
