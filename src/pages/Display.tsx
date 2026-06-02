@@ -1244,10 +1244,10 @@ export default function Display() {
             exit={{ opacity: 0, y: -30 }}
             transition={{ type: "spring", stiffness: 240, damping: 24 }}
             className="absolute z-50 top-0 left-0 right-0 flex justify-center px-[2vw] pt-[1vh]"
-            style={{ direction: "rtl" }}
+            style={{ direction: "rtl", paddingTop: "max(1vh, env(safe-area-inset-top))" }}
           >
             <div
-              className="flex items-center gap-[1.2vw] rounded-2xl border border-amber-300/70 px-[1.6vw] py-[0.8vh] shadow-[0_6px_30px_rgba(212,175,55,0.45)] max-w-[92%]"
+              className="flex items-center gap-[2vw] sm:gap-[1.2vw] rounded-full sm:rounded-2xl border border-amber-300/70 px-3 sm:px-[1.6vw] py-1.5 sm:py-[0.8vh] shadow-[0_6px_30px_rgba(212,175,55,0.45)] max-w-[96%] min-w-0"
               style={{
                 background: "linear-gradient(135deg, rgba(120,53,15,0.95), rgba(180,83,9,0.95))",
               }}
@@ -1255,19 +1255,20 @@ export default function Display() {
               <motion.span
                 animate={{ rotate: [0, -10, 10, -6, 0] }}
                 transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1 }}
-                style={{ fontSize: "clamp(18px, 2.6vh, 30px)" }}
+                className="shrink-0"
+                style={{ fontSize: "clamp(16px, 2.6vh, 30px)" }}
               >
                 📜
               </motion.span>
               <span
-                className="text-amber-100/90 tracking-wide whitespace-nowrap"
+                className="hidden sm:inline text-amber-100/90 tracking-wide whitespace-nowrap shrink-0"
                 style={{ fontSize: "clamp(12px, 1.6vh, 18px)", textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}
               >
                 עודכן זה עתה
               </span>
               <span
-                className="text-white font-bold truncate"
-                style={{ fontSize: "clamp(14px, 2.2vh, 26px)", textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}
+                className="text-white font-bold truncate min-w-0"
+                style={{ fontSize: "clamp(13px, 2.2vh, 26px)", textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}
               >
                 {seferHighlight.includes(" · ") ? "ספרי תורה: " : "ספר תורה: "}
                 {seferHighlight}
@@ -1275,8 +1276,8 @@ export default function Display() {
               <button
                 onClick={() => setSeferHighlight(null)}
                 aria-label="סגור"
-                className="mr-[0.4vw] flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 text-amber-50 transition-colors"
-                style={{ width: "clamp(22px, 3vh, 34px)", height: "clamp(22px, 3vh, 34px)", fontSize: "clamp(14px, 2vh, 20px)", lineHeight: 1 }}
+                className="mr-1 sm:mr-[0.4vw] flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 text-amber-50 transition-colors shrink-0"
+                style={{ width: "clamp(24px, 3vh, 34px)", height: "clamp(24px, 3vh, 34px)", fontSize: "clamp(13px, 2vh, 20px)", lineHeight: 1 }}
               >
                 ✕
               </button>
@@ -1284,6 +1285,7 @@ export default function Display() {
           </motion.div>
         )}
       </AnimatePresence>
+
 
 
       {/* MAIN CONTENT */}
