@@ -83,9 +83,9 @@ export default function SifreiTorahManager() {
 
   const load = async () => {
     const todayIso = toIsoDate(new Date());
-    const [{ data: items }, { data: setting }, { data: sched }] = await Promise.all([
+    const [{ data: items }, { data: settings }, { data: sched }] = await Promise.all([
       db.from('sifrei_torah').select('*').order('created_at', { ascending: true }),
-      supabase.from('app_settings').select('value').eq('key', ACTIVE_KEY).maybeSingle(),
+      supabase.from('app_settings').select('key,value').in('key', [ACTIVE_KEY, ROSH_CHODESH_KEY]),
       db
         .from('sifrei_torah_schedule')
         .select('*')
@@ -93,7 +93,10 @@ export default function SifreiTorahManager() {
         .order('scheduled_date', { ascending: true }),
     ]);
     setList((items || []) as SeferTorah[]);
-    setActiveId(setting?.value || 'none');
+    const settingsMap = new Map<string, string>((settings || []).map((s: { key: string; value: string }) => [s.key, s.value]));
+    setActiveId(settingsMap.get(ACTIVE_KEY) || 'none');
+    const rcRaw = settingsMap.get(ROSH_CHODESH_KEY) || '';
+    setRoshChodeshIds(rcRaw ? rcRaw.split(',').filter(Boolean) : []);
     setSchedule((sched || []) as ScheduleRow[]);
   };
 
