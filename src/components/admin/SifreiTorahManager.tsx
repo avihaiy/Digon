@@ -51,6 +51,7 @@ const TIME_SLOT_LABELS: Record<string, string> = {
 
 
 const ACTIVE_KEY = 'active_sefer_torah_id';
+const ROSH_CHODESH_KEY = 'rosh_chodesh_sefer_ids';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
