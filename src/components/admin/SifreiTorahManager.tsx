@@ -383,7 +383,7 @@ export default function SifreiTorahManager() {
               </PopoverContent>
             </Popover>
 
-            <div className="border rounded-lg p-2 space-y-1 max-h-56 overflow-y-auto bg-background">
+            <div className="border rounded-lg p-2 space-y-1 max-h-64 overflow-y-auto bg-background">
               <p className="text-xs text-muted-foreground px-1 pb-1">
                 סמן את הספרים שיוצאו (סדר הסימון = סדר ההצגה)
               </p>
@@ -399,11 +399,11 @@ export default function SifreiTorahManager() {
                       <label
                         key={s.id}
                         className={cn(
-                          'flex items-center justify-between gap-2 p-2 rounded cursor-pointer hover:bg-muted/50',
+                          'flex items-center justify-between gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
                           checked && 'bg-amber-50 dark:bg-amber-950/20',
                         )}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                           <input
                             type="checkbox"
                             checked={checked}
@@ -414,12 +414,12 @@ export default function SifreiTorahManager() {
                                 setSchedSeferIds((prev) => prev.filter((id) => id !== s.id));
                               }
                             }}
-                            className="w-4 h-4 accent-amber-500"
+                            className="w-5 h-5 accent-amber-500"
                           />
                           <span className="text-sm truncate">{s.name}</span>
                         </div>
                         {checked && (
-                          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 shrink-0">
+                          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 shrink-0 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40">
                             #{idx + 1}
                           </span>
                         )}
@@ -428,6 +428,7 @@ export default function SifreiTorahManager() {
                   })
               )}
             </div>
+
 
             <Input
               placeholder="תיאור (למשל: פרשת שקלים / ראש חודש) — אופציונלי"
