@@ -281,14 +281,14 @@ export default function SifreiTorahManager() {
           ספרי תורה
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-3 sm:px-6">
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-500" />
             ספר התורה לשבת/חג הקרובים
           </Label>
           <Select value={activeId || 'none'} onValueChange={saveActive}>
-            <SelectTrigger>
+            <SelectTrigger className="h-11">
               <SelectValue placeholder="בחר ספר תורה" />
             </SelectTrigger>
             <SelectContent>
@@ -306,6 +306,50 @@ export default function SifreiTorahManager() {
             השם יופיע במסך התצוגה הציבורי בכותרת.
           </p>
         </div>
+
+        <div className="border-t pt-4 space-y-2">
+          <Label className="flex items-center gap-2 text-sm font-semibold">
+            <Moon className="w-4 h-4 text-indigo-500" />
+            ספרי תורה לראש חודש (קבוע)
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            בכל ראש חודש המסך יציג אוטומטית את הספרים שנבחרו כאן — אין צורך לעדכן ידנית בכל חודש. שיוך ספציפי לתאריך גובר על הגדרה זו.
+          </p>
+          <div className="border rounded-lg p-2 space-y-1 bg-background">
+            {list.filter((s) => s.is_active).length === 0 ? (
+              <p className="text-xs text-muted-foreground p-2">אין ספרי תורה פעילים.</p>
+            ) : (
+              list
+                .filter((s) => s.is_active)
+                .map((s) => {
+                  const checked = roshChodeshIds.includes(s.id);
+                  return (
+                    <label
+                      key={s.id}
+                      className={cn(
+                        'flex items-center gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
+                        checked && 'bg-indigo-50 dark:bg-indigo-950/20',
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleRoshChodeshSefer(s.id)}
+                        className="w-5 h-5 accent-indigo-500"
+                      />
+                      <span className="text-sm truncate flex-1">{s.name}</span>
+                      {checked && (
+                        <span className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 shrink-0 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50">
+                          ר״ח
+                        </span>
+                      )}
+                    </label>
+                  );
+                })
+            )}
+          </div>
+        </div>
+
 
         <div className="border-t pt-4 space-y-3">
           <Label className="text-sm font-semibold flex items-center gap-2">
