@@ -1239,44 +1239,52 @@ export default function Display() {
         {seferHighlight && (
           <motion.div
             key={seferHighlight}
-            initial={{ opacity: 0, y: -40, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -40, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 220, damping: 22 }}
-            className="pointer-events-none absolute z-50 left-1/2 -translate-x-1/2 top-[14vh] flex flex-col items-center gap-[1vh] text-center"
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ type: "spring", stiffness: 240, damping: 24 }}
+            className="absolute z-50 top-0 left-0 right-0 flex justify-center px-[2vw] pt-[1vh]"
             style={{ direction: "rtl" }}
           >
             <div
-              className="rounded-3xl border-2 border-amber-300/80 px-[3vw] py-[2vh] shadow-[0_10px_60px_rgba(212,175,55,0.55)]"
+              className="flex items-center gap-[1.2vw] rounded-2xl border border-amber-300/70 px-[1.6vw] py-[0.8vh] shadow-[0_6px_30px_rgba(212,175,55,0.45)] max-w-[92%]"
               style={{
-                background: "linear-gradient(135deg, rgba(120,53,15,0.92), rgba(180,83,9,0.92))",
+                background: "linear-gradient(135deg, rgba(120,53,15,0.95), rgba(180,83,9,0.95))",
               }}
             >
-              <div
-                className="text-amber-100/90 mb-[0.6vh] tracking-wide"
-                style={{ fontSize: "clamp(14px, 2vh, 22px)", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
+              <motion.span
+                animate={{ rotate: [0, -10, 10, -6, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1 }}
+                style={{ fontSize: "clamp(18px, 2.6vh, 30px)" }}
               >
-                ✨ עודכן זה עתה ✨
-              </div>
-              <div
-                className="text-white font-bold flex items-center gap-[1vw] justify-center"
-                style={{ fontSize: "clamp(22px, 4.5vh, 56px)", textShadow: "0 2px 10px rgba(0,0,0,0.7)" }}
+                📜
+              </motion.span>
+              <span
+                className="text-amber-100/90 tracking-wide whitespace-nowrap"
+                style={{ fontSize: "clamp(12px, 1.6vh, 18px)", textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}
               >
-                <motion.span
-                  animate={{ rotate: [0, -10, 10, -6, 0] }}
-                  transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1 }}
-                >
-                  📜
-                </motion.span>
-                <span>
-                  {seferHighlight.includes(" · ") ? "ספרי תורה: " : "ספר תורה: "}
-                  {seferHighlight}
-                </span>
-              </div>
+                עודכן זה עתה
+              </span>
+              <span
+                className="text-white font-bold truncate"
+                style={{ fontSize: "clamp(14px, 2.2vh, 26px)", textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}
+              >
+                {seferHighlight.includes(" · ") ? "ספרי תורה: " : "ספר תורה: "}
+                {seferHighlight}
+              </span>
+              <button
+                onClick={() => setSeferHighlight(null)}
+                aria-label="סגור"
+                className="mr-[0.4vw] flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 text-amber-50 transition-colors"
+                style={{ width: "clamp(22px, 3vh, 34px)", height: "clamp(22px, 3vh, 34px)", fontSize: "clamp(14px, 2vh, 20px)", lineHeight: 1 }}
+              >
+                ✕
+              </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
 
       {/* MAIN CONTENT */}
       <main className="flex-1 overflow-hidden relative z-10" style={{ height: 0 }}>
