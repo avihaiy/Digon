@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { ScrollText, Plus, Pencil, Trash2, Check, X, Star, Search, ArrowUpDown, Calendar as CalendarIcon } from 'lucide-react';
+import { ScrollText, Plus, Pencil, Trash2, Check, X, Star, Search, ArrowUpDown, Calendar as CalendarIcon, Moon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -51,6 +51,7 @@ const TIME_SLOT_LABELS: Record<string, string> = {
 
 
 const ACTIVE_KEY = 'active_sefer_torah_id';
+const ROSH_CHODESH_KEY = 'rosh_chodesh_sefer_ids';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
@@ -60,6 +61,7 @@ const toIsoDate = (d: Date) =>
 export default function SifreiTorahManager() {
   const [list, setList] = useState<SeferTorah[]>([]);
   const [activeId, setActiveId] = useState<string>('none');
+  const [roshChodeshIds, setRoshChodeshIds] = useState<string[]>([]);
   const [newName, setNewName] = useState('');
   const [newNotes, setNewNotes] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -81,9 +83,9 @@ export default function SifreiTorahManager() {
 
   const load = async () => {
     const todayIso = toIsoDate(new Date());
-    const [{ data: items }, { data: setting }, { data: sched }] = await Promise.all([
+    const [{ data: items }, { data: settings }, { data: sched }] = await Promise.all([
       db.from('sifrei_torah').select('*').order('created_at', { ascending: true }),
-      supabase.from('app_settings').select('value').eq('key', ACTIVE_KEY).maybeSingle(),
+      supabase.from('app_settings').select('key,value').in('key', [ACTIVE_KEY, ROSH_CHODESH_KEY]),
       db
         .from('sifrei_torah_schedule')
         .select('*')
@@ -91,7 +93,10 @@ export default function SifreiTorahManager() {
         .order('scheduled_date', { ascending: true }),
     ]);
     setList((items || []) as SeferTorah[]);
-    setActiveId(setting?.value || 'none');
+    const settingsMap = new Map<string, string>((settings || []).map((s: { key: string; value: string }) => [s.key, s.value]));
+    setActiveId(settingsMap.get(ACTIVE_KEY) || 'none');
+    const rcRaw = settingsMap.get(ROSH_CHODESH_KEY) || '';
+    setRoshChodeshIds(rcRaw ? rcRaw.split(',').filter(Boolean) : []);
     setSchedule((sched || []) as ScheduleRow[]);
   };
 
@@ -165,6 +170,25 @@ export default function SifreiTorahManager() {
       await supabase.from('app_settings').insert({ key: ACTIVE_KEY, value });
     }
     toast({ title: id === 'none' ? 'בוטל ספר תורה פעיל' : 'ספר התורה הפעיל עודכן' });
+  };
+
+  const toggleRoshChodeshSefer = async (id: string) => {
+    const next = roshChodeshIds.includes(id)
+      ? roshChodeshIds.filter((x) => x !== id)
+      : [...roshChodeshIds, id];
+    setRoshChodeshIds(next);
+    const value = next.join(',');
+    const { data: existing } = await supabase
+      .from('app_settings')
+      .select('id')
+      .eq('key', ROSH_CHODESH_KEY)
+      .maybeSingle();
+    if (existing) {
+      await supabase.from('app_settings').update({ value }).eq('key', ROSH_CHODESH_KEY);
+    } else {
+      await supabase.from('app_settings').insert({ key: ROSH_CHODESH_KEY, value });
+    }
+    toast({ title: 'הגדרת ראש חודש עודכנה' });
   };
 
   const addSefer = async () => {
@@ -257,14 +281,14 @@ export default function SifreiTorahManager() {
           ספרי תורה
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-3 sm:px-6">
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <Star className="w-4 h-4 text-amber-500" />
             ספר התורה לשבת/חג הקרובים
           </Label>
           <Select value={activeId || 'none'} onValueChange={saveActive}>
-            <SelectTrigger>
+            <SelectTrigger className="h-11">
               <SelectValue placeholder="בחר ספר תורה" />
             </SelectTrigger>
             <SelectContent>
@@ -282,6 +306,50 @@ export default function SifreiTorahManager() {
             השם יופיע במסך התצוגה הציבורי בכותרת.
           </p>
         </div>
+
+        <div className="border-t pt-4 space-y-2">
+          <Label className="flex items-center gap-2 text-sm font-semibold">
+            <Moon className="w-4 h-4 text-indigo-500" />
+            ספרי תורה לראש חודש (קבוע)
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            בכל ראש חודש המסך יציג אוטומטית את הספרים שנבחרו כאן — אין צורך לעדכן ידנית בכל חודש. שיוך ספציפי לתאריך גובר על הגדרה זו.
+          </p>
+          <div className="border rounded-lg p-2 space-y-1 bg-background">
+            {list.filter((s) => s.is_active).length === 0 ? (
+              <p className="text-xs text-muted-foreground p-2">אין ספרי תורה פעילים.</p>
+            ) : (
+              list
+                .filter((s) => s.is_active)
+                .map((s) => {
+                  const checked = roshChodeshIds.includes(s.id);
+                  return (
+                    <label
+                      key={s.id}
+                      className={cn(
+                        'flex items-center gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
+                        checked && 'bg-indigo-50 dark:bg-indigo-950/20',
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleRoshChodeshSefer(s.id)}
+                        className="w-5 h-5 accent-indigo-500"
+                      />
+                      <span className="text-sm truncate flex-1">{s.name}</span>
+                      {checked && (
+                        <span className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 shrink-0 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50">
+                          ר״ח
+                        </span>
+                      )}
+                    </label>
+                  );
+                })
+            )}
+          </div>
+        </div>
+
 
         <div className="border-t pt-4 space-y-3">
           <Label className="text-sm font-semibold flex items-center gap-2">
@@ -315,7 +383,7 @@ export default function SifreiTorahManager() {
               </PopoverContent>
             </Popover>
 
-            <div className="border rounded-lg p-2 space-y-1 max-h-56 overflow-y-auto bg-background">
+            <div className="border rounded-lg p-2 space-y-1 max-h-64 overflow-y-auto bg-background">
               <p className="text-xs text-muted-foreground px-1 pb-1">
                 סמן את הספרים שיוצאו (סדר הסימון = סדר ההצגה)
               </p>
@@ -331,11 +399,11 @@ export default function SifreiTorahManager() {
                       <label
                         key={s.id}
                         className={cn(
-                          'flex items-center justify-between gap-2 p-2 rounded cursor-pointer hover:bg-muted/50',
+                          'flex items-center justify-between gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
                           checked && 'bg-amber-50 dark:bg-amber-950/20',
                         )}
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0">
                           <input
                             type="checkbox"
                             checked={checked}
@@ -346,12 +414,12 @@ export default function SifreiTorahManager() {
                                 setSchedSeferIds((prev) => prev.filter((id) => id !== s.id));
                               }
                             }}
-                            className="w-4 h-4 accent-amber-500"
+                            className="w-5 h-5 accent-amber-500"
                           />
                           <span className="text-sm truncate">{s.name}</span>
                         </div>
                         {checked && (
-                          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 shrink-0">
+                          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 shrink-0 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40">
                             #{idx + 1}
                           </span>
                         )}
@@ -360,6 +428,7 @@ export default function SifreiTorahManager() {
                   })
               )}
             </div>
+
 
             <Input
               placeholder="תיאור (למשל: פרשת שקלים / ראש חודש) — אופציונלי"

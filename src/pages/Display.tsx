@@ -536,7 +536,32 @@ export default function Display() {
         return;
       }
 
-      // 2) fallback — הספר הפעיל הקבוע מההגדרות
+      // 2) fallback — אם היום ראש חודש, השתמש בהגדרת ר״ח הקבועה
+      const isRoshChodesh = !!getRoshChodesh(today);
+      if (isRoshChodesh) {
+        const { data: rcSetting } = await supabase
+          .from("app_settings")
+          .select("value")
+          .eq("key", "rosh_chodesh_sefer_ids")
+          .maybeSingle();
+        const ids = (rcSetting?.value || '').split(',').map((s) => s.trim()).filter(Boolean);
+        if (ids.length > 0) {
+          const { data: sefarim } = await db
+            .from("sifrei_torah")
+            .select("id, name, is_active")
+            .in("id", ids);
+          const byId = new Map<string, { name: string; is_active: boolean }>(
+            (sefarim || []).map((s: { id: string; name: string; is_active: boolean }) => [s.id, { name: s.name, is_active: s.is_active }]),
+          );
+          const ordered = ids.map((id) => byId.get(id)).filter((s): s is { name: string; is_active: boolean } => !!s && s.is_active);
+          if (ordered.length > 0) {
+            setActiveSeferTorahName(ordered.map((s) => s.name).join(" · "));
+            return;
+          }
+        }
+      }
+
+      // 3) fallback — הספר הפעיל הקבוע מההגדרות
       const { data: setting } = await supabase
         .from("app_settings")
         .select("value")
@@ -563,6 +588,11 @@ export default function Display() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "app_settings", filter: "key=eq.active_sefer_torah_id" },
+        () => fetchActiveSefer(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.rosh_chodesh_sefer_ids" },
         () => fetchActiveSefer(),
       )
       .subscribe();
