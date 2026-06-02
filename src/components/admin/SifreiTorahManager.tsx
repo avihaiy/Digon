@@ -172,6 +172,25 @@ export default function SifreiTorahManager() {
     toast({ title: id === 'none' ? 'בוטל ספר תורה פעיל' : 'ספר התורה הפעיל עודכן' });
   };
 
+  const toggleRoshChodeshSefer = async (id: string) => {
+    const next = roshChodeshIds.includes(id)
+      ? roshChodeshIds.filter((x) => x !== id)
+      : [...roshChodeshIds, id];
+    setRoshChodeshIds(next);
+    const value = next.join(',');
+    const { data: existing } = await supabase
+      .from('app_settings')
+      .select('id')
+      .eq('key', ROSH_CHODESH_KEY)
+      .maybeSingle();
+    if (existing) {
+      await supabase.from('app_settings').update({ value }).eq('key', ROSH_CHODESH_KEY);
+    } else {
+      await supabase.from('app_settings').insert({ key: ROSH_CHODESH_KEY, value });
+    }
+    toast({ title: 'הגדרת ראש חודש עודכנה' });
+  };
+
   const addSefer = async () => {
     if (!newName.trim()) return;
     setLoading(true);
