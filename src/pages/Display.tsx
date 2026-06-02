@@ -590,6 +590,11 @@ export default function Display() {
         { event: "*", schema: "public", table: "app_settings", filter: "key=eq.active_sefer_torah_id" },
         () => fetchActiveSefer(),
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.rosh_chodesh_sefer_ids" },
+        () => fetchActiveSefer(),
+      )
       .subscribe();
     const interval = setInterval(fetchActiveSefer, 60 * 1000);
     return () => {
