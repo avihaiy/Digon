@@ -392,6 +392,81 @@ export default function SifreiTorahManager() {
           </div>
         </div>
 
+        <div className="border-t pt-4 space-y-2">
+          <Label className="flex items-center gap-2 text-sm font-semibold">
+            <Moon className="w-4 h-4 text-purple-500" />
+            ספרי תורה לר״ח לפי חודש עברי
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            הגדרה ייעודית לכל חודש (למשל ר״ח ניסן שונה מר״ח אב). גוברת על "ר״ח קבוע" למעלה. שיוך לתאריך ספציפי גובר על שתיהן.
+          </p>
+          <div className="space-y-2">
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="h-11">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 13 }, (_, i) => i + 1).map((m) => {
+                  const has = (monthOverrides[m] || []).length > 0;
+                  return (
+                    <SelectItem key={m} value={String(m)}>
+                      {HEBREW_MONTH_NAMES[m]} {has ? `• ${monthOverrides[m].length} ספרים` : ''}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {(() => {
+              const month = Number(selectedMonth);
+              const selectedIds = monthOverrides[month] || [];
+              const active = list.filter((s) => s.is_active);
+              return (
+                <div className="border rounded-lg p-2 space-y-1 bg-background">
+                  {active.length === 0 ? (
+                    <p className="text-xs text-muted-foreground p-2">אין ספרי תורה פעילים.</p>
+                  ) : (
+                    active.map((s) => {
+                      const checked = selectedIds.includes(s.id);
+                      return (
+                        <label
+                          key={s.id}
+                          className={cn(
+                            'flex items-center gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
+                            checked && 'bg-purple-50 dark:bg-purple-950/20',
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleMonthOverrideSefer(month, s.id)}
+                            className="w-5 h-5 accent-purple-500"
+                          />
+                          <span className="text-sm truncate flex-1">{s.name}</span>
+                          {checked && (
+                            <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 shrink-0 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50">
+                              ר״ח {HEBREW_MONTH_NAMES[month]}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })
+                  )}
+                  {selectedIds.length > 0 && (
+                    <div className="pt-1">
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => clearMonthOverride(month)}>
+                        <Trash2 className="w-3.5 h-3.5 ml-1" />
+                        נקה הגדרה לחודש זה
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+
+
 
         <div className="border-t pt-4 space-y-3">
           <Label className="text-sm font-semibold flex items-center gap-2">
