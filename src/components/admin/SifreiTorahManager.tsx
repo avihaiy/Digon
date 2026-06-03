@@ -205,6 +205,34 @@ export default function SifreiTorahManager() {
     toast({ title: 'הגדרת ראש חודש עודכנה' });
   };
 
+  const toggleMonthOverrideSefer = async (month: number, id: string) => {
+    const current = monthOverrides[month] || [];
+    const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
+    setMonthOverrides((prev) => ({ ...prev, [month]: next }));
+    const key = `${ROSH_CHODESH_MONTH_PREFIX}${month}`;
+    const value = next.join(',');
+    const { data: existing } = await supabase
+      .from('app_settings').select('id').eq('key', key).maybeSingle();
+    if (existing) {
+      await supabase.from('app_settings').update({ value }).eq('key', key);
+    } else {
+      await supabase.from('app_settings').insert({ key, value });
+    }
+    toast({ title: `עודכן ר״ח ${HEBREW_MONTH_NAMES[month]}` });
+  };
+
+  const clearMonthOverride = async (month: number) => {
+    setMonthOverrides((prev) => {
+      const copy = { ...prev };
+      delete copy[month];
+      return copy;
+    });
+    const key = `${ROSH_CHODESH_MONTH_PREFIX}${month}`;
+    await supabase.from('app_settings').delete().eq('key', key);
+    toast({ title: `נמחקה הגדרה לר״ח ${HEBREW_MONTH_NAMES[month]}` });
+  };
+
+
   const addSefer = async () => {
     if (!newName.trim()) return;
     setLoading(true);
