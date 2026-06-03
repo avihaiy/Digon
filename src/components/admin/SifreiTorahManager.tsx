@@ -67,6 +67,8 @@ export default function SifreiTorahManager() {
   const [list, setList] = useState<SeferTorah[]>([]);
   const [activeId, setActiveId] = useState<string>('none');
   const [roshChodeshIds, setRoshChodeshIds] = useState<string[]>([]);
+  const [monthOverrides, setMonthOverrides] = useState<Record<number, string[]>>({});
+  const [selectedMonth, setSelectedMonth] = useState<string>('1');
   const [newName, setNewName] = useState('');
   const [newNotes, setNewNotes] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
