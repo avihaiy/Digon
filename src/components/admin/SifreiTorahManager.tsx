@@ -52,6 +52,11 @@ const TIME_SLOT_LABELS: Record<string, string> = {
 
 const ACTIVE_KEY = 'active_sefer_torah_id';
 const ROSH_CHODESH_KEY = 'rosh_chodesh_sefer_ids';
+const ROSH_CHODESH_MONTH_PREFIX = 'rosh_chodesh_sefer_ids_m';
+const HEBREW_MONTH_NAMES: Record<number, string> = {
+  1: 'ניסן', 2: 'אייר', 3: 'סיוון', 4: 'תמוז', 5: 'אב', 6: 'אלול',
+  7: 'תשרי', 8: 'חשוון', 9: 'כסלו', 10: 'טבת', 11: 'שבט', 12: 'אדר', 13: 'אדר ב׳',
+};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
