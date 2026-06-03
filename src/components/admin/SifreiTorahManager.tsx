@@ -90,9 +90,10 @@ export default function SifreiTorahManager() {
 
   const load = async () => {
     const todayIso = toIsoDate(new Date());
+    const monthKeys = Array.from({ length: 13 }, (_, i) => `${ROSH_CHODESH_MONTH_PREFIX}${i + 1}`);
     const [{ data: items }, { data: settings }, { data: sched }] = await Promise.all([
       db.from('sifrei_torah').select('*').order('created_at', { ascending: true }),
-      supabase.from('app_settings').select('key,value').in('key', [ACTIVE_KEY, ROSH_CHODESH_KEY]),
+      supabase.from('app_settings').select('key,value').in('key', [ACTIVE_KEY, ROSH_CHODESH_KEY, ...monthKeys]),
       db
         .from('sifrei_torah_schedule')
         .select('*')
@@ -104,6 +105,12 @@ export default function SifreiTorahManager() {
     setActiveId(settingsMap.get(ACTIVE_KEY) || 'none');
     const rcRaw = settingsMap.get(ROSH_CHODESH_KEY) || '';
     setRoshChodeshIds(rcRaw ? rcRaw.split(',').filter(Boolean) : []);
+    const overrides: Record<number, string[]> = {};
+    for (let m = 1; m <= 13; m++) {
+      const v = settingsMap.get(`${ROSH_CHODESH_MONTH_PREFIX}${m}`) || '';
+      if (v) overrides[m] = v.split(',').filter(Boolean);
+    }
+    setMonthOverrides(overrides);
     setSchedule((sched || []) as ScheduleRow[]);
   };
 
