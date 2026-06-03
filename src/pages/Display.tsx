@@ -536,15 +536,21 @@ export default function Display() {
         return;
       }
 
-      // 2) fallback — אם היום ראש חודש, השתמש בהגדרת ר״ח הקבועה
+      // 2) fallback — אם היום ראש חודש, השתמש בהגדרה לפי חודש (ואם אין — בהגדרה הקבועה)
       const isRoshChodesh = !!getRoshChodesh(today);
       if (isRoshChodesh) {
-        const { data: rcSetting } = await supabase
+        // ר״ח של יום 30 שייך לחודש הבא; של יום 1 — לחודש הנוכחי
+        const hd = new HDate(today);
+        const targetHd = hd.getDate() === 30 ? new HDate(new Date(today.getTime() + 86400000)) : hd;
+        const targetMonth = targetHd.getMonth();
+        const monthKey = `rosh_chodesh_sefer_ids_m${targetMonth}`;
+        const { data: settings } = await supabase
           .from("app_settings")
-          .select("value")
-          .eq("key", "rosh_chodesh_sefer_ids")
-          .maybeSingle();
-        const ids = (rcSetting?.value || '').split(',').map((s) => s.trim()).filter(Boolean);
+          .select("key,value")
+          .in("key", [monthKey, "rosh_chodesh_sefer_ids"]);
+        const map = new Map<string, string>((settings || []).map((s: { key: string; value: string }) => [s.key, s.value]));
+        const raw = map.get(monthKey) || map.get("rosh_chodesh_sefer_ids") || '';
+        const ids = raw.split(',').map((s) => s.trim()).filter(Boolean);
         if (ids.length > 0) {
           const { data: sefarim } = await db
             .from("sifrei_torah")
@@ -560,6 +566,7 @@ export default function Display() {
           }
         }
       }
+
 
       // 3) fallback — הספר הפעיל הקבוע מההגדרות
       const { data: setting } = await supabase
