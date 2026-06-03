@@ -536,15 +536,21 @@ export default function Display() {
         return;
       }
 
-      // 2) fallback — אם היום ראש חודש, השתמש בהגדרת ר״ח הקבועה
+      // 2) fallback — אם היום ראש חודש, השתמש בהגדרה לפי חודש (ואם אין — בהגדרה הקבועה)
       const isRoshChodesh = !!getRoshChodesh(today);
       if (isRoshChodesh) {
-        const { data: rcSetting } = await supabase
+        // ר״ח של יום 30 שייך לחודש הבא; של יום 1 — לחודש הנוכחי
+        const hd = new HDate(today);
+        const targetHd = hd.getDate() === 30 ? new HDate(new Date(today.getTime() + 86400000)) : hd;
+        const targetMonth = targetHd.getMonth();
+        const monthKey = `rosh_chodesh_sefer_ids_m${targetMonth}`;
+        const { data: settings } = await supabase
           .from("app_settings")
-          .select("value")
-          .eq("key", "rosh_chodesh_sefer_ids")
-          .maybeSingle();
-        const ids = (rcSetting?.value || '').split(',').map((s) => s.trim()).filter(Boolean);
+          .select("key,value")
+          .in("key", [monthKey, "rosh_chodesh_sefer_ids"]);
+        const map = new Map<string, string>((settings || []).map((s: { key: string; value: string }) => [s.key, s.value]));
+        const raw = map.get(monthKey) || map.get("rosh_chodesh_sefer_ids") || '';
+        const ids = raw.split(',').map((s) => s.trim()).filter(Boolean);
         if (ids.length > 0) {
           const { data: sefarim } = await db
             .from("sifrei_torah")
@@ -560,6 +566,7 @@ export default function Display() {
           }
         }
       }
+
 
       // 3) fallback — הספר הפעיל הקבוע מההגדרות
       const { data: setting } = await supabase
@@ -587,13 +594,17 @@ export default function Display() {
       .on("postgres_changes", { event: "*", schema: "public", table: "sifrei_torah_schedule" }, () => fetchActiveSefer())
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.active_sefer_torah_id" },
-        () => fetchActiveSefer(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.rosh_chodesh_sefer_ids" },
-        () => fetchActiveSefer(),
+        { event: "*", schema: "public", table: "app_settings" },
+        (payload: { new?: { key?: string }; old?: { key?: string } }) => {
+          const key = payload.new?.key || payload.old?.key || '';
+          if (
+            key === "active_sefer_torah_id" ||
+            key === "rosh_chodesh_sefer_ids" ||
+            key.startsWith("rosh_chodesh_sefer_ids_m")
+          ) {
+            fetchActiveSefer();
+          }
+        },
       )
       .subscribe();
     const interval = setInterval(fetchActiveSefer, 60 * 1000);
