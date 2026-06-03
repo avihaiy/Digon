@@ -594,13 +594,17 @@ export default function Display() {
       .on("postgres_changes", { event: "*", schema: "public", table: "sifrei_torah_schedule" }, () => fetchActiveSefer())
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.active_sefer_torah_id" },
-        () => fetchActiveSefer(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "app_settings", filter: "key=eq.rosh_chodesh_sefer_ids" },
-        () => fetchActiveSefer(),
+        { event: "*", schema: "public", table: "app_settings" },
+        (payload: { new?: { key?: string }; old?: { key?: string } }) => {
+          const key = payload.new?.key || payload.old?.key || '';
+          if (
+            key === "active_sefer_torah_id" ||
+            key === "rosh_chodesh_sefer_ids" ||
+            key.startsWith("rosh_chodesh_sefer_ids_m")
+          ) {
+            fetchActiveSefer();
+          }
+        },
       )
       .subscribe();
     const interval = setInterval(fetchActiveSefer, 60 * 1000);
