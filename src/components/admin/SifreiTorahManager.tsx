@@ -518,10 +518,17 @@ export default function SifreiTorahManager() {
           <Label className="text-sm font-semibold flex items-center gap-2">
             <CalendarIcon className="w-4 h-4 text-amber-500" />
             שיוך ספר תורה לתאריך (שבת/חג)
+            {!isAdmin && (
+              <span className="text-[10px] font-semibold text-muted-foreground inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted">
+                <Lock className="w-3 h-3" /> לצפייה בלבד
+              </span>
+            )}
           </Label>
           <p className="text-xs text-muted-foreground">
             בתאריך שנבחר — המסך יציג אוטומטית את הספרים המשויכים, כולל מקרים של 2 או 3 ספרי תורה (כמו ראש חודש, חנוכה, פרשת שקלים וכו').
           </p>
+
+
 
           <div className="grid grid-cols-1 gap-2">
             <Popover>
