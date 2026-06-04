@@ -691,9 +691,12 @@ export default function SifreiTorahManager() {
                               <span className="truncate">
                                 📜 #{i + 1} {sefer?.name || '—'}
                               </span>
-                              <Button size="icon" variant="ghost" onClick={() => removeSchedule(row.id)}>
-                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                              </Button>
+                              {isAdmin && (
+                                <Button size="icon" variant="ghost" onClick={() => removeSchedule(row.id)}>
+                                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                                </Button>
+                              )}
+
                             </div>
                           );
                         })}
