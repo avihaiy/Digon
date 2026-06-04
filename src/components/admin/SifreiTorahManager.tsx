@@ -163,10 +163,18 @@ export default function SifreiTorahManager() {
     load();
   };
 
-  const removeSchedule = (id: string) => setDeleteScheduleId(id);
+  const removeSchedule = (id: string) => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
+    setDeleteScheduleId(id);
+  };
 
   const confirmRemoveSchedule = async () => {
     if (!deleteScheduleId) return;
+    if (!isAdmin) { setDeleteScheduleId(null); return; }
+
     const id = deleteScheduleId;
     setDeleteScheduleId(null);
     const { error } = await db.from('sifrei_torah_schedule').delete().eq('id', id);
