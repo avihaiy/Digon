@@ -634,6 +634,9 @@ export default function SifreiTorahManager() {
             <Plus className="w-4 h-4 ml-1" />
             הוסף שיוך ({schedSeferIds.length} ספרים · {TIME_SLOT_LABELS[schedSlot]})
           </Button>
+          )}
+
+
 
           {schedule.length > 0 && (
             <div className="space-y-2 pt-2">
