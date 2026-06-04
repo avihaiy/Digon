@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { ScrollText, Plus, Pencil, Trash2, Check, X, Star, Search, ArrowUpDown, Calendar as CalendarIcon, Moon } from 'lucide-react';
+import { ScrollText, Plus, Pencil, Trash2, Check, X, Star, Search, ArrowUpDown, Calendar as CalendarIcon, Moon, Lock } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -23,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+
 
 type SortMode = 'name_asc' | 'name_desc' | 'created_asc' | 'created_desc';
 
@@ -64,7 +66,9 @@ const toIsoDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export default function SifreiTorahManager() {
+  const { isAdmin } = useAuth();
   const [list, setList] = useState<SeferTorah[]>([]);
+
   const [activeId, setActiveId] = useState<string>('none');
   const [roshChodeshIds, setRoshChodeshIds] = useState<string[]>([]);
   const [monthOverrides, setMonthOverrides] = useState<Record<number, string[]>>({});
@@ -127,10 +131,15 @@ export default function SifreiTorahManager() {
   }, []);
 
   const addSchedule = async () => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
     if (!schedDate || schedSeferIds.length === 0) {
       toast({ title: 'יש לבחור תאריך ולפחות ספר תורה אחד', variant: 'destructive' });
       return;
     }
+
     const dateIso = toIsoDate(schedDate);
     const rows = schedSeferIds.map((sefer_id, idx) => ({
       scheduled_date: dateIso,
@@ -154,10 +163,18 @@ export default function SifreiTorahManager() {
     load();
   };
 
-  const removeSchedule = (id: string) => setDeleteScheduleId(id);
+  const removeSchedule = (id: string) => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
+    setDeleteScheduleId(id);
+  };
 
   const confirmRemoveSchedule = async () => {
     if (!deleteScheduleId) return;
+    if (!isAdmin) { setDeleteScheduleId(null); return; }
+
     const id = deleteScheduleId;
     setDeleteScheduleId(null);
     const { error } = await db.from('sifrei_torah_schedule').delete().eq('id', id);
@@ -187,6 +204,10 @@ export default function SifreiTorahManager() {
   };
 
   const toggleRoshChodeshSefer = async (id: string) => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
     const next = roshChodeshIds.includes(id)
       ? roshChodeshIds.filter((x) => x !== id)
       : [...roshChodeshIds, id];
@@ -206,6 +227,10 @@ export default function SifreiTorahManager() {
   };
 
   const toggleMonthOverrideSefer = async (month: number, id: string) => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
     const current = monthOverrides[month] || [];
     const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
     setMonthOverrides((prev) => ({ ...prev, [month]: next }));
@@ -222,6 +247,10 @@ export default function SifreiTorahManager() {
   };
 
   const clearMonthOverride = async (month: number) => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
     setMonthOverrides((prev) => {
       const copy = { ...prev };
       delete copy[month];
@@ -231,6 +260,7 @@ export default function SifreiTorahManager() {
     await supabase.from('app_settings').delete().eq('key', key);
     toast({ title: `נמחקה הגדרה לר״ח ${HEBREW_MONTH_NAMES[month]}` });
   };
+
 
 
   const addSefer = async () => {
@@ -353,6 +383,11 @@ export default function SifreiTorahManager() {
           <Label className="flex items-center gap-2 text-sm font-semibold">
             <Moon className="w-4 h-4 text-indigo-500" />
             ספרי תורה לראש חודש (קבוע)
+            {!isAdmin && (
+              <span className="text-[10px] font-semibold text-muted-foreground inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted">
+                <Lock className="w-3 h-3" /> לצפייה בלבד
+              </span>
+            )}
           </Label>
           <p className="text-xs text-muted-foreground">
             בכל ראש חודש המסך יציג אוטומטית את הספרים שנבחרו כאן — אין צורך לעדכן ידנית בכל חודש. שיוך ספציפי לתאריך גובר על הגדרה זו.
@@ -369,15 +404,17 @@ export default function SifreiTorahManager() {
                     <label
                       key={s.id}
                       className={cn(
-                        'flex items-center gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
+                        'flex items-center gap-3 p-3 sm:p-2 rounded min-h-[44px]',
+                        isAdmin ? 'cursor-pointer hover:bg-muted/50' : 'cursor-not-allowed opacity-90',
                         checked && 'bg-indigo-50 dark:bg-indigo-950/20',
                       )}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
+                        disabled={!isAdmin}
                         onChange={() => toggleRoshChodeshSefer(s.id)}
-                        className="w-5 h-5 accent-indigo-500"
+                        className="w-5 h-5 accent-indigo-500 disabled:cursor-not-allowed"
                       />
                       <span className="text-sm truncate flex-1">{s.name}</span>
                       {checked && (
@@ -392,10 +429,16 @@ export default function SifreiTorahManager() {
           </div>
         </div>
 
+
         <div className="border-t pt-4 space-y-2">
           <Label className="flex items-center gap-2 text-sm font-semibold">
             <Moon className="w-4 h-4 text-purple-500" />
             ספרי תורה לר״ח לפי חודש עברי
+            {!isAdmin && (
+              <span className="text-[10px] font-semibold text-muted-foreground inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted">
+                <Lock className="w-3 h-3" /> לצפייה בלבד
+              </span>
+            )}
           </Label>
           <p className="text-xs text-muted-foreground">
             הגדרה ייעודית לכל חודש (למשל ר״ח ניסן שונה מר״ח אב). גוברת על "ר״ח קבוע" למעלה. שיוך לתאריך ספציפי גובר על שתיהן.
@@ -431,15 +474,17 @@ export default function SifreiTorahManager() {
                         <label
                           key={s.id}
                           className={cn(
-                            'flex items-center gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
+                            'flex items-center gap-3 p-3 sm:p-2 rounded min-h-[44px]',
+                            isAdmin ? 'cursor-pointer hover:bg-muted/50' : 'cursor-not-allowed opacity-90',
                             checked && 'bg-purple-50 dark:bg-purple-950/20',
                           )}
                         >
                           <input
                             type="checkbox"
                             checked={checked}
+                            disabled={!isAdmin}
                             onChange={() => toggleMonthOverrideSefer(month, s.id)}
-                            className="w-5 h-5 accent-purple-500"
+                            className="w-5 h-5 accent-purple-500 disabled:cursor-not-allowed"
                           />
                           <span className="text-sm truncate flex-1">{s.name}</span>
                           {checked && (
@@ -451,7 +496,7 @@ export default function SifreiTorahManager() {
                       );
                     })
                   )}
-                  {selectedIds.length > 0 && (
+                  {isAdmin && selectedIds.length > 0 && (
                     <div className="pt-1">
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => clearMonthOverride(month)}>
                         <Trash2 className="w-3.5 h-3.5 ml-1" />
@@ -468,17 +513,29 @@ export default function SifreiTorahManager() {
 
 
 
+
         <div className="border-t pt-4 space-y-3">
           <Label className="text-sm font-semibold flex items-center gap-2">
             <CalendarIcon className="w-4 h-4 text-amber-500" />
             שיוך ספר תורה לתאריך (שבת/חג)
+            {!isAdmin && (
+              <span className="text-[10px] font-semibold text-muted-foreground inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted">
+                <Lock className="w-3 h-3" /> לצפייה בלבד
+              </span>
+            )}
           </Label>
           <p className="text-xs text-muted-foreground">
             בתאריך שנבחר — המסך יציג אוטומטית את הספרים המשויכים, כולל מקרים של 2 או 3 ספרי תורה (כמו ראש חודש, חנוכה, פרשת שקלים וכו').
           </p>
 
+
+
+          {isAdmin && (
+          <>
           <div className="grid grid-cols-1 gap-2">
             <Popover>
+
+
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -579,6 +636,11 @@ export default function SifreiTorahManager() {
             <Plus className="w-4 h-4 ml-1" />
             הוסף שיוך ({schedSeferIds.length} ספרים · {TIME_SLOT_LABELS[schedSlot]})
           </Button>
+          </>
+          )}
+
+
+
 
           {schedule.length > 0 && (
             <div className="space-y-2 pt-2">
@@ -629,9 +691,12 @@ export default function SifreiTorahManager() {
                               <span className="truncate">
                                 📜 #{i + 1} {sefer?.name || '—'}
                               </span>
-                              <Button size="icon" variant="ghost" onClick={() => removeSchedule(row.id)}>
-                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                              </Button>
+                              {isAdmin && (
+                                <Button size="icon" variant="ghost" onClick={() => removeSchedule(row.id)}>
+                                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                                </Button>
+                              )}
+
                             </div>
                           );
                         })}
