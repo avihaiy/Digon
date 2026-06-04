@@ -131,10 +131,15 @@ export default function SifreiTorahManager() {
   }, []);
 
   const addSchedule = async () => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
     if (!schedDate || schedSeferIds.length === 0) {
       toast({ title: 'יש לבחור תאריך ולפחות ספר תורה אחד', variant: 'destructive' });
       return;
     }
+
     const dateIso = toIsoDate(schedDate);
     const rows = schedSeferIds.map((sefer_id, idx) => ({
       scheduled_date: dateIso,
