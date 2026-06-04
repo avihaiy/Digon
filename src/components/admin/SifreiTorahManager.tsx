@@ -434,6 +434,11 @@ export default function SifreiTorahManager() {
           <Label className="flex items-center gap-2 text-sm font-semibold">
             <Moon className="w-4 h-4 text-purple-500" />
             ספרי תורה לר״ח לפי חודש עברי
+            {!isAdmin && (
+              <span className="text-[10px] font-semibold text-muted-foreground inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted">
+                <Lock className="w-3 h-3" /> לצפייה בלבד
+              </span>
+            )}
           </Label>
           <p className="text-xs text-muted-foreground">
             הגדרה ייעודית לכל חודש (למשל ר״ח ניסן שונה מר״ח אב). גוברת על "ר״ח קבוע" למעלה. שיוך לתאריך ספציפי גובר על שתיהן.
@@ -469,15 +474,17 @@ export default function SifreiTorahManager() {
                         <label
                           key={s.id}
                           className={cn(
-                            'flex items-center gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
+                            'flex items-center gap-3 p-3 sm:p-2 rounded min-h-[44px]',
+                            isAdmin ? 'cursor-pointer hover:bg-muted/50' : 'cursor-not-allowed opacity-90',
                             checked && 'bg-purple-50 dark:bg-purple-950/20',
                           )}
                         >
                           <input
                             type="checkbox"
                             checked={checked}
+                            disabled={!isAdmin}
                             onChange={() => toggleMonthOverrideSefer(month, s.id)}
-                            className="w-5 h-5 accent-purple-500"
+                            className="w-5 h-5 accent-purple-500 disabled:cursor-not-allowed"
                           />
                           <span className="text-sm truncate flex-1">{s.name}</span>
                           {checked && (
@@ -489,7 +496,7 @@ export default function SifreiTorahManager() {
                       );
                     })
                   )}
-                  {selectedIds.length > 0 && (
+                  {isAdmin && selectedIds.length > 0 && (
                     <div className="pt-1">
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => clearMonthOverride(month)}>
                         <Trash2 className="w-3.5 h-3.5 ml-1" />
@@ -502,6 +509,7 @@ export default function SifreiTorahManager() {
             })()}
           </div>
         </div>
+
 
 
 
