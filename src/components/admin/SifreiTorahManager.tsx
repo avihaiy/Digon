@@ -530,8 +530,10 @@ export default function SifreiTorahManager() {
 
 
 
+          {isAdmin && (
           <div className="grid grid-cols-1 gap-2">
             <Popover>
+
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
