@@ -383,6 +383,11 @@ export default function SifreiTorahManager() {
           <Label className="flex items-center gap-2 text-sm font-semibold">
             <Moon className="w-4 h-4 text-indigo-500" />
             ספרי תורה לראש חודש (קבוע)
+            {!isAdmin && (
+              <span className="text-[10px] font-semibold text-muted-foreground inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted">
+                <Lock className="w-3 h-3" /> לצפייה בלבד
+              </span>
+            )}
           </Label>
           <p className="text-xs text-muted-foreground">
             בכל ראש חודש המסך יציג אוטומטית את הספרים שנבחרו כאן — אין צורך לעדכן ידנית בכל חודש. שיוך ספציפי לתאריך גובר על הגדרה זו.
@@ -399,15 +404,17 @@ export default function SifreiTorahManager() {
                     <label
                       key={s.id}
                       className={cn(
-                        'flex items-center gap-3 p-3 sm:p-2 rounded cursor-pointer hover:bg-muted/50 min-h-[44px]',
+                        'flex items-center gap-3 p-3 sm:p-2 rounded min-h-[44px]',
+                        isAdmin ? 'cursor-pointer hover:bg-muted/50' : 'cursor-not-allowed opacity-90',
                         checked && 'bg-indigo-50 dark:bg-indigo-950/20',
                       )}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
+                        disabled={!isAdmin}
                         onChange={() => toggleRoshChodeshSefer(s.id)}
-                        className="w-5 h-5 accent-indigo-500"
+                        className="w-5 h-5 accent-indigo-500 disabled:cursor-not-allowed"
                       />
                       <span className="text-sm truncate flex-1">{s.name}</span>
                       {checked && (
@@ -421,6 +428,7 @@ export default function SifreiTorahManager() {
             )}
           </div>
         </div>
+
 
         <div className="border-t pt-4 space-y-2">
           <Label className="flex items-center gap-2 text-sm font-semibold">
