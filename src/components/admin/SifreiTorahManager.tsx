@@ -204,6 +204,10 @@ export default function SifreiTorahManager() {
   };
 
   const toggleRoshChodeshSefer = async (id: string) => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
     const next = roshChodeshIds.includes(id)
       ? roshChodeshIds.filter((x) => x !== id)
       : [...roshChodeshIds, id];
@@ -223,6 +227,10 @@ export default function SifreiTorahManager() {
   };
 
   const toggleMonthOverrideSefer = async (month: number, id: string) => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
     const current = monthOverrides[month] || [];
     const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
     setMonthOverrides((prev) => ({ ...prev, [month]: next }));
@@ -239,6 +247,10 @@ export default function SifreiTorahManager() {
   };
 
   const clearMonthOverride = async (month: number) => {
+    if (!isAdmin) {
+      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      return;
+    }
     setMonthOverrides((prev) => {
       const copy = { ...prev };
       delete copy[month];
@@ -248,6 +260,7 @@ export default function SifreiTorahManager() {
     await supabase.from('app_settings').delete().eq('key', key);
     toast({ title: `נמחקה הגדרה לר״ח ${HEBREW_MONTH_NAMES[month]}` });
   };
+
 
 
   const addSefer = async () => {
