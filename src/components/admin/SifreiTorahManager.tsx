@@ -344,6 +344,41 @@ export default function SifreiTorahManager() {
     return sorted;
   }, [list, search, sort]);
 
+  const previewDisplay = useMemo(() => {
+    const targetDate = getNextShabbat(new Date());
+    const targetIso = toIsoDate(targetDate);
+    
+    let activeName = '';
+    const daySchedule = schedule.filter(s => s.scheduled_date === targetIso);
+    if (daySchedule.length > 0) {
+      const sorted = daySchedule.sort((a,b) => a.position - b.position);
+      activeName = sorted.map(row => {
+        const sefer = list.find(s => s.id === row.sefer_id);
+        return sefer ? sefer.name : '';
+      }).filter(Boolean).join(" · ");
+    } else {
+      const activeSefer = list.find(s => s.id === activeId);
+      if (activeSefer) activeName = activeSefer.name;
+    }
+
+    const req = getRequiredSifreiTorah(targetDate);
+    
+    if (activeName) {
+      const isPlural = activeName.includes(" · ");
+      let text = isPlural ? "ספרי תורה" : "ספר תורה";
+      if (req.reasons.length > 0) {
+        const specialReasons = req.reasons.filter(r => !r.startsWith('פרשת'));
+        if (specialReasons.length > 0) text += ` (${specialReasons.join(', ')})`;
+      }
+      return { icon: "📜", text: `${text}: ${activeName}` };
+    } else if (req.count > 1) {
+      const specialReasons = req.reasons.filter(r => !r.startsWith('פרשת'));
+      const reasonsStr = specialReasons.length > 0 ? ` (${specialReasons.join(', ')})` : '';
+      return { icon: "📜", text: `מוציאים ${req.count} ספרי תורה${reasonsStr}` };
+    }
+    return null;
+  }, [activeId, list, schedule]);
+
   return (
     <Card className="border-0 shadow-none sm:border sm:shadow-sm sm:bg-card bg-transparent min-h-[70vh]">
       <CardContent className="p-0 sm:p-6 sm:pt-6">
@@ -459,6 +494,19 @@ export default function SifreiTorahManager() {
 
           {/* TAB 2: SCHEDULE */}
           <TabsContent value="schedule" className="space-y-6 px-3 sm:px-0 w-full animate-in fade-in slide-in-from-bottom-2">
+            {previewDisplay && (
+              <div className="bg-slate-900 dark:bg-black rounded-2xl p-6 border border-amber-900/30 shadow-xl overflow-hidden relative">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent pointer-events-none" />
+                <Label className="text-amber-500/80 text-xs font-bold uppercase tracking-wider mb-4 block text-center">תצוגה מקדימה למסך הראשי (לשבת הקרובה)</Label>
+                <div className="flex items-center justify-center gap-3 text-center relative z-10" dir="rtl">
+                  <span className="text-2xl sm:text-3xl filter drop-shadow-md">{previewDisplay.icon}</span>
+                  <span className="text-lg sm:text-2xl font-bold text-[#d4af37]" style={{ textShadow: "0 2px 12px rgba(212,175,55,0.4)" }}>
+                    {previewDisplay.text}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="p-5 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:border-amber-900/50 dark:from-amber-950/30 dark:to-background space-y-4 shadow-sm">
               <div>
                 <Label className="flex items-center gap-2 text-amber-900 dark:text-amber-300 text-base font-semibold">
