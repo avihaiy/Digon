@@ -38,7 +38,7 @@ import {
   Megaphone,
   AlertCircle,
   Printer,
-
+  ScrollText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -59,6 +59,7 @@ const navItems = [
   { href: '/receipts', icon: Receipt, label: 'קבלות' },
   { href: '/budget', icon: Wallet, label: 'תקציב' },
   { href: '/events', icon: Calendar, label: 'יומן אירועים' },
+  { href: '/sifrei-torah', icon: ScrollText, label: 'ספרי תורה' },
   { href: '/manage-ads', icon: Megaphone, label: 'ניהול מודעות' },
   { href: '/prayer-poster', icon: Printer, label: 'טופס זמני תפילות' },
 ];

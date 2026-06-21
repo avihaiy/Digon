@@ -43,6 +43,7 @@ import PrayerPoster from "@/pages/PrayerPoster";
 import PublicReceipt from "@/pages/PublicReceipt";
 import PublicMemberDebts from "@/pages/PublicMemberDebts";
 import PublicMemberArea from "@/pages/PublicMemberArea";
+import SifreiTorah from "@/pages/SifreiTorah";
 import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 
@@ -297,6 +298,16 @@ const AnimatedRoutes = () => {
             <ProtectedRoute>
               <PageTransition>
                 <Events />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sifrei-torah"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <SifreiTorah />
               </PageTransition>
             </ProtectedRoute>
           }
