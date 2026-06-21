@@ -9,6 +9,7 @@ import {
   getBirkatHashanim,
   getSefiratHaOmer,
   getCurrentParasha,
+  getRequiredSifreiTorah,
 } from "@/lib/hebrew-utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Maximize, Lock, Unlock, MonitorSmartphone } from "lucide-react";
@@ -1032,6 +1033,7 @@ export default function Display() {
   const todayHoliday = getTodayHolidayHebrew();
   const sefiratHaOmer = getSefiratHaOmer(currentTime);
   const parasha = getCurrentParasha();
+  const halachicSifreiTorahReq = getRequiredSifreiTorah(currentTime);
 
   return (
     <div
@@ -1246,7 +1248,22 @@ export default function Display() {
             todayHoliday ? { icon: "⭐", text: todayHoliday } : null,
             sefiratHaOmer ? { icon: "🌾", text: sefiratHaOmer } : null,
             parasha ? { icon: "📖", text: `פרשת ${parasha}` } : null,
-            activeSeferTorahName ? { icon: "📜", text: `${activeSeferTorahName.includes(" · ") ? "ספרי תורה" : "ספר תורה"}: ${activeSeferTorahName}` } : null,
+            (() => {
+              if (activeSeferTorahName) {
+                const isPlural = activeSeferTorahName.includes(" · ");
+                let text = isPlural ? "ספרי תורה" : "ספר תורה";
+                if (halachicSifreiTorahReq && halachicSifreiTorahReq.reasons.length > 0) {
+                  const specialReasons = halachicSifreiTorahReq.reasons.filter(r => !r.startsWith('פרשת'));
+                  if (specialReasons.length > 0) text += ` (${specialReasons.join(', ')})`;
+                }
+                return { icon: "📜", text: `${text}: ${activeSeferTorahName}` };
+              } else if (halachicSifreiTorahReq && halachicSifreiTorahReq.count > 1) {
+                const specialReasons = halachicSifreiTorahReq.reasons.filter(r => !r.startsWith('פרשת'));
+                const reasonsStr = specialReasons.length > 0 ? ` (${specialReasons.join(', ')})` : '';
+                return { icon: "📜", text: `מוציאים ${halachicSifreiTorahReq.count} ספרי תורה${reasonsStr}` };
+              }
+              return null;
+            })(),
           ]
             .filter(Boolean)
             .map((item, i) => {

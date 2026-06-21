@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { getRequiredSifreiTorah, getNextShabbat } from '@/lib/hebrew-utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -538,6 +539,27 @@ export default function SifreiTorahManager() {
                   </span>
                 )}
               </div>
+
+              {/* Halachic Requirement Alert */}
+              {(() => {
+                const targetDate = schedDate || getNextShabbat(new Date());
+                const req = getRequiredSifreiTorah(targetDate);
+                if (req.count > 1) {
+                  return (
+                    <div className="p-3 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 rounded-lg text-indigo-800 dark:text-indigo-300 shadow-sm animate-in fade-in slide-in-from-top-2">
+                      <p className="text-sm font-semibold flex items-center gap-2">
+                        <Star className="w-4 h-4" />
+                        שים לב: לתאריך {format(targetDate, 'dd/MM/yyyy')} דרושים {req.count} ספרי תורה
+                      </p>
+                      <p className="text-xs mt-1 opacity-90">
+                        סיבה: {req.reasons.join(', ')}
+                      </p>
+                      {!schedDate && <p className="text-[10px] mt-1 font-bold bg-indigo-100 dark:bg-indigo-900/50 inline-block px-2 py-0.5 rounded">ההתרעה מתייחסת לשבת/חג הקרובים</p>}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {isAdmin && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/20">

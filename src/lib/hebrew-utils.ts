@@ -789,3 +789,128 @@ export function formatShortDate(date: Date | string): string {
 export function generateBitPaymentLink(amount: number, description: string): string {
   return `https://www.bitpay.co.il/app?amount=${amount}&description=${encodeURIComponent(description)}`;
 }
+
+export interface SifreiTorahRequirement {
+  count: number;
+  reasons: string[];
+}
+
+export function getRequiredSifreiTorah(date: Date): SifreiTorahRequirement {
+  const isSat = date.getDay() === 6;
+  const isMonThu = date.getDay() === 1 || date.getDay() === 4;
+  
+  const hdate = new HDate(date);
+  const events = HebrewCalendar.getHolidaysOnDate(hdate, true) || [];
+  
+  let count = 0;
+  const reasons: string[] = [];
+  
+  if (isSat) {
+    count = 1;
+    reasons.push(`פרשת ${getParashaForDate(date)}`);
+  } else if (isMonThu) {
+    count = 1;
+    // Do not push reason for regular mon/thu reading unless we want it verbose
+  }
+  
+  let isRoshChodesh = false;
+  let isChanukah = false;
+  let isYomTov = false;
+  let isCholHamoed = false;
+  let isFast = false;
+  let isSpecialShabbat = false;
+  let isSimchatTorah = false;
+  let isRoshHashanaOrYomKippur = false;
+  
+  for (const ev of events) {
+    const desc = ev.getDesc();
+    if (desc === 'Simchat Torah') isSimchatTorah = true;
+    if (desc.includes('Rosh Chodesh')) isRoshChodesh = true;
+    if (desc.includes('Chanukah')) isChanukah = true;
+    
+    if (ev.getFlags() & flags.CHAG) {
+       if (desc.includes('Rosh Hashana') || desc.includes('Yom Kippur')) {
+         isRoshHashanaOrYomKippur = true;
+       } else {
+         isYomTov = true;
+       }
+    }
+    if (ev.getFlags() & flags.CHOL_HAMOED) isCholHamoed = true;
+    if (ev.getFlags() & flags.SPECIAL_SHABBAT) {
+      if (desc.includes('Shekalim')) {
+        isSpecialShabbat = true;
+        reasons.push('שבת שקלים');
+      } else if (desc.includes('Zachor')) {
+        isSpecialShabbat = true;
+        reasons.push('שבת זכור');
+      } else if (desc.includes('Parah')) {
+        isSpecialShabbat = true;
+        reasons.push('שבת פרה');
+      } else if (desc.includes('HaChodesh')) {
+        isSpecialShabbat = true;
+        reasons.push('שבת החודש');
+      }
+    }
+    if ((ev.getFlags() & flags.MAJOR_FAST) || (ev.getFlags() & flags.MINOR_FAST)) isFast = true;
+    if (desc.includes('Purim')) {
+      reasons.push('פורים');
+      count = Math.max(count, 1);
+    }
+  }
+  
+  if (isSimchatTorah) {
+    return { count: 3, reasons: ['שמחת תורה'] };
+  }
+  
+  if (isSat) {
+    if (isRoshChodesh && isChanukah) {
+      count = 3;
+      if (!reasons.includes('ראש חודש')) reasons.push('ראש חודש');
+      if (!reasons.includes('חנוכה')) reasons.push('חנוכה');
+    } else if (isRoshChodesh && isSpecialShabbat) {
+      count = 3;
+      if (!reasons.includes('ראש חודש')) reasons.push('ראש חודש');
+    } else if (isRoshChodesh) {
+      count = 2;
+      if (!reasons.includes('ראש חודש')) reasons.push('ראש חודש');
+    } else if (isChanukah) {
+      count = 2;
+      if (!reasons.includes('חנוכה')) reasons.push('חנוכה');
+    } else if (isSpecialShabbat) {
+      count = 2;
+    } else if (isYomTov) {
+      count = 2;
+      if (!reasons.includes('חג')) reasons.push('חג');
+    } else if (isCholHamoed) {
+      count = 2;
+      if (!reasons.includes('חול המועד')) reasons.push('חול המועד');
+    }
+  } else {
+    // Weekdays
+    if (isRoshChodesh && isChanukah) {
+      count = 2;
+      if (!reasons.includes('ראש חודש')) reasons.push('ראש חודש');
+      if (!reasons.includes('חנוכה')) reasons.push('חנוכה');
+    } else if (isRoshHashanaOrYomKippur || isYomTov) {
+      count = 2;
+      if (!reasons.includes('חג')) reasons.push('חג');
+    } else if (isCholHamoed) {
+      count = 1;
+      if (!reasons.includes('חול המועד')) reasons.push('חול המועד');
+    } else if (isRoshChodesh) {
+      count = 1;
+      if (!reasons.includes('ראש חודש')) reasons.push('ראש חודש');
+    } else if (isChanukah) {
+      count = 1;
+      if (!reasons.includes('חנוכה')) reasons.push('חנוכה');
+    } else if (isFast) {
+      count = 1;
+      if (!reasons.includes('צום')) reasons.push('צום');
+    }
+  }
+  
+  // Filter out the parasha reason if it's the ONLY reason (meaning regular shabbat)
+  // Or actually, keep it. If count is 1 and it's a regular Shabbat, it's fine.
+  
+  return { count, reasons };
+}
