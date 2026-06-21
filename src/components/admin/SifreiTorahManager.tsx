@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { ScrollText, Plus, Pencil, Trash2, Star, Search, Calendar as CalendarIcon, Moon, Lock, Info, Check } from 'lucide-react';
+import { ScrollText, Plus, Pencil, Trash2, Star, Search, Calendar as CalendarIcon, Moon, Lock, Info, Check, AlertTriangle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
@@ -379,10 +380,70 @@ export default function SifreiTorahManager() {
     return { icon: "📜", text: "ספר תורה" };
   }, [activeId, list, schedule]);
 
+  const missingAlerts = useMemo(() => {
+    const alerts: { date: Date; reason: string; count: number; daySchedCount: number }[] = [];
+    const today = new Date();
+    // Scan next 14 days
+    for (let i = 0; i <= 14; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const iso = toIsoDate(d);
+      
+      const req = getRequiredSifreiTorah(d);
+      const isRegular = req.reasons.length === 1 && req.reasons[0].startsWith('פרשת');
+      
+      if (!isRegular && req.count >= 1) {
+        const daySched = schedule.filter(s => s.scheduled_date === iso);
+        
+        // Skip if ONLY Rosh Chodesh and we have enough defaults
+        const isOnlyRoshChodesh = req.reasons.length === 1 && req.reasons[0] === 'ראש חודש';
+        if (isOnlyRoshChodesh && daySched.length === 0 && roshChodeshIds.length >= req.count) {
+          continue;
+        }
+
+        const isChagOrSpecial = req.reasons.some(r => r === 'חג' || r === 'שמחת תורה' || r.startsWith('שבת ') || r === 'חנוכה');
+        
+        if (req.count > 1 || isChagOrSpecial) {
+          if (daySched.length < req.count) {
+            alerts.push({
+              date: d,
+              reason: req.reasons.join(', '),
+              count: req.count,
+              daySchedCount: daySched.length
+            });
+          }
+        }
+      }
+    }
+    return alerts;
+  }, [schedule, roshChodeshIds]);
+
   return (
     <Card className="border-0 shadow-none sm:border sm:shadow-sm sm:bg-card bg-transparent min-h-[70vh]">
       <CardContent className="p-0 sm:p-6 sm:pt-6">
         <Tabs defaultValue="inventory" className="w-full flex flex-col items-center">
+          
+          {/* ALERTS SECTION */}
+          {missingAlerts.length > 0 && (
+            <div className="w-full max-w-[600px] mb-6 space-y-3 px-3 sm:px-0">
+              {missingAlerts.map((alert, idx) => (
+                <Alert key={idx} className="bg-red-50/80 dark:bg-red-950/30 text-red-900 dark:text-red-200 border-red-200 dark:border-red-900/50 shadow-sm animate-in fade-in slide-in-from-top-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <AlertTitle className="font-bold text-[15px] mb-1.5 flex items-center gap-2">
+                    התראה: חסר שיבוץ ל{format(alert.date, 'EEEE, d בMMMM', { locale: he })}
+                  </AlertTitle>
+                  <AlertDescription className="text-[13.5px] leading-relaxed opacity-90">
+                    ביום זה חל <strong>{alert.reason}</strong> ונדרשים <strong>{alert.count}</strong> ספרי תורה.
+                    {alert.daySchedCount > 0 ? ` שובצו ${alert.daySchedCount} ספרים בלבד.` : ' לא שובץ אף ספר ידנית.'}
+                    <span className="block mt-1 font-medium underline underline-offset-2 decoration-red-300 dark:decoration-red-800">
+                      אנא עבור ללשונית ״שיבוץ״ כדי להגדיר אילו ספרים יוצאים.
+                    </span>
+                  </AlertDescription>
+                </Alert>
+              ))}
+            </div>
+          )}
+
           <TabsList className="w-full max-w-[400px] h-12 flex mb-6 bg-muted/50 p-1.5 rounded-full shadow-sm">
             <TabsTrigger value="inventory" className="flex-1 rounded-full text-sm font-medium data-[state=active]:shadow-sm data-[state=active]:bg-background transition-all">
               מלאי ספרים
