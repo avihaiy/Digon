@@ -376,7 +376,7 @@ export default function SifreiTorahManager() {
       const reasonsStr = specialReasons.length > 0 ? ` (${specialReasons.join(', ')})` : '';
       return { icon: "📜", text: `מוציאים ${req.count} ספרי תורה${reasonsStr}` };
     }
-    return null;
+    return { icon: "📜", text: "ספר תורה" };
   }, [activeId, list, schedule]);
 
   return (
