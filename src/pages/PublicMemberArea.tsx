@@ -1251,6 +1251,16 @@ export default function PublicMemberArea() {
             </div>
             <span className="text-[11px] font-semibold">פרופיל</span>
           </button>
+
+          <button 
+            onClick={() => setActiveTab('contact')} 
+            className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'contact' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+          >
+            <div className={`${activeTab === 'contact' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
+              <MessageSquare className={`w-6 h-6 ${activeTab === 'contact' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+            </div>
+            <span className="text-[11px] font-semibold">פניות</span>
+          </button>
         </div>
       </nav>
       <style>{`
