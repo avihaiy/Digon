@@ -82,11 +82,21 @@ export default function PublicMemberArea() {
   const [sendingPayment, setSendingPayment] = useState(false);
   const [activeTab, setActiveTab] = useState<"debts" | "receipts">("debts");
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     if (window.matchMedia && !window.matchMedia("(display-mode: standalone)").matches) {
       setShowInstallPrompt(true);
     }
+    
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+    
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   // טיק לעדכון תצוגת זמן הנעילה
@@ -402,13 +412,36 @@ export default function PublicMemberArea() {
         {showInstallPrompt && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start gap-3 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 w-2 h-full bg-blue-500"></div>
-            <div className="flex-1 space-y-1">
+            <div className="flex-1 space-y-2">
               <h4 className="font-bold text-blue-900 dark:text-blue-100 text-sm">שמור כאפליקציה במסך הבית</h4>
-              <p className="text-xs text-blue-800/80 dark:text-blue-200/80 leading-relaxed">
-                לחץ על כפתור השיתוף בתחתית המסך (ב-Safari) או בתפריט (ב-Chrome) ובחר <strong>"הוסף למסך הבית"</strong> כדי שהאזור האישי יופיע כאפליקציה נפרדת.
-              </p>
+              {deferredPrompt ? (
+                <>
+                  <p className="text-xs text-blue-800/80 dark:text-blue-200/80 leading-relaxed">
+                    הוסף את האזור האישי למסך הבית שלך לגישה מהירה ונוחה!
+                  </p>
+                  <Button 
+                    size="sm" 
+                    className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm"
+                    onClick={async () => {
+                      if (!deferredPrompt) return;
+                      deferredPrompt.prompt();
+                      const { outcome } = await deferredPrompt.userChoice;
+                      if (outcome === 'accepted') {
+                        setDeferredPrompt(null);
+                        setShowInstallPrompt(false);
+                      }
+                    }}
+                  >
+                    הוסף למסך הבית
+                  </Button>
+                </>
+              ) : (
+                <p className="text-xs text-blue-800/80 dark:text-blue-200/80 leading-relaxed">
+                  לחץ על כפתור השיתוף בתחתית המסך (ב-Safari) או בתפריט (ב-Chrome) ובחר <strong>"הוסף למסך הבית"</strong> כדי שהאזור האישי יופיע כאפליקציה נפרדת.
+                </p>
+              )}
             </div>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-400 shrink-0" onClick={() => setShowInstallPrompt(false)}>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-400 shrink-0 -mt-1 -ml-1" onClick={() => setShowInstallPrompt(false)}>
               <LogOut className="w-4 h-4 rotate-45" />
             </Button>
           </div>
