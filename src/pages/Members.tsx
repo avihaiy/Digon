@@ -43,6 +43,8 @@ interface Member {
   full_name: string;
   phone: string | null;
   email: string | null;
+  address?: string | null;
+  spouse_name?: string | null;
   notes: string | null;
   active: boolean;
   notification_preference?: 'none' | 'email' | 'whatsapp' | null;
@@ -61,6 +63,8 @@ export default function Members() {
     full_name: '',
     phone: '',
     email: '',
+    address: '',
+    spouse_name: '',
     notes: '',
     notification_preference: 'none' as 'none' | 'email' | 'whatsapp',
   });
@@ -94,6 +98,8 @@ export default function Members() {
             full_name: data.full_name,
             phone: data.phone || null,
             email: data.email || null,
+            address: data.address || null,
+            spouse_name: data.spouse_name || null,
             notes: data.notes || null,
             notification_preference: data.notification_preference,
           } as any)
@@ -106,6 +112,8 @@ export default function Members() {
             full_name: data.full_name,
             phone: data.phone || null,
             email: data.email || null,
+            address: data.address || null,
+            spouse_name: data.spouse_name || null,
             notes: data.notes || null,
             notification_preference: data.notification_preference,
           } as any);
@@ -152,7 +160,7 @@ export default function Members() {
     },
   });
 
-  const emptyForm = { full_name: '', phone: '', email: '', notes: '', notification_preference: 'none' as const };
+  const emptyForm = { full_name: '', phone: '', email: '', address: '', spouse_name: '', notes: '', notification_preference: 'none' as const };
 
   const handleOpenDialog = (member?: Member) => {
     if (member) {
@@ -161,6 +169,8 @@ export default function Members() {
         full_name: member.full_name,
         phone: member.phone || '',
         email: member.email || '',
+        address: member.address || '',
+        spouse_name: member.spouse_name || '',
         notes: member.notes || '',
         notification_preference: (member.notification_preference || 'none') as 'none' | 'email' | 'whatsapp',
       });
@@ -360,6 +370,26 @@ export default function Members() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 dir="ltr"
                 className="text-left"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">כתובת</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="למשל: הרצל 10, עכו"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="spouse_name">שם בן/בת זוג</Label>
+              <Input
+                id="spouse_name"
+                value={formData.spouse_name}
+                onChange={(e) => setFormData({ ...formData, spouse_name: e.target.value })}
+                placeholder="למשל: רחל"
               />
             </div>
 
