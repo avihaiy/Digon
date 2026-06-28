@@ -106,6 +106,8 @@ export default function PublicMemberArea() {
   const [address, setAddress] = useState("");
   const [spouseName, setSpouseName] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [taxYear, setTaxYear] = useState(new Date().getFullYear() - 1);
+  const [isGeneratingTax, setIsGeneratingTax] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -416,6 +418,113 @@ export default function PublicMemberArea() {
       toast.error("לא הצלחנו לעדכן את הפרטים. נסה שוב מאוחר יותר.");
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleGenerateTaxReceipt = async () => {
+    if (!memberId || !authed) return;
+    const savedPhone = localStorage.getItem(phoneKey(memberId));
+    if (!savedPhone) return;
+
+    setIsGeneratingTax(true);
+    try {
+      const { data, error } = await supabase.rpc('get_member_yearly_receipts', {
+        _member_id: memberId,
+        _phone: savedPhone,
+        _year: taxYear
+      });
+
+      if (error || !data || !(data as any).success) {
+        throw new Error("שגיאה בשליפת הקבלות");
+      }
+
+      const yearlyReceipts = (data as any).receipts || [];
+      if (yearlyReceipts.length === 0) {
+        toast.error(`לא נמצאו קבלות לשנת ${taxYear}`);
+        setIsGeneratingTax(false);
+        return;
+      }
+
+      const totalAmount = yearlyReceipts.reduce((sum: number, r: any) => sum + Number(r.total_amount), 0);
+
+      // Generate HTML string for PDF
+      const htmlContent = `
+        <div style="font-family: 'Heebo', Arial, sans-serif; direction: rtl; padding: 20px; color: #333; max-width: 800px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #ddd; padding-bottom: 20px;">
+            <h1 style="margin: 0; font-size: 28px; color: #1e3a8a;">בית כנסת "ברית שלום" עכו</h1>
+            <p style="margin: 5px 0; font-size: 16px;">רחוב קדושי קהיר 18, עכו</p>
+            <p style="margin: 5px 0; font-size: 14px; font-weight: bold; background-color: #f0f9ff; display: inline-block; padding: 5px 15px; border-radius: 5px; color: #0369a1;">
+              מוסד ציבורי מוכר לעניין תרומות לפי סעיף 46 לפקודת מס הכנסה
+            </p>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <h2 style="text-align: center; font-size: 22px; margin-bottom: 20px; text-decoration: underline;">ריכוז תרומות לשנת המס ${taxYear}</h2>
+            <div style="background-color: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+              <p style="margin: 5px 0; font-size: 16px;"><strong>שם התורם:</strong> ${memberName}</p>
+              ${address ? `<p style="margin: 5px 0; font-size: 16px;"><strong>כתובת:</strong> ${address}</p>` : ''}
+              <p style="margin: 5px 0; font-size: 16px;"><strong>טלפון:</strong> <span dir="ltr">${savedPhone}</span></p>
+            </div>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px;">
+            <thead>
+              <tr style="background-color: #e5e7eb;">
+                <th style="padding: 12px; border: 1px solid #ccc; text-align: right;">מס' קבלה</th>
+                <th style="padding: 12px; border: 1px solid #ccc; text-align: right;">תאריך</th>
+                <th style="padding: 12px; border: 1px solid #ccc; text-align: right;">תיאור</th>
+                <th style="padding: 12px; border: 1px solid #ccc; text-align: left;">סכום</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${yearlyReceipts.map((r: any) => `
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #ddd;">${r.receipt_number}</td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">${formatShortDate(r.created_at)}</td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">${r.description || 'תרומה'}</td>
+                  <td style="padding: 10px; border: 1px solid #ddd; text-align: left;">${formatCurrency(Number(r.total_amount))}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr style="background-color: #f3f4f6; font-weight: bold; font-size: 16px;">
+                <td colspan="3" style="padding: 15px; border: 1px solid #ccc; text-align: right;">סך הכל תרומות בשנת ${taxYear}:</td>
+                <td style="padding: 15px; border: 1px solid #ccc; text-align: left; color: #15803d;">${formatCurrency(totalAmount)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div style="margin-top: 50px; text-align: left;">
+            <div style="border-top: 1px solid #000; width: 200px; padding-top: 10px; margin-right: auto; text-align: center;">
+              <p style="margin: 0;">חתימה / חותמת מורשה חתימה</p>
+              <p style="margin: 0; font-size: 12px; color: #666;">הופק אוטומטית מאתר בית הכנסת ברית שלום</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const el = document.createElement('div');
+      el.innerHTML = htmlContent;
+      document.body.appendChild(el);
+
+      const worker = (window as any).html2pdf().set({
+        margin: 10,
+        filename: `אישור_מס_${taxYear}_${memberName.replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+      }).from(el);
+
+      await worker.save();
+      
+      document.body.removeChild(el);
+      toast.success("אישור המס הופק בהצלחה!");
+      
+    } catch (err) {
+      console.error(err);
+      toast.error("שגיאה בהפקת אישור מס. נסה שוב.");
+    } finally {
+      setIsGeneratingTax(false);
     }
   };
 
@@ -813,7 +922,45 @@ export default function PublicMemberArea() {
 
           {activeTab === 'receipts' && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <h3 className="font-bold text-lg px-1">הקבלות שלי</h3>
+              {/* Tax Receipt Section */}
+              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-900/20 rounded-3xl p-5 border border-indigo-100 dark:border-indigo-900 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <FileDown className="w-24 h-24" />
+                </div>
+                <div className="relative z-10 space-y-3">
+                  <div>
+                    <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                      אישור מס (סעיף 46) מרוכז
+                    </h3>
+                    <p className="text-sm text-indigo-700/80 dark:text-indigo-300/80">
+                      הורדת ריכוז קבלות לצורך החזר מס.
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-2 items-center">
+                    <select
+                      value={taxYear}
+                      onChange={(e) => setTaxYear(Number(e.target.value))}
+                      className="h-10 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white/80 dark:bg-zinc-900/80 px-3 text-sm focus:ring-2 focus:ring-indigo-500 font-medium w-28"
+                    >
+                      {[new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2].map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                    <Button 
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm gap-2"
+                      onClick={handleGenerateTaxReceipt}
+                      disabled={isGeneratingTax}
+                    >
+                      {isGeneratingTax ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                      הפק PDF
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <h3 className="font-bold text-lg px-1 mt-6">הקבלות שלי</h3>
               
               {receipts.length === 0 ? (
                 <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 text-center border border-slate-100 dark:border-zinc-800 shadow-sm">
