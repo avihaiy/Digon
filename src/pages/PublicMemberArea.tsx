@@ -99,6 +99,22 @@ export default function PublicMemberArea() {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [lastSeenGlobal, setLastSeenGlobal] = useState<string | null>(
+    localStorage.getItem(`last_seen_global_${memberId}`)
+  );
+
+  useEffect(() => {
+    if (activeTab === 'messages' && memberId) {
+      const globalMsgs = messages.filter(m => m.is_global);
+      if (globalMsgs.length > 0) {
+        const latestId = globalMsgs[0].id;
+        if (latestId !== lastSeenGlobal) {
+          localStorage.setItem(`last_seen_global_${memberId}`, latestId);
+          setLastSeenGlobal(latestId);
+        }
+      }
+    }
+  }, [activeTab, messages, memberId, lastSeenGlobal]);
 
   useEffect(() => {
     if (window.matchMedia && !window.matchMedia("(display-mode: standalone)").matches) {
@@ -510,21 +526,27 @@ export default function PublicMemberArea() {
 
         {/* GLOBAL MESSAGES */}
         {messages.filter(m => m.is_global).length > 0 && activeTab !== 'messages' && (
-          <div className="bg-indigo-50/80 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-4 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-4">
-            <div className="mt-0.5">
-              <Megaphone className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <div className="bg-gradient-to-r from-rose-500 to-red-500 rounded-3xl p-5 flex items-start gap-4 shadow-lg shadow-red-500/20 text-white animate-in fade-in slide-in-from-top-4 relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+            <div className="mt-1 bg-white/20 p-2.5 rounded-full shrink-0 relative">
+              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-white rounded-full animate-ping"></span>
+              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-white rounded-full"></span>
+              <Megaphone className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-indigo-900 dark:text-indigo-100 text-sm mb-1">הודעה מהגבאי</h4>
-              <p className="text-xs text-indigo-800/90 dark:text-indigo-200/90 line-clamp-2">
+              <h4 className="font-bold text-lg mb-1.5 flex items-center gap-2">
+                הודעה חשובה מהגבאי
+              </h4>
+              <p className="text-sm text-red-50 leading-relaxed font-medium">
                 {messages.find(m => m.is_global)?.content}
               </p>
               <Button 
-                variant="link" 
-                className="h-auto p-0 text-[11px] text-indigo-600 dark:text-indigo-400 mt-1"
+                variant="secondary" 
+                size="sm"
+                className="mt-3.5 bg-white text-red-600 hover:bg-red-50 shadow-sm font-bold w-auto h-8 px-4 text-xs rounded-full"
                 onClick={() => setActiveTab('messages')}
               >
-                קרא הכל
+                קרא עוד
               </Button>
             </div>
           </div>
@@ -796,7 +818,7 @@ export default function PublicMemberArea() {
           >
             <div className={`${activeTab === 'messages' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'} relative`}>
               <Bell className={`w-6 h-6 ${activeTab === 'messages' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              {messages.some(m => !m.is_global && !m.is_read) && (
+              {(messages.some(m => !m.is_global && !m.is_read) || (messages.some(m => m.is_global) && messages.find(m => m.is_global)?.id !== lastSeenGlobal)) && (
                 <span className="absolute top-1 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900 animate-pulse"></span>
               )}
             </div>
