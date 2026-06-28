@@ -24,7 +24,8 @@ import {
   MessageSquare,
   Info,
   Megaphone,
-  X
+  X,
+  Trash2
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
@@ -106,6 +107,18 @@ export default function PublicMemberArea() {
   const [dismissedGlobal, setDismissedGlobal] = useState<string | null>(
     localStorage.getItem(`dismissed_global_${memberId}`)
   );
+  const [hiddenMessages, setHiddenMessages] = useState<string[]>(
+    JSON.parse(localStorage.getItem(`hidden_messages_${memberId}`) || '[]')
+  );
+
+  const visibleMessages = messages.filter(m => !hiddenMessages.includes(m.id));
+
+  const handleClearMessages = () => {
+    const newHidden = [...new Set([...hiddenMessages, ...messages.map(m => m.id)])];
+    setHiddenMessages(newHidden);
+    localStorage.setItem(`hidden_messages_${memberId}`, JSON.stringify(newHidden));
+    toast.success("ההודעות הוסתרו בהצלחה");
+  };
 
   useEffect(() => {
     if (activeTab === 'messages' && memberId) {
@@ -755,9 +768,22 @@ export default function PublicMemberArea() {
 
           {activeTab === 'messages' && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <h3 className="font-bold text-lg px-1">הודעות מהגבאי</h3>
+              <div className="flex items-center justify-between px-1">
+                <h3 className="font-bold text-lg">הודעות מהגבאי</h3>
+                {visibleMessages.length > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 text-xs font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                    onClick={handleClearMessages}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 ml-1.5" />
+                    נקה הודעות
+                  </Button>
+                )}
+              </div>
               
-              {messages.length === 0 ? (
+              {visibleMessages.length === 0 ? (
                 <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 text-center border border-slate-100 dark:border-zinc-800 shadow-sm">
                   <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-800 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
                     <MessageSquare className="w-8 h-8" />
@@ -766,7 +792,7 @@ export default function PublicMemberArea() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {messages.map(m => {
+                  {visibleMessages.map(m => {
                     const isGlobal = m.is_global;
                     const isUnread = !isGlobal && !m.is_read;
                     
@@ -838,7 +864,7 @@ export default function PublicMemberArea() {
           >
             <div className={`${activeTab === 'messages' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'} relative`}>
               <Bell className={`w-6 h-6 ${activeTab === 'messages' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              {(messages.some(m => !m.is_global && !m.is_read) || (messages.some(m => m.is_global) && messages.find(m => m.is_global)?.id !== lastSeenGlobal)) && (
+              {(visibleMessages.some(m => !m.is_global && !m.is_read) || (visibleMessages.some(m => m.is_global) && visibleMessages.find(m => m.is_global)?.id !== lastSeenGlobal)) && (
                 <span className="absolute top-1 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900 animate-pulse"></span>
               )}
             </div>
