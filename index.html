@@ -16,17 +16,31 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
     
+    <script>
+      (function() {
+        var isMy = /^\/my\//.test(window.location.pathname);
+        if (isMy) {
+          document.title = "אזור אישי - ברית שלום";
+          document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute("content", "האזור שלי");
+        }
+      })();
+    </script>
+    
     <!-- PWA Manifest - set dynamically based on route and saved rotation -->
     <script>
       (function() {
         var isDisplay = /^\/display/.test(window.location.pathname);
-        if (!isDisplay) {
-          document.write('<link rel="manifest" href="/manifest-admin.json" />');
+        var isMy = /^\/my\//.test(window.location.pathname);
+        
+        if (isMy) {
+          // Do nothing. React's useManifestSwitcher will inject a dynamic blob manifest.
+        } else if (!isDisplay) {
+          document.write('<link rel="manifest" href="/manifest-admin.json" id="app-manifest" />');
         } else {
           // Check localStorage cache for rotation (set by the app)
           var rotation = localStorage.getItem('display_rotation') || '0';
           var isPortrait = rotation === '90' || rotation === '270';
-          document.write('<link rel="manifest" href="' + (isPortrait ? '/manifest-display-portrait.json' : '/manifest-display.json') + '" />');
+          document.write('<link rel="manifest" href="' + (isPortrait ? '/manifest-display-portrait.json' : '/manifest-display.json') + '" id="app-manifest" />');
         }
       })();
     </script>
