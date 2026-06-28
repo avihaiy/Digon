@@ -347,7 +347,7 @@ export default function PublicMemberArea() {
     const remainingSecPart = remainingSec % 60;
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 p-4 pt-[max(1rem,env(safe-area-inset-top))]" dir="rtl">
+      <div className="relative min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 p-4 pt-[max(1rem,env(safe-area-inset-top))]" dir="rtl">
         <div className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[2rem] p-8 shadow-xl border border-slate-100 dark:border-zinc-800 space-y-6 relative overflow-hidden">
           {/* Decorative background element */}
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>
@@ -409,6 +409,11 @@ export default function PublicMemberArea() {
               </form>
             )}
           </div>
+        </div>
+        
+        <div className="absolute bottom-6 left-0 right-0 text-center text-xs text-slate-400 dark:text-slate-500">
+          <div>© {new Date().getFullYear()} כל הזכויות שמורות לברית שלום</div>
+          <div className="mt-1">פותח ע״י אביחי יוסיפוביץ</div>
         </div>
       </div>
     );
