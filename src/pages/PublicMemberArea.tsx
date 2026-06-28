@@ -23,7 +23,8 @@ import {
   Bell,
   MessageSquare,
   Info,
-  Megaphone
+  Megaphone,
+  X
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
@@ -101,6 +102,9 @@ export default function PublicMemberArea() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [lastSeenGlobal, setLastSeenGlobal] = useState<string | null>(
     localStorage.getItem(`last_seen_global_${memberId}`)
+  );
+  const [dismissedGlobal, setDismissedGlobal] = useState<string | null>(
+    localStorage.getItem(`dismissed_global_${memberId}`)
   );
 
   useEffect(() => {
@@ -525,32 +529,48 @@ export default function PublicMemberArea() {
         )}
 
         {/* GLOBAL MESSAGES */}
-        {messages.filter(m => m.is_global).length > 0 && activeTab !== 'messages' && (
-          <div className="bg-gradient-to-r from-rose-500 to-red-500 rounded-3xl p-5 flex items-start gap-4 shadow-lg shadow-red-500/20 text-white animate-in fade-in slide-in-from-top-4 relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
-            <div className="mt-1 bg-white/20 p-2.5 rounded-full shrink-0 relative">
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-white rounded-full animate-ping"></span>
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-white rounded-full"></span>
-              <Megaphone className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-lg mb-1.5 flex items-center gap-2">
-                הודעה חשובה מהגבאי
-              </h4>
-              <p className="text-sm text-red-50 leading-relaxed font-medium">
-                {messages.find(m => m.is_global)?.content}
-              </p>
-              <Button 
-                variant="secondary" 
-                size="sm"
-                className="mt-3.5 bg-white text-red-600 hover:bg-red-50 shadow-sm font-bold w-auto h-8 px-4 text-xs rounded-full"
-                onClick={() => setActiveTab('messages')}
+        {(() => {
+          const globalMsg = messages.find(m => m.is_global);
+          if (!globalMsg || activeTab === 'messages' || globalMsg.id === dismissedGlobal) return null;
+
+          return (
+            <div className="bg-gradient-to-r from-rose-500 to-red-500 rounded-3xl p-5 flex items-start gap-4 shadow-lg shadow-red-500/20 text-white animate-in fade-in slide-in-from-top-4 relative overflow-hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-3 top-3 h-7 w-7 text-white/70 hover:text-white hover:bg-white/20 rounded-full z-10"
+                onClick={() => {
+                  localStorage.setItem(`dismissed_global_${memberId}`, globalMsg.id);
+                  setDismissedGlobal(globalMsg.id);
+                }}
               >
-                קרא עוד
+                <X className="w-4 h-4" />
               </Button>
+              <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+              <div className="mt-1 bg-white/20 p-2.5 rounded-full shrink-0 relative">
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-white rounded-full animate-ping"></span>
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-white rounded-full"></span>
+                <Megaphone className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-lg mb-1.5 flex items-center gap-2">
+                  הודעה חשובה מהגבאי
+                </h4>
+                <p className="text-sm text-red-50 leading-relaxed font-medium pl-6">
+                  {globalMsg.content}
+                </p>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  className="mt-3.5 bg-white text-red-600 hover:bg-red-50 shadow-sm font-bold w-auto h-8 px-4 text-xs rounded-full"
+                  onClick={() => setActiveTab('messages')}
+                >
+                  קרא עוד
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* BALANCE CARD */}
         <div className={`relative overflow-hidden rounded-3xl p-6 text-white shadow-xl transition-all ${netOwed > 0 ? 'bg-gradient-to-br from-indigo-500 to-blue-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600'}`}>

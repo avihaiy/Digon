@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Megaphone, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
+import { Megaphone, MessageSquare, Send, CheckCircle2, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function Messages() {
@@ -50,6 +50,20 @@ export default function Messages() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('member_messages').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('ההודעה נמחקה בהצלחה');
+      queryClient.invalidateQueries({ queryKey: ['member_messages'] });
+    },
+    onError: () => {
+      toast.error('שגיאה במחיקת ההודעה');
+    }
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -215,9 +229,28 @@ export default function Messages() {
                         )}
                         {msg.title && <h4 className="font-semibold text-sm">{msg.title}</h4>}
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(msg.created_at), 'dd/MM/yyyy HH:mm')}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(msg.created_at), 'dd/MM/yyyy HH:mm')}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            if (confirm('האם אתה בטוח שברצונך למחוק הודעה זו?')) {
+                              deleteMessageMutation.mutate(msg.id);
+                            }
+                          }}
+                          disabled={deleteMessageMutation.isPending}
+                        >
+                          {deleteMessageMutation.isPending && deleteMessageMutation.variables === msg.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
