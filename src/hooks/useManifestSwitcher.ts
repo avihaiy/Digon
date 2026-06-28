@@ -30,10 +30,12 @@ export function useManifestSwitcher() {
     };
 
     if (location.pathname.startsWith('/my/')) {
+      const origin = window.location.origin;
       const manifest = {
         name: "אזור אישי - ברית שלום",
         short_name: "האזור שלי",
-        start_url: location.pathname,
+        start_url: origin + location.pathname,
+        scope: origin + location.pathname,
         display: "standalone",
         background_color: "#ffffff",
         theme_color: "#ffffff",
@@ -41,14 +43,15 @@ export function useManifestSwitcher() {
         lang: "he",
         icons: [
           {
-            src: "/pwa-192x192.png",
+            src: origin + "/pwa-192x192.png",
             sizes: "192x192",
             type: "image/png"
           },
           {
-            src: "/pwa-512x512.png",
+            src: origin + "/pwa-512x512.png",
             sizes: "512x512",
-            type: "image/png"
+            type: "image/png",
+            purpose: "any maskable"
           }
         ]
       };
