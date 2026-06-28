@@ -19,6 +19,7 @@ export default function Messages() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
 
   // Fetch members for the dropdown
   const { data: members = [] } = useQuery({
@@ -104,6 +105,33 @@ export default function Messages() {
       toast.error('שגיאה בעדכון הפנייה');
     }
   });
+
+  const replyInquiryMutation = useMutation({
+    mutationFn: async ({ id, reply }: { id: string, reply: string }) => {
+      const { error } = await supabase
+        .from('member_inquiries')
+        .update({ 
+          status: 'resolved', 
+          reply: reply,
+          replied_at: new Date().toISOString(),
+          resolved_by: (await supabase.auth.getUser()).data.user?.id 
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('התשובה נשלחה והפנייה סומנה כטופלה');
+      setReplyInputs({});
+      queryClient.invalidateQueries({ queryKey: ['member_inquiries'] });
+    },
+    onError: () => {
+      toast.error('שגיאה בשליחת התשובה');
+    }
+  });
+
+  const handleReplyChange = (id: string, text: string) => {
+    setReplyInputs(prev => ({ ...prev, [id]: text }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -410,6 +438,50 @@ export default function Messages() {
                             <MessageSquare className="w-3 h-3" />
                             שלח וואטסאפ למתפלל
                           </a>
+                        </div>
+                      )}
+
+                      {inquiry.reply && (
+                        <div className="mt-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-100 dark:border-indigo-900/30">
+                          <div className="flex items-center gap-1 mb-1 text-indigo-700 dark:text-indigo-400">
+                            <Send className="w-3.5 h-3.5" />
+                            <span className="font-semibold text-sm">תשובת הגבאי</span>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{inquiry.reply}</p>
+                        </div>
+                      )}
+
+                      {inquiry.status === 'new' && (
+                        <div className="mt-4 border-t pt-4">
+                          <Label className="mb-2 block text-sm">מענה לפנייה (המתפלל יראה זאת באזור האישי)</Label>
+                          <Textarea
+                            placeholder="הקלד את תשובתך למתפלל כאן..."
+                            value={replyInputs[inquiry.id] || ''}
+                            onChange={(e) => handleReplyChange(inquiry.id, e.target.value)}
+                            className="min-h-[80px] text-sm resize-none"
+                          />
+                          <div className="flex justify-end mt-2">
+                            <Button
+                              size="sm"
+                              disabled={replyInquiryMutation.isPending && replyInquiryMutation.variables?.id === inquiry.id}
+                              onClick={() => {
+                                const txt = replyInputs[inquiry.id];
+                                if (!txt?.trim()) {
+                                  toast.error('אנא הזן תוכן למענה לפנייה');
+                                  return;
+                                }
+                                replyInquiryMutation.mutate({ id: inquiry.id, reply: txt });
+                              }}
+                              className="bg-indigo-600 hover:bg-indigo-700"
+                            >
+                              {replyInquiryMutation.isPending && replyInquiryMutation.variables?.id === inquiry.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                              ) : (
+                                <Send className="w-4 h-4 ml-2" />
+                              )}
+                              שלח תשובה וסגור פניה
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>

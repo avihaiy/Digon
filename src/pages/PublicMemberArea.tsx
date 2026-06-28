@@ -86,6 +86,7 @@ export default function PublicMemberArea() {
   const [pending, setPending] = useState<PendingPaymentRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
   const [messages, setMessages] = useState<MessageRow[]>([]);
+  const [inquiries, setInquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
@@ -292,6 +293,7 @@ export default function PublicMemberArea() {
         is_global: !!row.is_global,
       })),
     );
+    setInquiries(d.inquiries || []);
     setBitPhone(d.bit_phone || "");
     setBitEnabled(!!d.bit_enabled);
     setPayboxPhone(d.paybox_phone || "");
@@ -1196,6 +1198,45 @@ export default function PublicMemberArea() {
                           )}
                         </Button>
                       </form>
+
+                      {inquiries && inquiries.length > 0 && (
+                        <div className="mt-8">
+                          <h4 className="font-bold text-lg px-1 mb-4">היסטוריית פניות</h4>
+                          <div className="space-y-4">
+                            {inquiries.map((inq: any) => (
+                              <div key={inq.id} className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-slate-100 dark:border-zinc-800 shadow-sm">
+                                <div className="flex justify-between items-start mb-2">
+                                  <h5 className="font-bold text-sm">{inq.subject}</h5>
+                                  <span className="text-[10px] text-muted-foreground">{formatShortDate(inq.created_at)}</span>
+                                </div>
+                                <p className="text-sm text-foreground/90 whitespace-pre-wrap">{inq.content}</p>
+                                
+                                {inq.reply && (
+                                  <div className="mt-3 bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                                    <div className="flex items-center gap-1.5 mb-1.5 text-indigo-700 dark:text-indigo-400">
+                                      <MessageSquare className="w-4 h-4" />
+                                      <span className="font-bold text-xs">תשובת הגבאי</span>
+                                    </div>
+                                    <p className="text-sm text-indigo-900 dark:text-indigo-200 whitespace-pre-wrap">{inq.reply}</p>
+                                    {inq.replied_at && (
+                                      <div className="text-[10px] text-indigo-500/70 mt-1.5 flex justify-end">
+                                        {formatShortDate(inq.replied_at)}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {!inq.reply && inq.status === 'new' && (
+                                  <div className="mt-3 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md w-fit">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    <span>ממתין למענה</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
