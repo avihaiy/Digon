@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -90,12 +89,18 @@ export default function Messages() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      <PageHeader
-        title="הודעות למתפללים"
-        description="שליחת הודעות כלליות או אישיות לאזור האישי של המתפללים"
-        icon={Megaphone}
-      />
+    <div className="space-y-6 max-w-5xl mx-auto pb-12 animate-fade-up">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Megaphone className="w-6 h-6" />
+            הודעות למתפללים
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            שליחת הודעות כלליות או אישיות לאזור האישי של המתפללים
+          </p>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1 h-fit">
