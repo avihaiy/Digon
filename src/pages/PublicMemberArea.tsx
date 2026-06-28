@@ -507,7 +507,7 @@ export default function PublicMemberArea() {
       el.innerHTML = htmlContent;
       document.body.appendChild(el);
 
-      const worker = (window as any).html2pdf().set({
+      const worker = html2pdf().set({
         margin: 10,
         filename: `אישור_מס_${taxYear}_${memberName.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
