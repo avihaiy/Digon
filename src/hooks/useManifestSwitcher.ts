@@ -29,6 +29,39 @@ export function useManifestSwitcher() {
       }
     };
 
+    if (location.pathname.startsWith('/my/')) {
+      const manifest = {
+        name: "אזור אישי - ברית שלום",
+        short_name: "האזור שלי",
+        start_url: location.pathname,
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#ffffff",
+        dir: "rtl",
+        lang: "he",
+        icons: [
+          {
+            src: "/pwa-192x192.png",
+            sizes: "192x192",
+            type: "image/png"
+          },
+          {
+            src: "/pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png"
+          }
+        ]
+      };
+      
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      setManifest(url);
+      
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    }
+
     if (!isDisplay) {
       setManifest('/manifest-admin.json');
       return;
