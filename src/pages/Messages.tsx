@@ -129,6 +129,23 @@ export default function Messages() {
     }
   });
 
+  const deleteInquiryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('member_inquiries')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('הפנייה נמחקה בהצלחה');
+      queryClient.invalidateQueries({ queryKey: ['member_inquiries'] });
+    },
+    onError: () => {
+      toast.error('שגיאה במחיקת הפנייה');
+    }
+  });
+
   const handleReplyChange = (id: string, text: string) => {
     setReplyInputs(prev => ({ ...prev, [id]: text }));
   };
@@ -392,6 +409,24 @@ export default function Messages() {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-bold">{inquiry.members?.full_name}</span>
                             <span className="text-sm text-muted-foreground">• {inquiry.members?.phone}</span>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50 mr-2"
+                              onClick={() => {
+                                if (window.confirm('האם אתה בטוח שברצונך למחוק פניה זו?')) {
+                                  deleteInquiryMutation.mutate(inquiry.id);
+                                }
+                              }}
+                              title="מחק פנייה"
+                            >
+                              {deleteInquiryMutation.isPending && deleteInquiryMutation.variables === inquiry.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
+                            </Button>
                           </div>
                           <h4 className="font-semibold text-lg">{inquiry.subject}</h4>
                         </div>
