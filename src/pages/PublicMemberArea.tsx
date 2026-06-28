@@ -25,7 +25,9 @@ import {
   Info,
   Megaphone,
   X,
-  Trash2
+  Trash2,
+  User,
+  Save
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
@@ -97,7 +99,13 @@ export default function PublicMemberArea() {
   const [creditBalance, setCreditBalance] = useState<number>(0);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [sendingPayment, setSendingPayment] = useState(false);
-  const [activeTab, setActiveTab] = useState<"debts" | "receipts" | "messages">("debts");
+  const [activeTab, setActiveTab] = useState<"debts" | "receipts" | "messages" | "profile">("debts");
+  
+  // Profile state
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [spouseName, setSpouseName] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -279,6 +287,11 @@ export default function PublicMemberArea() {
     setPayboxPhone(d.paybox_phone || "");
     setPayboxEnabled(!!d.paybox_enabled);
     setCreditBalance(Number(d.credit_balance || 0));
+    
+    // Profile
+    if (d.email !== undefined) setEmail(d.email || "");
+    if (d.address !== undefined) setAddress(d.address || "");
+    if (d.spouse_name !== undefined) setSpouseName(d.spouse_name || "");
   };
 
   // Auto-refresh data every 15 seconds when authenticated
@@ -363,6 +376,33 @@ export default function PublicMemberArea() {
     setPending([]);
     setReceipts([]);
     toast.success("התנתקת מהאזור האישי");
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!memberId || !authed) return;
+    
+    const savedPhone = localStorage.getItem(phoneKey(memberId));
+    if (!savedPhone) return;
+
+    setIsSavingProfile(true);
+    try {
+      const { data, error } = await supabase.rpc('update_public_member_profile', {
+        _member_id: memberId,
+        _phone: savedPhone,
+        _new_full_name: memberName,
+        _new_email: email,
+        _new_address: address,
+        _new_spouse_name: spouseName
+      });
+      
+      if (error || !data) throw new Error("שגיאה בשמירת הנתונים");
+      toast.success("הפרטים עודכנו בהצלחה!");
+    } catch (err) {
+      toast.error("לא הצלחנו לעדכן את הפרטים. נסה שוב מאוחר יותר.");
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const totalCharges = useMemo(() => charges.reduce((s, c) => s + c.remaining_balance, 0), [charges]);
@@ -853,6 +893,61 @@ export default function PublicMemberArea() {
               )}
             </div>
           )}
+          
+          {activeTab === 'profile' && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <h3 className="font-bold text-lg px-1">הפרופיל שלי</h3>
+              <form onSubmit={handleSaveProfile} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-100 dark:border-zinc-800 shadow-sm space-y-4">
+                <div className="space-y-2">
+                  <Label>שם מלא</Label>
+                  <Input 
+                    value={memberName} 
+                    onChange={e => setMemberName(e.target.value)} 
+                    placeholder="שם מלא"
+                    className="h-12 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>שם בן/בת זוג</Label>
+                  <Input 
+                    value={spouseName} 
+                    onChange={e => setSpouseName(e.target.value)} 
+                    placeholder="למשל: רחל"
+                    className="h-12 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>כתובת מלאה</Label>
+                  <Input 
+                    value={address} 
+                    onChange={e => setAddress(e.target.value)} 
+                    placeholder="למשל: הרצל 10, עכו"
+                    className="h-12 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>אימייל</Label>
+                  <Input 
+                    type="email"
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)} 
+                    placeholder="example@gmail.com"
+                    className="h-12 rounded-xl text-left"
+                    dir="ltr"
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  disabled={isSavingProfile}
+                  className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md shadow-indigo-500/20 mt-2"
+                >
+                  {isSavingProfile ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5 ml-2" />}
+                  שמור שינויים
+                </Button>
+              </form>
+            </div>
+          )}
         </div>
         
         <div className="text-center mt-12 mb-4 text-xs text-slate-400 dark:text-slate-500">
@@ -895,6 +990,16 @@ export default function PublicMemberArea() {
               )}
             </div>
             <span className="text-[11px] font-semibold">הודעות</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('profile')} 
+            className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'profile' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+          >
+            <div className={`${activeTab === 'profile' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
+              <User className={`w-6 h-6 ${activeTab === 'profile' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+            </div>
+            <span className="text-[11px] font-semibold">פרופיל</span>
           </button>
         </div>
       </nav>
