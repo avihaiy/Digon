@@ -570,7 +570,7 @@ export default function PublicMemberArea() {
         {/* GLOBAL MESSAGES */}
         {(() => {
           const globalMsg = messages.find(m => m.is_global);
-          if (!globalMsg || activeTab === 'messages' || globalMsg.id === dismissedGlobal) return null;
+          if (!globalMsg || activeTab === 'messages' || globalMsg.id === dismissedGlobal || globalMsg.id === lastSeenGlobal) return null;
 
           return (
             <div className="bg-gradient-to-r from-rose-500 to-red-500 rounded-3xl p-5 flex items-start gap-4 shadow-lg shadow-red-500/20 text-white animate-in fade-in slide-in-from-top-4 relative overflow-hidden">
