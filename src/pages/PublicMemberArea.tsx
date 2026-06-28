@@ -33,6 +33,7 @@ const LOCKOUT_MS = 15 * 60 * 1000;
 const authKey = (id: string) => `member_area_auth_${id}`;
 const attemptsKey = (id: string) => `member_area_attempts_${id}`;
 const lockoutKey = (id: string) => `member_area_lockout_${id}`;
+const phoneKey = (id: string) => `member_area_phone_${id}`;
 
 interface ChargeRow {
   id: string;
@@ -158,6 +159,24 @@ export default function PublicMemberArea() {
             localStorage.removeItem(attemptsKey(memberId));
           }
         }
+
+        const savedPhone = localStorage.getItem(phoneKey(memberId));
+        if (savedPhone && d.has_phone) {
+          // Attempt auto-login
+          const { data: autoData, error: autoErr } = await supabase.rpc("get_member_area_data", {
+            _member_id: memberId,
+            _phone: savedPhone,
+            _user_agent: navigator.userAgent.slice(0, 500),
+          });
+          if (!autoErr && autoData && (autoData as any).success) {
+            applyMemberData(autoData as any);
+            setAuthed(true);
+            setLockedUntil(null);
+          } else {
+            localStorage.removeItem(phoneKey(memberId));
+          }
+        }
+
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "שגיאה בטעינה");
       } finally {
@@ -168,6 +187,41 @@ export default function PublicMemberArea() {
       cancelled = true;
     };
   }, [memberId]);
+
+  const applyMemberData = (d: any) => {
+    setCharges(
+      (d.charges || []).map((row: any) => ({
+        id: row.id,
+        amount: Number(row.amount),
+        remaining_balance: Number(row.remaining_balance),
+        description: row.description,
+        charge_date: row.charge_date,
+      })),
+    );
+    setPending(
+      (d.pending || []).map((row: any) => ({
+        id: row.id,
+        amount: Number(row.amount),
+        method: row.method,
+        created_at: row.created_at,
+        description: row.description,
+      })),
+    );
+    setReceipts(
+      (d.receipts || []).map((row: any) => ({
+        id: row.id,
+        receipt_number: Number(row.receipt_number),
+        total_amount: Number(row.total_amount),
+        description: row.description,
+        created_at: row.created_at,
+      })),
+    );
+    setBitPhone(d.bit_phone || "");
+    setBitEnabled(!!d.bit_enabled);
+    setPayboxPhone(d.paybox_phone || "");
+    setPayboxEnabled(!!d.paybox_enabled);
+    setCreditBalance(Number(d.credit_balance || 0));
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,40 +259,10 @@ export default function PublicMemberArea() {
     }
 
     const d: any = data;
-    setCharges(
-      (d.charges || []).map((row: any) => ({
-        id: row.id,
-        amount: Number(row.amount),
-        remaining_balance: Number(row.remaining_balance),
-        description: row.description,
-        charge_date: row.charge_date,
-      })),
-    );
-    setPending(
-      (d.pending || []).map((row: any) => ({
-        id: row.id,
-        amount: Number(row.amount),
-        method: row.method,
-        created_at: row.created_at,
-        description: row.description,
-      })),
-    );
-    setReceipts(
-      (d.receipts || []).map((row: any) => ({
-        id: row.id,
-        receipt_number: Number(row.receipt_number),
-        total_amount: Number(row.total_amount),
-        description: row.description,
-        created_at: row.created_at,
-      })),
-    );
-    setBitPhone(d.bit_phone || "");
-    setBitEnabled(!!d.bit_enabled);
-    setPayboxPhone(d.paybox_phone || "");
-    setPayboxEnabled(!!d.paybox_enabled);
-    setCreditBalance(Number(d.credit_balance || 0));
+    applyMemberData(d);
 
     sessionStorage.setItem(authKey(memberId), String(Date.now()));
+    localStorage.setItem(phoneKey(memberId), pwd);
     localStorage.removeItem(attemptsKey(memberId));
     localStorage.removeItem(lockoutKey(memberId));
     setAuthed(true);
@@ -249,6 +273,7 @@ export default function PublicMemberArea() {
   const handleLogout = () => {
     if (!memberId) return;
     sessionStorage.removeItem(authKey(memberId));
+    localStorage.removeItem(phoneKey(memberId));
     setAuthed(false);
     setCharges([]);
     setPending([]);
