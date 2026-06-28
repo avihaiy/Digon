@@ -27,7 +27,8 @@ import {
   X,
   Trash2,
   User,
-  Save
+  Save,
+  Send
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
@@ -101,13 +102,18 @@ export default function PublicMemberArea() {
   const [creditBalance, setCreditBalance] = useState<number>(0);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [sendingPayment, setSendingPayment] = useState(false);
-  const [activeTab, setActiveTab] = useState<"debts" | "receipts" | "messages" | "profile">("debts");
+  const [activeTab, setActiveTab] = useState<"debts" | "receipts" | "messages" | "profile" | "contact">("debts");
   
   // Profile state
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [spouseName, setSpouseName] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Contact State
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactContent, setContactContent] = useState("");
+  const [isSendingContact, setIsSendingContact] = useState(false);
   const [taxYear, setTaxYear] = useState(new Date().getFullYear() - 1);
   const [isGeneratingTax, setIsGeneratingTax] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -421,6 +427,38 @@ export default function PublicMemberArea() {
       toast.error("לא הצלחנו לעדכן את הפרטים. נסה שוב מאוחר יותר.");
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactSubject.trim() || !contactContent.trim()) {
+      toast.error("אנא מלא את נושא ותוכן הפניה");
+      return;
+    }
+    
+    const savedPhone = localStorage.getItem(phoneKey(memberId!));
+    if (!savedPhone) return;
+
+    setIsSendingContact(true);
+    try {
+      const { data, error } = await supabase.rpc('submit_member_inquiry', {
+        _member_id: memberId,
+        _phone: savedPhone,
+        _subject: contactSubject,
+        _content: contactContent
+      });
+      
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Unknown error');
+      
+      toast.success("פנייתך נשלחה בהצלחה לגבאי");
+      setContactSubject("");
+      setContactContent("");
+    } catch (e: any) {
+      toast.error(e.message || "שגיאה בשליחת הפניה");
+    } finally {
+      setIsSendingContact(false);
     }
   };
 
@@ -1115,7 +1153,52 @@ export default function PublicMemberArea() {
               </form>
             </div>
           )}
-        </div>
+
+          {activeTab === 'contact' && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                      <h3 className="font-bold text-lg px-1">פנייה לגבאי</h3>
+                      <form onSubmit={handleContactSubmit} className="space-y-4 bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-zinc-800">
+                        <div className="space-y-2">
+                          <Label>נושא הפניה</Label>
+                          <select 
+                            value={contactSubject}
+                            onChange={(e) => setContactSubject(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="">בחר נושא...</option>
+                            <option value="בירור חיוב / יתרת חוב">בירור חיוב / יתרת חוב</option>
+                            <option value="שאלה לגבי קבלה / אישור מס">שאלה לגבי קבלה / אישור מס</option>
+                            <option value="עדכון פרטים אישיים">עדכון פרטים אישיים</option>
+                            <option value="שאלה או בקשה כללית">שאלה או בקשה כללית</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>פירוט הפניה</Label>
+                          <textarea
+                            value={contactContent}
+                            onChange={(e) => setContactContent(e.target.value)}
+                            placeholder="כתוב כאן את הודעתך לגבאי..."
+                            className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                          />
+                        </div>
+                        <Button 
+                          type="submit" 
+                          className="w-full h-12 rounded-xl text-md font-medium"
+                          disabled={isSendingContact}
+                        >
+                          {isSendingContact ? (
+                            <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                          ) : (
+                            <>
+                              <Send className="w-5 h-5 ml-2" />
+                              שלח פניה לגבאי
+                            </>
+                          )}
+                        </Button>
+                      </form>
+                    </div>
+                  )}
+                </div>
         
         <div className="text-center mt-12 mb-4 text-xs text-slate-400 dark:text-slate-500">
           <div>© {new Date().getFullYear()} כל הזכויות שמורות לברית שלום</div>
