@@ -20,6 +20,9 @@ import {
   Copy,
   Check,
   QrCode,
+  Bell,
+  MessageSquare,
+  Info
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
@@ -59,6 +62,15 @@ interface ReceiptRow {
   created_at: string;
 }
 
+interface MessageRow {
+  id: string;
+  title: string | null;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+  is_global: boolean;
+}
+
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
   const [memberName, setMemberName] = useState<string>("");
@@ -66,6 +78,7 @@ export default function PublicMemberArea() {
   const [charges, setCharges] = useState<ChargeRow[]>([]);
   const [pending, setPending] = useState<PendingPaymentRow[]>([]);
   const [receipts, setReceipts] = useState<ReceiptRow[]>([]);
+  const [messages, setMessages] = useState<MessageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
@@ -81,7 +94,7 @@ export default function PublicMemberArea() {
   const [creditBalance, setCreditBalance] = useState<number>(0);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [sendingPayment, setSendingPayment] = useState(false);
-  const [activeTab, setActiveTab] = useState<"debts" | "receipts">("debts");
+  const [activeTab, setActiveTab] = useState<"debts" | "receipts" | "messages">("debts");
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -215,6 +228,16 @@ export default function PublicMemberArea() {
         total_amount: Number(row.total_amount),
         description: row.description,
         created_at: row.created_at,
+      })),
+    );
+    setMessages(
+      (d.messages || []).map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        content: row.content,
+        created_at: row.created_at,
+        is_read: !!row.is_read,
+        is_global: !!row.is_global,
       })),
     );
     setBitPhone(d.bit_phone || "");
@@ -484,6 +507,28 @@ export default function PublicMemberArea() {
           </div>
         )}
 
+        {/* GLOBAL MESSAGES */}
+        {messages.filter(m => m.is_global).length > 0 && activeTab !== 'messages' && (
+          <div className="bg-indigo-50/80 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-2xl p-4 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-4">
+            <div className="mt-0.5">
+              <Megaphone className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-indigo-900 dark:text-indigo-100 text-sm mb-1">הודעה מהגבאי</h4>
+              <p className="text-xs text-indigo-800/90 dark:text-indigo-200/90 line-clamp-2">
+                {messages.find(m => m.is_global)?.content}
+              </p>
+              <Button 
+                variant="link" 
+                className="h-auto p-0 text-[11px] text-indigo-600 dark:text-indigo-400 mt-1"
+                onClick={() => setActiveTab('messages')}
+              >
+                קרא הכל
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* BALANCE CARD */}
         <div className={`relative overflow-hidden rounded-3xl p-6 text-white shadow-xl transition-all ${netOwed > 0 ? 'bg-gradient-to-br from-indigo-500 to-blue-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600'}`}>
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
@@ -664,6 +709,55 @@ export default function PublicMemberArea() {
               )}
             </div>
           )}
+
+          {activeTab === 'messages' && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <h3 className="font-bold text-lg px-1">הודעות מהגבאי</h3>
+              
+              {messages.length === 0 ? (
+                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 text-center border border-slate-100 dark:border-zinc-800 shadow-sm">
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-800 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="w-8 h-8" />
+                  </div>
+                  <h4 className="font-bold text-lg mb-1">אין הודעות חדשות</h4>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {messages.map(m => {
+                    const isGlobal = m.is_global;
+                    const isUnread = !isGlobal && !m.is_read;
+                    
+                    // Mark as read immediately when viewed if it's personal and unread
+                    if (isUnread) {
+                      supabase.rpc('mark_message_read', { _message_id: m.id }).then(() => {
+                        setMessages(prev => prev.map(msg => msg.id === m.id ? { ...msg, is_read: true } : msg));
+                      });
+                    }
+
+                    return (
+                      <div key={m.id} className={`bg-white dark:bg-zinc-900 rounded-2xl p-4 border shadow-sm ${isUnread ? 'border-indigo-200 dark:border-indigo-800/50 bg-indigo-50/30 dark:bg-indigo-900/10' : 'border-slate-100 dark:border-zinc-800'}`}>
+                        <div className="flex items-start gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isGlobal ? 'bg-blue-50 text-blue-500' : 'bg-indigo-50 text-indigo-500'} dark:bg-opacity-10`}>
+                            {isGlobal ? <Info className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <div className="flex justify-between items-start">
+                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${isGlobal ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'}`}>
+                                {isGlobal ? 'כללי' : 'אישי'}
+                              </span>
+                              <span className="text-xs text-muted-foreground">{formatShortDate(m.created_at)}</span>
+                            </div>
+                            {m.title && <h4 className="font-bold text-sm leading-tight">{m.title}</h4>}
+                            <p className="text-sm text-foreground/90 whitespace-pre-wrap pt-1">{m.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="text-center mt-12 mb-4 text-xs text-slate-400 dark:text-slate-500">
@@ -693,6 +787,19 @@ export default function PublicMemberArea() {
               <ReceiptIcon className={`w-6 h-6 ${activeTab === 'receipts' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </div>
             <span className="text-[11px] font-semibold">קבלות</span>
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('messages')} 
+            className={`flex flex-col items-center justify-center p-2 transition-all relative ${activeTab === 'messages' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+          >
+            <div className={`${activeTab === 'messages' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'} relative`}>
+              <Bell className={`w-6 h-6 ${activeTab === 'messages' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+              {messages.some(m => !m.is_global && !m.is_read) && (
+                <span className="absolute top-1 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900 animate-pulse"></span>
+              )}
+            </div>
+            <span className="text-[11px] font-semibold">הודעות</span>
           </button>
         </div>
       </nav>

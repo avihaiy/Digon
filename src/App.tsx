@@ -13,6 +13,7 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 
 import Members from "@/pages/Members";
+import Messages from "@/pages/Messages";
 
 import Payments from "@/pages/Payments";
 import Receipts from "@/pages/Receipts";
@@ -127,6 +128,16 @@ const AnimatedRoutes = () => {
             <ProtectedRoute>
               <PageTransition>
                 <Members />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Messages />
               </PageTransition>
             </ProtectedRoute>
           }
