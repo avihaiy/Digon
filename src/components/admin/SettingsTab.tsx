@@ -40,6 +40,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [bitEnabled, setBitEnabled] = useState(false);
   const [payboxPhone, setPayboxPhone] = useState('');
   const [payboxEnabled, setPayboxEnabled] = useState(false);
+  const [taxReceiptEnabled, setTaxReceiptEnabled] = useState(true);
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
@@ -451,6 +452,49 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Load Tax Receipt settings
+  const { data: taxSettings } = useQuery({
+    queryKey: ['app-settings-tax'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .eq('key', 'tax_receipt_enabled')
+        .maybeSingle();
+      return data?.value ? data.value === 'true' : true;
+    },
+  });
+
+  useEffect(() => {
+    if (taxSettings !== undefined) {
+      setTaxReceiptEnabled(taxSettings);
+    }
+  }, [taxSettings]);
+
+  const saveTaxMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const previous = taxSettings !== undefined ? taxSettings : true;
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'tax_receipt_enabled', value: String(enabled) }, { onConflict: 'key' });
+      if (error) throw error;
+      
+      const { data: u } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        user_id: u.user?.id ?? null,
+        action: 'tax_receipt_settings_changed',
+        table_name: 'app_settings',
+        old_data: { tax_receipt_enabled: previous },
+        new_data: { tax_receipt_enabled: enabled },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-tax'] });
+      toast({ title: 'הגדרות אישור מס נשמרו בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Count enabled screens
   const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
@@ -737,11 +781,11 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>הצג כפתור תשלום ב-PayBox באזור האישי</Label>
+              <Label>אפשר תשלום ב-PayBox באזור האישי</Label>
               <Switch checked={payboxEnabled} onCheckedChange={setPayboxEnabled} />
             </div>
             <div className="space-y-2">
-              <Label>מספר טלפון לקבלת תשלומים ב-PayBox</Label>
+              <Label>מספר טלפון לקבלת PayBox</Label>
               <Input
                 type="tel"
                 inputMode="numeric"
@@ -761,6 +805,32 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             >
               <Save className="w-4 h-4 ml-2" />
               שמור הגדרות PayBox
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Tax Receipt */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              אישור מס מרוכז באזור האישי
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>אפשר הפקת אישורי מס עצמאית</Label>
+              <Switch checked={taxReceiptEnabled} onCheckedChange={setTaxReceiptEnabled} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              כאשר אפשרות זו מופעלת, מתפללים יוכלו להוריד אישור מס שנתי מרוכז (סעיף 46) ישירות מהאזור האישי שלהם כקובץ PDF.
+            </p>
+            <Button
+              onClick={() => saveTaxMutation.mutate(taxReceiptEnabled)}
+              disabled={saveTaxMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור הגדרות אישור מס
             </Button>
           </CardContent>
         </Card>

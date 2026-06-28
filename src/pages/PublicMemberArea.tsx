@@ -96,6 +96,7 @@ export default function PublicMemberArea() {
   const [bitEnabled, setBitEnabled] = useState(false);
   const [payboxPhone, setPayboxPhone] = useState<string>("");
   const [payboxEnabled, setPayboxEnabled] = useState(false);
+  const [taxReceiptEnabled, setTaxReceiptEnabled] = useState(true);
   const [payboxDialogOpen, setPayboxDialogOpen] = useState(false);
   const [creditBalance, setCreditBalance] = useState<number>(0);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
@@ -289,6 +290,7 @@ export default function PublicMemberArea() {
     setBitEnabled(!!d.bit_enabled);
     setPayboxPhone(d.paybox_phone || "");
     setPayboxEnabled(!!d.paybox_enabled);
+    setTaxReceiptEnabled(d.tax_receipt_enabled !== false); // default true
     setCreditBalance(Number(d.credit_balance || 0));
     
     // Profile
@@ -925,42 +927,44 @@ export default function PublicMemberArea() {
           {activeTab === 'receipts' && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
               {/* Tax Receipt Section */}
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-900/20 rounded-3xl p-5 border border-indigo-100 dark:border-indigo-900 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <FileDown className="w-24 h-24" />
-                </div>
-                <div className="relative z-10 space-y-3">
-                  <div>
-                    <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                      אישור מס (סעיף 46) מרוכז
-                    </h3>
-                    <p className="text-sm text-indigo-700/80 dark:text-indigo-300/80">
-                      הורדת ריכוז קבלות לצורך החזר מס.
-                    </p>
+              {taxReceiptEnabled && (
+                <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-900/20 rounded-3xl p-5 border border-indigo-100 dark:border-indigo-900 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <FileDown className="w-24 h-24" />
                   </div>
-                  
-                  <div className="flex gap-2 items-center">
-                    <select
-                      value={taxYear}
-                      onChange={(e) => setTaxYear(Number(e.target.value))}
-                      className="h-10 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white/80 dark:bg-zinc-900/80 px-3 text-sm focus:ring-2 focus:ring-indigo-500 font-medium w-28"
-                    >
-                      {[new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2].map(year => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
-                    <Button 
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm gap-2"
-                      onClick={handleGenerateTaxReceipt}
-                      disabled={isGeneratingTax}
-                    >
-                      {isGeneratingTax ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-                      הפק PDF
-                    </Button>
+                  <div className="relative z-10 space-y-3">
+                    <div>
+                      <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        אישור מס (סעיף 46) מרוכז
+                      </h3>
+                      <p className="text-sm text-indigo-700/80 dark:text-indigo-300/80">
+                        הורדת ריכוז קבלות לצורך החזר מס.
+                      </p>
+                    </div>
+                    
+                    <div className="flex gap-2 items-center">
+                      <select
+                        value={taxYear}
+                        onChange={(e) => setTaxYear(Number(e.target.value))}
+                        className="h-10 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white/80 dark:bg-zinc-900/80 px-3 text-sm focus:ring-2 focus:ring-indigo-500 font-medium w-28"
+                      >
+                        {[new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2].map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                      <Button 
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm gap-2"
+                        onClick={handleGenerateTaxReceipt}
+                        disabled={isGeneratingTax}
+                      >
+                        {isGeneratingTax ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                        הפק PDF
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <h3 className="font-bold text-lg px-1 mt-6">הקבלות שלי</h3>
               
