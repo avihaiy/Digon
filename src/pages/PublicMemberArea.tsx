@@ -347,7 +347,7 @@ export default function PublicMemberArea() {
     const remainingSecPart = remainingSec % 60;
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 p-4" dir="rtl">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 p-4 pt-[max(1rem,env(safe-area-inset-top))]" dir="rtl">
         <div className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[2rem] p-8 shadow-xl border border-slate-100 dark:border-zinc-800 space-y-6 relative overflow-hidden">
           {/* Decorative background element */}
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>
@@ -417,7 +417,7 @@ export default function PublicMemberArea() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 pb-20" dir="rtl">
       {/* HEADER */}
-      <header className="sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 px-5 py-4 flex items-center justify-between shadow-sm">
+      <header className="sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm">
         <div className="flex flex-col">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">אזור אישי</span>
           <h1 className="text-lg font-bold text-foreground">שלום {memberName}</h1>
