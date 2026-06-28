@@ -22,6 +22,8 @@
         if (isMy) {
           document.title = "אזור אישי - ברית שלום";
           document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute("content", "איזור אישי");
+          document.querySelector('link[rel="apple-touch-icon"]').setAttribute("href", "/pwa-personal-192x192.png");
+          document.querySelector('link[sizes="180x180"]').setAttribute("href", "/pwa-personal-192x192.png");
         }
       })();
     </script>
