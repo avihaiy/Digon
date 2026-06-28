@@ -22,7 +22,8 @@ import {
   QrCode,
   Bell,
   MessageSquare,
-  Info
+  Info,
+  Megaphone
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
