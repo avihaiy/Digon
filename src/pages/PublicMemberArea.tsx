@@ -653,6 +653,10 @@ export default function PublicMemberArea() {
             </div>
           )}
         </div>
+        
+        <div className="text-center mt-12 mb-4 text-xs text-slate-400 dark:text-slate-500">
+          © {new Date().getFullYear()} כל הזכויות שמורות לברית שלום
+        </div>
       </main>
 
       {/* BOTTOM NAVIGATION (Sticky) */}
