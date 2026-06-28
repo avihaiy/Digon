@@ -655,7 +655,8 @@ export default function PublicMemberArea() {
         </div>
         
         <div className="text-center mt-12 mb-4 text-xs text-slate-400 dark:text-slate-500">
-          © {new Date().getFullYear()} כל הזכויות שמורות לברית שלום
+          <div>© {new Date().getFullYear()} כל הזכויות שמורות לברית שלום</div>
+          <div className="mt-1">פותח ע״י אביחי יוסיפוביץ</div>
         </div>
       </main>
 
