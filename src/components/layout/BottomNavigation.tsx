@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, CreditCard, Bell, Settings } from 'lucide-react';
+import { Home, Users, CreditCard, Bell, Settings, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,9 +7,9 @@ import { supabase } from '@/integrations/supabase/client';
 const tabs = [
   { href: '/', icon: Home, label: 'בקרה', badge: false },
   { href: '/members', icon: Users, label: 'חברים', badge: false },
+  { href: '/messages', icon: Megaphone, label: 'הודעות', badge: false },
   { href: '/payments', icon: CreditCard, label: 'תשלומים', badge: false },
   { href: '/reminders', icon: Bell, label: 'תזכורות', badge: 'reminders' as const },
-  { href: '/settings', icon: Settings, label: 'הגדרות', badge: false },
 ];
 
 export default function BottomNavigation() {
