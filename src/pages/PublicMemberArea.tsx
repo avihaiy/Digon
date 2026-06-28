@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
+import html2pdf from 'html2pdf.js';
 
 // תוקף סשן: 24 שעות
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
