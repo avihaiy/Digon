@@ -397,6 +397,20 @@ export default function PublicMemberArea() {
       });
       
       if (error || !data) throw new Error("שגיאה בשמירת הנתונים");
+      
+      const cachedRaw = localStorage.getItem("memberData");
+      if (cachedRaw) {
+        try {
+          const parsed = JSON.parse(cachedRaw);
+          parsed.address = address;
+          parsed.spouse_name = spouseName;
+          parsed.email = email;
+          parsed.member_name = memberName;
+          localStorage.setItem("memberData", JSON.stringify(parsed));
+          setCachedData(parsed);
+        } catch(e) {}
+      }
+
       toast.success("הפרטים עודכנו בהצלחה!");
     } catch (err) {
       toast.error("לא הצלחנו לעדכן את הפרטים. נסה שוב מאוחר יותר.");

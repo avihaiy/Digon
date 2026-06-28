@@ -30,6 +30,8 @@ import {
   Trash2,
   Minus,
   Send,
+  MapPin,
+  Heart,
 } from 'lucide-react';
 import {
   formatCurrency,
@@ -111,7 +113,7 @@ export function MemberDetailDialog({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('members')
-        .select('phone, email')
+        .select('phone, email, address, spouse_name')
         .eq('id', memberId!)
         .maybeSingle();
       if (error) throw error;
