@@ -281,6 +281,32 @@ export default function PublicMemberArea() {
     setCreditBalance(Number(d.credit_balance || 0));
   };
 
+  // Auto-refresh data every 15 seconds when authenticated
+  useEffect(() => {
+    if (!authed || !memberId) return;
+    
+    const savedPhone = localStorage.getItem(phoneKey(memberId));
+    if (!savedPhone) return;
+
+    const fetchLatest = async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_member_area_data", {
+          _member_id: memberId,
+          _phone: savedPhone,
+          _user_agent: navigator.userAgent.slice(0, 500),
+        });
+        if (!error && data && (data as any).success) {
+          applyMemberData(data as any);
+        }
+      } catch (e) {
+        // Silently fail on background refresh
+      }
+    };
+
+    const intervalId = setInterval(fetchLatest, 15000);
+    return () => clearInterval(intervalId);
+  }, [authed, memberId]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwdError(null);
