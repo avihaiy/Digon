@@ -507,7 +507,8 @@ export default function PublicMemberArea() {
       el.innerHTML = htmlContent;
       document.body.appendChild(el);
 
-      const worker = html2pdf().set({
+      const generatePdf = (html2pdf as any).default || html2pdf;
+      const worker = generatePdf().set({
         margin: 10,
         filename: `אישור_מס_${taxYear}_${memberName.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
@@ -520,9 +521,9 @@ export default function PublicMemberArea() {
       document.body.removeChild(el);
       toast.success("אישור המס הופק בהצלחה!");
       
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("שגיאה בהפקת אישור מס. נסה שוב.");
+      toast.error(`שגיאה בהפקת אישור מס: ${err?.message || "שגיאה לא ידועה"}`);
     } finally {
       setIsGeneratingTax(false);
     }
