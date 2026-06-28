@@ -33,7 +33,7 @@ export function useManifestSwitcher() {
       const origin = window.location.origin;
       const manifest = {
         name: "אזור אישי - ברית שלום",
-        short_name: "האזור שלי",
+        short_name: "איזור אישי",
         start_url: origin + location.pathname,
         scope: origin + location.pathname,
         display: "standalone",
