@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ResponsiveModal } from "@/components/ui/responsive-modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -967,13 +966,16 @@ export default function Payments() {
       </Card>
 
       {/* Add Payment Dialog */}
-      <ResponsiveModal
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        title={editingPayment ? "עריכת תשלום" : "קבלת תשלום חדש"}
-        icon={CreditCard}
-      >
-        <form onSubmit={handleSubmit} className="space-y-4 pb-20">
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] max-h-[90dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              {editingPayment ? "עריכת תשלום" : "קבלת תשלום חדש"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4 pb-20">
             {/* Payment Category Selection */}
             {!editingPayment && (
               <div className="space-y-2">
@@ -1422,7 +1424,8 @@ export default function Payments() {
               </Button>
             </div>
           </form>
-      </ResponsiveModal>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog with Code Protection */}
       <DeleteCodeDialog
