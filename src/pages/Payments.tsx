@@ -1021,6 +1021,42 @@ export default function Payments() {
               </div>
             )}
 
+            {/* Donation Type */}
+            {paymentCategory === "donation" && (
+              <div className="space-y-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <Label className="font-semibold text-primary">פרטי התרומה</Label>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>סוג הקדשה</Label>
+                    <Select value={donationPurpose} onValueChange={setDonationPurpose}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחר סוג הקדשה" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="לרפואת">לרפואת</SelectItem>
+                        <SelectItem value="לעילוי נשמת">לעילוי נשמת</SelectItem>
+                        <SelectItem value="להצלחת">להצלחת</SelectItem>
+                        <SelectItem value="לשמירה והגנה על">לשמירה והגנה על</SelectItem>
+                        <SelectItem value="לישועת">לישועת</SelectItem>
+                        <SelectItem value="תרומה כללית">תרומה כללית (ללא הקדשה)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {donationPurpose !== "תרומה כללית" && (
+                    <div className="space-y-2">
+                      <Label>שם האדם (כולל שם האם/האב)</Label>
+                      <Input
+                        value={donationName}
+                        onChange={(e) => setDonationName(e.target.value)}
+                        placeholder="לדוגמה: ישראל בן שרה"
+                        className="text-right"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Hall Event Type */}
             {paymentCategory === "hall" && (
               <div className="space-y-3 p-4 rounded-xl bg-muted/50 border border-border">
