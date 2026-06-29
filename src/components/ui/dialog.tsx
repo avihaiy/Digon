@@ -73,7 +73,7 @@ const DialogContent = React.forwardRef<
   const isMobile = useIsMobile();
   if (isMobile) {
     return (
-      <DrawerContent ref={ref} className={cn("px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] max-h-[96dvh]", className)} {...props}>
+      <DrawerContent ref={ref} className={cn(className, "px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] max-h-[96dvh] w-full max-w-none rounded-t-[10px] rounded-b-none")} {...props}>
         <div className="overflow-y-auto w-full h-full pb-4">
           {children}
         </div>
