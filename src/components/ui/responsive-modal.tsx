@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
 
 export function ResponsiveModal({ 
   open, 
@@ -27,6 +27,7 @@ export function ResponsiveModal({
               {Icon && <Icon className="w-5 h-5" />}
               {title}
             </DrawerTitle>
+            <DrawerDescription className="hidden">תפריט</DrawerDescription>
           </DrawerHeader>
           <div className="overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4">
             {children}
@@ -44,6 +45,7 @@ export function ResponsiveModal({
             {Icon && <Icon className="w-5 h-5" />}
             {title}
           </DialogTitle>
+          <DialogDescription className="hidden">חלון</DialogDescription>
         </DialogHeader>
         {children}
       </DialogContent>
