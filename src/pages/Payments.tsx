@@ -40,6 +40,7 @@ import {
   FileCheck,
   Share2,
   MessageCircle,
+  Heart,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -56,7 +57,7 @@ import {
 } from "@/lib/hebrew-utils";
 
 type FilterType = "all" | "pending" | "confirmed" | "bit" | "cash" | "check" | "bank_transfer" | "this_month";
-type PaymentCategory = "regular" | "hall";
+type PaymentCategory = "regular" | "hall" | "donation";
 type HallEventType = "simcha" | "azkara";
 
 export default function Payments() {
@@ -81,6 +82,8 @@ export default function Payments() {
   const [useCustomName, setUseCustomName] = useState(false);
   const [customName, setCustomName] = useState("");
   const [debtsDialogOpen, setDebtsDialogOpen] = useState(false);
+  const [donationPurpose, setDonationPurpose] = useState("לרפואת");
+  const [donationName, setDonationName] = useState("");
 
   const [formData, setFormData] = useState({
     member_id: "",
@@ -236,6 +239,8 @@ export default function Payments() {
         if (paymentCategory === "hall") {
           const eventLabel = hallEventType === "simcha" ? "שמחה" : "אזכרה";
           receiptDescription = `תשלום אולם - ${eventLabel} — תשלום ${installmentNumber} מתוך ${totalInstallments}`;
+        } else if (paymentCategory === "donation") {
+          receiptDescription = `תרומה ${donationPurpose} ${donationName}`.trim();
         } else if (occasionType === "parasha") {
           receiptDescription = `תשלום - פרשת ${formData.occasion}`;
         } else {
@@ -382,6 +387,8 @@ export default function Payments() {
     setInstallmentNumber("1");
     setInstallmentTotalAmount("");
     setUseCustomName(false);
+    setDonationPurpose("לרפואת");
+    setDonationName("");
     setCustomName("");
   };
 
@@ -973,18 +980,18 @@ export default function Payments() {
             {!editingPayment && (
               <div className="space-y-2">
                 <Label>סוג תשלום</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setPaymentCategory("regular")}
-                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-2 ${
+                    className={`px-2 py-3 rounded-lg border-2 transition-all text-sm font-medium flex flex-col items-center justify-center gap-1 ${
                       paymentCategory === "regular"
                         ? "border-primary bg-primary/5 text-primary"
                         : "border-border hover:border-primary/50"
                     }`}
                   >
                     <CreditCard className="w-4 h-4" />
-                    תשלום רגיל
+                    רגיל
                   </button>
                   <button
                     type="button"
@@ -1183,66 +1190,70 @@ export default function Payments() {
               />
             </div>
 
-            {/* Occasion Type Selection */}
-            <div className="space-y-2">
-              <Label>סוג אירוע</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOccasionType("parasha");
-                    setFormData({ ...formData, occasion: getCurrentParasha() });
-                  }}
-                  className={`px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
-                    occasionType === "parasha"
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  פרשה
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOccasionType("holiday");
-                    setFormData({ ...formData, occasion: HOLIDAY_LIST[0] });
-                  }}
-                  className={`px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
-                    occasionType === "holiday"
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  חג / אירוע
-                </button>
-              </div>
-            </div>
+            {/* Occasion Type Selection (Regular Payment Only) */}
+            {paymentCategory === "regular" && (
+              <>
+                <div className="space-y-2">
+                  <Label>סוג אירוע</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOccasionType("parasha");
+                        setFormData({ ...formData, occasion: getCurrentParasha() });
+                      }}
+                      className={`px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
+                        occasionType === "parasha"
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      פרשה
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOccasionType("holiday");
+                        setFormData({ ...formData, occasion: HOLIDAY_LIST[0] });
+                      }}
+                      className={`px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
+                        occasionType === "holiday"
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      חג / אירוע
+                    </button>
+                  </div>
+                </div>
 
-            {/* Parasha or Holiday Selection */}
-            <div className="space-y-2">
-              <Label>{occasionType === "parasha" ? "פרשה לקבלה" : "חג / אירוע לקבלה"}</Label>
-              <Select
-                value={formData.occasion}
-                onValueChange={(value) => setFormData({ ...formData, occasion: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={occasionType === "parasha" ? "בחר פרשה" : "בחר חג / אירוע"} />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {occasionType === "parasha"
-                    ? PARASHA_LIST.map((parasha) => (
-                        <SelectItem key={parasha} value={parasha}>
-                          {parasha}
-                        </SelectItem>
-                      ))
-                    : HOLIDAY_LIST.map((holiday) => (
-                        <SelectItem key={holiday} value={holiday}>
-                          {holiday}
-                        </SelectItem>
-                      ))}
-                </SelectContent>
-              </Select>
-            </div>
+                {/* Parasha or Holiday Selection */}
+                <div className="space-y-2">
+                  <Label>{occasionType === "parasha" ? "פרשה לקבלה" : "חג / אירוע לקבלה"}</Label>
+                  <Select
+                    value={formData.occasion}
+                    onValueChange={(value) => setFormData({ ...formData, occasion: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={occasionType === "parasha" ? "בחר פרשה" : "בחר חג / אירוע"} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {occasionType === "parasha"
+                        ? PARASHA_LIST.map((parasha) => (
+                            <SelectItem key={parasha} value={parasha}>
+                              {parasha}
+                            </SelectItem>
+                          ))
+                        : HOLIDAY_LIST.map((holiday) => (
+                            <SelectItem key={holiday} value={holiday}>
+                              {holiday}
+                            </SelectItem>
+                          ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
 
             {/* Payment Method */}
             <div className="space-y-3">
