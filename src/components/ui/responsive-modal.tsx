@@ -20,7 +20,7 @@ export function ResponsiveModal({
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
+      <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
         <DrawerContent className="max-h-[96dvh]">
           <DrawerHeader className="text-right border-b pb-4 mb-4">
             <DrawerTitle className="flex items-center gap-2 justify-start">
