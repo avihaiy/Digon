@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { ThemeProvider } from "@/components/theme-provider";
+import { DirectionProvider } from "@radix-ui/react-direction";
 import AppLayout from "@/components/layout/AppLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
@@ -391,23 +392,25 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <TooltipProvider>
-        <OfflineSyncProvider>
-          <PWAUpdateProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AuthProvider>
-                <AnimatedRoutes />
-              </AuthProvider>
-            </BrowserRouter>
-          </PWAUpdateProvider>
-        </OfflineSyncProvider>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <DirectionProvider dir="rtl">
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <TooltipProvider>
+          <OfflineSyncProvider>
+            <PWAUpdateProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AuthProvider>
+                  <AnimatedRoutes />
+                </AuthProvider>
+              </BrowserRouter>
+            </PWAUpdateProvider>
+          </OfflineSyncProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </DirectionProvider>
 );
 
 export default App;
