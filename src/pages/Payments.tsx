@@ -996,14 +996,26 @@ export default function Payments() {
                   <button
                     type="button"
                     onClick={() => setPaymentCategory("hall")}
-                    className={`px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-2 ${
+                    className={`px-2 py-3 rounded-lg border-2 transition-all text-sm font-medium flex flex-col items-center justify-center gap-1 ${
                       paymentCategory === "hall"
                         ? "border-primary bg-primary/5 text-primary"
                         : "border-border hover:border-primary/50"
                     }`}
                   >
                     <Building2 className="w-4 h-4" />
-                    תשלום אולם
+                    אולם
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentCategory("donation")}
+                    className={`px-2 py-3 rounded-lg border-2 transition-all text-sm font-medium flex flex-col items-center justify-center gap-1 ${
+                      paymentCategory === "donation"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <Heart className="w-4 h-4" />
+                    תרומה
                   </button>
                 </div>
               </div>
