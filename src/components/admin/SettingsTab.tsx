@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
 import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send, Bell, Volume2, VolumeX, Calendar, Smartphone } from 'lucide-react';
 import { playNotificationSound, getSelectedSound, setSelectedSound, SOUND_PRESETS, type SoundPreset } from '@/lib/notification-sounds';
