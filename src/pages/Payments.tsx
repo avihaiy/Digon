@@ -980,7 +980,7 @@ export default function Payments() {
             {!editingPayment && (
               <div className="space-y-2">
                 <Label>סוג תשלום</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="flex flex-col sm:grid sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setPaymentCategory("regular")}
@@ -1061,7 +1061,7 @@ export default function Payments() {
             {paymentCategory === "hall" && (
               <div className="space-y-3 p-4 rounded-xl bg-muted/50 border border-border">
                 <Label className="font-semibold">סוג אירוע באולם</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setHallEventType("simcha")}
@@ -1086,7 +1086,7 @@ export default function Payments() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                   <div className="space-y-1">
                     <Label className="text-xs">סכום כולל לכל התשלומים</Label>
                     <Input
@@ -1243,7 +1243,7 @@ export default function Payments() {
               <>
                 <div className="space-y-2">
                   <Label>סוג אירוע</Label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => {
@@ -1306,7 +1306,7 @@ export default function Payments() {
             {/* Payment Method */}
             <div className="space-y-3">
               <Label>אמצעי תשלום</Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("cash")}
