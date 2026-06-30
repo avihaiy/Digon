@@ -36,6 +36,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [displayRotation, setDisplayRotation] = useState('0');
   const [eventReminderHours, setEventReminderHours] = useState('24');
   const [notificationSound, setNotificationSound] = useState<SoundPreset>(getSelectedSound());
+  const [bankAccountDetails, setBankAccountDetails] = useState('');
   const [bitPhone, setBitPhone] = useState('');
   const [bitEnabled, setBitEnabled] = useState(false);
   const [payboxPhone, setPayboxPhone] = useState('');
@@ -69,7 +70,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
 
   // Load display lock code
   const { data: lockCodeSetting } = useQuery({
-    queryKey: ['app-settings-display-lock-code'],
+    queryKey: ['app-settings-display-lock'],
     queryFn: async () => {
       const { data } = await supabase
         .from('app_settings')
@@ -79,6 +80,40 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
       return data?.value || '1234';
     },
   });
+
+  // Load bank account details
+  const { data: bankAccountSetting } = useQuery({
+    queryKey: ['app-settings-bank-account'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'bank_account_details')
+        .maybeSingle();
+      return data?.value || '';
+    },
+  });
+
+  useEffect(() => {
+    if (bankAccountSetting !== undefined) {
+      setBankAccountDetails(bankAccountSetting);
+    }
+  }, [bankAccountSetting]);
+
+  const saveBankAccountMutation = useMutation({
+    mutationFn: async (val: string) => {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'bank_account_details', value: val }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'פרטי בנק נשמרו בהצלחה' });
+      queryClient.invalidateQueries({ queryKey: ['app-settings-bank-account'] });
+    },
+  });
+
+
 
   // Load delete protection code
   const { data: deleteCodeSetting } = useQuery({
@@ -733,7 +768,38 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
           </CardContent>
         </Card>
 
-        {/* Bit Payment */}
+        {/* Bank Account Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            פרטי העברה בנקאית (בנק בית הכנסת)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>פרטי החשבון להעברה (יוצג באזור האישי של המתפללים)</Label>
+            <Textarea
+              value={bankAccountDetails}
+              onChange={e => setBankAccountDetails(e.target.value)}
+              placeholder="לדוגמה: בנק פועלים (12), סניף 123, חשבון 123456 עש בית כנסת..."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">
+              הפרטים שיוזנו כאן יוצגו באזור האישי של כל מתפלל, יחד עם כפתור העתקה והנחיה לשלוח צילום מסך לגבאי.
+            </p>
+          </div>
+          <Button
+            onClick={() => saveBankAccountMutation.mutate(bankAccountDetails)}
+            disabled={saveBankAccountMutation.isPending}
+          >
+            <Save className="w-4 h-4 ml-2" />
+            שמור פרטי בנק
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Bit Payment */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -28,7 +28,8 @@ import {
   Trash2,
   User,
   Save,
-  Send
+  Send,
+  Building2
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { toast } from "sonner";
@@ -98,6 +99,7 @@ export default function PublicMemberArea() {
   const [bitEnabled, setBitEnabled] = useState(false);
   const [payboxPhone, setPayboxPhone] = useState<string>("");
   const [payboxEnabled, setPayboxEnabled] = useState(false);
+  const [bankAccountDetails, setBankAccountDetails] = useState<string>("");
   const [taxReceiptEnabled, setTaxReceiptEnabled] = useState(true);
   const [payboxDialogOpen, setPayboxDialogOpen] = useState(false);
   const [creditBalance, setCreditBalance] = useState<number>(0);
@@ -298,7 +300,13 @@ export default function PublicMemberArea() {
     setBitEnabled(!!d.bit_enabled);
     setPayboxPhone(d.paybox_phone || "");
     setPayboxEnabled(!!d.paybox_enabled);
-    setTaxReceiptEnabled(d.tax_receipt_enabled !== false); // default true
+      
+      // Fetch bank account details directly
+      supabase.from('app_settings').select('value').eq('key', 'bank_account_details').maybeSingle().then(({ data }) => {
+        if (data && data.value) setBankAccountDetails(data.value);
+      });
+      
+      setTaxReceiptEnabled(d.tax_receipt_enabled !== false); // default true
     setCreditBalance(Number(d.credit_balance || 0));
     
     // Profile
@@ -849,6 +857,40 @@ export default function PublicMemberArea() {
             )}
           </div>
         </div>
+
+        {/* PAYMENT BUTTONS */}
+        {bankAccountDetails && (
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base">העברה בנקאית (בנק בית הכנסת)</h3>
+                <p className="text-xs text-muted-foreground">העתיקו את הפרטים להעברה</p>
+              </div>
+            </div>
+            <div className="bg-slate-50 dark:bg-zinc-950 p-4 rounded-xl text-sm font-medium whitespace-pre-wrap font-mono relative group">
+              {bankAccountDetails}
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => {
+                  navigator.clipboard.writeText(bankAccountDetails);
+                  toast.success("פרטי הבנק הועתקו בהצלחה!");
+                }}
+              >
+                <Copy className="w-4 h-4 ml-1.5" />
+                העתק
+              </Button>
+            </div>
+            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl flex items-center gap-2">
+              <Info className="w-4 h-4 shrink-0" />
+              לאחר ביצוע ההעברה, נא לשלוח צילום מסך או אסמכתא לגבאי לאישור התשלום.
+            </p>
+          </div>
+        )}
 
         {/* PAYMENT BUTTONS */}
         {netOwed > 0 && (bitEnabled || payboxEnabled) && (
