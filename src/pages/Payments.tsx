@@ -975,7 +975,7 @@ export default function Payments() {
 
       {/* Add Payment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent dir="rtl" className="max-w-md w-full sm:max-h-[90dvh] sm:overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <DialogContent dir="rtl" className="max-w-md w-[calc(100vw-2rem)] max-h-[90dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
@@ -1469,7 +1469,7 @@ export default function Payments() {
       />
       {/* Debts Breakdown Dialog */}
       <Dialog open={debtsDialogOpen} onOpenChange={setDebtsDialogOpen}>
-        <DialogContent className="max-w-lg sm:max-h-[80vh] sm:overflow-y-auto" dir="rtl">
+        <DialogContent className="max-w-lg w-[calc(100vw-2rem)] max-h-[80dvh] overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right">פירוט חובות שטרם נגבו</DialogTitle>
           </DialogHeader>
