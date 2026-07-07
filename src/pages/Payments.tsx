@@ -975,8 +975,7 @@ export default function Payments() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="overflow-y-auto max-h-[80dvh] px-1 -mx-1">
-            <form onSubmit={handleSubmit} className="space-y-4 pb-20">
+          <form onSubmit={handleSubmit} className="space-y-4 pb-20">
             {/* Payment Category Selection */}
             {!editingPayment && (
               <div className="space-y-2">
@@ -1425,7 +1424,6 @@ export default function Payments() {
               </Button>
             </div>
             </form>
-          </div>
         </DialogContent>
       </Dialog>
 
@@ -1463,7 +1461,7 @@ export default function Payments() {
       />
       {/* Debts Breakdown Dialog */}
       <Dialog open={debtsDialogOpen} onOpenChange={setDebtsDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto" dir="rtl">
+        <DialogContent className="max-w-lg sm:max-h-[80vh] sm:overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right">פירוט חובות שטרם נגבו</DialogTitle>
           </DialogHeader>
