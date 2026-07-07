@@ -1405,11 +1405,11 @@ export default function Payments() {
               </div>
             )}
 
-            <div className="sticky bottom-0 bg-background/95 backdrop-blur pt-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] flex gap-3">
-              <Button type="button" variant="outline" onClick={handleCloseDialog} className="flex-1">
+            <div className="sticky bottom-0 bg-background/95 backdrop-blur pt-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] flex flex-col-reverse sm:flex-row gap-3">
+              <Button type="button" variant="outline" onClick={handleCloseDialog} className="w-full sm:flex-1">
                 ביטול
               </Button>
-              <Button type="submit" className="flex-1 btn-primary-gradient" disabled={savePayment.isPending}>
+              <Button type="submit" className="w-full sm:flex-1 btn-primary-gradient" disabled={savePayment.isPending}>
                 {savePayment.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 ml-2 animate-spin" />
