@@ -633,7 +633,7 @@ export default function Payments() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="glass-card">
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-5 h-5 text-success" />
                 </div>
@@ -647,7 +647,7 @@ export default function Payments() {
 
           <Card className="glass-card">
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <Receipt className="w-5 h-5 text-primary" />
                 </div>
@@ -661,7 +661,7 @@ export default function Payments() {
 
           <Card className="glass-card cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDebtsDialogOpen(true)}>
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
                   <AlertCircle className="w-5 h-5 text-warning" />
                 </div>
@@ -676,38 +676,38 @@ export default function Payments() {
 
           <Card className="glass-card">
             <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex flex-col gap-1.5 text-xs w-full">
-                  <div className="flex items-center justify-between gap-1">
+              <div className="flex items-start gap-3 w-full min-w-0">
+                <div className="flex flex-col gap-1.5 text-xs w-full min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1 min-w-0">
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Banknote className="w-3.5 h-3.5 text-green-600" />
-                      <span className="text-muted-foreground">מזומן:</span>
+                      <span className="text-muted-foreground shrink-0">מזומן:</span>
                     </div>
-                    <span className="font-bold hebrew-number truncate">{formatCurrency(cashTotal)}</span>
+                    <span className="font-bold hebrew-number truncate min-w-0">{formatCurrency(cashTotal)}</span>
                   </div>
-                  <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center justify-between gap-1 min-w-0">
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Smartphone className="w-3.5 h-3.5 text-purple-600" />
-                      <span className="text-muted-foreground">ביט:</span>
+                      <span className="text-muted-foreground shrink-0">ביט:</span>
                     </div>
-                    <span className="font-bold hebrew-number truncate">{formatCurrency(bitTotal)}</span>
+                    <span className="font-bold hebrew-number truncate min-w-0">{formatCurrency(bitTotal)}</span>
                   </div>
                   {checkTotal > 0 && (
-                    <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center justify-between gap-1 min-w-0">
                       <div className="flex items-center gap-1.5 shrink-0">
                         <FileCheck className="w-3.5 h-3.5 text-blue-600" />
-                        <span className="text-muted-foreground">צ׳ק:</span>
+                        <span className="text-muted-foreground shrink-0">צ׳ק:</span>
                       </div>
-                      <span className="font-bold hebrew-number truncate">{formatCurrency(checkTotal)}</span>
+                      <span className="font-bold hebrew-number truncate min-w-0">{formatCurrency(checkTotal)}</span>
                     </div>
                   )}
                   {bankTransferTotal > 0 && (
-                    <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center justify-between gap-1 min-w-0">
                       <div className="flex items-center gap-1.5 shrink-0">
                         <Building2 className="w-3.5 h-3.5 text-orange-600" />
-                        <span className="text-muted-foreground">העברה:</span>
+                        <span className="text-muted-foreground shrink-0">העברה:</span>
                       </div>
-                      <span className="font-bold hebrew-number truncate">{formatCurrency(bankTransferTotal)}</span>
+                      <span className="font-bold hebrew-number truncate min-w-0">{formatCurrency(bankTransferTotal)}</span>
                     </div>
                   )}
                 </div>
