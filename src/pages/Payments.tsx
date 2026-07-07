@@ -967,7 +967,7 @@ export default function Payments() {
 
       {/* Add Payment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent dir="rtl" className="max-w-md w-[95vw] max-h-[90dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+        <DialogContent dir="rtl" className="max-w-md w-full max-h-[90dvh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
