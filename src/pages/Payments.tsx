@@ -630,52 +630,54 @@ export default function Payments() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="glass-card">
-            <CardContent className="p-4">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3 w-full min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
                   <TrendingUp className="w-5 h-5 text-success" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-muted-foreground truncate">סה״כ הכנסות</p>
-                  <p className="text-lg font-bold hebrew-number truncate">{formatCurrency(totalConfirmed)}</p>
+                  <p className="text-base sm:text-lg font-bold hebrew-number truncate">{formatCurrency(totalConfirmed)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="glass-card">
-            <CardContent className="p-4">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3 w-full min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <Receipt className="w-5 h-5 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-muted-foreground truncate">הכנסות החודש</p>
-                  <p className="text-lg font-bold hebrew-number truncate">{formatCurrency(thisMonthAmount)}</p>
+                  <p className="text-base sm:text-lg font-bold hebrew-number truncate">{formatCurrency(thisMonthAmount)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDebtsDialogOpen(true)}>
-            <CardContent className="p-4">
+          <Card className="glass-card col-span-2 lg:col-span-1 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDebtsDialogOpen(true)}>
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3 w-full min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
                   <AlertCircle className="w-5 h-5 text-warning" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-muted-foreground truncate">חובות שטרם נגבו</p>
-                  <p className="text-lg font-bold hebrew-number truncate">{formatCurrency(totalMemberDebts)}</p>
-                  {debtMemberCount > 0 && <p className="text-xs text-muted-foreground truncate">{debtMemberCount} חברים</p>}
+                  <div className="flex items-center justify-between">
+                    <p className="text-base sm:text-lg font-bold hebrew-number truncate">{formatCurrency(totalMemberDebts)}</p>
+                    {debtMemberCount > 0 && <p className="text-xs text-muted-foreground shrink-0 bg-warning/10 px-2 py-0.5 rounded-full">{debtMemberCount} חברים</p>}
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="glass-card">
-            <CardContent className="p-4">
+          <Card className="glass-card col-span-2 lg:col-span-1">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-start gap-3 w-full min-w-0">
                 <div className="flex flex-col gap-1.5 text-xs w-full min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1 min-w-0">
@@ -864,7 +866,7 @@ export default function Payments() {
                   </div>
 
                   {/* Bottom row on mobile: amount + badges + actions */}
-                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 mr-0 sm:mr-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 mr-0 sm:mr-0 flex-wrap">
                     <div className="flex items-center gap-2">
                       <span className="text-base sm:text-lg font-bold hebrew-number">
                         {formatCurrency(Number(payment.amount))}
