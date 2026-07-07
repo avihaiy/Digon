@@ -616,14 +616,14 @@ export default function Payments() {
     <div className="space-y-6 animate-fade-up">
       {/* Header with Enhanced Stats */}
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-1.5 sm:gap-2">
               <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
               ניהול תשלומים
             </h1>
           </div>
-          <Button onClick={() => setDialogOpen(true)} className="btn-primary-gradient gap-1.5 sm:gap-2 shrink-0 text-sm px-3 sm:text-base sm:px-4">
+          <Button onClick={() => setDialogOpen(true)} className="btn-primary-gradient gap-1.5 sm:gap-2 text-sm px-4 self-start sm:self-auto">
             <Plus className="w-4 h-4 shrink-0" />
             קבל תשלום
           </Button>
