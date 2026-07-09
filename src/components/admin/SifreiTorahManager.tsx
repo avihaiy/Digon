@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { HDate } from '@hebcal/core';
 import { cn } from '@/lib/utils';
-import { getRequiredSifreiTorah, getNextShabbat } from '@/lib/hebrew-utils';
+import { getRequiredSifreiTorah, getNextShabbat, getOccasionForDate } from '@/lib/hebrew-utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -180,11 +180,12 @@ export default function SifreiTorahManager() {
     const allRows: any[] = [];
     datesToSchedule.forEach(date => {
       const dateIso = toIsoDate(date);
+      const autoLabel = getOccasionForDate(date).label || null;
       schedSeferIds.forEach((sefer_id, idx) => {
         allRows.push({
           scheduled_date: dateIso,
           sefer_id,
-          label: schedLabel.trim() || null,
+          label: schedLabel.trim() || autoLabel,
           position: idx + 1,
           time_slot: schedSlot,
         });
@@ -1018,6 +1019,7 @@ export default function SifreiTorahManager() {
                 onChange={(e) => setSchedLabel(e.target.value)}
                 className="bg-white dark:bg-slate-900 h-12 rounded-xl"
               />
+              <p className="text-[11px] text-muted-foreground mt-1">אם תשאירו ריק, המערכת תזהה את שם הפרשה/החג באופן אוטומטי.</p>
             </div>
 
             <div className="space-y-3">
