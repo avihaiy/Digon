@@ -1071,7 +1071,7 @@ export default function Display() {
 
       {/* Fullscreen Controls */}
       <AnimatePresence>
-        {(!isFullscreen || (showControls && !isLocked)) && (
+        {(!isFullscreen || showControls || isLocked) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
