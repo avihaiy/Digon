@@ -96,7 +96,9 @@ export default function SifreiTorahManager() {
 
   // States for Schedule Tab
   const [schedule, setSchedule] = useState<ScheduleRow[]>([]);
+  const [schedMode, setSchedMode] = useState<'date' | 'month'>('date');
   const [schedDate, setSchedDate] = useState<Date | undefined>(undefined);
+  const [schedMonthYear, setSchedMonthYear] = useState<string>('');
   const [schedSeferIds, setSchedSeferIds] = useState<string[]>([]);
   const [schedLabel, setSchedLabel] = useState('');
   const [schedSlot, setSchedSlot] = useState<string>('all');
@@ -143,37 +145,87 @@ export default function SifreiTorahManager() {
 
   const addSchedule = async () => {
     if (!isAdmin) {
-      toast({ title: 'אין הרשאה — פעולה זו זמינה למנהל בלבד', variant: 'destructive' });
+      toast({ title: 'אין הרשאה - רק מנהל יכול לשבץ', variant: 'destructive' });
       return;
     }
-    if (!schedDate || schedSeferIds.length === 0) {
-      toast({ title: 'יש לבחור תאריך ולפחות ספר תורה אחד', variant: 'destructive' });
+    if ((schedMode === 'date' && !schedDate) || (schedMode === 'month' && !schedMonthYear) || schedSeferIds.length === 0) {
+      toast({ title: 'יש לבחור תאריך/חודש ולפחות ספר תורה אחד', variant: 'destructive' });
       return;
     }
 
-    const dateIso = toIsoDate(schedDate);
-    const rows = schedSeferIds.map((sefer_id, idx) => ({
-      scheduled_date: dateIso,
-      sefer_id,
-      label: schedLabel.trim() || null,
-      position: idx + 1,
-      time_slot: schedSlot,
-    }));
+    let datesToSchedule: Date[] = [];
+
+    if (schedMode === 'date' && schedDate) {
+      datesToSchedule = [schedDate];
+    } else if (schedMode === 'month' && schedMonthYear) {
+      const [yearStr, monthStr] = schedMonthYear.split('-');
+      const hYear = parseInt(yearStr);
+      const hMonth = parseInt(monthStr);
+      
+      let hd = new HDate(1, hMonth, hYear);
+      while (hd.getMonth() === hMonth) {
+        if (hd.getDay() === 6) { // 6 = Saturday
+          datesToSchedule.push(hd.greg());
+        }
+        hd = hd.next();
+      }
+      
+      if (datesToSchedule.length === 0) {
+        toast({ title: 'לא נמצאו שבתות בחודש זה', variant: 'destructive' });
+        return;
+      }
+    }
+
+    const allRows: any[] = [];
+    datesToSchedule.forEach(date => {
+      const dateIso = toIsoDate(date);
+      schedSeferIds.forEach((sefer_id, idx) => {
+        allRows.push({
+          scheduled_date: dateIso,
+          sefer_id,
+          label: schedLabel.trim() || null,
+          position: idx + 1,
+          time_slot: schedSlot,
+        });
+      });
+    });
+
     const { error } = await db
       .from('sifrei_torah_schedule')
-      .upsert(rows, { onConflict: 'scheduled_date,time_slot,sefer_id' });
+      .upsert(allRows, { onConflict: 'scheduled_date,time_slot,sefer_id' });
+      
     if (error) {
       toast({ title: 'שגיאה בשמירת השיוך', description: error.message, variant: 'destructive' });
       return;
     }
+    
     setSchedDate(undefined);
+    setSchedMonthYear('');
+    setSchedMode('date');
     setSchedSeferIds([]);
     setSchedLabel('');
     setSchedSlot('all');
     setIsAddScheduleOpen(false);
-    toast({ title: `נשמרו ${rows.length} ספרים לתאריך (${TIME_SLOT_LABELS[schedSlot]})` });
+    toast({ title: `נשמרו ${allRows.length} שיבוצים` });
     load();
   };
+
+  const nextHebrewMonths = useMemo(() => {
+    const months = [];
+    let hd = new HDate();
+    hd = new HDate(1, hd.getMonth(), hd.getFullYear());
+    for (let i = 0; i < 12; i++) {
+      const parts = hd.render('he-x-NoNikud').split(' ');
+      parts.shift(); // Remove the day (א׳)
+      months.push({
+        value: `${hd.getFullYear()}-${hd.getMonth()}`,
+        label: parts.join(' '),
+      });
+      const nextHd = new HDate(hd.abs() + 32);
+      hd = new HDate(1, nextHd.getMonth(), nextHd.getFullYear());
+    }
+    return months;
+  }, []);
 
   const removeSchedule = (id: string) => {
     if (!isAdmin) {
@@ -903,20 +955,44 @@ export default function SifreiTorahManager() {
               return null;
             })()}
 
-            <div className="space-y-2.5">
-              <Label className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">תאריך השיבוץ</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn('w-full justify-start text-right font-normal h-12 bg-white dark:bg-slate-900 rounded-xl', !schedDate && 'text-muted-foreground')}>
-                    <CalendarIcon className="w-4.5 h-4.5 ml-2.5 opacity-50" />
-                    {schedDate ? format(schedDate, 'PPP', { locale: he }) : 'לחץ לבחירת תאריך מלוח השנה'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={schedDate} onSelect={setSchedDate} initialFocus locale={he} />
-                </PopoverContent>
-              </Popover>
-            </div>
+            <Tabs value={schedMode} onValueChange={(v) => setSchedMode(v as 'date' | 'month')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-2">
+                <TabsTrigger value="date">תאריך ספציפי</TabsTrigger>
+                <TabsTrigger value="month">לכל החודש (שבתות)</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {schedMode === 'date' ? (
+              <div className="space-y-2.5">
+                <Label className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">תאריך השיבוץ</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn('w-full justify-start text-right font-normal h-12 bg-white dark:bg-slate-900 rounded-xl', !schedDate && 'text-muted-foreground')}>
+                      <CalendarIcon className="w-4.5 h-4.5 ml-2.5 opacity-50" />
+                      {schedDate ? format(schedDate, 'PPP', { locale: he }) : 'לחץ לבחירת תאריך מלוח השנה'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={schedDate} onSelect={setSchedDate} initialFocus locale={he} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <Label className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">בחר חודש עברי</Label>
+                <Select value={schedMonthYear} onValueChange={setSchedMonthYear}>
+                  <SelectTrigger className="bg-white dark:bg-slate-900 h-12 rounded-xl">
+                    <SelectValue placeholder="בחר חודש לשיבוץ כל השבתות שבו" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {nextHebrewMonths.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground mt-1">המערכת תשבץ את הספרים באופן אוטומטי לכל השבתות שחלות בחודש הנבחר.</p>
+              </div>
+            )}
 
             <div className="space-y-2.5">
               <Label className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">זמן התפילה</Label>

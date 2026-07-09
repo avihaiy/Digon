@@ -1,0 +1,1 @@
+const { HDate } = require(@hebcal/core); const now = new HDate(); console.log(now.getMonthName());
