@@ -216,7 +216,8 @@ export default function SifreiTorahManager() {
     let hd = new HDate();
     hd = new HDate(1, hd.getMonth(), hd.getFullYear());
     for (let i = 0; i < 12; i++) {
-      const parts = hd.render('he-x-NoNikud').split(' ');
+      const raw = hd.renderGematriya().replace(/[\u0591-\u05C7]/g, '');
+      const parts = raw.split(' ');
       parts.shift(); // Remove the day (א׳)
       months.push({
         value: `${hd.getFullYear()}-${hd.getMonth()}`,
