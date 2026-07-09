@@ -1,8 +1,25 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
-@tailwind utilities;@layer base {
+@tailwind utilities;
+
+/* Scale up Display on large screens */
+@media (min-width: 1024px) {
+  .display-auto-scale {
+    width: calc(100vw / 1.15) !important;
+    height: calc(100vh / 1.15) !important;
+    transform: scale(1.15) !important;
+    transform-origin: top right !important; /* RTL default */
+  }
+}
+@media (min-width: 1536px) {
+  .display-auto-scale {
+    width: calc(100vw / 1.35) !important;
+    height: calc(100vh / 1.35) !important;
+    transform: scale(1.35) !important;
+  }
+}@layer base {
   :root {
     --background: 45 30% 97%;
     --foreground: 20 25% 15%;
