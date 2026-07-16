@@ -81,7 +81,7 @@ export default function Newsletter() {
       const parashaName = parashaEvent ? parashaEvent.render("he").replace("פרשת ", "") : "";
       
       // Get heb date string like "כ' אלול תשפ\"ד"
-      const heDateStr = hDate.render("he");
+      const heDateStr = hDate.renderGematriya();
       
       setData(prev => ({
         ...prev,
