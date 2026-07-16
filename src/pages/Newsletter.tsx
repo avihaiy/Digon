@@ -365,36 +365,36 @@ export default function Newsletter() {
             {/* The actual A4 Page to be captured */}
             <div 
               ref={newsletterRef}
-              className="w-[210mm] min-h-[297mm] bg-white text-black p-[12mm] relative overflow-hidden"
+              className="w-[210mm] min-h-[297mm] bg-white text-black p-[15mm] relative flex flex-col"
               style={{ direction: 'rtl', fontFamily: '"Heebo", "Frank Ruhl Libre", sans-serif' }}
             >
               {/* Decorative Border Background */}
-              <div className="absolute inset-4 border-[3px] border-double border-primary/20 pointer-events-none rounded-lg z-0"></div>
+              <div className="absolute inset-4 border border-primary/30 pointer-events-none rounded-xl z-0"></div>
+              <div className="absolute inset-[1.1rem] border border-primary/10 pointer-events-none rounded-lg z-0"></div>
               
-              <div className="relative z-10">
+              <div className="relative z-10 flex-1 flex flex-col">
                 {/* Header */}
-                <div className="text-center mb-6 border-b-[3px] border-double border-primary/30 pb-4 mt-2">
-                  <h1 className="text-5xl font-black text-primary mb-2 tracking-tight drop-shadow-sm">עלון שבת</h1>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">{data.synagogueName}</h2>
-                  <div className="flex justify-center items-center gap-4 text-gray-700 font-bold bg-primary/5 py-1.5 px-6 rounded-full inline-flex border border-primary/10">
+                <div className="text-center mb-8 pb-6 border-b border-primary/20 mt-2 flex flex-col items-center">
+                  <h1 className="text-5xl font-black text-primary mb-3 tracking-tight">עלון שבת</h1>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">{data.synagogueName}</h2>
+                  <div className="flex justify-center items-center gap-4 text-primary font-bold bg-primary/5 py-1.5 px-6 rounded-full border border-primary/10">
                     <span>פרשת {data.parasha}</span>
                     <span className="text-primary/40">•</span>
                     <span>{data.hebrewDate}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-12 gap-6">
+                <div className="grid grid-cols-12 gap-8 flex-1">
                   {/* Main Content Column */}
-                  <div className="col-span-8 space-y-5">
+                  <div className="col-span-8 space-y-8">
                     {/* Dvar Torah */}
                     {data.dvarTorahTitle && (
-                      <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-200/60 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-1 h-full bg-primary/60"></div>
-                        <h3 className="text-2xl font-bold text-primary mb-3 pb-2 border-b border-primary/10 inline-block">
+                      <div className="bg-white">
+                        <h3 className="text-2xl font-bold text-primary mb-4 pb-2 border-b-2 border-primary/20 inline-block">
                           {data.dvarTorahTitle}
                         </h3>
                         <div 
-                          className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify font-serif text-lg [&>p]:mb-3 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
+                          className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify font-serif text-lg [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
                           dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
                         />
                       </div>
@@ -402,13 +402,13 @@ export default function Newsletter() {
 
                     {/* Halacha */}
                     {data.halachaTitle && (
-                      <div className="bg-blue-50/40 p-5 rounded-xl border border-blue-100 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-1 h-full bg-blue-400"></div>
-                        <h3 className="text-xl font-bold text-blue-900 mb-3 pb-2 border-b border-blue-200/50 inline-block">
+                      <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-primary rounded-full"></span>
                           {data.halachaTitle}
                         </h3>
                         <div 
-                          className="prose prose-sm max-w-none text-gray-800 leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:mr-5"
+                          className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:mr-5"
                           dangerouslySetInnerHTML={{ __html: data.halachaContent }}
                         />
                       </div>
@@ -416,13 +416,13 @@ export default function Newsletter() {
 
                     {/* Announcements */}
                     {data.announcementsTitle && (
-                      <div className="bg-amber-50/50 p-5 rounded-xl border border-amber-200/50 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-1 h-full bg-amber-400"></div>
-                        <h3 className="text-xl font-bold text-amber-900 mb-3 pb-2 border-b border-amber-200/50 inline-block">
+                      <div className="bg-primary/5 p-5 rounded-xl border border-primary/10">
+                        <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-primary rounded-full"></span>
                           {data.announcementsTitle}
                         </h3>
                         <div 
-                          className="prose prose-sm max-w-none text-gray-800 leading-relaxed [&>p]:mb-2"
+                          className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&>p]:mb-2"
                           dangerouslySetInnerHTML={{ __html: data.announcements }}
                         />
                       </div>
@@ -430,17 +430,17 @@ export default function Newsletter() {
                   </div>
 
                   {/* Sidebar Column */}
-                  <div className="col-span-4 space-y-5">
+                  <div className="col-span-4 space-y-6">
                     {/* Prayer Times */}
-                    <div className="bg-primary/5 p-5 rounded-xl border border-primary/10 shadow-sm relative">
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-3 text-primary font-bold border border-primary/20 rounded-full shadow-sm text-sm">
+                    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="bg-primary/10 text-primary font-bold text-center py-3 border-b border-primary/10">
                         זמני התפילות
                       </div>
-                      <div className="space-y-3 mt-3">
+                      <div className="p-4 space-y-3">
                         {data.times.map((t, idx) => (
-                          <div key={idx} className="flex justify-between items-center border-b border-primary/10 pb-2 last:border-0 last:pb-0">
-                            <span className="font-semibold text-gray-800">{t.label}</span>
-                            <span className="font-bold text-primary tabular-nums tracking-wider bg-white px-2 py-0.5 rounded shadow-sm border border-primary/5" dir="ltr">{t.time}</span>
+                          <div key={idx} className="flex justify-between items-center border-b border-dashed border-slate-200 pb-2 last:border-0 last:pb-0">
+                            <span className="font-semibold text-gray-700">{t.label}</span>
+                            <span className="font-bold text-primary tabular-nums tracking-wider" dir="ltr">{t.time}</span>
                           </div>
                         ))}
                       </div>
@@ -448,11 +448,11 @@ export default function Newsletter() {
 
                     {/* Sponsors */}
                     {data.parnasHashavua && (
-                      <div className="bg-emerald-50/80 p-5 rounded-xl border border-emerald-200/60 shadow-sm relative">
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-3 text-emerald-700 font-bold border border-emerald-200 rounded-full shadow-sm text-sm">
+                      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div className="bg-slate-100 text-slate-700 font-bold text-center py-3 border-b border-slate-200">
                           פרנס השבוע
                         </div>
-                        <div className="text-emerald-950 text-center leading-relaxed whitespace-pre-wrap font-medium mt-3">
+                        <div className="p-4 text-slate-800 text-center leading-relaxed whitespace-pre-wrap font-medium">
                           {data.parnasHashavua}
                         </div>
                       </div>
@@ -461,7 +461,7 @@ export default function Newsletter() {
                 </div>
 
                 {/* Footer */}
-                <div className="absolute bottom-[10mm] left-[15mm] right-[15mm] text-center pt-3 border-t border-gray-300 text-gray-500 text-sm font-medium">
+                <div className="mt-auto pt-6 text-center text-gray-400 text-sm font-medium">
                   שבת שלום ומבורך! הופק באמצעות מערכת ניהול בית הכנסת
                 </div>
               </div>
