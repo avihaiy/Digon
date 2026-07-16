@@ -669,7 +669,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
 
         <Divider theme={t} />
 
-        <div style={{ padding: "3mm 3mm 0", textAlign: "right" }}>
+        <div style={{ padding: "3mm 3mm 0", textAlign: "right", direction: "rtl" }}>
           {data.rows.map((row, idx) => (
             <div key={row.id}>
               {row.isHeader ? (
@@ -691,6 +691,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
                     display: "flex",
                     alignItems: "baseline",
                     justifyContent: "space-between",
+                    direction: "rtl",
                     fontSize: "19px",
                     fontWeight: 700,
                     color: t.textPrimary,
