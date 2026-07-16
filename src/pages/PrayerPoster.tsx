@@ -555,15 +555,44 @@ const THEMES: Record<Variant, Theme> = {
 function PosterPreview({ data, variant, orientation = "portrait" }: { data: PosterData; variant: Variant; orientation?: "portrait" | "landscape" }) {
   const t = THEMES[variant];
   const nameParts = splitName(data.synagogueName);
+  const isLandscape = orientation === "landscape";
   
-  const width = orientation === "landscape" ? "297mm" : "210mm";
-  const minHeight = orientation === "landscape" ? "167mm" : "297mm";
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dynamicWidth, setDynamicWidth] = useState<string>(isLandscape ? "297mm" : "210mm");
+
+  useEffect(() => {
+    if (!isLandscape) {
+      setDynamicWidth("210mm");
+      return;
+    }
+
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const height = containerRef.current.offsetHeight;
+        // 1mm = 3.78px approx. 297mm = ~1122px.
+        const targetWidth = height * (16 / 9);
+        if (targetWidth > 1122) {
+          setDynamicWidth(`${targetWidth}px`);
+        } else {
+          setDynamicWidth("297mm");
+        }
+      }
+    };
+
+    updateWidth();
+    // Re-check width after a short delay to allow fonts to render
+    setTimeout(updateWidth, 100);
+  }, [isLandscape, data.rows.length, data]);
+
+  const minHeight = isLandscape ? "167mm" : "297mm";
+  const sf = isLandscape ? 1.4 : 1; // Scale factor for landscape fonts
   
   return (
     <div
+      ref={containerRef}
       className="poster-page relative shadow-2xl"
       style={{
-        width,
+        width: dynamicWidth,
         minHeight,
         padding: "20mm 18mm",
         boxSizing: "border-box",
@@ -617,13 +646,13 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm" }}>
           <img src={posterLogo} alt="לוגו" style={{ height: "14mm", objectFit: "contain" }} />
         </div>
-        <div style={{ fontSize: "22px", fontWeight: 500, letterSpacing: "1px", color: t.textSecondary }}>
+        <div style={{ fontSize: `${22 * sf}px`, fontWeight: 500, letterSpacing: "1px", color: t.textSecondary }}>
           {nameParts.prefix}
         </div>
         {nameParts.quoted && (
           <div
             style={{
-              fontSize: "42px",
+              fontSize: `${42 * sf}px`,
               fontWeight: 900,
               letterSpacing: variant === "shabbat" ? "2px" : "1px",
               color: t.textPrimary,
@@ -633,8 +662,21 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
             "{nameParts.quoted}"
           </div>
         )}
+        {nameParts.main && (
+          <div
+            style={{
+              fontSize: `${42 * sf}px`,
+              fontWeight: 900,
+              letterSpacing: variant === "shabbat" ? "2px" : "1px",
+              color: t.textPrimary,
+              marginTop: nameParts.quoted ? "2px" : "6px",
+            }}
+          >
+            {nameParts.main}
+          </div>
+        )}
         {data.subtitle && (
-          <div style={{ fontSize: "18px", color: t.textSecondary, marginTop: "6px", letterSpacing: "0.5px" }}>
+          <div style={{ fontSize: `${18 * sf}px`, color: t.textSecondary, marginTop: "6px", letterSpacing: "0.5px" }}>
             {data.subtitle}
           </div>
         )}
@@ -643,7 +685,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
 
         <div
           style={{
-            fontSize: "38px",
+            fontSize: `${38 * sf}px`,
             fontWeight: 900,
             color: t.textPrimary,
             margin: "4mm 0 2mm",
@@ -656,7 +698,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
         {data.parasha && variant === "shabbat" && (
           <div
             style={{
-              fontSize: "28px",
+              fontSize: `${28 * sf}px`,
               fontWeight: 700,
               color: t.highlight,
               margin: "0 0 2mm",
@@ -675,7 +717,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
               {row.isHeader ? (
                 <div
                   style={{
-                    fontSize: "26px",
+                    fontSize: `${26 * sf}px`,
                     fontWeight: 900,
                     color: t.highlight,
                     textAlign: "center",
@@ -692,7 +734,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
                     alignItems: "baseline",
                     justifyContent: "space-between",
                     direction: "rtl",
-                    fontSize: "26px",
+                    fontSize: `${26 * sf}px`,
                     fontWeight: 800,
                     color: t.textPrimary,
                     padding: "2mm 0",
@@ -709,7 +751,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
                     dir="ltr"
                     style={{
                       fontFamily: '"Heebo", sans-serif',
-                      fontSize: "28px",
+                      fontSize: `${28 * sf}px`,
                       fontWeight: 900,
                       color: t.textSecondary,
                       fontVariantNumeric: "tabular-nums",
@@ -728,7 +770,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
             <Divider theme={t} />
             <div
               style={{
-                fontSize: "26px",
+                fontSize: `${26 * sf}px`,
                 fontWeight: 900,
                 color: t.highlight,
                 marginTop: "2mm",
@@ -763,7 +805,7 @@ function Divider({ theme }: { theme: Theme }) {
       }}
     >
       <span style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${theme.accent}, transparent)` }} />
-      <span style={{ fontSize: "20px" }}>{theme.divider}</span>
+      <span style={{ fontSize: `${20 * sf}px` }}>{theme.divider}</span>
       <span style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${theme.accent}, transparent)` }} />
     </div>
   );
