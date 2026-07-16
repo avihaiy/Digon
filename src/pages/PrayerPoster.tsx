@@ -194,6 +194,7 @@ export default function PrayerPoster() {
 
       const el = posterRef.current;
       const clone = el.cloneNode(true) as HTMLElement;
+      clone.dir = 'rtl'; // Restore RTL direction for internal layout since outer container forces LTR
 
       const outerContainer = document.createElement('div');
       outerContainer.style.position = 'absolute';
