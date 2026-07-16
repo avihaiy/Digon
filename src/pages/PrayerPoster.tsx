@@ -675,8 +675,8 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
               {row.isHeader ? (
                 <div
                   style={{
-                    fontSize: "20px",
-                    fontWeight: 700,
+                    fontSize: "22px",
+                    fontWeight: 900,
                     color: t.highlight,
                     textAlign: "center",
                     margin: "2mm 0 1mm",
@@ -692,8 +692,8 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
                     alignItems: "baseline",
                     justifyContent: "space-between",
                     direction: "rtl",
-                    fontSize: "19px",
-                    fontWeight: 700,
+                    fontSize: "21px",
+                    fontWeight: 800,
                     color: t.textPrimary,
                     padding: "2mm 0",
                     borderBottom:
@@ -709,6 +709,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
                     dir="ltr"
                     style={{
                       fontFamily: '"Heebo", sans-serif',
+                      fontSize: "22px",
                       fontWeight: 900,
                       color: t.textSecondary,
                       fontVariantNumeric: "tabular-nums",
@@ -727,8 +728,8 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
             <Divider theme={t} />
             <div
               style={{
-                fontSize: "20px",
-                fontWeight: 700,
+                fontSize: "22px",
+                fontWeight: 900,
                 color: t.highlight,
                 marginTop: "2mm",
                 letterSpacing: "1px",
