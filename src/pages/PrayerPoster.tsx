@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Printer, Save, ArrowRight, Image as ImageIcon, X } from "lucide-react";
+import { Plus, Trash2, Printer, Save, ArrowRight, Image as ImageIcon, X, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { getCurrentParasha, getShabbatTimes, formatTimeOnly } from "@/lib/hebrew-utils";
 import posterLogo from "@/assets/brit-shalom-poster-logo.png";
+import html2pdf from "html2pdf.js";
 
 interface PosterRow {
   id: string;
@@ -92,6 +93,8 @@ export default function PrayerPoster() {
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
   const [shabbatData, setShabbatData] = useState<PosterData>(() => loadData("poster-shabbat", DEFAULT_SHABBAT));
   const [weekdayData, setWeekdayData] = useState<PosterData>(() => loadData("poster-weekday", DEFAULT_WEEKDAY));
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const posterRef = useRef<HTMLDivElement>(null);
 
   const data = tab === "shabbat" ? shabbatData : weekdayData;
   const setData = tab === "shabbat" ? setShabbatData : setWeekdayData;
@@ -179,6 +182,73 @@ export default function PrayerPoster() {
     }
   };
 
+  const handleDownloadImage = async () => {
+    if (!posterRef.current) return;
+    try {
+      setIsGeneratingImage(true);
+      const el = posterRef.current;
+      
+      const width = orientation === "landscape" ? 1122 : 794; // 297mm or 210mm in px approx
+      const height = orientation === "landscape" ? 631 : 1122; // 167mm or 297mm in px approx
+
+      const worker = html2pdf().set({
+        margin: 0,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          letterRendering: true,
+          width,
+          height,
+          windowWidth: width,
+          windowHeight: height,
+        },
+      }).from(el).toCanvas();
+
+      const canvas: HTMLCanvasElement | undefined = await (worker as any).get('canvas');
+      if (!canvas) throw new Error('Failed to render canvas');
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        if (typeof canvas.toBlob === 'function') {
+          canvas.toBlob(
+            (b) => (b ? resolve(b) : reject(new Error('Canvas to blob failed'))),
+            'image/jpeg',
+            0.98,
+          );
+          return;
+        }
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.98);
+          const [meta, base64 = ''] = dataUrl.split(',');
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          resolve(new Blob([new Uint8Array(byteNumbers)], { type: 'image/jpeg' }));
+        } catch (err) {
+          reject(err);
+        }
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prayer-times-${orientation}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      toast({ title: "התמונה נשמרה בהצלחה" });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "שגיאה ביצירת התמונה", variant: "destructive" });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
 
   const fillFromShabbatTimes = () => {
     if (tab !== "shabbat") return;
@@ -216,8 +286,11 @@ export default function PrayerPoster() {
         <Button onClick={handleSave} variant="outline">
           <Save className="w-4 h-4 ml-1" /> שמירה
         </Button>
-        <Button onClick={handlePrint}>
-          <Printer className="w-4 h-4 ml-1" /> הדפס / שמור
+        <Button onClick={handlePrint} variant="outline">
+          <Printer className="w-4 h-4 ml-1" /> PDF
+        </Button>
+        <Button onClick={handleDownloadImage} disabled={isGeneratingImage}>
+          <Download className="w-4 h-4 ml-1" /> {isGeneratingImage ? "מייצר..." : "שמור כתמונה"}
         </Button>
       </div>
 
@@ -387,7 +460,9 @@ function EditorAndPreview({
 
       <div className="flex justify-center overflow-auto">
         <div style={{ transform: orientation === "landscape" ? "scale(0.5)" : "scale(0.55)", transformOrigin: "top center", marginBottom: orientation === "landscape" ? "-200px" : "0" }}>
-          <PosterPreview data={data} variant={isShabbat ? "shabbat" : "weekday"} orientation={orientation} />
+          <div ref={posterRef}>
+            <PosterPreview data={data} variant={isShabbat ? "shabbat" : "weekday"} orientation={orientation} />
+          </div>
         </div>
       </div>
     </div>
