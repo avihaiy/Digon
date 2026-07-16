@@ -585,7 +585,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
   }, [isLandscape, data.rows.length, data]);
 
   const minHeight = isLandscape ? "167mm" : "297mm";
-  const sf = isLandscape ? 1.4 : 1; // Scale factor for landscape fonts
+  const sf = isLandscape ? 2.2 : 1; // Scale factor for landscape fonts
   
   return (
     <div
@@ -711,7 +711,13 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
 
         <Divider theme={t} sf={sf} />
 
-        <div style={{ padding: "3mm 3mm 0", textAlign: "right", direction: "rtl" }}>
+        <div style={{ 
+          padding: "3mm 3mm 0", 
+          textAlign: "right", 
+          direction: "rtl",
+          maxWidth: isLandscape ? "70%" : "100%",
+          margin: "0 auto"
+        }}>
           {data.rows.map((row, idx) => (
             <div key={row.id}>
               {row.isHeader ? (
