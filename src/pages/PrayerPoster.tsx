@@ -681,7 +681,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
           </div>
         )}
 
-        <Divider theme={t} />
+        <Divider theme={t} sf={sf} />
 
         <div
           style={{
@@ -709,7 +709,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
           </div>
         )}
 
-        <Divider theme={t} />
+        <Divider theme={t} sf={sf} />
 
         <div style={{ padding: "3mm 3mm 0", textAlign: "right", direction: "rtl" }}>
           {data.rows.map((row, idx) => (
@@ -767,7 +767,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
 
         {data.footer && (
           <>
-            <Divider theme={t} />
+            <Divider theme={t} sf={sf} />
             <div
               style={{
                 fontSize: `${26 * sf}px`,
@@ -792,7 +792,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
   );
 }
 
-function Divider({ theme }: { theme: Theme }) {
+function Divider({ theme, sf = 1 }: { theme: Theme; sf?: number }) {
   return (
     <div
       style={{
