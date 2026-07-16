@@ -42,6 +42,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import Reminders from "@/pages/Reminders";
 import Events from "@/pages/Events";
 import PrayerPoster from "@/pages/PrayerPoster";
+import Newsletter from "@/pages/Newsletter";
 import PublicReceipt from "@/pages/PublicReceipt";
 import PublicMemberDebts from "@/pages/PublicMemberDebts";
 import PublicMemberArea from "@/pages/PublicMemberArea";
@@ -338,6 +339,16 @@ const AnimatedRoutes = () => {
             <ProtectedRoute>
               <PageTransition>
                 <PrayerPoster />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/newsletter"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Newsletter />
               </PageTransition>
             </ProtectedRoute>
           }

@@ -39,6 +39,7 @@ import {
   AlertCircle,
   Printer,
   ScrollText,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -63,6 +64,7 @@ const navItems = [
   { href: '/sifrei-torah', icon: ScrollText, label: 'ספרי תורה' },
   { href: '/manage-ads', icon: Megaphone, label: 'ניהול מודעות' },
   { href: '/prayer-poster', icon: Printer, label: 'טופס זמני תפילות' },
+  { href: '/newsletter', icon: FileText, label: 'מחולל עלון שבת' },
 ];
 
 const reportsSubItems = [
