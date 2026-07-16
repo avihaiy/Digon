@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import defaultLogo from "@/assets/brit-shalom-poster-logo.png";
 
 interface NewsletterData {
   synagogueName: string;
@@ -278,9 +279,13 @@ export default function Newsletter() {
                         onChange={handleLogoUpload}
                         className="flex-1"
                       />
-                      {data.logo && (
-                        <Button variant="outline" size="sm" onClick={() => setData({...data, logo: ''})}>
+                      {data.logo !== 'none' ? (
+                        <Button variant="outline" size="sm" onClick={() => setData({...data, logo: 'none'})}>
                           הסר לוגו
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => setData({...data, logo: ''})}>
+                          הצג לוגו מחדל
                         </Button>
                       )}
                     </div>
@@ -508,8 +513,8 @@ export default function Newsletter() {
               <div className="relative z-10 flex-1 flex flex-col">
                 {/* Header */}
                 <div className={`flex flex-col items-center text-center mb-8 pb-6 ${data.theme === 'minimal' ? 'border-none' : 'border-b border-primary/20'} mt-2`}>
-                  {data.logo && (
-                    <img src={data.logo} alt="Logo" className="h-20 w-auto object-contain mb-4 rounded" />
+                  {(data.logo !== 'none') && (
+                    <img src={data.logo || defaultLogo} alt="Logo" className="h-20 w-auto object-contain mb-4 rounded" />
                   )}
                   <h1 className={`font-black text-primary mb-3 tracking-tight ${data.theme === 'minimal' ? 'text-4xl uppercase tracking-widest' : 'text-5xl drop-shadow-sm'}`}>עלון שבת</h1>
                   <h2 className={`text-2xl font-bold ${data.theme === 'modern' ? 'text-primary/80' : 'text-gray-800'} mb-4`}>{data.synagogueName}</h2>
