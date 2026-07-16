@@ -89,6 +89,7 @@ export default function PrayerPoster() {
   useGoogleFonts();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"shabbat" | "weekday">("shabbat");
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
   const [shabbatData, setShabbatData] = useState<PosterData>(() => loadData("poster-shabbat", DEFAULT_SHABBAT));
   const [weekdayData, setWeekdayData] = useState<PosterData>(() => loadData("poster-weekday", DEFAULT_WEEKDAY));
 
@@ -158,8 +159,8 @@ export default function PrayerPoster() {
   // Open print in a new window — bypasses AppLayout chrome and ensures the poster renders correctly
   const handlePrint = () => {
     handleSave();
-    const html = buildPrintHtml(data, tab === "shabbat" ? "shabbat" : "weekday");
-    const w = window.open("", "_blank", "width=900,height=1200");
+    const html = buildPrintHtml(data, tab === "shabbat" ? "shabbat" : "weekday", orientation);
+    const w = window.open("", "_blank", orientation === "landscape" ? "width=1200,height=675" : "width=900,height=1200");
     if (!w) {
       toast({ title: "החלון נחסם — אשר חלונות קופצים", variant: "destructive" });
       return;
@@ -216,7 +217,16 @@ export default function PrayerPoster() {
           <Save className="w-4 h-4 ml-1" /> שמירה
         </Button>
         <Button onClick={handlePrint}>
-          <Printer className="w-4 h-4 ml-1" /> הדפס / שמור PDF
+          <Printer className="w-4 h-4 ml-1" /> הדפס / שמור
+        </Button>
+      </div>
+
+      <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 mb-4">
+        <Button variant={orientation === "portrait" ? "default" : "outline"} onClick={() => setOrientation("portrait")} className="w-40">
+          פוסטר לאורך (A4)
+        </Button>
+        <Button variant={orientation === "landscape" ? "default" : "outline"} onClick={() => setOrientation("landscape")} className="w-40">
+          פוסטר לרוחב (מסך)
         </Button>
       </div>
 
@@ -239,6 +249,7 @@ export default function PrayerPoster() {
               fillFromShabbatTimes={fillFromShabbatTimes}
               handleImageUpload={handleImageUpload}
               isShabbat
+              orientation={orientation}
             />
           </TabsContent>
           <TabsContent value="weekday" className="mt-4">
@@ -253,6 +264,7 @@ export default function PrayerPoster() {
               fillFromShabbatTimes={fillFromShabbatTimes}
               handleImageUpload={handleImageUpload}
               isShabbat={false}
+              orientation={orientation}
             />
           </TabsContent>
         </Tabs>
@@ -272,10 +284,11 @@ interface EAPProps {
   fillFromShabbatTimes: () => void;
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isShabbat: boolean;
+  orientation: "portrait" | "landscape";
 }
 
 function EditorAndPreview({
-  data, updateField, updateRow, addRow, removeRow, moveRow, fillFromShabbatTimes, handleImageUpload, isShabbat,
+  data, updateField, updateRow, addRow, removeRow, moveRow, fillFromShabbatTimes, handleImageUpload, isShabbat, orientation
 }: EAPProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -373,8 +386,8 @@ function EditorAndPreview({
       </Card>
 
       <div className="flex justify-center overflow-auto">
-        <div style={{ transform: "scale(0.55)", transformOrigin: "top center" }}>
-          <PosterPreview data={data} variant={isShabbat ? "shabbat" : "weekday"} />
+        <div style={{ transform: orientation === "landscape" ? "scale(0.5)" : "scale(0.55)", transformOrigin: "top center", marginBottom: orientation === "landscape" ? "-200px" : "0" }}>
+          <PosterPreview data={data} variant={isShabbat ? "shabbat" : "weekday"} orientation={orientation} />
         </div>
       </div>
     </div>
@@ -430,15 +443,19 @@ const THEMES: Record<Variant, Theme> = {
   },
 };
 
-function PosterPreview({ data, variant }: { data: PosterData; variant: Variant }) {
+function PosterPreview({ data, variant, orientation = "portrait" }: { data: PosterData; variant: Variant; orientation?: "portrait" | "landscape" }) {
   const t = THEMES[variant];
   const nameParts = splitName(data.synagogueName);
+  
+  const width = orientation === "landscape" ? "297mm" : "210mm";
+  const minHeight = orientation === "landscape" ? "210mm" : "297mm";
+  
   return (
     <div
       className="poster-page relative shadow-2xl"
       style={{
-        width: "210mm",
-        minHeight: "297mm",
+        width,
+        minHeight,
         padding: "20mm 18mm",
         boxSizing: "border-box",
         fontFamily: t.fontFamily,
@@ -648,18 +665,24 @@ function splitName(name: string): { prefix: string; quoted: string } {
 }
 
 // Build standalone HTML for print window
-function buildPrintHtml(data: PosterData, variant: Variant): string {
+function buildPrintHtml(data: PosterData, variant: Variant, orientation: "portrait" | "landscape" = "portrait"): string {
   const t = THEMES[variant];
   const nameParts = splitName(data.synagogueName);
+  
+  // Use a two-column grid if landscape and there are many rows
+  const isLandscape = orientation === "landscape";
+  const shouldSplitColumns = isLandscape && data.rows.length > 5;
+  
   const rowsHtml = data.rows
     .map((row, idx) => {
       if (row.isHeader) {
         const label = variant === "shabbat" ? `❖ ${escapeHtml(row.label)} ❖` : `— ${escapeHtml(row.label)} —`;
-        return `<div class="hdr">${label}</div>`;
+        return `<div class="hdr" style="${shouldSplitColumns ? 'grid-column: 1 / -1;' : ''}">${label}</div>`;
       }
       const borderStyle = variant === "shabbat" ? "dotted" : "solid";
+      // In grid mode, we might not want bottom borders, or we need to be careful
       const border =
-        idx < data.rows.length - 1 ? `border-bottom:1px ${borderStyle} ${t.accentSoft};` : "";
+        (idx < data.rows.length - 1 && !shouldSplitColumns) ? `border-bottom:1px ${borderStyle} ${t.accentSoft};` : "";
       return `<div class="row" style="${border}">
         <span>${escapeHtml(row.label)}</span>
         <span class="time" dir="ltr">${escapeHtml(row.time)}</span>
@@ -667,8 +690,16 @@ function buildPrintHtml(data: PosterData, variant: Variant): string {
     })
     .join("");
 
+  const rowsContainerCss = shouldSplitColumns 
+    ? `display: grid; grid-template-columns: 1fr 1fr; column-gap: 12mm; align-items: start;`
+    : ``;
+
   const divider = `<div class="divider"><span class="line"></span><span class="star">${t.divider}</span><span class="line"></span></div>`;
   const borderStyleOuter = variant === "shabbat" ? "double" : "solid";
+
+  const pageWidth = isLandscape ? "297mm" : "210mm";
+  const pageHeight = isLandscape ? "167mm" : "297mm";
+  const pageCss = isLandscape ? `@page { size: 297mm 167mm; margin: 0; }` : `@page { size: A4 portrait; margin: 0; }`;
 
   return `<!doctype html>
 <html lang="he" dir="rtl">
@@ -680,16 +711,16 @@ function buildPrintHtml(data: PosterData, variant: Variant): string {
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=David+Libre:wght@400;500;700&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   /* Zero printer margins — our own padding handles whitespace, and auto-fit ensures content never overflows */
-  @page { size: A4 portrait; margin: 0; }
+  ${pageCss}
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { margin:0; padding:0; background:#e9e4d4; font-family:${t.fontFamily}; color:${t.textPrimary}; }
   .sheet {
-    width:210mm; height:297mm; position:relative; overflow:hidden;
+    width:${pageWidth}; height:${pageHeight}; position:relative; overflow:hidden;
     background: ${t.bg};
     margin:0 auto;
   }
   .page {
-    width:210mm; padding:20mm 18mm; position:relative;
+    width:${pageWidth}; padding:20mm 18mm; position:relative;
     transform-origin: top center;
   }
   .border-outer { position:absolute; inset:10mm; border:3px ${borderStyleOuter} ${t.borderColor}; border-radius:${variant === "shabbat" ? "6px" : "2px"};
@@ -709,7 +740,7 @@ function buildPrintHtml(data: PosterData, variant: Variant): string {
   .subtitle { font-size:13px; color:${t.textSecondary}; margin-top:6px; letter-spacing:0.5px; }
   .title { font-size:30px; font-weight:900; color:${t.textPrimary}; margin:4mm 0 2mm; letter-spacing:1px; }
   .parasha { font-size:22px; font-weight:700; color:${t.highlight}; margin:0 0 2mm; letter-spacing:1px; }
-  .rows { padding:3mm 3mm 0; text-align:right; }
+  .rows { padding:3mm 3mm 0; text-align:right; ${rowsContainerCss} }
   .row { display:flex; align-items:baseline; justify-content:space-between; font-size:19px; font-weight:700; color:${t.textPrimary}; padding:2mm 0; }
   .row .time { font-family:"Heebo",sans-serif; font-weight:900; color:${t.textSecondary}; font-variant-numeric: tabular-nums; }
   .hdr { font-size:20px; font-weight:700; color:${t.highlight}; text-align:center; margin:2mm 0 1mm; letter-spacing:0.5px; }
@@ -761,7 +792,7 @@ function buildPrintHtml(data: PosterData, variant: Variant): string {
         var scale = sheetH / pageH;
         page.style.transform = 'scale(' + scale + ')';
         // After scaling down, give the page the original width so it remains centered correctly
-        page.style.width = '210mm';
+        page.style.width = '${pageWidth}';
       }
     }
     if (document.fonts && document.fonts.ready) {
