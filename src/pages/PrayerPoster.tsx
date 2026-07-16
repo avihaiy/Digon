@@ -323,6 +323,7 @@ export default function PrayerPoster() {
               handleImageUpload={handleImageUpload}
               isShabbat
               orientation={orientation}
+              posterRef={posterRef}
             />
           </TabsContent>
           <TabsContent value="weekday" className="mt-4">
@@ -338,6 +339,7 @@ export default function PrayerPoster() {
               handleImageUpload={handleImageUpload}
               isShabbat={false}
               orientation={orientation}
+              posterRef={posterRef}
             />
           </TabsContent>
         </Tabs>
@@ -358,10 +360,11 @@ interface EAPProps {
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isShabbat: boolean;
   orientation: "portrait" | "landscape";
+  posterRef: React.RefObject<HTMLDivElement>;
 }
 
 function EditorAndPreview({
-  data, updateField, updateRow, addRow, removeRow, moveRow, fillFromShabbatTimes, handleImageUpload, isShabbat, orientation
+  data, updateField, updateRow, addRow, removeRow, moveRow, fillFromShabbatTimes, handleImageUpload, isShabbat, orientation, posterRef
 }: EAPProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
