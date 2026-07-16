@@ -190,52 +190,53 @@ export default function PrayerPoster() {
     
     try {
       setIsGeneratingImage(true);
-      // Temporarily force LTR on the document. 
-      // html2canvas has a known bug in RTL documents where it calculates canvas bounds 
-      // backwards and crops the right half of the image.
       root.dir = 'ltr';
 
       const el = posterRef.current;
-
       const clone = el.cloneNode(true) as HTMLElement;
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.top = '0';
-      tempContainer.style.left = '0';
-      tempContainer.style.zIndex = '-9999';
-      tempContainer.style.width = orientation === 'landscape' ? '297mm' : '210mm';
-      tempContainer.style.height = orientation === 'landscape' ? '167mm' : '297mm';
-      // Reset any inherited text alignments
-      tempContainer.style.textAlign = 'initial';
-      tempContainer.dir = 'ltr';
-      tempContainer.appendChild(clone);
-      document.body.appendChild(tempContainer);
 
-      // Wait a moment for styles to apply
+      const outerContainer = document.createElement('div');
+      outerContainer.style.position = 'absolute';
+      outerContainer.style.top = '0';
+      outerContainer.style.left = '0';
+      outerContainer.style.zIndex = '-9999';
+      outerContainer.dir = 'ltr';
+      
+      const scaledContainer = document.createElement('div');
+      scaledContainer.style.transform = 'scale(0.5)';
+      scaledContainer.style.transformOrigin = 'top left';
+      scaledContainer.style.width = orientation === 'landscape' ? '297mm' : '210mm';
+      scaledContainer.style.height = orientation === 'landscape' ? '167mm' : '297mm';
+      scaledContainer.style.textAlign = 'initial';
+      
+      scaledContainer.appendChild(clone);
+      outerContainer.appendChild(scaledContainer);
+      document.body.appendChild(outerContainer);
+
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      const width = clone.offsetWidth;
-      const height = clone.offsetHeight;
+      const width = scaledContainer.offsetWidth * 0.5;
+      const height = scaledContainer.offsetHeight * 0.5;
 
       const worker = html2pdf().set({
         margin: 0,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: {
-          scale: 3,
+          scale: 6, // 6 * 0.5 = 3 (matches original high quality)
           useCORS: true,
           backgroundColor: '#ffffff',
           letterRendering: true,
           width,
           height,
-          windowWidth: Math.max(document.documentElement.clientWidth, width + 100),
-          windowHeight: Math.max(document.documentElement.clientHeight, height + 100),
+          windowWidth: document.documentElement.clientWidth,
+          windowHeight: document.documentElement.clientHeight,
           scrollX: 0,
           scrollY: 0,
         },
-      }).from(clone).toCanvas();
+      }).from(scaledContainer).toCanvas();
 
       const canvas: HTMLCanvasElement | undefined = await (worker as any).get('canvas');
-      document.body.removeChild(tempContainer);
+      document.body.removeChild(outerContainer);
       
       if (!canvas) throw new Error('Failed to render canvas');
 
