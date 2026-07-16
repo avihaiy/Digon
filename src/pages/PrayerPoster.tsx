@@ -203,6 +203,12 @@ export default function PrayerPoster() {
           height,
           windowWidth: width,
           windowHeight: height,
+          onclone: (doc: any) => {
+            const wrapper = doc.getElementById('poster-scale-wrapper');
+            if (wrapper) {
+              wrapper.style.transform = 'none';
+            }
+          }
         },
       }).from(el).toCanvas();
 
@@ -462,7 +468,7 @@ function EditorAndPreview({
       </Card>
 
       <div className="flex justify-center overflow-auto">
-        <div style={{ transform: orientation === "landscape" ? "scale(0.5)" : "scale(0.55)", transformOrigin: "top center", marginBottom: orientation === "landscape" ? "-200px" : "0" }}>
+        <div id="poster-scale-wrapper" style={{ transform: orientation === "landscape" ? "scale(0.5)" : "scale(0.55)", transformOrigin: "top center", marginBottom: orientation === "landscape" ? "-200px" : "0" }}>
           <div ref={posterRef}>
             <PosterPreview data={data} variant={isShabbat ? "shabbat" : "weekday"} orientation={orientation} />
           </div>
