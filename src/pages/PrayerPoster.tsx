@@ -184,10 +184,20 @@ export default function PrayerPoster() {
 
   const handleDownloadImage = async () => {
     if (!posterRef.current) return;
+    const wrapper = document.getElementById('poster-scale-wrapper');
+    const originalTransform = wrapper ? wrapper.style.transform : "";
+    
     try {
       setIsGeneratingImage(true);
-      const el = posterRef.current;
       
+      // Temporarily remove transform so html2canvas sees true dimensions and viewport
+      if (wrapper) {
+        wrapper.style.transform = 'none';
+      }
+      // Wait for layout update
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const el = posterRef.current;
       const width = el.offsetWidth;
       const height = el.offsetHeight;
 
@@ -203,12 +213,8 @@ export default function PrayerPoster() {
           height,
           windowWidth: width,
           windowHeight: height,
-          onclone: (doc: any) => {
-            const wrapper = doc.getElementById('poster-scale-wrapper');
-            if (wrapper) {
-              wrapper.style.transform = 'none';
-            }
-          }
+          scrollX: 0,
+          scrollY: 0,
         },
       }).from(el).toCanvas();
 
@@ -252,6 +258,9 @@ export default function PrayerPoster() {
       toast({ title: "שגיאה ביצירת התמונה", variant: "destructive" });
     } finally {
       setIsGeneratingImage(false);
+      if (wrapper) {
+        wrapper.style.transform = originalTransform;
+      }
     }
   };
 
