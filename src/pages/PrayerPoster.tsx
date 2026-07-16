@@ -184,8 +184,17 @@ export default function PrayerPoster() {
 
   const handleDownloadImage = async () => {
     if (!posterRef.current) return;
+    
+    const root = document.documentElement;
+    const originalDir = root.dir;
+    
     try {
       setIsGeneratingImage(true);
+      // Temporarily force LTR on the document. 
+      // html2canvas has a known bug in RTL documents where it calculates canvas bounds 
+      // backwards and crops the right half of the image.
+      root.dir = 'ltr';
+
       const el = posterRef.current;
 
       const clone = el.cloneNode(true) as HTMLElement;
@@ -198,6 +207,7 @@ export default function PrayerPoster() {
       tempContainer.style.height = orientation === 'landscape' ? '167mm' : '297mm';
       // Reset any inherited text alignments
       tempContainer.style.textAlign = 'initial';
+      tempContainer.dir = 'ltr';
       tempContainer.appendChild(clone);
       document.body.appendChild(tempContainer);
 
@@ -265,6 +275,7 @@ export default function PrayerPoster() {
       console.error(error);
       toast({ title: "שגיאה ביצירת התמונה", variant: "destructive" });
     } finally {
+      root.dir = originalDir;
       setIsGeneratingImage(false);
     }
   };
