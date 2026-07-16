@@ -233,7 +233,7 @@ export default function PrayerPoster() {
           scrollX: 0,
           scrollY: 0,
         },
-      }).from(scaledContainer).toCanvas();
+      }).from(outerContainer).toCanvas();
 
       const canvas: HTMLCanvasElement | undefined = await (worker as any).get('canvas');
       document.body.removeChild(outerContainer);
