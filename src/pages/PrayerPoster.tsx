@@ -188,8 +188,8 @@ export default function PrayerPoster() {
       setIsGeneratingImage(true);
       const el = posterRef.current;
       
-      const width = orientation === "landscape" ? 1122 : 794; // 297mm or 210mm in px approx
-      const height = orientation === "landscape" ? 631 : 1122; // 167mm or 297mm in px approx
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
 
       const worker = html2pdf().set({
         margin: 0,
