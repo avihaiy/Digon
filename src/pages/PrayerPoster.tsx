@@ -617,13 +617,13 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "3mm" }}>
           <img src={posterLogo} alt="לוגו" style={{ height: "14mm", objectFit: "contain" }} />
         </div>
-        <div style={{ fontSize: "18px", fontWeight: 500, letterSpacing: "1px", color: t.textSecondary }}>
+        <div style={{ fontSize: "22px", fontWeight: 500, letterSpacing: "1px", color: t.textSecondary }}>
           {nameParts.prefix}
         </div>
         {nameParts.quoted && (
           <div
             style={{
-              fontSize: "34px",
+              fontSize: "42px",
               fontWeight: 900,
               letterSpacing: variant === "shabbat" ? "2px" : "1px",
               color: t.textPrimary,
@@ -634,7 +634,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
           </div>
         )}
         {data.subtitle && (
-          <div style={{ fontSize: "13px", color: t.textSecondary, marginTop: "6px", letterSpacing: "0.5px" }}>
+          <div style={{ fontSize: "18px", color: t.textSecondary, marginTop: "6px", letterSpacing: "0.5px" }}>
             {data.subtitle}
           </div>
         )}
@@ -643,7 +643,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
 
         <div
           style={{
-            fontSize: "30px",
+            fontSize: "38px",
             fontWeight: 900,
             color: t.textPrimary,
             margin: "4mm 0 2mm",
@@ -656,7 +656,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
         {data.parasha && variant === "shabbat" && (
           <div
             style={{
-              fontSize: "22px",
+              fontSize: "28px",
               fontWeight: 700,
               color: t.highlight,
               margin: "0 0 2mm",
@@ -675,7 +675,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
               {row.isHeader ? (
                 <div
                   style={{
-                    fontSize: "22px",
+                    fontSize: "26px",
                     fontWeight: 900,
                     color: t.highlight,
                     textAlign: "center",
@@ -692,7 +692,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
                     alignItems: "baseline",
                     justifyContent: "space-between",
                     direction: "rtl",
-                    fontSize: "21px",
+                    fontSize: "26px",
                     fontWeight: 800,
                     color: t.textPrimary,
                     padding: "2mm 0",
@@ -709,7 +709,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
                     dir="ltr"
                     style={{
                       fontFamily: '"Heebo", sans-serif',
-                      fontSize: "22px",
+                      fontSize: "28px",
                       fontWeight: 900,
                       color: t.textSecondary,
                       fontVariantNumeric: "tabular-nums",
@@ -728,7 +728,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
             <Divider theme={t} />
             <div
               style={{
-                fontSize: "22px",
+                fontSize: "26px",
                 fontWeight: 900,
                 color: t.highlight,
                 marginTop: "2mm",
@@ -763,7 +763,7 @@ function Divider({ theme }: { theme: Theme }) {
       }}
     >
       <span style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${theme.accent}, transparent)` }} />
-      <span style={{ fontSize: "16px" }}>{theme.divider}</span>
+      <span style={{ fontSize: "20px" }}>{theme.divider}</span>
       <span style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${theme.accent}, transparent)` }} />
     </div>
   );
