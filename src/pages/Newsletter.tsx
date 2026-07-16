@@ -22,7 +22,7 @@ interface NewsletterData {
   parasha: string;
   hebrewDate: string;
   logo: string;
-  theme: 'classic' | 'modern' | 'minimal';
+  theme: 'classic' | 'modern' | 'minimal' | 'newspaper';
   dvarTorahTitle: string;
   dvarTorahContent: string;
   halachaTitle: string;
@@ -267,6 +267,7 @@ export default function Newsletter() {
                         <SelectItem value="classic">קלאסי (מסגרות מסורתיות)</SelectItem>
                         <SelectItem value="modern">מודרני (נקי עם הצללות)</SelectItem>
                         <SelectItem value="minimal">מינימליסטי (שטח לבן ואלגנטי)</SelectItem>
+                        <SelectItem value="newspaper">עיתון קלאסי (שחור-לבן, 3 עמודות)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -511,124 +512,226 @@ export default function Newsletter() {
               )}
               
               <div className="relative z-10 flex-1 flex flex-col">
-                {/* Header */}
-                <div className={`flex flex-col items-center text-center mb-8 pb-6 ${data.theme === 'minimal' ? 'border-none' : 'border-b border-primary/20'} mt-2`}>
-                  {(data.logo !== 'none') && (
-                    <img src={data.logo || defaultLogo} alt="Logo" className="h-20 w-auto object-contain mb-4 rounded" />
-                  )}
-                  <h1 className={`font-black text-primary mb-3 tracking-tight ${data.theme === 'minimal' ? 'text-4xl uppercase tracking-widest' : 'text-5xl drop-shadow-sm'}`}>עלון שבת</h1>
-                  <h2 className={`text-2xl font-bold ${data.theme === 'modern' ? 'text-primary/80' : 'text-gray-800'} mb-4`}>{data.synagogueName}</h2>
-                  <div className={`flex justify-center items-center gap-4 text-primary font-bold ${data.theme === 'modern' ? 'bg-white shadow-sm' : 'bg-primary/5'} py-1.5 px-6 rounded-full border border-primary/10`}>
-                    <span>פרשת {data.parasha}</span>
-                    <span className="text-primary/40">•</span>
-                    <span>{data.hebrewDate}</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-12 gap-8 flex-1">
-                  {/* Main Content Column */}
-                  <div className="col-span-8 space-y-6">
-                    {/* Dvar Torah */}
-                    {data.dvarTorahTitle && (
-                      <div className={`${data.theme === 'modern' ? 'bg-white p-6 rounded-2xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent' : 'bg-white'}`}>
-                        <h3 className={`text-2xl font-bold text-primary mb-4 pb-2 ${data.theme === 'minimal' ? 'border-b border-slate-200' : 'border-b-2 border-primary/20 inline-block'}`}>
-                          {data.dvarTorahTitle}
-                        </h3>
-                        <div 
-                          className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify font-serif text-lg [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
-                          dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
-                        />
+                {data.theme === 'newspaper' ? (
+                  <div className="flex-1 flex flex-col">
+                    {/* Newspaper Header */}
+                    <div className="flex justify-between items-start border-b-4 border-double border-slate-900 pb-4 mb-6 mt-2">
+                      <div className="flex-1 flex flex-col justify-center text-right pr-2">
+                        <h2 className="text-xl font-bold text-slate-900 mb-1">{data.synagogueName}</h2>
+                        <div className="text-slate-800 font-bold text-sm">
+                          <span>פרשת {data.parasha}</span>
+                          <span className="mx-2">•</span>
+                          <span>{data.hebrewDate}</span>
+                        </div>
                       </div>
-                    )}
-
-                    {/* Halacha */}
-                    {data.halachaTitle && (
-                      <div className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-slate-50 p-5 rounded-xl border border-slate-100'}`}>
-                        <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
-                          {data.theme !== 'minimal' && <span className="w-2 h-2 bg-primary rounded-full"></span>}
-                          {data.halachaTitle}
-                        </h3>
-                        <div 
-                          className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:mr-5"
-                          dangerouslySetInnerHTML={{ __html: data.halachaContent }}
-                        />
+                      <div className="flex flex-col items-center flex-[1.5]">
+                        {(data.logo !== 'none') && (
+                          <img src={data.logo || defaultLogo} alt="Logo" className="h-16 w-auto object-contain mb-2 grayscale" />
+                        )}
+                        <h1 className="text-6xl font-black text-slate-900 tracking-tighter" style={{ fontFamily: '"Frank Ruhl Libre", serif' }}>עלון שבת</h1>
                       </div>
-                    )}
-
-                    {/* Announcements */}
-                    {data.announcementsTitle && (
-                      <div className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-primary/5 p-5 rounded-xl border border-primary/10'}`}>
-                        <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
-                          {data.theme !== 'minimal' && <span className="w-2 h-2 bg-primary rounded-full"></span>}
-                          {data.announcementsTitle}
-                        </h3>
-                        <div 
-                          className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&>p]:mb-2"
-                          dangerouslySetInnerHTML={{ __html: data.announcements }}
-                        />
-                      </div>
-                    )}
-                    
-                    {/* Children's Corner */}
-                    {data.childrensCornerTitle && data.childrensCornerContent && data.childrensCornerContent !== '<p><br></p>' && (
-                      <div className={`mt-6 ${data.theme === 'modern' ? 'bg-gradient-to-br from-pink-50 to-white p-5 rounded-xl shadow-sm border border-pink-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-pink-50 p-5 rounded-xl border border-pink-100'}`}>
-                        <h3 className="text-xl font-bold text-pink-600 mb-3 flex items-center gap-2">
-                          {data.theme !== 'minimal' && <span className="w-2 h-2 bg-pink-500 rounded-full"></span>}
-                          {data.childrensCornerTitle}
-                        </h3>
-                        <div 
-                          className="prose prose-sm max-w-none text-gray-800 leading-relaxed [&>p]:mb-2"
-                          dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Sidebar Column */}
-                  <div className="col-span-4 space-y-6">
-                    {/* Prayer Times */}
-                    <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
-                      <div className={`${data.theme === 'modern' ? 'bg-primary/5 text-primary' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-primary/10 text-primary border-b border-primary/10'} font-bold text-center py-3`}>
-                        זמני התפילות
-                      </div>
-                      <div className={`${data.theme === 'minimal' ? 'p-0' : 'p-4'} space-y-3`}>
-                        {data.times.map((t, idx) => (
-                          <div key={idx} className="flex justify-between items-center border-b border-dashed border-slate-200 pb-2 last:border-0 last:pb-0">
-                            <span className="font-semibold text-gray-700">{t.label}</span>
-                            <span className="font-bold text-primary tabular-nums tracking-wider" dir="ltr">{t.time}</span>
+                      
+                      {/* Zmanim Top Left */}
+                      <div className="flex-1 pl-2 flex justify-end">
+                        <div className="border-[3px] border-slate-900 p-2 bg-white w-52 text-sm">
+                          <div className="bg-slate-900 text-white text-center font-bold mb-2 py-1">זמני כניסה ויציאת השבת</div>
+                          <div className="space-y-1">
+                            {data.times.map((t, idx) => (
+                              <div key={idx} className="flex justify-between items-center border-b border-slate-300 pb-1 last:border-0 last:pb-0">
+                                <span className="font-semibold text-slate-900">{t.label}</span>
+                                <span className="font-bold text-slate-900 tabular-nums" dir="ltr">{t.time}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Daily Study */}
-                    {data.dailyStudyTitle && data.dailyStudyContent && data.dailyStudyContent !== '<p><br></p>' && (
-                      <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
-                        <div className={`${data.theme === 'modern' ? 'bg-indigo-50 text-indigo-700' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-indigo-50 text-indigo-800 border-b border-indigo-100'} font-bold text-center py-3`}>
-                          {data.dailyStudyTitle}
-                        </div>
-                        <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'}`}>
-                          <div 
-                            className="prose prose-sm max-w-none text-slate-700 leading-relaxed text-center"
-                            dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }}
-                          />
-                        </div>
+                    {/* Newspaper Columns */}
+                    <div className="grid grid-cols-12 gap-6 flex-1">
+                      {/* Right Column (Sidebar 1) */}
+                      <div className="col-span-3 flex flex-col gap-5 border-l border-slate-400 pl-5">
+                        {data.halachaTitle && (
+                          <div className="border border-slate-900 p-3 bg-slate-50">
+                            <h3 className="text-lg font-bold text-slate-900 border-b-2 border-slate-900 pb-1 mb-2">
+                              {data.halachaTitle}
+                            </h3>
+                            <div className="prose prose-sm prose-p:leading-tight text-slate-800 [&>p]:mb-2" dangerouslySetInnerHTML={{ __html: data.halachaContent }} />
+                          </div>
+                        )}
+                        
+                        {data.dailyStudyTitle && data.dailyStudyContent && data.dailyStudyContent !== '<p><br></p>' && (
+                          <div className="border-t-2 border-slate-900 pt-3">
+                            <h3 className="text-base font-bold text-white bg-slate-900 px-2 py-1 inline-block mb-2">{data.dailyStudyTitle}</h3>
+                            <div className="prose prose-sm text-slate-800" dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }} />
+                          </div>
+                        )}
                       </div>
-                    )}
 
-                    {/* Sponsors */}
-                    {data.parnasHashavua && (
-                      <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden mt-6' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-6'}`}>
-                        <div className={`${data.theme === 'modern' ? 'bg-slate-50 text-slate-600' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-slate-100 text-slate-700 border-b border-slate-200'} font-bold text-center py-3`}>
-                          פרנס השבוע
-                        </div>
-                        <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'} text-slate-800 text-center leading-relaxed whitespace-pre-wrap font-medium`}>
-                          {data.parnasHashavua}
-                        </div>
+                      {/* Center Column (Main Dvar Torah) */}
+                      <div className="col-span-6 flex flex-col pr-1 pl-1">
+                         {data.dvarTorahTitle && (
+                           <div>
+                             <h3 className="text-4xl font-black text-slate-900 text-center mb-6 leading-tight" style={{ fontFamily: '"Frank Ruhl Libre", serif' }}>
+                               {data.dvarTorahTitle}
+                             </h3>
+                             <div 
+                               className="prose prose-slate max-w-none text-slate-900 leading-relaxed text-justify font-serif text-base columns-2 gap-6 [&>p]:mb-4"
+                               dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
+                             />
+                           </div>
+                         )}
                       </div>
-                    )}
+
+                      {/* Left Column (Sidebar 2) */}
+                      <div className="col-span-3 flex flex-col gap-5 border-r border-slate-400 pr-5">
+                        {data.announcementsTitle && (
+                          <div className="border border-slate-900 p-3 relative mt-2">
+                            <div className="absolute -top-3 right-3 bg-white px-2">
+                                <h3 className="text-base font-bold text-slate-900">{data.announcementsTitle}</h3>
+                            </div>
+                            <div className="prose prose-sm text-slate-800 mt-2 [&>p]:mb-2" dangerouslySetInnerHTML={{ __html: data.announcements }} />
+                          </div>
+                        )}
+
+                        {data.childrensCornerTitle && data.childrensCornerContent && data.childrensCornerContent !== '<p><br></p>' && (
+                          <div className="border-t-4 border-double border-slate-900 pt-3">
+                            <h3 className="text-lg font-bold text-slate-900 mb-2 text-center">{data.childrensCornerTitle}</h3>
+                            <div className="prose prose-sm text-slate-800" dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }} />
+                          </div>
+                        )}
+
+                        {data.parnasHashavua && (
+                          <div className="border-2 border-slate-900 p-3 mt-auto bg-slate-100">
+                            <div className="text-slate-900 font-bold text-center border-b border-slate-400 pb-1 mb-2">פרנס השבוע</div>
+                            <div className="text-slate-800 text-center text-sm whitespace-pre-wrap font-serif">{data.parnasHashavua}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    {/* Header for Standard Themes */}
+                    <div className={`flex flex-col items-center text-center mb-8 pb-6 ${data.theme === 'minimal' ? 'border-none' : 'border-b border-primary/20'} mt-2`}>
+                      {(data.logo !== 'none') && (
+                        <img src={data.logo || defaultLogo} alt="Logo" className="h-20 w-auto object-contain mb-4 rounded" />
+                      )}
+                      <h1 className={`font-black text-primary mb-3 tracking-tight ${data.theme === 'minimal' ? 'text-4xl uppercase tracking-widest' : 'text-5xl drop-shadow-sm'}`}>עלון שבת</h1>
+                      <h2 className={`text-2xl font-bold ${data.theme === 'modern' ? 'text-primary/80' : 'text-gray-800'} mb-4`}>{data.synagogueName}</h2>
+                      <div className={`flex justify-center items-center gap-4 text-primary font-bold ${data.theme === 'modern' ? 'bg-white shadow-sm' : 'bg-primary/5'} py-1.5 px-6 rounded-full border border-primary/10`}>
+                        <span>פרשת {data.parasha}</span>
+                        <span className="text-primary/40">•</span>
+                        <span>{data.hebrewDate}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-8 flex-1">
+                      {/* Main Content Column */}
+                      <div className="col-span-8 space-y-6">
+                        {/* Dvar Torah */}
+                        {data.dvarTorahTitle && (
+                          <div className={`${data.theme === 'modern' ? 'bg-white p-6 rounded-2xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent' : 'bg-white'}`}>
+                            <h3 className={`text-2xl font-bold text-primary mb-4 pb-2 ${data.theme === 'minimal' ? 'border-b border-slate-200' : 'border-b-2 border-primary/20 inline-block'}`}>
+                              {data.dvarTorahTitle}
+                            </h3>
+                            <div 
+                              className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify font-serif text-lg [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
+                              dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Halacha */}
+                        {data.halachaTitle && (
+                          <div className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-slate-50 p-5 rounded-xl border border-slate-100'}`}>
+                            <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
+                              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-primary rounded-full"></span>}
+                              {data.halachaTitle}
+                            </h3>
+                            <div 
+                              className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:mr-5"
+                              dangerouslySetInnerHTML={{ __html: data.halachaContent }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Announcements */}
+                        {data.announcementsTitle && (
+                          <div className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-primary/5 p-5 rounded-xl border border-primary/10'}`}>
+                            <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
+                              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-primary rounded-full"></span>}
+                              {data.announcementsTitle}
+                            </h3>
+                            <div 
+                              className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&>p]:mb-2"
+                              dangerouslySetInnerHTML={{ __html: data.announcements }}
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Children's Corner */}
+                        {data.childrensCornerTitle && data.childrensCornerContent && data.childrensCornerContent !== '<p><br></p>' && (
+                          <div className={`mt-6 ${data.theme === 'modern' ? 'bg-gradient-to-br from-pink-50 to-white p-5 rounded-xl shadow-sm border border-pink-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-pink-50 p-5 rounded-xl border border-pink-100'}`}>
+                            <h3 className="text-xl font-bold text-pink-600 mb-3 flex items-center gap-2">
+                              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-pink-500 rounded-full"></span>}
+                              {data.childrensCornerTitle}
+                            </h3>
+                            <div 
+                              className="prose prose-sm max-w-none text-gray-800 leading-relaxed [&>p]:mb-2"
+                              dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Sidebar Column */}
+                      <div className="col-span-4 space-y-6">
+                        {/* Prayer Times */}
+                        <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
+                          <div className={`${data.theme === 'modern' ? 'bg-primary/5 text-primary' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-primary/10 text-primary border-b border-primary/10'} font-bold text-center py-3`}>
+                            זמני התפילות
+                          </div>
+                          <div className={`${data.theme === 'minimal' ? 'p-0' : 'p-4'} space-y-3`}>
+                            {data.times.map((t, idx) => (
+                              <div key={idx} className="flex justify-between items-center border-b border-dashed border-slate-200 pb-2 last:border-0 last:pb-0">
+                                <span className="font-semibold text-gray-700">{t.label}</span>
+                                <span className="font-bold text-primary tabular-nums tracking-wider" dir="ltr">{t.time}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Daily Study */}
+                        {data.dailyStudyTitle && data.dailyStudyContent && data.dailyStudyContent !== '<p><br></p>' && (
+                          <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
+                            <div className={`${data.theme === 'modern' ? 'bg-indigo-50 text-indigo-700' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-indigo-50 text-indigo-800 border-b border-indigo-100'} font-bold text-center py-3`}>
+                              {data.dailyStudyTitle}
+                            </div>
+                            <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'}`}>
+                              <div 
+                                className="prose prose-sm max-w-none text-slate-700 leading-relaxed text-center"
+                                dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Sponsors */}
+                        {data.parnasHashavua && (
+                          <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden mt-6' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-6'}`}>
+                            <div className={`${data.theme === 'modern' ? 'bg-slate-50 text-slate-600' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-slate-100 text-slate-700 border-b border-slate-200'} font-bold text-center py-3`}>
+                              פרנס השבוע
+                            </div>
+                            <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'} text-slate-800 text-center leading-relaxed whitespace-pre-wrap font-medium`}>
+                              {data.parnasHashavua}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Footer */}
                 <div className={`mt-auto pt-6 text-center text-sm font-medium ${data.theme === 'minimal' ? 'text-slate-500 border-t border-slate-200' : 'text-gray-400'}`}>
