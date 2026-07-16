@@ -205,8 +205,6 @@ export default function PrayerPoster() {
       const scaledContainer = document.createElement('div');
       scaledContainer.style.transform = 'scale(0.5)';
       scaledContainer.style.transformOrigin = 'top left';
-      scaledContainer.style.width = orientation === 'landscape' ? '297mm' : '210mm';
-      scaledContainer.style.height = orientation === 'landscape' ? '167mm' : '297mm';
       scaledContainer.style.textAlign = 'initial';
       
       scaledContainer.appendChild(clone);
@@ -215,8 +213,8 @@ export default function PrayerPoster() {
 
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      const width = scaledContainer.offsetWidth * 0.5;
-      const height = scaledContainer.offsetHeight * 0.5;
+      const width = clone.offsetWidth * 0.5;
+      const height = clone.offsetHeight * 0.5;
 
       const worker = html2pdf().set({
         margin: 0,
