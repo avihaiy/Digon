@@ -186,16 +186,24 @@ export default function PrayerPoster() {
     if (!posterRef.current) return;
     const wrapper = document.getElementById('poster-scale-wrapper');
     const originalTransform = wrapper ? wrapper.style.transform : "";
+    const originalPosition = wrapper ? wrapper.style.position : "";
+    const originalLeft = wrapper ? wrapper.style.left : "";
+    const originalTop = wrapper ? wrapper.style.top : "";
+    const originalZIndex = wrapper ? wrapper.style.zIndex : "";
     
     try {
       setIsGeneratingImage(true);
       
-      // Temporarily remove transform so html2canvas sees true dimensions and viewport
+      // Temporarily remove transform and force absolute top-left so it doesn't get cut by scroll overflow
       if (wrapper) {
         wrapper.style.transform = 'none';
+        wrapper.style.position = 'absolute';
+        wrapper.style.left = '0';
+        wrapper.style.top = '0';
+        wrapper.style.zIndex = '9999';
       }
       // Wait for layout update
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
 
       const el = posterRef.current;
       const width = el.offsetWidth;
@@ -260,6 +268,10 @@ export default function PrayerPoster() {
       setIsGeneratingImage(false);
       if (wrapper) {
         wrapper.style.transform = originalTransform;
+        wrapper.style.position = originalPosition;
+        wrapper.style.left = originalLeft;
+        wrapper.style.top = originalTop;
+        wrapper.style.zIndex = originalZIndex;
       }
     }
   };
