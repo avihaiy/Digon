@@ -147,6 +147,8 @@ export default function PrayerTimesSlide({ content, isShabbat }: PrayerTimesSlid
       transition={{ duration: 0.7, ease: "easeInOut" }}
       style={{
         width: "100%",
+        maxWidth: hasLessons ? "100%" : "900px",
+        margin: "0 auto",
         height: "100%",
         display: "flex",
         flexDirection: "column",
