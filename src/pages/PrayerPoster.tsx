@@ -188,18 +188,45 @@ export default function PrayerPoster() {
       setIsGeneratingImage(true);
       const el = posterRef.current;
 
+      const clone = el.cloneNode(true) as HTMLElement;
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.top = '0';
+      tempContainer.style.left = '0';
+      tempContainer.style.zIndex = '-9999';
+      tempContainer.style.width = orientation === 'landscape' ? '297mm' : '210mm';
+      tempContainer.style.height = orientation === 'landscape' ? '167mm' : '297mm';
+      // Reset any inherited text alignments
+      tempContainer.style.textAlign = 'initial';
+      tempContainer.appendChild(clone);
+      document.body.appendChild(tempContainer);
+
+      // Wait a moment for styles to apply
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      const width = clone.offsetWidth;
+      const height = clone.offsetHeight;
+
       const worker = html2pdf().set({
         margin: 0,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 1.0 },
         html2canvas: {
           scale: 3,
           useCORS: true,
           backgroundColor: '#ffffff',
           letterRendering: true,
+          width,
+          height,
+          windowWidth: Math.max(document.documentElement.clientWidth, width + 100),
+          windowHeight: Math.max(document.documentElement.clientHeight, height + 100),
+          scrollX: 0,
+          scrollY: 0,
         },
-      }).from(el).toCanvas();
+      }).from(clone).toCanvas();
 
       const canvas: HTMLCanvasElement | undefined = await (worker as any).get('canvas');
+      document.body.removeChild(tempContainer);
+      
       if (!canvas) throw new Error('Failed to render canvas');
 
       const blob = await new Promise<Blob>((resolve, reject) => {
@@ -519,7 +546,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
   const nameParts = splitName(data.synagogueName);
   
   const width = orientation === "landscape" ? "297mm" : "210mm";
-  const minHeight = orientation === "landscape" ? "210mm" : "297mm";
+  const minHeight = orientation === "landscape" ? "167mm" : "297mm";
   
   return (
     <div
