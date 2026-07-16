@@ -184,30 +184,9 @@ export default function PrayerPoster() {
 
   const handleDownloadImage = async () => {
     if (!posterRef.current) return;
-    const wrapper = document.getElementById('poster-scale-wrapper');
-    const originalTransform = wrapper ? wrapper.style.transform : "";
-    const originalPosition = wrapper ? wrapper.style.position : "";
-    const originalLeft = wrapper ? wrapper.style.left : "";
-    const originalTop = wrapper ? wrapper.style.top : "";
-    const originalZIndex = wrapper ? wrapper.style.zIndex : "";
-    
     try {
       setIsGeneratingImage(true);
-      
-      // Temporarily remove transform and force absolute top-left so it doesn't get cut by scroll overflow
-      if (wrapper) {
-        wrapper.style.transform = 'none';
-        wrapper.style.position = 'absolute';
-        wrapper.style.left = '0';
-        wrapper.style.top = '0';
-        wrapper.style.zIndex = '9999';
-      }
-      // Wait for layout update
-      await new Promise(resolve => setTimeout(resolve, 150));
-
       const el = posterRef.current;
-      const width = el.offsetWidth;
-      const height = el.offsetHeight;
 
       const worker = html2pdf().set({
         margin: 0,
@@ -217,12 +196,6 @@ export default function PrayerPoster() {
           useCORS: true,
           backgroundColor: '#ffffff',
           letterRendering: true,
-          width,
-          height,
-          windowWidth: width,
-          windowHeight: height,
-          scrollX: 0,
-          scrollY: 0,
         },
       }).from(el).toCanvas();
 
@@ -266,13 +239,6 @@ export default function PrayerPoster() {
       toast({ title: "שגיאה ביצירת התמונה", variant: "destructive" });
     } finally {
       setIsGeneratingImage(false);
-      if (wrapper) {
-        wrapper.style.transform = originalTransform;
-        wrapper.style.position = originalPosition;
-        wrapper.style.left = originalLeft;
-        wrapper.style.top = originalTop;
-        wrapper.style.zIndex = originalZIndex;
-      }
     }
   };
 
