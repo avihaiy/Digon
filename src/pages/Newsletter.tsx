@@ -470,7 +470,7 @@ export default function Newsletter() {
     setIsGeneratingDvarTorah(true);
     const toastId = toast.loading("ה-AI כותב דבר תורה...");
     try {
-      const promptText = `כתוב לי דבר תורה קצר ותמציתי מאוד (עד 80 מילים בלבד!) על פרשת ${data.parasha}. הדבר תורה מיועד לעלון שבת קהילתי מודפס וצפוף, ולכן עליו להיות קצר במיוחד. על המאמר לכלול מסר או מוסר השכל קצר ויפה. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
+      const promptText = `כתוב לי דבר תורה קצר ותמציתי מאוד (עד 80 מילים בלבד!) על פרשת ${data.parasha}. הדבר תורה מיועד לעלון שבת קהילתי מודפס וצפוף, ולכן עליו להיות קצר במיוחד. על המאמר לכלול מסר או מוסר השכל קצר ויפה. חשוב מאוד: הקפד לנקד את הטקסט במלואו (ניקוד מלא לכל המילים). החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
       
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -586,7 +586,7 @@ export default function Newsletter() {
     setIsGeneratingHalacha(true);
     const toastId = toast.loading("ה-AI כותב הלכה שבועית...");
     try {
-      const promptText = `כתוב לי הלכה שבועית קצרה, שימושית ותמציתית מאוד (עד 40 מילים בלבד!) לפרשת ${data.parasha} או הלכה שקשורה לשבת/מועדים. הטקסט מיועד לפינת ההלכה בעלון שבת קהילתי מודפס, אז חובה לשמור על טקסט קצר מאוד. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו'). בלי עטיפת markdown.`;
+      const promptText = `כתוב לי הלכה שבועית קצרה, שימושית ותמציתית מאוד (עד 40 מילים בלבד!) לפרשת ${data.parasha} או הלכה שקשורה לשבת/מועדים. הטקסט מיועד לפינת ההלכה בעלון שבת קהילתי מודפס, אז חובה לשמור על טקסט קצר מאוד. חשוב מאוד: הקפד לנקד את הטקסט במלואו (ניקוד מלא לכל המילים). החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו'). בלי עטיפת markdown.`;
       
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
