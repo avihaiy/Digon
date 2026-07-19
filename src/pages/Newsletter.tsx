@@ -81,6 +81,7 @@ export default function Newsletter() {
   const [isArchivesOpen, setIsArchivesOpen] = useState(false);
   const [isGeneratingDvarTorah, setIsGeneratingDvarTorah] = useState(false);
   const [isGeneratingChildrensCorner, setIsGeneratingChildrensCorner] = useState(false);
+  const [isGeneratingHalacha, setIsGeneratingHalacha] = useState(false);
   const newsletterRef = useRef<HTMLDivElement>(null);
   
   const getInitialData = (): NewsletterData => {
@@ -556,6 +557,64 @@ export default function Newsletter() {
     }
   };
 
+  const generateHalacha = async () => {
+    if (!data.parasha) {
+      toast.error("אנא בחר פרשה קודם");
+      return;
+    }
+    
+    // Attempt to get API key from environment, or ask user
+    let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      const savedKey = localStorage.getItem('gemini_api_key');
+      if (savedKey) {
+        apiKey = savedKey;
+      } else {
+        apiKey = prompt("אנא הזן מפתח API של Google Gemini:");
+        if (apiKey) {
+          localStorage.setItem('gemini_api_key', apiKey);
+        } else {
+          return;
+        }
+      }
+    }
+
+    setIsGeneratingHalacha(true);
+    const toastId = toast.loading("ה-AI כותב הלכה שבועית...");
+    try {
+      const promptText = `כתוב לי הלכה שבועית קצרה ושימושית לפרשת ${data.parasha} או הלכה שקשורה לשבת/מועדים. הטקסט מיועד לפינת ההלכה בעלון שבת קהילתי. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error.message || "שגיאה מה-API");
+      }
+
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleanHtml = text.replace(/```html/g, '').replace(/```/g, '').trim();
+
+      if (cleanHtml) {
+        setData({ ...data, halachaContent: cleanHtml });
+        toast.success("הלכה שבועית נכתבה בהצלחה!", { id: toastId });
+      } else {
+        throw new Error("לא התקבל טקסט");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`שגיאה ביצירת ההלכה: ${err.message}`, { id: toastId });
+    } finally {
+      setIsGeneratingHalacha(false);
+    }
+  };
+
   const handleTimeChange = (idx: number, field: 'label' | 'time', value: string) => {
     const newTimes = [...data.times];
     newTimes[idx] = { ...newTimes[idx], [field]: value };
@@ -1012,8 +1071,18 @@ export default function Newsletter() {
               </Card>
 
               <Card className="shadow-sm border-t-4 border-t-blue-500">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">הלכה שבועית</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={generateHalacha}
+                    disabled={isGeneratingHalacha}
+                    className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    {isGeneratingHalacha ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    צור בעזרת AI
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
