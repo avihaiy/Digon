@@ -1183,10 +1183,12 @@ export default function PublicMemberArea() {
               ) : (
                 <div className="space-y-4">
                   {charges.map((c, idx) => (
-                    <div 
+                    <motion.div 
                       key={c.id} 
-                      className="parallax-stack-card bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-3xl p-4 flex items-center justify-between border border-slate-200/50 dark:border-zinc-800/50 shadow-md"
-                      style={{ top: `calc(100px + ${idx * 16}px)`, zIndex: 10 + idx }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-3xl p-4 flex items-center justify-between border border-slate-200/50 dark:border-zinc-800/50 shadow-md"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 shrink-0">
@@ -1203,10 +1205,12 @@ export default function PublicMemberArea() {
                     </div>
                   ))}
                   {pending.map((p, idx) => (
-                    <div 
+                    <motion.div 
                       key={p.id} 
-                      className="parallax-stack-card bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md rounded-3xl p-4 flex items-center justify-between border border-slate-200/50 dark:border-zinc-800/50 shadow-md opacity-80 grayscale"
-                      style={{ top: `calc(100px + ${(charges.length + idx) * 16}px)`, zIndex: 10 + charges.length + idx }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: (charges.length + idx) * 0.1 }}
+                      className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md rounded-3xl p-4 flex items-center justify-between border border-slate-200/50 dark:border-zinc-800/50 shadow-md opacity-80 grayscale"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 shrink-0">
@@ -1288,14 +1292,18 @@ export default function PublicMemberArea() {
                   </motion.div>
                 </div>
               ) : (
-                <div className="space-y-4 relative pb-20">
+                <div className="space-y-4 pb-20">
                   {receipts.map((r, idx) => (
-                    <Link 
-                      key={r.id} 
-                      to={`/r/${r.receipt_number}`} 
-                      className="parallax-stack-card block bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-3xl p-4 border border-slate-200/50 dark:border-zinc-800/50 shadow-md hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-colors"
-                      style={{ top: `calc(100px + ${idx * 16}px)`, zIndex: 10 + idx }}
+                    <motion.div
+                      key={r.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
                     >
+                      <Link 
+                        to={`/r/${r.receipt_number}`} 
+                        className="block bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-3xl p-4 border border-slate-200/50 dark:border-zinc-800/50 shadow-md hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-colors"
+                      >
                       <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 shrink-0">
@@ -1312,6 +1320,7 @@ export default function PublicMemberArea() {
                       </div>
                     </div>
                   </Link>
+                  </motion.div>
                   ))}
                 </div>
               )}
