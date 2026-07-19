@@ -270,7 +270,7 @@ export default function Newsletter() {
       const zmanim = await res.json();
       
       const sunset = new Date(zmanim.times.sunset);
-      const candleLighting = new Date(sunset.getTime() - 20 * 60000);
+      const candleLighting = new Date(sunset.getTime() - 30 * 60000); // 30 minutes before sunset is the standard in Haifa/Akko
       const havdalah = new Date(zmanim.times.tzeit50min);
       const rabbeinuTam = new Date(zmanim.times.tzeit72min);
       
