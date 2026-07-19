@@ -1314,10 +1314,16 @@ export default function Newsletter() {
                   </>
                 )}
 
-                {/* Footer Ad */}
-                {data.footerAd && (
+                {/* Footer Ad or Fallback */}
+                {data.footerAd ? (
                   <div className="mt-auto pt-4 flex justify-center w-full">
                     <img src={data.footerAd} alt="Footer Ad" className="max-h-[150px] object-contain w-full" />
+                  </div>
+                ) : (
+                  <div className="mt-auto pt-4 w-full">
+                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200 shadow-sm">
+                      <span className="text-slate-600 font-medium text-sm">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
+                    </div>
                   </div>
                 )}
                 </div>
@@ -1352,10 +1358,16 @@ export default function Newsletter() {
                     />
                   </div>
 
-                  {/* Extra Page Footer Ad */}
-                  {data.footerAd && (
+                  {/* Extra Page Footer Ad or Fallback */}
+                  {data.footerAd ? (
                     <div className="mt-4 pt-4 border-t border-slate-200 flex justify-center w-full relative z-10">
                       <img src={data.footerAd} alt="Footer Ad" className="max-h-[150px] object-contain w-full" />
+                    </div>
+                  ) : (
+                    <div className="mt-4 pt-4 border-t border-slate-200 w-full relative z-10">
+                      <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200 shadow-sm">
+                        <span className="text-slate-600 font-medium text-sm">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
+                      </div>
                     </div>
                   )}
                 </div>
