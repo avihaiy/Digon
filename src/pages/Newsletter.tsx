@@ -222,13 +222,16 @@ export default function Newsletter() {
 
       await new Promise(resolve => setTimeout(resolve, 150));
 
+      const heightInPixels = scaledContainer.scrollHeight;
+      const heightInMm = heightInPixels / 3.779527559; // Convert px to mm at 96 DPI
+      const finalHeight = Math.max(297, heightInMm); // Ensure at least A4 height
+
       const opt = {
         margin:       0,
         filename:     `עלון-שבת-${data.parasha || 'קהילה'}.pdf`,
         image:        { type: 'jpeg', quality: 1 },
         html2canvas:  { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+        jsPDF:        { unit: 'mm', format: [210, finalHeight], orientation: 'portrait' }
       };
 
       await html2pdf().set(opt).from(scaledContainer).save();
