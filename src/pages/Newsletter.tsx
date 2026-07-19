@@ -130,8 +130,6 @@ export default function Newsletter() {
   });
 
   useEffect(() => {
-    if (data.parasha && data.hebrewDate) return; 
-    
     try {
       const today = new Date();
       const nextSaturday = new Date(today);
@@ -149,11 +147,16 @@ export default function Newsletter() {
       const parashaName = parashaEvent ? parashaEvent.render("he").replace("פרשת ", "") : "";
       const heDateStr = hDate.renderGematriya();
       
-      setData(prev => ({
-        ...prev,
-        parasha: parashaName || prev.parasha,
-        hebrewDate: heDateStr
-      }));
+      setData(prev => {
+        if (!prev.hebrewDate || !prev.parasha || prev.hebrewDate !== heDateStr) {
+          return {
+            ...prev,
+            parasha: parashaName || prev.parasha,
+            hebrewDate: heDateStr
+          };
+        }
+        return prev;
+      });
     } catch (err) {
       console.error("Error calculating heb dates", err);
     }
