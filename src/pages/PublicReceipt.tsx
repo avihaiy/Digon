@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, FileDown, Printer } from "lucide-react";
+import { Loader2, FileDown, Printer, X } from "lucide-react";
 import { formatCurrency, formatDate, getHebrewDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import html2pdf from "html2pdf.js";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ const PAYMENT_METHOD_DISPLAY: Record<string, string> = {
 
 export default function PublicReceipt() {
   const { receiptNumber } = useParams<{ receiptNumber: string }>();
+  const navigate = useNavigate();
   const [receipt, setReceipt] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -178,6 +179,15 @@ export default function PublicReceipt() {
             הדפסה
           </Button>
         </div>
+
+        <Button 
+          variant="secondary" 
+          onClick={() => navigate(-1)} 
+          className="w-full gap-2 mt-2"
+        >
+          <X className="w-4 h-4" />
+          חזור אחורה / סגור קבלה
+        </Button>
 
         <p className="text-center text-xs text-muted-foreground pt-2">
           קבלה זו נשלחה אליכם דיגיטלית מבית כנסת ברית שלום עכו
