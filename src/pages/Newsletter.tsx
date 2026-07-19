@@ -192,16 +192,46 @@ export default function Newsletter() {
     const toastId = toast.loading("מייצר קובץ PDF...");
     
     try {
-      const element = newsletterRef.current;
+      const root = document.documentElement;
+      const originalDir = root.dir;
+      root.dir = 'ltr';
+
+      const el = newsletterRef.current;
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.dir = 'rtl';
+
+      const outerContainer = document.createElement('div');
+      outerContainer.style.position = 'absolute';
+      outerContainer.style.top = '-9999px';
+      outerContainer.style.left = '-9999px';
+      outerContainer.style.zIndex = '-9999';
+      outerContainer.dir = 'ltr';
+      
+      const scaledContainer = document.createElement('div');
+      scaledContainer.style.transform = 'scale(1)';
+      scaledContainer.style.transformOrigin = 'top left';
+      scaledContainer.style.width = '210mm';
+      scaledContainer.style.height = '297mm';
+      
+      scaledContainer.appendChild(clone);
+      outerContainer.appendChild(scaledContainer);
+      document.body.appendChild(outerContainer);
+
+      await new Promise(resolve => setTimeout(resolve, 150));
+
       const opt = {
         margin:       0,
         filename:     `עלון-שבת-${data.parasha || 'קהילה'}.pdf`,
         image:        { type: 'jpeg', quality: 1 },
-        html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 },
+        html2canvas:  { scale: 3, useCORS: true, letterRendering: true },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      await html2pdf().set(opt).from(element).save();
+      await html2pdf().set(opt).from(scaledContainer).save();
+      
+      document.body.removeChild(outerContainer);
+      root.dir = originalDir;
+
       toast.success("קובץ ה-PDF הופק בהצלחה!", { id: toastId });
     } catch (error) {
       console.error("PDF generation error:", error);
