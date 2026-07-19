@@ -1056,9 +1056,35 @@ export default function Newsletter() {
             </TabsContent>
 
             <TabsContent value="content" className="space-y-4 mt-4">
-              <Card className="shadow-sm border-t-4 border-t-primary">
+              <Card className="shadow-sm border-t-4 border-t-slate-500">
                 <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">פרטי העלון</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>שם הפרשה</Label>
+                    <Input value={data.parasha} onChange={(e) => setData({...data, parasha: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>תאריך עברי</Label>
+                    <Input value={data.hebrewDate} onChange={(e) => setData({...data, hebrewDate: e.target.value})} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-sm border-t-4 border-t-primary">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">דבר תורה</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={generateDvarTorah}
+                    disabled={isGeneratingDvarTorah}
+                    className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    {isGeneratingDvarTorah ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    צור בעזרת AI
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -1332,37 +1358,6 @@ export default function Newsletter() {
                 </CardContent>
               </Card>
               
-              <Card className="shadow-sm border-t-4 border-t-slate-500">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">פרטי העלון</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <Label>שם הפרשה</Label>
-                    <Input value={data.parasha} onChange={(e) => setData({...data, parasha: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center mb-1">
-                      <Label>תוכן דבר התורה</Label>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={generateDvarTorah}
-                        disabled={isGeneratingDvarTorah}
-                        className="h-8 gap-1 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
-                      >
-                        {isGeneratingDvarTorah ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                        כתוב לי ב-AI
-                      </Button>
-                    </div>
-                    <ReactQuill theme="snow" value={data.dvarTorahContent} onChange={(val) => setData({...data, dvarTorahContent: val})} modules={modules} formats={formats} className="bg-white rounded-md mb-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>תאריך עברי</Label>
-                    <Input value={data.hebrewDate} onChange={(e) => setData({...data, hebrewDate: e.target.value})} />
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
           </Tabs>
         </div>
