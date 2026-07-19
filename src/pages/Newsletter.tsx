@@ -80,6 +80,7 @@ export default function Newsletter() {
   const [archives, setArchives] = useState<any[]>([]);
   const [isArchivesOpen, setIsArchivesOpen] = useState(false);
   const [isGeneratingDvarTorah, setIsGeneratingDvarTorah] = useState(false);
+  const [isGeneratingChildrensCorner, setIsGeneratingChildrensCorner] = useState(false);
   const newsletterRef = useRef<HTMLDivElement>(null);
   
   const getInitialData = (): NewsletterData => {
@@ -494,6 +495,64 @@ export default function Newsletter() {
       toast.error(`שגיאה ביצירת דבר התורה: ${err.message}`, { id: toastId });
     } finally {
       setIsGeneratingDvarTorah(false);
+    }
+  };
+
+  const generateChildrensCorner = async () => {
+    if (!data.parasha) {
+      toast.error("אנא בחר פרשה קודם");
+      return;
+    }
+    
+    // Attempt to get API key from environment, or ask user
+    let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      const savedKey = localStorage.getItem('gemini_api_key');
+      if (savedKey) {
+        apiKey = savedKey;
+      } else {
+        apiKey = prompt("אנא הזן מפתח API של Google Gemini:");
+        if (apiKey) {
+          localStorage.setItem('gemini_api_key', apiKey);
+        } else {
+          return;
+        }
+      }
+    }
+
+    setIsGeneratingChildrensCorner(true);
+    const toastId = toast.loading("ה-AI כותב פינת ילדים...");
+    try {
+      const promptText = `כתוב לי סיפור קצר או חידה לילדים על פרשת ${data.parasha} או לכבוד שבת. הטקסט מיועד לפינת הילדים בעלון שבת קהילתי. על הקטע להיות מנוסח בשפה מותאמת ומרתקת לילדים. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error.message || "שגיאה מה-API");
+      }
+
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleanHtml = text.replace(/```html/g, '').replace(/```/g, '').trim();
+
+      if (cleanHtml) {
+        setData({ ...data, childrensCornerContent: cleanHtml });
+        toast.success("פינת הילדים נכתבה בהצלחה!", { id: toastId });
+      } else {
+        throw new Error("לא התקבל טקסט");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`שגיאה ביצירת פינת הילדים: ${err.message}`, { id: toastId });
+    } finally {
+      setIsGeneratingChildrensCorner(false);
     }
   };
 
@@ -1005,8 +1064,18 @@ export default function Newsletter() {
               </Card>
 
               <Card className="shadow-sm border-t-4 border-t-pink-500">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">פינת הילדים</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={generateChildrensCorner}
+                    disabled={isGeneratingChildrensCorner}
+                    className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    {isGeneratingChildrensCorner ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    צור בעזרת AI
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
