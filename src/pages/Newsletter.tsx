@@ -40,6 +40,7 @@ interface NewsletterData {
   announcements: string;
   parnasHashavua: string;
   times: { label: string; time: string }[];
+  extraPages: { id: string; title: string; content: string }[];
 }
 
 const modules = {
@@ -81,6 +82,7 @@ export default function Newsletter() {
           dailyStudyContent: '',
           childrensCornerTitle: 'פינת הילדים',
           childrensCornerContent: '',
+          extraPages: [],
           ...parsed,
         };
       } catch (e) {
@@ -113,58 +115,61 @@ export default function Newsletter() {
         { label: "שחרית", time: "08:00" },
         { label: "מנחה של שבת", time: "18:30" },
         { label: "צאת שבת", time: "20:00" },
-      ]
+      ],
+      extraPages: []
     };
   };
 
   const [data, setData] = useState<NewsletterData>(getInitialData);
-  const innerContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const adjustFit = () => {
-      if (!innerContentRef.current || !newsletterRef.current) return;
-      const content = innerContentRef.current;
-      const container = newsletterRef.current;
+      if (!newsletterRef.current) return;
+      const contents = newsletterRef.current.querySelectorAll('.page-inner-content');
+      const containers = newsletterRef.current.querySelectorAll('.a4-page');
       
-      // Reset styles to measure natural height
-      content.style.transform = 'none';
-      content.style.width = '100%';
-      
-      setTimeout(() => {
+      contents.forEach((content: any, index: number) => {
+        const container = containers[index] as HTMLElement;
         if (!content || !container) return;
+
+        // Reset styles to measure natural height
+        content.style.transform = 'none';
+        content.style.width = '100%';
         
-        // The container has h-[297mm] and p-[15mm].
-        // Get the exact available height inside the padding
-        const computedStyle = window.getComputedStyle(container);
-        const paddingTop = parseFloat(computedStyle.paddingTop);
-        const paddingBottom = parseFloat(computedStyle.paddingBottom);
-        const targetHeight = container.clientHeight - paddingTop - paddingBottom;
-        
-        // scrollHeight of the content wrapper will reflect the actual content size
-        let scrollHeight = content.scrollHeight;
-        
-        if (scrollHeight > targetHeight && targetHeight > 0) {
-          // Content overflows. Let's find the optimal scale.
-          let bestScale = 1;
-          let min = 0.4; // minimum scale
-          let max = 1.0;
+        setTimeout(() => {
+          // The container has h-[297mm] and p-[15mm].
+          // Get the exact available height inside the padding
+          const computedStyle = window.getComputedStyle(container);
+          const paddingTop = parseFloat(computedStyle.paddingTop);
+          const paddingBottom = parseFloat(computedStyle.paddingBottom);
+          const targetHeight = container.clientHeight - paddingTop - paddingBottom;
           
-          for (let i = 0; i < 15; i++) {
-            const mid = (min + max) / 2;
-            content.style.width = `${100 / mid}%`;
-            if (content.scrollHeight * mid <= targetHeight) {
-              bestScale = mid;
-              min = mid; 
-            } else {
-              max = mid; 
+          // scrollHeight of the content wrapper will reflect the actual content size
+          let scrollHeight = content.scrollHeight;
+          
+          if (scrollHeight > targetHeight && targetHeight > 0) {
+            // Content overflows. Let's find the optimal scale.
+            let bestScale = 1;
+            let min = 0.4; // minimum scale
+            let max = 1.0;
+            
+            for (let i = 0; i < 15; i++) {
+              const mid = (min + max) / 2;
+              content.style.width = `${100 / mid}%`;
+              if (content.scrollHeight * mid <= targetHeight) {
+                bestScale = mid;
+                min = mid; 
+              } else {
+                max = mid; 
+              }
             }
+            
+            content.style.width = `${100 / bestScale}%`;
+            content.style.transform = `scale(${bestScale})`;
+            content.style.transformOrigin = 'top right';
           }
-          
-          content.style.width = `${100 / bestScale}%`;
-          content.style.transform = `scale(${bestScale})`;
-          content.style.transformOrigin = 'top right';
-        }
-      }, 100);
+        }, 100);
+      });
     };
     
     adjustFit();
@@ -253,6 +258,7 @@ export default function Newsletter() {
       const el = newsletterRef.current;
       const clone = el.cloneNode(true) as HTMLElement;
       clone.dir = 'rtl';
+      clone.style.gap = '0';
 
       const outerContainer = document.createElement('div');
       outerContainer.style.position = 'absolute';
@@ -265,7 +271,6 @@ export default function Newsletter() {
       scaledContainer.style.transform = 'scale(1)';
       scaledContainer.style.transformOrigin = 'top left';
       scaledContainer.style.width = '210mm';
-      scaledContainer.style.minHeight = '297mm';
       
       scaledContainer.appendChild(clone);
       outerContainer.appendChild(scaledContainer);
@@ -273,16 +278,13 @@ export default function Newsletter() {
 
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      const heightInPixels = scaledContainer.scrollHeight;
-      const heightInMm = heightInPixels / 3.779527559; // Convert px to mm at 96 DPI
-      const finalHeight = Math.max(297, heightInMm); // Ensure at least A4 height
-
       const opt = {
         margin:       0,
         filename:     `עלון-שבת-${data.parasha || 'קהילה'}.pdf`,
         image:        { type: 'jpeg', quality: 1 },
         html2canvas:  { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF:        { unit: 'mm', format: [210, finalHeight], orientation: 'portrait' }
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['css', 'legacy'] }
       };
 
       await html2pdf().set(opt).from(scaledContainer).save();
@@ -505,10 +507,11 @@ export default function Newsletter() {
         {/* Editor Form */}
         <div className="lg:col-span-4 space-y-4">
           <Tabs defaultValue="content" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="content"><FileText className="w-4 h-4 ml-1 md:ml-2"/><span className="hidden md:inline">תוכן</span></TabsTrigger>
-              <TabsTrigger value="times"><Clock className="w-4 h-4 ml-1 md:ml-2"/><span className="hidden md:inline">זמנים</span></TabsTrigger>
-              <TabsTrigger value="design"><Palette className="w-4 h-4 ml-1 md:ml-2"/><span className="hidden md:inline">עיצוב</span></TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="content" className="text-xs md:text-sm"><FileText className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">תוכן</span></TabsTrigger>
+              <TabsTrigger value="times" className="text-xs md:text-sm"><Clock className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">זמנים</span></TabsTrigger>
+              <TabsTrigger value="design" className="text-xs md:text-sm"><Palette className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">עיצוב</span></TabsTrigger>
+              <TabsTrigger value="pages" className="text-xs md:text-sm"><FolderOpen className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">עמודים</span></TabsTrigger>
             </TabsList>
             
             <TabsContent value="design" className="space-y-4 mt-4">
@@ -592,6 +595,78 @@ export default function Newsletter() {
                       )}
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="pages" className="space-y-4 mt-4">
+              <Card className="shadow-sm border-t-4 border-t-blue-500">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">עמודים נוספים</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setData({
+                      ...data, 
+                      extraPages: [
+                        ...data.extraPages, 
+                        { id: Date.now().toString(), title: `עמוד נוסף ${data.extraPages.length + 1}`, content: '<p>הכנס תוכן כאן...</p>' }
+                      ]
+                    })}
+                  >
+                    + הוסף עמוד
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {data.extraPages.length === 0 ? (
+                    <div className="text-center text-slate-500 py-6 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                      אין עמודים נוספים. לחץ על הכפתור למעלה כדי להוסיף עמוד חדש.
+                    </div>
+                  ) : (
+                    data.extraPages.map((page, index) => (
+                      <div key={page.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-4 relative">
+                        <Button 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute -top-3 -left-3 h-8 w-8 rounded-full shadow-md z-10"
+                          onClick={() => {
+                            const newPages = [...data.extraPages];
+                            newPages.splice(index, 1);
+                            setData({...data, extraPages: newPages});
+                          }}
+                        >
+                          &times;
+                        </Button>
+                        <div className="space-y-2">
+                          <Label>כותרת העמוד (לא חובה)</Label>
+                          <Input 
+                            value={page.title} 
+                            onChange={(e) => {
+                              const newPages = [...data.extraPages];
+                              newPages[index].title = e.target.value;
+                              setData({...data, extraPages: newPages});
+                            }} 
+                            placeholder="למשל: המשך דבר תורה"
+                          />
+                        </div>
+                        <div className="space-y-2" dir="ltr">
+                          <Label className="text-right block" dir="rtl">תוכן העמוד</Label>
+                          <ReactQuill 
+                            theme="snow" 
+                            value={page.content} 
+                            onChange={(content) => {
+                              const newPages = [...data.extraPages];
+                              newPages[index].content = content;
+                              setData({...data, extraPages: newPages});
+                            }}
+                            modules={modules}
+                            formats={formats}
+                            className="bg-white rounded-md text-right ql-editor-rtl"
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -806,33 +881,38 @@ export default function Newsletter() {
 
         {/* Live Preview */}
         <div className="lg:col-span-8 flex justify-center bg-muted/30 rounded-xl p-4 md:p-8 overflow-auto border border-border/50">
-          <div className="relative shadow-2xl bg-white mx-auto transform-gpu origin-top transition-transform duration-300" style={{ width: '210mm', minHeight: '297mm', transform: 'scale(0.85)' }}>
-            {/* The actual A4 Page to be captured */}
-            <div 
-              ref={newsletterRef}
-              className={`w-[210mm] h-[297mm] overflow-hidden text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
-              style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
-            >
+          <div className="relative mx-auto transform-gpu origin-top transition-transform duration-300" style={{ transform: 'scale(0.85)' }}>
+            
+            <div ref={newsletterRef} className="flex flex-col gap-8 bg-transparent">
               <style>
                 {`
                   .prose, .content-font { font-family: '${data.contentFontFamily || 'Frank Ruhl Libre'}' !important; }
+                  @media print {
+                    .a4-page { page-break-after: always; }
+                  }
                 `}
               </style>
-              {/* Outer Page Styles by Theme */}
-              {data.theme === 'classic' && (
-                <>
-                  <div className="absolute inset-4 border border-primary/40 pointer-events-none rounded-xl z-0"></div>
-                  <div className="absolute inset-[1.1rem] border border-primary/10 pointer-events-none rounded-lg z-0"></div>
-                </>
-              )}
-              {data.theme === 'modern' && (
-                <div className="absolute top-0 left-0 right-0 h-[150px] bg-gradient-to-b from-primary/10 to-transparent pointer-events-none z-0"></div>
-              )}
-              {data.theme === 'minimal' && (
-                <div className="absolute inset-4 border-b-2 border-t-2 border-slate-200 pointer-events-none z-0"></div>
-              )}
-              
-              <div className="relative z-10 flex-1 flex flex-col" ref={innerContentRef}>
+
+              {/* PAGE 1: Main Newsletter */}
+              <div 
+                className={`a4-page shadow-2xl w-[210mm] h-[297mm] overflow-hidden text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
+                style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
+              >
+                {/* Outer Page Styles by Theme */}
+                {data.theme === 'classic' && (
+                  <>
+                    <div className="absolute inset-4 border border-primary/40 pointer-events-none rounded-xl z-0"></div>
+                    <div className="absolute inset-[1.1rem] border border-primary/10 pointer-events-none rounded-lg z-0"></div>
+                  </>
+                )}
+                {data.theme === 'modern' && (
+                  <div className="absolute top-0 left-0 right-0 h-[150px] bg-gradient-to-b from-primary/10 to-transparent pointer-events-none z-0"></div>
+                )}
+                {data.theme === 'minimal' && (
+                  <div className="absolute inset-4 border-b-2 border-t-2 border-slate-200 pointer-events-none z-0"></div>
+                )}
+                
+                <div className="relative z-10 flex-1 flex flex-col page-inner-content">
                 {data.theme === 'newspaper' ? (
                   <div className="flex-1 flex flex-col">
                     {/* Newspaper Header */}
@@ -1058,7 +1138,39 @@ export default function Newsletter() {
                 <div className={`mt-auto pt-6 text-center text-sm font-medium ${data.theme === 'minimal' ? 'text-slate-500 border-t border-slate-200' : 'text-gray-400'}`}>
                   שבת שלום ומבורך! הופק באמצעות מערכת ניהול בית הכנסת
                 </div>
+                </div>
               </div>
+
+              {/* EXTRA PAGES */}
+              {data.extraPages.map((page) => (
+                <div 
+                  key={page.id}
+                  className={`a4-page shadow-2xl w-[210mm] h-[297mm] overflow-hidden text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
+                  style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
+                >
+                  {/* Theme Backgrounds */}
+                  {data.theme === 'classic' && (
+                    <>
+                      <div className="absolute inset-4 border border-primary/40 pointer-events-none rounded-xl z-0"></div>
+                      <div className="absolute inset-[1.1rem] border border-primary/10 pointer-events-none rounded-lg z-0"></div>
+                    </>
+                  )}
+                  {data.theme === 'modern' && (
+                    <div className="absolute top-0 left-0 right-0 h-[150px] bg-gradient-to-b from-primary/10 to-transparent pointer-events-none z-0"></div>
+                  )}
+                  {data.theme === 'minimal' && (
+                    <div className="absolute inset-4 border-b-2 border-t-2 border-slate-200 pointer-events-none z-0"></div>
+                  )}
+
+                  <div className="relative z-10 flex-1 flex flex-col page-inner-content">
+                    {page.title && <h2 className="text-3xl font-bold mb-6 text-center text-primary" style={{ fontFamily: '"Frank Ruhl Libre", serif' }}>{page.title}</h2>}
+                    <div 
+                      className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
+                      dangerouslySetInnerHTML={{ __html: page.content }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
