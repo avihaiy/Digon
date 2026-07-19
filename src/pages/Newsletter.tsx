@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getShabbatTimes } from "@/lib/hebrew-utils";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import defaultLogo from "@/assets/brit-shalom-poster-logo.png";
@@ -147,12 +148,28 @@ export default function Newsletter() {
       const parashaName = parashaEvent ? parashaEvent.render("he").replace("פרשת ", "") : "";
       const heDateStr = hDate.renderGematriya();
       
+      const shabbatTimes = getShabbatTimes('jerusalem', nextSaturday);
+      const candleTime = shabbatTimes.candleLighting ? shabbatTimes.candleLighting.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : "";
+      const havdalahTime = shabbatTimes.havdalah ? shabbatTimes.havdalah.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : "";
+
       setData(prev => {
         if (!prev.hebrewDate || !prev.parasha || prev.hebrewDate !== heDateStr) {
+          const newTimes = [...(prev.times || [])];
+          
+          if (candleTime) {
+            const candleIdx = newTimes.findIndex(t => t.label === "כניסת שבת" || t.label.includes("כניסת שבת") || t.label.includes("הדלקת נרות"));
+            if (candleIdx >= 0) newTimes[candleIdx].time = candleTime;
+          }
+          if (havdalahTime) {
+            const havdalahIdx = newTimes.findIndex(t => t.label === "צאת שבת" || t.label.includes("צאת שבת") || t.label.includes("הבדלה"));
+            if (havdalahIdx >= 0) newTimes[havdalahIdx].time = havdalahTime;
+          }
+
           return {
             ...prev,
             parasha: parashaName || prev.parasha,
-            hebrewDate: heDateStr
+            hebrewDate: heDateStr,
+            times: newTimes
           };
         }
         return prev;
