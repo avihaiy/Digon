@@ -95,6 +95,15 @@ const TEHILLIM_MONTHLY: Record<number, string> = {
   29: "140-144", 30: "145-150"
 };
 
+// Aurora Background Component
+const AuroraBackground = () => (
+  <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden opacity-30 dark:opacity-40 mix-blend-multiply dark:mix-blend-screen transition-all duration-1000">
+    <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[var(--aurora-1,#eab308)] blur-[100px] animate-blob"></div>
+    <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--aurora-2,#3b82f6)] blur-[120px] animate-blob animation-delay-2000"></div>
+    <div className="absolute bottom-[-20%] left-[20%] w-[60%] h-[60%] rounded-full bg-[var(--aurora-3,#c026d3)] blur-[150px] animate-blob animation-delay-4000"></div>
+  </div>
+);
+
 function DailyTehillim() {
   const [chapters, setChapters] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -235,13 +244,34 @@ export default function PublicMemberArea() {
   const [bitPhone, setBitPhone] = useState<string>("");
   const [bitEnabled, setBitEnabled] = useState(false);
 
-  // Theme background based on time of day
-  const bgTheme = useMemo(() => {
+  // Custom Theme State
+  const [userTheme, setUserTheme] = useState<string>(() => {
+    return localStorage.getItem(`member_theme_${memberId}`) || 'theme-auto';
+  });
+
+  // Handle theme change
+  const handleThemeChange = (theme: string) => {
+    setUserTheme(theme);
+    localStorage.setItem(`member_theme_${memberId}`, theme);
+  };
+
+  // Theme background based on time of day (fallback for auto theme)
+  const autoBgTheme = useMemo(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return 'bg-gradient-to-b from-sky-100/50 to-slate-50 dark:from-sky-900/20 dark:to-zinc-950'; // Morning
     if (hour >= 12 && hour < 18) return 'bg-gradient-to-b from-amber-50/50 to-slate-50 dark:from-amber-900/10 dark:to-zinc-950'; // Afternoon
     return 'bg-gradient-to-b from-indigo-50/50 to-slate-50 dark:from-indigo-950/20 dark:to-zinc-950'; // Evening
   }, []);
+
+  const themeClasses: Record<string, string> = {
+    'theme-jerusalem': 'bg-amber-50/50 dark:bg-amber-950/20 theme-jerusalem',
+    'theme-ocean': 'bg-blue-50/50 dark:bg-blue-950/20 theme-ocean',
+    'theme-space': 'bg-slate-950 dark:bg-black theme-space'
+  };
+
+  const currentContainerClasses = userTheme === 'theme-auto' 
+    ? autoBgTheme 
+    : themeClasses[userTheme] || autoBgTheme;
   const [payboxPhone, setPayboxPhone] = useState<string>("");
   const [payboxEnabled, setPayboxEnabled] = useState(false);
   const [bankAccountDetails, setBankAccountDetails] = useState<string>("");
@@ -872,9 +902,11 @@ export default function PublicMemberArea() {
   }
 
   return (
-    <div className={`min-h-screen pb-20 ${bgTheme}`} dir="rtl">
+    <div className={`min-h-screen pb-20 ${currentContainerClasses} transition-colors duration-1000`} dir="rtl">
+      <AuroraBackground />
+      
       {/* HEADER */}
-      <header className="sticky top-0 z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl border-b border-slate-200/50 dark:border-zinc-800/50 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm transition-colors duration-500">
+      <header className={`sticky top-0 z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl border-b border-slate-200/50 dark:border-zinc-800/50 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm transition-colors duration-500`}>
         <div className="flex flex-col">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">אזור אישי</span>
           <h1 className="text-lg font-bold text-foreground">שלום {memberName}</h1>
@@ -1149,9 +1181,13 @@ export default function PublicMemberArea() {
                   </motion.div>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-zinc-800 shadow-sm divide-y divide-slate-100 dark:divide-zinc-800">
-                  {charges.map(c => (
-                    <div key={c.id} className="p-4 flex items-center justify-between">
+                <div className="space-y-4">
+                  {charges.map((c, idx) => (
+                    <div 
+                      key={c.id} 
+                      className="parallax-stack-card bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-3xl p-4 flex items-center justify-between border border-slate-200/50 dark:border-zinc-800/50 shadow-md"
+                      style={{ top: `calc(100px + ${idx * 16}px)`, zIndex: 10 + idx }}
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 shrink-0">
                           <FileText className="w-4 h-4" />
@@ -1166,8 +1202,12 @@ export default function PublicMemberArea() {
                       </div>
                     </div>
                   ))}
-                  {pending.map(p => (
-                    <div key={p.id} className="p-4 flex items-center justify-between bg-amber-50/50 dark:bg-amber-950/10">
+                  {pending.map((p, idx) => (
+                    <div 
+                      key={p.id} 
+                      className="parallax-stack-card bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md rounded-3xl p-4 flex items-center justify-between border border-slate-200/50 dark:border-zinc-800/50 shadow-md opacity-80 grayscale"
+                      style={{ top: `calc(100px + ${(charges.length + idx) * 16}px)`, zIndex: 10 + charges.length + idx }}
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 shrink-0">
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1248,9 +1288,15 @@ export default function PublicMemberArea() {
                   </motion.div>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-zinc-800 shadow-sm divide-y divide-slate-100 dark:divide-zinc-800">
-                  {receipts.map(r => (
-                    <Link key={r.id} to={`/r/${r.receipt_number}`} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <div className="space-y-4 relative pb-20">
+                  {receipts.map((r, idx) => (
+                    <Link 
+                      key={r.id} 
+                      to={`/r/${r.receipt_number}`} 
+                      className="parallax-stack-card block bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-3xl p-4 border border-slate-200/50 dark:border-zinc-800/50 shadow-md hover:bg-slate-50 dark:hover:bg-zinc-800/80 transition-colors"
+                      style={{ top: `calc(100px + ${idx * 16}px)`, zIndex: 10 + idx }}
+                    >
+                      <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 shrink-0">
                           <ReceiptIcon className="w-4 h-4" />
@@ -1262,9 +1308,10 @@ export default function PublicMemberArea() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="font-bold">{formatCurrency(r.total_amount)}</div>
-                        <ExternalLink className="w-3.5 h-3.5 text-slate-300 dark:text-zinc-600" />
+                        <ExternalLink className="w-4 h-4 text-slate-400" />
                       </div>
-                    </Link>
+                    </div>
+                  </Link>
                   ))}
                 </div>
               )}
@@ -1394,6 +1441,47 @@ export default function PublicMemberArea() {
                   שמור שינויים
                 </Button>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'profile' && (
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-100 dark:border-zinc-800 shadow-sm mt-4">
+              <h4 className="font-bold text-md mb-4 flex items-center gap-2">
+                <span className="text-xl">✨</span> עיצוב האפליקציה (Theme)
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  onClick={() => handleThemeChange('theme-auto')}
+                  className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${userTheme === 'theme-auto' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200'}`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-200 to-slate-400"></div>
+                  <span className="text-xs font-semibold">אוטומטי (לפי שעה)</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleThemeChange('theme-jerusalem')}
+                  className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${userTheme === 'theme-jerusalem' ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200'}`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-200 to-amber-500"></div>
+                  <span className="text-xs font-semibold">ירושלים של זהב</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleThemeChange('theme-ocean')}
+                  className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${userTheme === 'theme-ocean' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200'}`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-300 to-blue-600"></div>
+                  <span className="text-xs font-semibold">אוקיינוס כחול</span>
+                </button>
+                
+                <button 
+                  onClick={() => handleThemeChange('theme-space')}
+                  className={`p-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${userTheme === 'theme-space' ? 'border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-900/20' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-200'}`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600"></div>
+                  <span className="text-xs font-semibold">חלל עמוק (כהה)</span>
+                </button>
+              </div>
             </div>
           )}
 

@@ -766,3 +766,53 @@ div[style*="lovable-editor"] {
 .hide-scrollbar::-webkit-scrollbar {  
   display: none;  
 } 
+
+
+/* --- THEME SYSTEM & ADVANCED UI --- */
+@layer utilities {
+  .theme-jerusalem {
+    --aurora-1: #eab308;
+    --aurora-2: #fef08a;
+    --aurora-3: #fcd34d;
+    --theme-bg: bg-amber-50;
+    --theme-text: text-amber-900;
+  }
+  .theme-ocean {
+    --aurora-1: #3b82f6;
+    --aurora-2: #0ea5e9;
+    --aurora-3: #8b5cf6;
+    --theme-bg: bg-blue-50;
+    --theme-text: text-blue-900;
+  }
+  .theme-space {
+    --aurora-1: #c026d3;
+    --aurora-2: #3b82f6;
+    --aurora-3: #4c1d95;
+    --theme-bg: bg-slate-950;
+    --theme-text: text-slate-100;
+  }
+  .theme-auto {}
+
+  .animate-blob {
+    animation: blob 15s infinite alternate ease-in-out;
+  }
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+}
+
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+/* Stacking Cards */
+.parallax-stack-card {
+  position: sticky;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
