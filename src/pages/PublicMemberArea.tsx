@@ -974,9 +974,13 @@ export default function PublicMemberArea() {
             <span className="text-white/80 text-sm font-medium">
               {netOwed > 0 ? 'יתרת חוב כוללת' : 'יתרת זכות'}
             </span>
-            <div className="text-5xl font-extrabold tracking-tight">
+            <motion.div 
+              className="text-5xl font-extrabold tracking-tight drop-shadow-md"
+              animate={{ scale: [1, 1.04, 1] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            >
               {formatCurrency(netOwed > 0 ? netOwed : creditBalance)}
-            </div>
+            </motion.div>
             {totalPending > 0 && netOwed > 0 && (
               <span className="inline-flex items-center gap-1.5 text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm mt-2">
                 <Loader2 className="w-3 h-3 animate-spin" />
