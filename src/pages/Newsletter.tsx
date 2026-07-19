@@ -1358,11 +1358,15 @@ export default function Newsletter() {
                         )}
                         
                         {/* Sidebar Ads */}
-                        {data.sidebarAds && data.sidebarAds.some(ad => ad) && (
-                          <div className="mt-4 space-y-4 flex flex-col items-center">
+                        {data.sidebarAds && (
+                          <div className="mt-4 space-y-4 flex flex-col items-center w-full">
                             {data.sidebarAds.map((ad, idx) => ad ? (
-                              <img key={idx} src={ad} alt={`Ad ${idx + 1}`} className="max-w-full h-auto object-contain rounded-md shadow-sm border border-slate-300" />
-                            ) : null)}
+                              <img key={idx} src={ad} alt={`Ad ${idx + 1}`} className="w-full h-auto object-contain rounded-md shadow-sm border border-slate-300" />
+                            ) : (
+                              <div key={idx} className="w-full bg-[#42b8c5] rounded-md p-3 text-center shadow-sm border border-[#42b8c5]/20">
+                                <span className="text-white font-bold text-sm leading-tight inline-block">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -1501,11 +1505,15 @@ export default function Newsletter() {
                         )}
                         
                         {/* Sidebar Ads */}
-                        {data.sidebarAds && data.sidebarAds.some(ad => ad) && (
-                          <div className="mt-4 space-y-4 flex flex-col items-center">
+                        {data.sidebarAds && (
+                          <div className="mt-4 space-y-4 flex flex-col items-center w-full">
                             {data.sidebarAds.map((ad, idx) => ad ? (
-                              <img key={idx} src={ad} alt={`Ad ${idx + 1}`} className="max-w-full h-auto object-contain rounded-xl shadow-sm border border-slate-100" />
-                            ) : null)}
+                              <img key={idx} src={ad} alt={`Ad ${idx + 1}`} className="w-full h-auto object-contain rounded-xl shadow-sm border border-slate-100" />
+                            ) : (
+                              <div key={idx} className="w-full bg-[#42b8c5] rounded-xl p-3 text-center shadow-sm">
+                                <span className="text-white font-bold text-sm leading-tight inline-block">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
