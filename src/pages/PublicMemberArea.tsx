@@ -39,6 +39,7 @@ import { HDate } from "@hebcal/core";
 import { toast } from "sonner";
 import html2pdf from 'html2pdf.js';
 import confetti from "canvas-confetti";
+import CountUp from 'react-countup';
 
 // תוקף סשן: 24 שעות
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -992,8 +993,14 @@ export default function PublicMemberArea() {
               className="text-5xl font-extrabold tracking-tight drop-shadow-md"
               animate={{ scale: [1, 1.04, 1] }}
               transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              dir="ltr"
             >
-              {formatCurrency(netOwed > 0 ? netOwed : creditBalance)}
+              <CountUp 
+                end={netOwed > 0 ? netOwed : creditBalance} 
+                duration={2.5} 
+                separator="," 
+                prefix="₪" 
+              />
             </motion.div>
             {totalPending > 0 && netOwed > 0 && (
               <span className="inline-flex items-center gap-1.5 text-xs bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm mt-2">
