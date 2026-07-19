@@ -39,8 +39,11 @@ interface NewsletterData {
   childrensCornerContent: string;
   announcementsTitle: string;
   announcements: string;
-  parnasHashavuaTitle: string;
-  parnasHashavua: string;
+  akkoZmanim?: {
+    candleLighting: string;
+    havdalah: string;
+    rabbeinuTam: string;
+  };
   times: { label: string; time: string }[];
   extraPages: { id: string; title: string; content: string }[];
   backPage?: {
@@ -129,8 +132,11 @@ export default function Newsletter() {
       childrensCornerContent: '',
       announcementsTitle: 'הודעות הקהילה',
       announcements: '<p>זמני שיעורים, תזכורות וכו\'...</p>',
-      parnasHashavuaTitle: 'פרנס השבוע',
-      parnasHashavua: 'מי תרם השבוע את הקידוש?',
+      akkoZmanim: {
+        candleLighting: '',
+        havdalah: '',
+        rabbeinuTam: ''
+      },
       times: [
         { label: "כניסת שבת", time: "19:00" },
         { label: "מנחה ערב שבת", time: "19:10" },
@@ -153,6 +159,7 @@ export default function Newsletter() {
   };
 
   const [data, setData] = useState<NewsletterData>(getInitialData);
+  const [isFetchingAkkoZmanim, setIsFetchingAkkoZmanim] = useState(false);
 
   useEffect(() => {
     const adjustFit = () => {
@@ -226,6 +233,41 @@ export default function Newsletter() {
       return settings;
     }
   });
+
+  const fetchAkkoZmanim = async () => {
+    setIsFetchingAkkoZmanim(true);
+    try {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const daysUntilFriday = (5 - dayOfWeek + 7) % 7;
+      const nextFriday = new Date(today);
+      nextFriday.setDate(today.getDate() + daysUntilFriday);
+      const dateStr = nextFriday.toISOString().split('T')[0];
+      
+      const res = await fetch(`https://www.hebcal.com/zmanim?cfg=json&latitude=32.9272&longitude=35.0818&tzid=Asia/Jerusalem&date=${dateStr}`);
+      const zmanim = await res.json();
+      
+      const sunset = new Date(zmanim.times.sunset);
+      const candleLighting = new Date(sunset.getTime() - 20 * 60000);
+      const havdalah = new Date(zmanim.times.tzeit50min);
+      const rabbeinuTam = new Date(zmanim.times.tzeit72min);
+      
+      const formatTime = (d: Date) => d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' });
+      
+      setData(prev => ({
+        ...prev,
+        akkoZmanim: {
+          candleLighting: formatTime(candleLighting),
+          havdalah: formatTime(havdalah),
+          rabbeinuTam: formatTime(rabbeinuTam)
+        }
+      }));
+    } catch (e) {
+      console.error("Failed to fetch Akko zmanim", e);
+    } finally {
+      setIsFetchingAkkoZmanim(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -1014,25 +1056,50 @@ export default function Newsletter() {
               </Card>
 
               <Card className="shadow-sm border-t-4 border-t-emerald-500">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">הקדשות / תרומות</CardTitle>
+                <CardHeader className="pb-4 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">זמני שבת עכו</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={fetchAkkoZmanim}
+                    disabled={isFetchingAkkoZmanim}
+                    className="flex items-center gap-2"
+                  >
+                    {isFetchingAkkoZmanim ? <Loader2 className="w-4 h-4 animate-spin" /> : "עדכן זמנים אוטומטית"}
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>כותרת</Label>
-                    <Input 
-                      value={data.parnasHashavuaTitle}
-                      onChange={(e) => setData({ ...data, parnasHashavuaTitle: e.target.value })}
-                      placeholder="פרנס השבוע"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>תוכן</Label>
-                    <Textarea 
-                      className="min-h-[80px] resize-none"
-                      value={data.parnasHashavua}
-                      onChange={(e) => setData({ ...data, parnasHashavua: e.target.value })}
-                    />
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>כניסת שבת</Label>
+                      <Input 
+                        value={data.akkoZmanim?.candleLighting || ''}
+                        onChange={(e) => setData({ ...data, akkoZmanim: { ...data.akkoZmanim!, candleLighting: e.target.value } })}
+                        placeholder="19:20"
+                        dir="ltr"
+                        className="text-center"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>צאת שבת</Label>
+                      <Input 
+                        value={data.akkoZmanim?.havdalah || ''}
+                        onChange={(e) => setData({ ...data, akkoZmanim: { ...data.akkoZmanim!, havdalah: e.target.value } })}
+                        placeholder="20:25"
+                        dir="ltr"
+                        className="text-center"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>רבנו תם</Label>
+                      <Input 
+                        value={data.akkoZmanim?.rabbeinuTam || ''}
+                        onChange={(e) => setData({ ...data, akkoZmanim: { ...data.akkoZmanim!, rabbeinuTam: e.target.value } })}
+                        placeholder="20:55"
+                        dir="ltr"
+                        className="text-center"
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1195,10 +1262,20 @@ export default function Newsletter() {
                           </div>
                         )}
 
-                        {data.parnasHashavua && (
-                          <div className="border-2 border-slate-900 p-3 mt-auto bg-slate-100">
-                            <div className="text-slate-900 font-bold text-center border-b border-slate-400 pb-1 mb-2">{data.parnasHashavuaTitle || 'פרנס השבוע'}</div>
-                            <div className="text-slate-800 text-center text-sm whitespace-pre-wrap content-font">{data.parnasHashavua}</div>
+                        {data.akkoZmanim?.candleLighting && (
+                          <div className="border-2 border-slate-900 mt-auto bg-slate-100 flex flex-col items-center">
+                            <div className="bg-slate-900 text-white font-bold text-center py-1 w-full text-lg">זמני שבת עכו</div>
+                            <div className="p-3 w-full space-y-2">
+                              <div className="flex justify-between font-bold border-b border-slate-300 pb-1">
+                                <span>כניסת שבת</span><span className="text-slate-900">{data.akkoZmanim.candleLighting}</span>
+                              </div>
+                              <div className="flex justify-between font-bold border-b border-slate-300 pb-1">
+                                <span>צאת שבת</span><span className="text-slate-900">{data.akkoZmanim.havdalah}</span>
+                              </div>
+                              <div className="flex justify-between font-bold text-slate-700">
+                                <span>רבנו תם</span><span>{data.akkoZmanim.rabbeinuTam}</span>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1311,14 +1388,27 @@ export default function Newsletter() {
                           </div>
                         )}
 
-                        {/* Sponsors */}
-                        {data.parnasHashavua && (
+                        {/* Akko Zmanim */}
+                        {data.akkoZmanim?.candleLighting && (
                           <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden mt-6' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-6'}`}>
-                            <div className={`${data.theme === 'modern' ? 'bg-slate-50 text-slate-600' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-slate-100 text-slate-700 border-b border-slate-200'} font-bold text-center py-3`}>
-                              {data.parnasHashavuaTitle || 'פרנס השבוע'}
+                            <div className={`${data.theme === 'modern' ? 'bg-indigo-600 text-white' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-center text-2xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-slate-800 text-white border-b border-slate-200'} font-bold text-center py-3 text-lg`}>
+                              זמני שבת - עכו והסביבה
                             </div>
-                            <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'} text-slate-800 text-center leading-relaxed whitespace-pre-wrap font-medium`}>
-                              {data.parnasHashavua}
+                            <div className={`${data.theme === 'minimal' ? 'p-0 pt-4' : 'p-5'} text-slate-800 text-center leading-relaxed font-medium`}>
+                              <div className="grid grid-cols-1 gap-3">
+                                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
+                                  <span className="text-slate-600 font-bold">כניסת שבת</span>
+                                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.candleLighting}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
+                                  <span className="text-slate-600 font-bold">צאת שבת</span>
+                                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.havdalah}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
+                                  <span className="text-slate-500">צאת שבת (רבנו תם)</span>
+                                  <span className="text-lg font-bold text-slate-700">{data.akkoZmanim.rabbeinuTam}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}
