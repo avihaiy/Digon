@@ -366,6 +366,9 @@ export default function Newsletter() {
       const clone = el.cloneNode(true) as HTMLElement;
       clone.dir = 'rtl';
       clone.style.gap = '0';
+      const numPages = 1 + data.extraPages.length + (data.backPage?.enabled ? 1 : 0);
+      clone.style.height = `${numPages * 297 - 0.5}mm`;
+      clone.style.overflow = 'hidden';
 
       const outerContainer = document.createElement('div');
       outerContainer.style.position = 'absolute';
@@ -1372,9 +1375,6 @@ export default function Newsletter() {
               <style>
                 {`
                   .prose, .content-font { font-family: '${data.contentFontFamily || 'Frank Ruhl Libre'}' !important; }
-                  @media print {
-                    .a4-page:not(:last-child) { page-break-after: always; }
-                  }
                 `}
               </style>
 
