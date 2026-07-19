@@ -56,6 +56,7 @@ interface NewsletterData {
     }
   };
   footerAd?: string;
+  sidebarAds?: string[];
 }
 
 const modules = {
@@ -112,6 +113,7 @@ export default function Newsletter() {
             havdalah: '',
             rabbeinuTam: ''
           },
+          sidebarAds: ['', ''],
           ...parsed,
         };
         // Ensure akkoZmanim exists even if parsed from old storage
@@ -121,6 +123,9 @@ export default function Newsletter() {
             havdalah: '',
             rabbeinuTam: ''
           };
+        }
+        if (!parsed.sidebarAds) {
+          result.sidebarAds = ['', ''];
         }
         return result;
       } catch (e) {
@@ -168,7 +173,8 @@ export default function Newsletter() {
           brachaVeHatzlacha: ''
         }
       },
-      footerAd: ''
+      footerAd: '',
+      sidebarAds: ['', '']
     };
   };
 
@@ -1127,6 +1133,54 @@ export default function Newsletter() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="shadow-sm border-t-4 border-t-purple-500">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">פרסומות מתחת לזמנים</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[0, 1].map((index) => (
+                    <div key={index} className="space-y-2">
+                      <Label>פרסומת {index + 1}</Label>
+                      {data.sidebarAds?.[index] ? (
+                        <div className="relative inline-block border rounded overflow-hidden">
+                          <img src={data.sidebarAds[index]} alt={`Ad ${index + 1}`} className="h-20 object-contain" />
+                          <Button 
+                            variant="destructive" 
+                            size="icon"
+                            className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                            onClick={() => {
+                              const newAds = [...(data.sidebarAds || ['', ''])];
+                              newAds[index] = '';
+                              setData({ ...data, sidebarAds: newAds });
+                            }}
+                          >
+                            <span className="sr-only">Remove</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                          </Button>
+                        </div>
+                      ) : (
+                        <Input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                const newAds = [...(data.sidebarAds || ['', ''])];
+                                newAds[index] = event.target?.result as string;
+                                setData({ ...data, sidebarAds: newAds });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
               
               <Card className="shadow-sm border-t-4 border-t-slate-500">
                 <CardHeader className="pb-4">
@@ -1302,6 +1356,15 @@ export default function Newsletter() {
                             </div>
                           </div>
                         )}
+                        
+                        {/* Sidebar Ads */}
+                        {data.sidebarAds && data.sidebarAds.some(ad => ad) && (
+                          <div className="mt-4 space-y-4 flex flex-col items-center">
+                            {data.sidebarAds.map((ad, idx) => ad ? (
+                              <img key={idx} src={ad} alt={`Ad ${idx + 1}`} className="max-w-full h-auto object-contain rounded-md shadow-sm border border-slate-300" />
+                            ) : null)}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1434,6 +1497,15 @@ export default function Newsletter() {
                                 </div>
                               </div>
                             </div>
+                          </div>
+                        )}
+                        
+                        {/* Sidebar Ads */}
+                        {data.sidebarAds && data.sidebarAds.some(ad => ad) && (
+                          <div className="mt-4 space-y-4 flex flex-col items-center">
+                            {data.sidebarAds.map((ad, idx) => ad ? (
+                              <img key={idx} src={ad} alt={`Ad ${idx + 1}`} className="max-w-full h-auto object-contain rounded-xl shadow-sm border border-slate-100" />
+                            ) : null)}
                           </div>
                         )}
                       </div>
