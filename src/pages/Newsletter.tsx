@@ -144,7 +144,7 @@ export default function Newsletter() {
       try {
         const parsed = JSON.parse(saved);
         // Ensure new fields exist in old saves
-        return {
+        const result: any = {
           logo: '',
           theme: 'classic',
           fontFamily: 'Assistant',
@@ -436,7 +436,7 @@ export default function Newsletter() {
   useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
-      const { data: settings } = await supabase
+      const { data: settings } = await (supabase as any)
         .from('settings')
         .select('*')
         .limit(1)
@@ -622,7 +622,7 @@ export default function Newsletter() {
   const handleSaveArchive = async () => {
     setIsSavingArchive(true);
     try {
-      const { error } = await supabase.from('newsletters').insert({
+      const { error } = await (supabase as any).from('newsletters').insert({
         parasha: data.parasha || 'כללי',
         hebrew_date: data.hebrewDate || '',
         data: data
