@@ -183,6 +183,29 @@ export default function Newsletter() {
 
   const [data, setData] = useState<NewsletterData>(getInitialData);
   const [isFetchingAkkoZmanim, setIsFetchingAkkoZmanim] = useState(false);
+  const [previewScale, setPreviewScale] = useState(0.85);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const containerWidth = entry.contentRect.width;
+        // Calculate scale to fit. A4 width in pixels is approx 794. Add some padding.
+        if (containerWidth < 850) { 
+          // 32px padding, so we scale it down relative to 794px original width
+          setPreviewScale(Math.max(0.3, (containerWidth - 32) / 794));
+        } else {
+          setPreviewScale(0.85);
+        }
+      }
+    });
+
+    if (previewContainerRef.current) {
+      resizeObserver.observe(previewContainerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   useEffect(() => {
     const adjustFit = () => {
@@ -1363,8 +1386,8 @@ export default function Newsletter() {
         </div>
 
         {/* Live Preview */}
-        <div className="lg:col-span-8 flex justify-center bg-muted/30 rounded-xl p-4 md:p-8 overflow-auto border border-border/50">
-          <div className="relative mx-auto transform-gpu origin-top transition-transform duration-300" style={{ transform: 'scale(0.85)' }}>
+        <div ref={previewContainerRef} className="lg:col-span-8 flex justify-center bg-muted/30 rounded-xl p-4 md:p-8 overflow-auto border border-border/50">
+          <div className="relative mx-auto transform-gpu origin-top transition-transform duration-300" style={{ transform: `scale(${previewScale})` }}>
             
             <div ref={newsletterRef} className="flex flex-col gap-8 bg-transparent">
               <style>
