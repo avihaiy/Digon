@@ -1599,7 +1599,7 @@ export default function Newsletter() {
                         {/* Prayer Times */}
                         <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
                           <div className={`${data.theme === 'modern' ? 'bg-primary/5 text-primary' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-primary/10 text-primary border-b border-primary/10'} font-bold text-center py-3`}>
-                            זמני התפילות
+                            זמני התפילות - ברית שלום עכו
                           </div>
                           <div className={`${data.theme === 'minimal' ? 'p-0' : 'p-4'} space-y-3`}>
                             {data.times.map((t, idx) => (
