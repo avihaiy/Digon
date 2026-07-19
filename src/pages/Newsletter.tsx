@@ -246,7 +246,7 @@ export default function Newsletter() {
     try {
       const promptText = `כתוב לי דבר תורה קצר ומרתק על פרשת ${data.parasha}. הדבר תורה מיועד לעלון שבת קהילתי. על המאמר לכלול מסר או מוסר השכל קצר ויפה שאפשר לקחת לחיי היום-יום. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
