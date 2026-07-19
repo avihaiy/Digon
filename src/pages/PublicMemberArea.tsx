@@ -32,9 +32,12 @@ import {
   Save,
   Send,
   Building2,
-  BookOpen
+  BookOpen,
+  Calendar,
+  Clock
 } from "lucide-react";
-import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
+import { formatCurrency, formatShortDate, PAYMENT_METHOD, getHebrewDate } from "@/lib/hebrew-utils";
+import confetti from "canvas-confetti";
 import { HDate } from "@hebcal/core";
 import { toast } from "sonner";
 import html2pdf from 'html2pdf.js';
@@ -272,6 +275,32 @@ export default function PublicMemberArea() {
   const currentContainerClasses = userTheme === 'theme-auto' 
     ? autoBgTheme 
     : themeClasses[userTheme] || autoBgTheme;
+    
+  // Live Clock
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 10000); // update every 10s
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeString = currentTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  const hebDateString = getHebrewDate(currentTime);
+  const gregorianDateString = currentTime.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  // Confetti effect for Zero Debt
+  useEffect(() => {
+    if (!loading && totalCharges > 0 && netOwed === 0) {
+      setTimeout(() => {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#10b981', '#3b82f6', '#fbbf24', '#f43f5e', '#8b5cf6'],
+          disableForReducedMotion: true
+        });
+      }, 500);
+    }
+  }, [loading, netOwed, totalCharges]);
   const [payboxPhone, setPayboxPhone] = useState<string>("");
   const [payboxEnabled, setPayboxEnabled] = useState(false);
   const [bankAccountDetails, setBankAccountDetails] = useState<string>("");
@@ -907,9 +936,17 @@ export default function PublicMemberArea() {
       
       {/* HEADER */}
       <header className={`sticky top-0 z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl border-b border-slate-200/50 dark:border-zinc-800/50 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm transition-colors duration-500`}>
-        <div className="flex flex-col">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">אזור אישי</span>
-          <h1 className="text-lg font-bold text-foreground">שלום {memberName}</h1>
+        <div className="flex flex-col gap-0.5">
+          <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 flex-wrap mb-0.5">
+            <span className="flex items-center gap-0.5"><Calendar className="w-3 h-3" /> {hebDateString}</span>
+            <span className="opacity-50">•</span>
+            <span>{gregorianDateString}</span>
+            <span className="opacity-50">•</span>
+            <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {timeString}</span>
+          </div>
+          <h1 className="text-lg font-bold text-foreground leading-tight">
+            שלום {memberName?.split(' ')[0]} 👋
+          </h1>
         </div>
         <Button
           variant="ghost"
@@ -1019,7 +1056,7 @@ export default function PublicMemberArea() {
           
           <div className="relative z-10 flex flex-col items-center text-center space-y-2">
             <span className="text-white/80 text-sm font-medium">
-              {netOwed > 0 ? 'יתרת חוב כוללת' : 'יתרת זכות'}
+              {netOwed > 0 ? 'יתרת חוב כוללת' : (creditBalance > 0 ? 'יתרת זכות' : 'כל החובות שולמו, תודה רבה!')}
             </span>
             <motion.div 
               className="text-5xl font-extrabold tracking-tight drop-shadow-md"
