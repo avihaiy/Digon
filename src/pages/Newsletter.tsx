@@ -39,6 +39,7 @@ interface NewsletterData {
   childrensCornerContent: string;
   announcementsTitle: string;
   announcements: string;
+  parnasHashavuaTitle: string;
   parnasHashavua: string;
   times: { label: string; time: string }[];
   extraPages: { id: string; title: string; content: string }[];
@@ -128,6 +129,7 @@ export default function Newsletter() {
       childrensCornerContent: '',
       announcementsTitle: 'הודעות הקהילה',
       announcements: '<p>זמני שיעורים, תזכורות וכו\'...</p>',
+      parnasHashavuaTitle: 'פרנס השבוע',
       parnasHashavua: 'מי תרם השבוע את הקידוש?',
       times: [
         { label: "כניסת שבת", time: "19:00" },
@@ -1013,14 +1015,25 @@ export default function Newsletter() {
 
               <Card className="shadow-sm border-t-4 border-t-emerald-500">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">פרנס השבוע / תרומות</CardTitle>
+                  <CardTitle className="text-lg">הקדשות / תרומות</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Textarea 
-                    className="min-h-[80px] resize-none"
-                    value={data.parnasHashavua}
-                    onChange={(e) => setData({ ...data, parnasHashavua: e.target.value })}
-                  />
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>כותרת</Label>
+                    <Input 
+                      value={data.parnasHashavuaTitle}
+                      onChange={(e) => setData({ ...data, parnasHashavuaTitle: e.target.value })}
+                      placeholder="פרנס השבוע"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>תוכן</Label>
+                    <Textarea 
+                      className="min-h-[80px] resize-none"
+                      value={data.parnasHashavua}
+                      onChange={(e) => setData({ ...data, parnasHashavua: e.target.value })}
+                    />
+                  </div>
                 </CardContent>
               </Card>
               
@@ -1184,7 +1197,7 @@ export default function Newsletter() {
 
                         {data.parnasHashavua && (
                           <div className="border-2 border-slate-900 p-3 mt-auto bg-slate-100">
-                            <div className="text-slate-900 font-bold text-center border-b border-slate-400 pb-1 mb-2">פרנס השבוע</div>
+                            <div className="text-slate-900 font-bold text-center border-b border-slate-400 pb-1 mb-2">{data.parnasHashavuaTitle || 'פרנס השבוע'}</div>
                             <div className="text-slate-800 text-center text-sm whitespace-pre-wrap content-font">{data.parnasHashavua}</div>
                           </div>
                         )}
@@ -1302,7 +1315,7 @@ export default function Newsletter() {
                         {data.parnasHashavua && (
                           <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden mt-6' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-6'}`}>
                             <div className={`${data.theme === 'modern' ? 'bg-slate-50 text-slate-600' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-slate-100 text-slate-700 border-b border-slate-200'} font-bold text-center py-3`}>
-                              פרנס השבוע
+                              {data.parnasHashavuaTitle || 'פרנס השבוע'}
                             </div>
                             <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'} text-slate-800 text-center leading-relaxed whitespace-pre-wrap font-medium`}>
                               {data.parnasHashavua}
