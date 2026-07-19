@@ -29,9 +29,11 @@ import {
   User,
   Save,
   Send,
-  Building2
+  Building2,
+  BookOpen
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
+import { HDate } from "@hebcal/core";
 import { toast } from "sonner";
 import html2pdf from 'html2pdf.js';
 
@@ -79,6 +81,86 @@ interface MessageRow {
   is_global: boolean;
 }
 
+const TEHILLIM_MONTHLY: Record<number, string> = {
+  1: "1-9", 2: "10-17", 3: "18-22", 4: "23-28", 5: "29-34",
+  6: "35-38", 7: "39-43", 8: "44-48", 9: "49-54", 10: "55-59",
+  11: "60-65", 12: "66-68", 13: "69-71", 14: "72-76", 15: "77-78",
+  16: "79-82", 17: "83-87", 18: "88-89", 19: "90-96", 20: "97-103",
+  21: "104-105", 22: "106-107", 23: "108-112", 24: "113-118",
+  25: "119.1-96", 26: "119.97-176", 27: "120-134", 28: "135-139",
+  29: "140-144", 30: "145-150"
+};
+
+function DailyTehillim() {
+  const [chapters, setChapters] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  
+  const hdate = useMemo(() => new HDate(), []);
+  const dayOfMonth = hdate.getDate(); // 1 to 30
+  const dateString = hdate.renderGematriya(true); // e.g. "י״ד באלול תשפ״ג"
+
+  useEffect(() => {
+    const fetchTehillim = async () => {
+      try {
+        setLoading(true);
+        const range = TEHILLIM_MONTHLY[dayOfMonth === 30 ? 30 : dayOfMonth] || "1-9";
+        const res = await fetch(`https://www.sefaria.org/api/texts/Psalms.${range}?context=0&he=1`);
+        const data = await res.json();
+        
+        let verses: string[] = [];
+        if (Array.isArray(data.he)) {
+           if (typeof data.he[0] === 'string') {
+             verses = data.he as string[];
+           } else {
+             verses = (data.he as string[][]).flat();
+           }
+        }
+        setChapters(verses.filter(v => typeof v === 'string' && v.trim().length > 0));
+      } catch (err) {
+        console.error("Error fetching Tehillim:", err);
+        setError("שגיאה בטעינת תהילים. נסה שוב מאוחר יותר.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTehillim();
+  }, [dayOfMonth]);
+
+  return (
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl p-6 shadow-sm border border-indigo-500 relative overflow-hidden">
+        <div className="absolute top-0 right-0 opacity-10">
+          <BookOpen className="w-32 h-32 -mt-4 -mr-4" />
+        </div>
+        <div className="relative z-10 text-center">
+          <h2 className="text-2xl font-bold mb-1">תהילים יומי</h2>
+          <p className="text-blue-100">{dateString}</p>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-zinc-800 min-h-[300px]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+             <Loader2 className="w-8 h-8 animate-spin mb-4 text-indigo-500" />
+             <p>טוען פרקי תהילים...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-500">
+            {error}
+          </div>
+        ) : (
+          <div className="prose prose-slate dark:prose-invert max-w-none text-center leading-loose text-lg font-serif">
+             {chapters.map((verse, idx) => (
+                <span key={idx} dangerouslySetInnerHTML={{ __html: verse + " " }} />
+             ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PublicMemberArea() {
   const { memberId } = useParams<{ memberId: string }>();
   const [memberName, setMemberName] = useState<string>("");
@@ -105,7 +187,7 @@ export default function PublicMemberArea() {
   const [creditBalance, setCreditBalance] = useState<number>(0);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [sendingPayment, setSendingPayment] = useState(false);
-  const [activeTab, setActiveTab] = useState<"debts" | "receipts" | "messages" | "profile" | "contact">("debts");
+  const [activeTab, setActiveTab] = useState<"debts" | "receipts" | "messages" | "tehillim" | "profile" | "contact">("debts");
   
   // Profile state
   const [email, setEmail] = useState("");
@@ -1198,6 +1280,10 @@ export default function PublicMemberArea() {
             </div>
           )}
 
+          {activeTab === 'tehillim' && (
+            <DailyTehillim />
+          )}
+
           {activeTab === 'contact' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                       <h3 className="font-bold text-lg px-1">פנייה לגבאי</h3>
@@ -1325,6 +1411,16 @@ export default function PublicMemberArea() {
             <span className="text-[11px] font-semibold">הודעות</span>
           </button>
           
+          <button 
+            onClick={() => setActiveTab('tehillim')} 
+            className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'tehillim' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+          >
+            <div className={`${activeTab === 'tehillim' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
+              <BookOpen className={`w-6 h-6 ${activeTab === 'tehillim' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+            </div>
+            <span className="text-[11px] font-semibold">תהילים יומי</span>
+          </button>
+
           <button 
             onClick={() => setActiveTab('profile')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'profile' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
