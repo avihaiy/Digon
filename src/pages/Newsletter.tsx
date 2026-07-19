@@ -182,15 +182,21 @@ export default function Newsletter() {
           ...parsed,
         };
         // Ensure akkoZmanim exists even if parsed from old storage
-        if (!parsed.akkoZmanim) {
+        if (!result.akkoZmanim) {
           result.akkoZmanim = {
             candleLighting: '',
             havdalah: '',
             rabbeinuTam: ''
           };
         }
-        if (!parsed.sidebarAds) {
+        if (!result.sidebarAds) {
           result.sidebarAds = ['', ''];
+        }
+        if (!result.layout) {
+          result.layout = {
+            mainColumn: ['dvarTorah', 'halacha', 'announcements', 'quiz', 'childrensCorner'],
+            sidebarColumn: ['prayerTimes', 'dailyStudy', 'quote', 'akkoZmanim']
+          };
         }
         return result;
       } catch (e) {
