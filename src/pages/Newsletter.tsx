@@ -124,18 +124,26 @@ export default function Newsletter() {
     const adjustFit = () => {
       if (!innerContentRef.current || !newsletterRef.current) return;
       const content = innerContentRef.current;
+      const container = newsletterRef.current;
       
       // Reset styles to measure natural height
       content.style.transform = 'none';
       content.style.width = '100%';
       
       setTimeout(() => {
-        if (!content || !newsletterRef.current) return;
+        if (!content || !container) return;
         
+        // The container has h-[297mm] and p-[15mm].
+        // Get the exact available height inside the padding
+        const computedStyle = window.getComputedStyle(container);
+        const paddingTop = parseFloat(computedStyle.paddingTop);
+        const paddingBottom = parseFloat(computedStyle.paddingBottom);
+        const targetHeight = container.clientHeight - paddingTop - paddingBottom;
+        
+        // scrollHeight of the content wrapper will reflect the actual content size
         let scrollHeight = content.scrollHeight;
-        let clientHeight = content.clientHeight;
         
-        if (scrollHeight > clientHeight && clientHeight > 0) {
+        if (scrollHeight > targetHeight && targetHeight > 0) {
           // Content overflows. Let's find the optimal scale.
           let bestScale = 1;
           let min = 0.4; // minimum scale
@@ -144,7 +152,7 @@ export default function Newsletter() {
           for (let i = 0; i < 15; i++) {
             const mid = (min + max) / 2;
             content.style.width = `${100 / mid}%`;
-            if (content.scrollHeight * mid <= clientHeight) {
+            if (content.scrollHeight * mid <= targetHeight) {
               bestScale = mid;
               min = mid; 
             } else {
