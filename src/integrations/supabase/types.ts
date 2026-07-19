@@ -613,44 +613,6 @@ export type Database = {
         }
         Relationships: []
       }
-      member_messages: {
-        Row: {
-          content: string
-          created_at: string
-          created_by: string | null
-          id: string
-          is_read: boolean | null
-          member_id: string | null
-          title: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_read?: boolean | null
-          member_id?: string | null
-          title?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_read?: boolean | null
-          member_id?: string | null
-          title?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "member_messages_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "members"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       member_area_logins: {
         Row: {
           created_at: string
@@ -722,9 +684,95 @@ export type Database = {
           },
         ]
       }
+      member_inquiries: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          member_id: string
+          replied_at: string | null
+          reply: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+          subject: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          member_id: string
+          replied_at?: string | null
+          reply?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          subject: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          replied_at?: string | null
+          reply?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_inquiries_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_messages: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_read: boolean | null
+          member_id: string | null
+          title: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_read?: boolean | null
+          member_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_read?: boolean | null
+          member_id?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_messages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           active: boolean | null
+          address: string | null
           created_at: string | null
           email: string | null
           full_name: string
@@ -732,10 +780,12 @@ export type Database = {
           notes: string | null
           notification_preference: string
           phone: string | null
+          spouse_name: string | null
           updated_at: string | null
         }
         Insert: {
           active?: boolean | null
+          address?: string | null
           created_at?: string | null
           email?: string | null
           full_name: string
@@ -743,10 +793,12 @@ export type Database = {
           notes?: string | null
           notification_preference?: string
           phone?: string | null
+          spouse_name?: string | null
           updated_at?: string | null
         }
         Update: {
           active?: boolean | null
+          address?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string
@@ -754,6 +806,7 @@ export type Database = {
           notes?: string | null
           notification_preference?: string
           phone?: string | null
+          spouse_name?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -810,6 +863,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      newsletters: {
+        Row: {
+          created_at: string
+          data: Json
+          hebrew_date: string
+          id: string
+          parasha: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          hebrew_date: string
+          id?: string
+          parasha: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          hebrew_date?: string
+          id?: string
+          parasha?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -1274,6 +1351,10 @@ export type Database = {
         Args: { _member_id: string; _phone: string; _user_agent?: string }
         Returns: Json
       }
+      get_member_yearly_receipts: {
+        Args: { _member_id: string; _phone: string; _year: number }
+        Returns: Json
+      }
       get_public_finance_display_stats: {
         Args: { months_count?: number }
         Returns: Json
@@ -1289,9 +1370,30 @@ export type Database = {
         Returns: boolean
       }
       is_manager: { Args: { _user_id: string }; Returns: boolean }
+      mark_message_read: { Args: { _message_id: string }; Returns: boolean }
       record_bit_payment_intent: {
         Args: { _amount: number; _member_id: string; _user_agent?: string }
         Returns: Json
+      }
+      submit_member_inquiry: {
+        Args: {
+          _content: string
+          _member_id: string
+          _phone: string
+          _subject: string
+        }
+        Returns: Json
+      }
+      update_public_member_profile: {
+        Args: {
+          _member_id: string
+          _new_address: string
+          _new_email: string
+          _new_full_name: string
+          _new_spouse_name: string
+          _phone: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
