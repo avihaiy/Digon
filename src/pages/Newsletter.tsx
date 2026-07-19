@@ -38,6 +38,10 @@ interface NewsletterData {
   childrensCornerTitle: string;
   childrensCornerContent: string;
   childrensCornerImage?: string;
+  quizTitle: string;
+  quizContent: string;
+  quoteTitle: string;
+  quoteContent: string;
   announcementsTitle: string;
   announcements: string;
   akkoZmanim?: {
@@ -83,6 +87,8 @@ export default function Newsletter() {
   const [isGeneratingDvarTorah, setIsGeneratingDvarTorah] = useState(false);
   const [isGeneratingChildrensCorner, setIsGeneratingChildrensCorner] = useState(false);
   const [isGeneratingHalacha, setIsGeneratingHalacha] = useState(false);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [isGeneratingQuote, setIsGeneratingQuote] = useState(false);
   const newsletterRef = useRef<HTMLDivElement>(null);
   
   const getInitialData = (): NewsletterData => {
@@ -102,6 +108,10 @@ export default function Newsletter() {
           childrensCornerTitle: 'פינת הילדים',
           childrensCornerContent: '',
           childrensCornerImage: '',
+          quizTitle: 'חידון פרשת השבוע',
+          quizContent: '',
+          quoteTitle: 'פנינת השבוע',
+          quoteContent: '',
           extraPages: [],
           backPage: {
             enabled: false,
@@ -154,6 +164,10 @@ export default function Newsletter() {
       childrensCornerTitle: 'פינת הילדים',
       childrensCornerContent: '',
       childrensCornerImage: '',
+      quizTitle: 'חידון פרשת השבוע',
+      quizContent: '',
+      quoteTitle: 'פנינת השבוע',
+      quoteContent: '',
       announcementsTitle: 'הודעות הקהילה',
       announcements: '<p>זמני שיעורים, תזכורות וכו\'...</p>',
       akkoZmanim: {
@@ -642,6 +656,109 @@ export default function Newsletter() {
       toast.error(`שגיאה ביצירת ההלכה: ${err.message}`, { id: toastId });
     } finally {
       setIsGeneratingHalacha(false);
+    }
+  };
+
+  const generateQuiz = async () => {
+    if (!data.parasha) {
+      toast.error("אנא בחר פרשה קודם");
+      return;
+    }
+    
+    let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      const savedKey = localStorage.getItem('gemini_api_key');
+      if (savedKey) {
+        apiKey = savedKey;
+      } else {
+        apiKey = prompt("אנא הזן מפתח API של Google Gemini:");
+        if (apiKey) {
+          localStorage.setItem('gemini_api_key', apiKey);
+        } else {
+          return;
+        }
+      }
+    }
+
+    setIsGeneratingQuiz(true);
+    const toastId = toast.loading("ה-AI כותב חידון...");
+    try {
+      const promptText = `כתוב לי חידון קצר וקליל של 3 שאלות על פרשת ${data.parasha}. בתחתית, הוסף את התשובות בצורה קטנה ומסודרת (או מופרדת בקו). הטקסט מיועד לעלון שבת, אז חובה לשמור עליו תמציתי. חשוב מאוד: הקפד לנקד את כל הטקסט במלואו! החזר תשובה בפורמט HTML נקי (p, strong, ul, br וכו'). בלי עטיפת markdown.`;
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error.message || "שגיאה מה-API");
+
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleanHtml = text.replace(/```html/g, '').replace(/```/g, '').trim();
+      
+      if (cleanHtml) {
+        setData({ ...data, quizContent: cleanHtml });
+        toast.success("החידון נכתב בהצלחה!", { id: toastId });
+      } else {
+        throw new Error("לא התקבל טקסט");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`שגיאה ביצירת החידון: ${err.message}`, { id: toastId });
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
+  const generateQuote = async () => {
+    let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      const savedKey = localStorage.getItem('gemini_api_key');
+      if (savedKey) {
+        apiKey = savedKey;
+      } else {
+        apiKey = prompt("אנא הזן מפתח API של Google Gemini:");
+        if (apiKey) {
+          localStorage.setItem('gemini_api_key', apiKey);
+        } else {
+          return;
+        }
+      }
+    }
+
+    setIsGeneratingQuote(true);
+    const toastId = toast.loading("ה-AI כותב פנינה...");
+    try {
+      const promptText = `כתוב לי פתגם חסידי, ציטוט מפרקי אבות או רעיון קצרצר ויפהפה (עד 25 מילים!) לכבוד פרשת ${data.parasha || 'השבוע'} או השבת. חשוב מאוד: הקפד לנקד את כל הטקסט במלואו! החזר תשובה בפורמט HTML נקי (p, strong וכו'). בלי עטיפת markdown.`;
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error.message || "שגיאה מה-API");
+
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleanHtml = text.replace(/```html/g, '').replace(/```/g, '').trim();
+      
+      if (cleanHtml) {
+        setData({ ...data, quoteContent: cleanHtml });
+        toast.success("הפנינה נכתבה בהצלחה!", { id: toastId });
+      } else {
+        throw new Error("לא התקבל טקסט");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`שגיאה ביצירת הפנינה: ${err.message}`, { id: toastId });
+    } finally {
+      setIsGeneratingQuote(false);
     }
   };
 
@@ -1264,6 +1381,78 @@ export default function Newsletter() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="shadow-sm border-t-4 border-t-emerald-500">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">חידון פרשת השבוע</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={generateQuiz}
+                    disabled={isGeneratingQuiz}
+                    className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    {isGeneratingQuiz ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    צור בעזרת AI
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>כותרת</Label>
+                    <Input 
+                      value={data.quizTitle}
+                      onChange={(e) => setData({ ...data, quizTitle: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2" dir="ltr">
+                    <Label className="text-right block" dir="rtl">תוכן</Label>
+                    <ReactQuill 
+                      theme="snow" 
+                      value={data.quizContent} 
+                      onChange={(content) => setData({ ...data, quizContent: content })}
+                      modules={modules}
+                      formats={formats}
+                      className="bg-white rounded-md text-right ql-editor-rtl"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-sm border-t-4 border-t-yellow-500">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">פנינת השבוע</CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={generateQuote}
+                    disabled={isGeneratingQuote}
+                    className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    {isGeneratingQuote ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    צור בעזרת AI
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>כותרת</Label>
+                    <Input 
+                      value={data.quoteTitle}
+                      onChange={(e) => setData({ ...data, quoteTitle: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2" dir="ltr">
+                    <Label className="text-right block" dir="rtl">תוכן</Label>
+                    <ReactQuill 
+                      theme="snow" 
+                      value={data.quoteContent} 
+                      onChange={(content) => setData({ ...data, quoteContent: content })}
+                      modules={modules}
+                      formats={formats}
+                      className="bg-white rounded-md text-right ql-editor-rtl"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="times" className="space-y-4 mt-4">
@@ -1632,6 +1821,20 @@ export default function Newsletter() {
                             />
                           </div>
                         )}
+
+                        {/* Quiz */}
+                        {data.quizTitle && data.quizContent && data.quizContent !== '<p><br></p>' && (
+                          <div className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-emerald-50 p-5 rounded-xl border border-emerald-100'}`}>
+                            <h3 className="text-xl font-bold text-emerald-700 mb-3 flex items-center gap-2">
+                              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>}
+                              {data.quizTitle}
+                            </h3>
+                            <div 
+                              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed [&>p]:mb-2`}
+                              dangerouslySetInnerHTML={{ __html: data.quizContent }}
+                            />
+                          </div>
+                        )}
                         
                         {/* Children's Corner */}
                         {data.childrensCornerTitle && data.childrensCornerContent && data.childrensCornerContent !== '<p><br></p>' && (
@@ -1672,7 +1875,7 @@ export default function Newsletter() {
 
                         {/* Daily Study */}
                         {data.dailyStudyTitle && data.dailyStudyContent && data.dailyStudyContent !== '<p><br></p>' && (
-                          <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
+                          <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-6'}`}>
                             <div className={`${data.theme === 'modern' ? 'bg-indigo-50 text-indigo-700' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-indigo-50 text-indigo-800 border-b border-indigo-100'} font-bold text-center py-3`}>
                               {data.dailyStudyTitle}
                             </div>
@@ -1680,6 +1883,23 @@ export default function Newsletter() {
                               <div 
                                 className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-slate-700 leading-relaxed text-center`}
                                 dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Weekly Quote */}
+                        {data.quoteTitle && data.quoteContent && data.quoteContent !== '<p><br></p>' && (
+                          <div className={`${data.theme === 'modern' ? 'bg-gradient-to-br from-yellow-50 to-white rounded-2xl border-0 shadow-md p-5 mt-6 relative overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-4 mt-8 relative' : 'bg-yellow-50 rounded-xl border border-yellow-200 p-5 mt-6 relative shadow-sm'}`}>
+                            <div className="absolute top-2 left-3 opacity-10 text-6xl font-serif text-yellow-900 pointer-events-none">"</div>
+                            <div className="absolute bottom-[-10px] right-3 opacity-10 text-6xl font-serif text-yellow-900 pointer-events-none">"</div>
+                            <div className="relative z-10">
+                              <h3 className="text-lg font-bold text-yellow-800 mb-2 text-center">
+                                {data.quoteTitle}
+                              </h3>
+                              <div 
+                                className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed text-center font-medium`}
+                                dangerouslySetInnerHTML={{ __html: data.quoteContent }}
                               />
                             </div>
                           </div>
