@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Download, ArrowLeft, Loader2, FileText, Clock, Palette, Image as ImageIcon, Sparkles, Save, FolderOpen } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Download, ArrowLeft, Loader2, FileText, Clock, Palette, Image as ImageIcon, Sparkles, Save, FolderOpen, PanelBottom } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -41,6 +42,15 @@ interface NewsletterData {
   parnasHashavua: string;
   times: { label: string; time: string }[];
   extraPages: { id: string; title: string; content: string }[];
+  backPage?: {
+    enabled: boolean;
+    ads: string[];
+    dedications: {
+      leiluyNishmat: string;
+      refuahShlema: string;
+      brachaVeHatzlacha: string;
+    }
+  };
 }
 
 const modules = {
@@ -83,6 +93,15 @@ export default function Newsletter() {
           childrensCornerTitle: 'פינת הילדים',
           childrensCornerContent: '',
           extraPages: [],
+          backPage: {
+            enabled: false,
+            ads: ['', '', ''],
+            dedications: {
+              leiluyNishmat: '',
+              refuahShlema: '',
+              brachaVeHatzlacha: ''
+            }
+          },
           ...parsed,
         };
       } catch (e) {
@@ -116,7 +135,16 @@ export default function Newsletter() {
         { label: "מנחה של שבת", time: "18:30" },
         { label: "צאת שבת", time: "20:00" },
       ],
-      extraPages: []
+      extraPages: [],
+      backPage: {
+        enabled: false,
+        ads: ['', '', ''],
+        dedications: {
+          leiluyNishmat: '',
+          refuahShlema: '',
+          brachaVeHatzlacha: ''
+        }
+      }
     };
   };
 
@@ -507,11 +535,12 @@ export default function Newsletter() {
         {/* Editor Form */}
         <div className="lg:col-span-4 space-y-4">
           <Tabs defaultValue="content" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="content" className="text-xs md:text-sm"><FileText className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">תוכן</span></TabsTrigger>
               <TabsTrigger value="times" className="text-xs md:text-sm"><Clock className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">זמנים</span></TabsTrigger>
               <TabsTrigger value="design" className="text-xs md:text-sm"><Palette className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">עיצוב</span></TabsTrigger>
               <TabsTrigger value="pages" className="text-xs md:text-sm"><FolderOpen className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">עמודים</span></TabsTrigger>
+              <TabsTrigger value="backpage" className="text-xs md:text-sm"><PanelBottom className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">אחורי</span></TabsTrigger>
             </TabsList>
             
             <TabsContent value="design" className="space-y-4 mt-4">
@@ -668,6 +697,125 @@ export default function Newsletter() {
                     ))
                   )}
                 </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="backpage" className="space-y-4 mt-4">
+              <Card className="shadow-sm border-t-4 border-t-teal-500">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">עמוד אחורי (פרסומות והקדשות)</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="enable-backpage" className="cursor-pointer">הפעל עמוד אחורי</Label>
+                    <Switch 
+                      id="enable-backpage"
+                      checked={data.backPage?.enabled}
+                      onCheckedChange={(checked) => setData({
+                        ...data,
+                        backPage: { ...data.backPage!, enabled: checked }
+                      })}
+                    />
+                  </div>
+                </CardHeader>
+                {data.backPage?.enabled && (
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="font-bold border-b pb-2">פרסומות (עד 3)</h3>
+                      {[0, 1, 2].map((idx) => (
+                        <div key={idx} className="space-y-2 bg-slate-50 p-3 rounded border">
+                          <Label>פרסומת {idx + 1}</Label>
+                          <div className="flex items-center gap-4">
+                            <Input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    const newAds = [...data.backPage!.ads];
+                                    newAds[idx] = reader.result as string;
+                                    setData({
+                                      ...data,
+                                      backPage: { ...data.backPage!, ads: newAds }
+                                    });
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            {data.backPage.ads[idx] && (
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                onClick={() => {
+                                  const newAds = [...data.backPage!.ads];
+                                  newAds[idx] = '';
+                                  setData({
+                                    ...data,
+                                    backPage: { ...data.backPage!, ads: newAds }
+                                  });
+                                }}
+                              >
+                                הסר
+                              </Button>
+                            )}
+                          </div>
+                          {data.backPage.ads[idx] && (
+                            <div className="mt-2 h-32 w-full bg-slate-200 rounded overflow-hidden flex items-center justify-center">
+                              <img src={data.backPage.ads[idx]} alt={`Ad ${idx+1}`} className="max-h-full object-contain" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="font-bold border-b pb-2">הקדשות (שורת טקסט רציפה)</h3>
+                      <div className="space-y-2">
+                        <Label>🕯️ לעילוי נשמת</Label>
+                        <Input 
+                          placeholder="שמות מופרדים בנקודה (למשל: רחל בת שרה • יעקב בן דוד)"
+                          value={data.backPage.dedications.leiluyNishmat}
+                          onChange={(e) => setData({
+                            ...data,
+                            backPage: {
+                              ...data.backPage!,
+                              dedications: { ...data.backPage!.dedications, leiluyNishmat: e.target.value }
+                            }
+                          })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>❤️ לרפואה שלמה</Label>
+                        <Input 
+                          placeholder="שמות מופרדים בנקודה"
+                          value={data.backPage.dedications.refuahShlema}
+                          onChange={(e) => setData({
+                            ...data,
+                            backPage: {
+                              ...data.backPage!,
+                              dedications: { ...data.backPage!.dedications, refuahShlema: e.target.value }
+                            }
+                          })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>💰 ברכה והצלחה</Label>
+                        <Input 
+                          placeholder="שמות מופרדים בנקודה"
+                          value={data.backPage.dedications.brachaVeHatzlacha}
+                          onChange={(e) => setData({
+                            ...data,
+                            backPage: {
+                              ...data.backPage!,
+                              dedications: { ...data.backPage!.dedications, brachaVeHatzlacha: e.target.value }
+                            }
+                          })}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
               </Card>
             </TabsContent>
 
@@ -1171,6 +1319,64 @@ export default function Newsletter() {
                   </div>
                 </div>
               ))}
+
+              {/* BACK PAGE */}
+              {data.backPage?.enabled && (
+                <div 
+                  className={`a4-page shadow-2xl bg-white w-[210mm] h-[297mm] overflow-hidden text-black relative flex flex-col`}
+                  style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
+                >
+                  {/* Ads Section */}
+                  <div className="flex-1 flex flex-col p-[15mm] pb-0 gap-4">
+                    {data.backPage.ads.map((ad, idx) => (
+                      ad ? (
+                        <div key={idx} className="flex-1 rounded-xl overflow-hidden shadow-sm border border-slate-100 flex items-center justify-center">
+                          <img src={ad} alt={`Ad ${idx}`} className="w-full h-full object-cover" />
+                        </div>
+                      ) : null
+                    ))}
+                  </div>
+
+                  {/* Dedications Section */}
+                  <div className="bg-[#42b8c5] mt-[10mm] p-6 text-white relative min-h-[120px] flex items-center">
+                    <div className="flex-1 space-y-3 pr-4 relative z-10">
+                      {data.backPage.dedications.leiluyNishmat && (
+                        <div className="flex items-start gap-2 text-sm leading-tight">
+                          <span className="text-xl">🕯️</span>
+                          <div>
+                            <span className="font-bold">לעילוי נשמת: </span>
+                            <span>{data.backPage.dedications.leiluyNishmat}</span>
+                          </div>
+                        </div>
+                      )}
+                      {data.backPage.dedications.refuahShlema && (
+                        <div className="flex items-start gap-2 text-sm leading-tight">
+                          <span className="text-xl">❤️</span>
+                          <div>
+                            <span className="font-bold">רפואה שלמה: </span>
+                            <span>{data.backPage.dedications.refuahShlema}</span>
+                          </div>
+                        </div>
+                      )}
+                      {data.backPage.dedications.brachaVeHatzlacha && (
+                        <div className="flex items-start gap-2 text-sm leading-tight">
+                          <span className="text-xl">💰</span>
+                          <div>
+                            <span className="font-bold">ברכה והצלחה וכל הישועות: </span>
+                            <span>{data.backPage.dedications.brachaVeHatzlacha}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Gold Badge */}
+                    <div className="w-[140px] h-[140px] bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-full absolute left-8 -top-8 shadow-xl border-4 border-white flex flex-col items-center justify-center text-center p-2 transform -rotate-6 z-20">
+                      <div className="font-black text-slate-900 text-2xl leading-none mb-1">העלון<br/>מוקדש</div>
+                      <div className="text-[10px] text-slate-800 font-bold leading-tight">להקדשת העלון<br/>חייגו 073-222-1388</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
