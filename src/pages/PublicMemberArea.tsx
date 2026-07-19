@@ -1202,7 +1202,7 @@ export default function PublicMemberArea() {
                       <div className="font-bold text-red-600 dark:text-red-400 shrink-0 mr-3">
                         {formatCurrency(c.remaining_balance)}
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                   {pending.map((p, idx) => (
                     <motion.div 
@@ -1224,7 +1224,7 @@ export default function PublicMemberArea() {
                       <div className="font-bold text-amber-600 shrink-0 mr-3">
                         {formatCurrency(p.amount)}
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
