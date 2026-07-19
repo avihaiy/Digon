@@ -1433,14 +1433,14 @@ export default function Newsletter() {
                             <h3 className="text-lg font-bold text-slate-900 border-b-2 border-slate-900 pb-1 mb-2">
                               {data.halachaTitle}
                             </h3>
-                            <div className="prose prose-sm prose-p:leading-tight text-slate-800 [&>p]:mb-2" dangerouslySetInnerHTML={{ __html: data.halachaContent }} />
+                            <div className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} prose-p:leading-tight text-slate-800 [&>p]:mb-2`} dangerouslySetInnerHTML={{ __html: data.halachaContent }} />
                           </div>
                         )}
                         
                         {data.dailyStudyTitle && data.dailyStudyContent && data.dailyStudyContent !== '<p><br></p>' && (
                           <div className="border-t-2 border-slate-900 pt-3">
                             <h3 className="text-base font-bold text-white bg-slate-900 px-2 py-1 inline-block mb-2">{data.dailyStudyTitle}</h3>
-                            <div className="prose prose-sm text-slate-800" dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }} />
+                            <div className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} text-slate-800`} dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }} />
                           </div>
                         )}
                       </div>
@@ -1467,14 +1467,14 @@ export default function Newsletter() {
                             <div className="absolute -top-3 right-3 bg-white px-2">
                                 <h3 className="text-base font-bold text-slate-900">{data.announcementsTitle}</h3>
                             </div>
-                            <div className="prose prose-sm text-slate-800 mt-2 [&>p]:mb-2" dangerouslySetInnerHTML={{ __html: data.announcements }} />
+                            <div className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} text-slate-800 mt-2 [&>p]:mb-2`} dangerouslySetInnerHTML={{ __html: data.announcements }} />
                           </div>
                         )}
 
                         {data.childrensCornerTitle && data.childrensCornerContent && data.childrensCornerContent !== '<p><br></p>' && (
                           <div className="border-t-4 border-double border-slate-900 pt-3">
                             <h3 className="text-lg font-bold text-slate-900 mb-2 text-center">{data.childrensCornerTitle}</h3>
-                            <div className="prose prose-sm text-slate-800" dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }} />
+                            <div className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} text-slate-800`} dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }} />
                           </div>
                         )}
 
@@ -1550,7 +1550,7 @@ export default function Newsletter() {
                               {data.halachaTitle}
                             </h3>
                             <div 
-                              className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:mr-5"
+                              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-700 leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:mr-5`}
                               dangerouslySetInnerHTML={{ __html: data.halachaContent }}
                             />
                           </div>
@@ -1564,7 +1564,7 @@ export default function Newsletter() {
                               {data.announcementsTitle}
                             </h3>
                             <div 
-                              className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&>p]:mb-2"
+                              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-700 leading-relaxed [&>p]:mb-2`}
                               dangerouslySetInnerHTML={{ __html: data.announcements }}
                             />
                           </div>
@@ -1578,7 +1578,7 @@ export default function Newsletter() {
                               {data.childrensCornerTitle}
                             </h3>
                             <div 
-                              className="prose prose-sm max-w-none text-gray-800 leading-relaxed [&>p]:mb-2"
+                              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed [&>p]:mb-2`}
                               dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }}
                             />
                           </div>
@@ -1610,7 +1610,7 @@ export default function Newsletter() {
                             </div>
                             <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'}`}>
                               <div 
-                                className="prose prose-sm max-w-none text-slate-700 leading-relaxed text-center"
+                                className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-slate-700 leading-relaxed text-center`}
                                 dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }}
                               />
                             </div>
