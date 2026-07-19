@@ -744,6 +744,14 @@ export default function Newsletter() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
+                    <Label>שם בית הכנסת</Label>
+                    <Input 
+                      value={data.synagogueName} 
+                      onChange={e => setData({...data, synagogueName: e.target.value})} 
+                      placeholder="לדוגמה: בית כנסת - ברית שלום עכו" 
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label>תבנית עיצוב (Theme)</Label>
                     <Select value={data.theme} onValueChange={(val: any) => setData({...data, theme: val})}>
                       <SelectTrigger>
