@@ -952,7 +952,7 @@ export default function PublicMemberArea() {
             <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {timeString}</span>
           </div>
           <h1 className="text-lg font-bold text-foreground leading-tight">
-            שלום {memberName?.split(' ')[0]} 👋
+            שלום {memberName ? memberName.split(' ')[0] : ''} 👋
           </h1>
         </div>
         <Button
