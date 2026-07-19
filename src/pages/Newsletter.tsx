@@ -51,6 +51,7 @@ interface NewsletterData {
       brachaVeHatzlacha: string;
     }
   };
+  footerAd?: string;
 }
 
 const modules = {
@@ -144,7 +145,8 @@ export default function Newsletter() {
           refuahShlema: '',
           brachaVeHatzlacha: ''
         }
-      }
+      },
+      footerAd: ''
     };
   };
 
@@ -623,6 +625,36 @@ export default function Newsletter() {
                         </Button>
                       )}
                     </div>
+                  </div>
+                  <div className="space-y-2 pt-4 border-t">
+                    <Label>פרסומת קבועה לתחתית כל עמוד (אופציונלי) <span className="text-slate-400 font-normal text-xs">(גובה מומלץ: כ-100 עד 200 פיקסלים, לרוחב העמוד)</span></Label>
+                    <div className="flex items-center gap-4">
+                      <Input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setData({...data, footerAd: reader.result as string});
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                      {data.footerAd && (
+                        <Button variant="destructive" size="sm" onClick={() => setData({...data, footerAd: ''})}>
+                          הסר פרסומת
+                        </Button>
+                      )}
+                    </div>
+                    {data.footerAd && (
+                      <div className="mt-2 h-12 w-full bg-slate-100 rounded overflow-hidden flex items-center justify-center">
+                        <img src={data.footerAd} alt="Footer Ad Preview" className="h-full object-contain" />
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1282,6 +1314,13 @@ export default function Newsletter() {
                   </>
                 )}
 
+                {/* Footer Ad */}
+                {data.footerAd && (
+                  <div className="mt-4 pt-4 border-t border-slate-200 flex justify-center w-full">
+                    <img src={data.footerAd} alt="Footer Ad" className="max-h-[150px] object-contain w-full" />
+                  </div>
+                )}
+
                 {/* Footer */}
                 <div className={`mt-auto pt-6 text-center text-sm font-medium ${data.theme === 'minimal' ? 'text-slate-500 border-t border-slate-200' : 'text-gray-400'}`}>
                   שבת שלום ומבורך! הופק באמצעות מערכת ניהול בית הכנסת
@@ -1317,6 +1356,13 @@ export default function Newsletter() {
                       dangerouslySetInnerHTML={{ __html: page.content }}
                     />
                   </div>
+
+                  {/* Extra Page Footer Ad */}
+                  {data.footerAd && (
+                    <div className="mt-4 pt-4 border-t border-slate-200 flex justify-center w-full relative z-10">
+                      <img src={data.footerAd} alt="Footer Ad" className="max-h-[150px] object-contain w-full" />
+                    </div>
+                  )}
                 </div>
               ))}
 
