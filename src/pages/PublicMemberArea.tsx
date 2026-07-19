@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1046,9 +1047,18 @@ export default function PublicMemberArea() {
         )}
 
         {/* TAB VIEWS */}
-        <div className="pb-8">
-          {activeTab === 'debts' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="pb-8 overflow-x-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="w-full"
+            >
+              {activeTab === 'debts' && (
+                <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
                 <h3 className="font-bold text-lg">פירוט חובות פתוחים</h3>
                 <Button asChild variant="ghost" size="sm" className="h-8 text-xs font-medium text-blue-600 dark:text-blue-400">
@@ -1107,7 +1117,7 @@ export default function PublicMemberArea() {
           )}
 
           {activeTab === 'receipts' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="space-y-4">
               {/* Tax Receipt Section */}
               {taxReceiptEnabled && (
                 <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-900/20 rounded-3xl p-5 border border-indigo-100 dark:border-indigo-900 shadow-sm relative overflow-hidden">
@@ -1182,7 +1192,7 @@ export default function PublicMemberArea() {
           )}
 
           {activeTab === 'messages' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
                 <h3 className="font-bold text-lg">הודעות מהגבאי</h3>
                 {visibleMessages.length > 0 && (
@@ -1244,7 +1254,7 @@ export default function PublicMemberArea() {
           )}
           
           {activeTab === 'profile' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="space-y-4">
               <h3 className="font-bold text-lg px-1">הפרופיל שלי</h3>
               <form onSubmit={handleSaveProfile} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-100 dark:border-zinc-800 shadow-sm space-y-4">
                 <div className="space-y-2">
@@ -1303,7 +1313,7 @@ export default function PublicMemberArea() {
           )}
 
           {activeTab === 'contact' && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="space-y-4">
                       <h3 className="font-bold text-lg px-1">פנייה לגבאי</h3>
                       <form onSubmit={handleContactSubmit} className="space-y-4 bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-zinc-800">
                         <div className="space-y-2">
@@ -1385,7 +1395,9 @@ export default function PublicMemberArea() {
                       )}
                     </div>
                   )}
-                </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
         
         <div className="text-center mt-12 mb-4 text-xs text-slate-400 dark:text-slate-500">
           <div>© {new Date().getFullYear()} כל הזכויות שמורות לברית שלום</div>
