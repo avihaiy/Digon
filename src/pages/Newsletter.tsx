@@ -1371,8 +1371,7 @@ export default function Newsletter() {
                     
                     {/* Gold Badge */}
                     <div className="w-[140px] h-[140px] bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-full absolute left-8 -top-8 shadow-xl border-4 border-white flex flex-col items-center justify-center text-center p-2 transform -rotate-6 z-20">
-                      <div className="font-black text-slate-900 text-2xl leading-none mb-1">העלון<br/>מוקדש</div>
-                      <div className="text-[10px] text-slate-800 font-bold leading-tight">להקדשת העלון<br/>חייגו 073-222-1388</div>
+                      <div className="font-black text-slate-900 text-3xl leading-none">העלון<br/>מוקדש</div>
                     </div>
                   </div>
                 </div>
