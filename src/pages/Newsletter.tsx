@@ -1321,8 +1321,8 @@ export default function Newsletter() {
                   </div>
                 ) : (
                   <div className="mt-auto pt-4 w-full">
-                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200 shadow-sm">
-                      <span className="text-slate-600 font-medium text-sm">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
+                    <div className="bg-[#42b8c5] rounded-lg p-3 text-center shadow-sm">
+                      <span className="text-white font-bold text-sm">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
                     </div>
                   </div>
                 )}
@@ -1365,8 +1365,8 @@ export default function Newsletter() {
                     </div>
                   ) : (
                     <div className="mt-4 pt-4 border-t border-slate-200 w-full relative z-10">
-                      <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200 shadow-sm">
-                        <span className="text-slate-600 font-medium text-sm">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
+                      <div className="bg-[#42b8c5] rounded-lg p-3 text-center shadow-sm">
+                        <span className="text-white font-bold text-sm">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
                       </div>
                     </div>
                   )}
