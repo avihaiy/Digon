@@ -1373,7 +1373,7 @@ export default function Newsletter() {
                 {`
                   .prose, .content-font { font-family: '${data.contentFontFamily || 'Frank Ruhl Libre'}' !important; }
                   @media print {
-                    .a4-page { page-break-after: always; }
+                    .a4-page:not(:last-child) { page-break-after: always; }
                   }
                 `}
               </style>
