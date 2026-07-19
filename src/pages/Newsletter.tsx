@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Download, ArrowLeft, Loader2, FileText, Clock, Palette, Image as ImageIcon, Sparkles, Save, FolderOpen, PanelBottom } from "lucide-react";
+import { Download, ArrowLeft, Loader2, FileText, Clock, Palette, Image as ImageIcon, Sparkles, Save, FolderOpen, PanelBottom, GripVertical, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -19,6 +19,23 @@ import { getShabbatTimes } from "@/lib/hebrew-utils";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import defaultLogo from "@/assets/brit-shalom-poster-logo.png";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface NewsletterData {
   synagogueName: string;
@@ -51,6 +68,10 @@ interface NewsletterData {
   };
   times: { label: string; time: string }[];
   extraPages: { id: string; title: string; content: string }[];
+  layout?: {
+    mainColumn: string[];
+    sidebarColumn: string[];
+  };
   backPage?: {
     enabled: boolean;
     ads: string[];
@@ -78,6 +99,32 @@ const formats = [
   'bold', 'italic', 'underline',
   'list', 'bullet', 'align'
 ];
+
+function SortableItem(props: { id: string; children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: props.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 bg-white p-3 rounded-md border shadow-sm cursor-default">
+      <div {...attributes} {...listeners} className="cursor-grab hover:text-primary active:cursor-grabbing p-1">
+        <GripVertical className="h-5 w-5 text-slate-400" />
+      </div>
+      <div className="flex-1 font-medium text-slate-700">
+        {props.children}
+      </div>
+    </div>
+  );
+}
 
 export default function Newsletter() {
   const [isExporting, setIsExporting] = useState(false);
@@ -112,6 +159,10 @@ export default function Newsletter() {
           quizContent: '',
           quoteTitle: 'פנינת השבוע',
           quoteContent: '',
+          layout: {
+            mainColumn: ['dvarTorah', 'halacha', 'announcements', 'quiz', 'childrensCorner'],
+            sidebarColumn: ['prayerTimes', 'dailyStudy', 'quote', 'akkoZmanim']
+          },
           extraPages: [],
           backPage: {
             enabled: false,
@@ -168,6 +219,10 @@ export default function Newsletter() {
       quizContent: '',
       quoteTitle: 'פנינת השבוע',
       quoteContent: '',
+      layout: {
+        mainColumn: ['dvarTorah', 'halacha', 'announcements', 'quiz', 'childrensCorner'],
+        sidebarColumn: ['prayerTimes', 'dailyStudy', 'quote', 'akkoZmanim']
+      },
       announcementsTitle: 'הודעות הקהילה',
       announcements: '<p>זמני שיעורים, תזכורות וכו\'...</p>',
       akkoZmanim: {
@@ -202,6 +257,97 @@ export default function Newsletter() {
   const [isFetchingAkkoZmanim, setIsFetchingAkkoZmanim] = useState(false);
   const [previewScale, setPreviewScale] = useState(0.85);
   const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const blockNames: Record<string, string> = {
+    dvarTorah: 'דבר תורה',
+    halacha: 'הלכה שבועית',
+    announcements: 'הודעות הקהילה',
+    quiz: 'חידון פרשת השבוע',
+    childrensCorner: 'פינת הילדים',
+    prayerTimes: 'זמני תפילות',
+    dailyStudy: 'לימוד יומי',
+    quote: 'פנינת השבוע',
+    akkoZmanim: 'זמני שבת',
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    if (activeId === overId) return;
+
+    setData((prev) => {
+      const layout = prev.layout || { mainColumn: [], sidebarColumn: [] };
+      const mainCol = [...layout.mainColumn];
+      const sideCol = [...layout.sidebarColumn];
+
+      // Find which column active is in
+      const isMainActive = mainCol.includes(activeId);
+      const isSideActive = sideCol.includes(activeId);
+
+      // Find which column over is in
+      const isMainOver = mainCol.includes(overId);
+      const isSideOver = sideCol.includes(overId);
+
+      // Same column drag (reordering)
+      if (isMainActive && isMainOver) {
+        const oldIndex = mainCol.indexOf(activeId);
+        const newIndex = mainCol.indexOf(overId);
+        return { ...prev, layout: { ...layout, mainColumn: arrayMove(mainCol, oldIndex, newIndex) } };
+      }
+      
+      if (isSideActive && isSideOver) {
+        const oldIndex = sideCol.indexOf(activeId);
+        const newIndex = sideCol.indexOf(overId);
+        return { ...prev, layout: { ...layout, sidebarColumn: arrayMove(sideCol, oldIndex, newIndex) } };
+      }
+
+      // Moving between columns
+      // If we hover over a specific item in another column
+      if (isMainActive && isSideOver) {
+        const activeIndex = mainCol.indexOf(activeId);
+        const overIndex = sideCol.indexOf(overId);
+        mainCol.splice(activeIndex, 1);
+        sideCol.splice(overIndex, 0, activeId);
+        return { ...prev, layout: { mainColumn: mainCol, sidebarColumn: sideCol } };
+      }
+
+      if (isSideActive && isMainOver) {
+        const activeIndex = sideCol.indexOf(activeId);
+        const overIndex = mainCol.indexOf(overId);
+        sideCol.splice(activeIndex, 1);
+        mainCol.splice(overIndex, 0, activeId);
+        return { ...prev, layout: { mainColumn: mainCol, sidebarColumn: sideCol } };
+      }
+
+      // If we hover directly over the container itself
+      if (isMainActive && overId === 'sidebarColumn') {
+        const activeIndex = mainCol.indexOf(activeId);
+        mainCol.splice(activeIndex, 1);
+        sideCol.push(activeId);
+        return { ...prev, layout: { mainColumn: mainCol, sidebarColumn: sideCol } };
+      }
+
+      if (isSideActive && overId === 'mainColumn') {
+        const activeIndex = sideCol.indexOf(activeId);
+        sideCol.splice(activeIndex, 1);
+        mainCol.push(activeId);
+        return { ...prev, layout: { mainColumn: mainCol, sidebarColumn: sideCol } };
+      }
+
+      return prev;
+    });
+  };
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
@@ -788,6 +934,152 @@ export default function Newsletter() {
     }
   };
 
+  const renderBlock = (id: string, isSidebar: boolean) => {
+    switch(id) {
+      case 'dvarTorah':
+        return data.dvarTorahTitle ? (
+          <div key="dvarTorah" className={`${data.theme === 'modern' ? 'bg-white p-6 rounded-2xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent' : 'bg-white'}`}>
+            <h3 className={`text-2xl font-bold text-primary mb-4 pb-2 ${data.theme === 'minimal' ? 'border-b border-slate-200' : 'border-b-2 border-primary/20 inline-block'}`}>
+              {data.dvarTorahTitle}
+            </h3>
+            <div 
+              className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
+              dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
+            />
+          </div>
+        ) : null;
+      case 'halacha':
+        return data.halachaTitle ? (
+          <div key="halacha" className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-slate-50 p-5 rounded-xl border border-slate-100'}`}>
+            <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
+              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-primary rounded-full"></span>}
+              {data.halachaTitle}
+            </h3>
+            <div 
+              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-700 leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:mr-5`}
+              dangerouslySetInnerHTML={{ __html: data.halachaContent }}
+            />
+          </div>
+        ) : null;
+      case 'announcements':
+        return data.announcementsTitle ? (
+          <div key="announcements" className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-primary/5 p-5 rounded-xl border border-primary/10'}`}>
+            <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
+              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-primary rounded-full"></span>}
+              {data.announcementsTitle}
+            </h3>
+            <div 
+              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-700 leading-relaxed [&>p]:mb-2`}
+              dangerouslySetInnerHTML={{ __html: data.announcements }}
+            />
+          </div>
+        ) : null;
+      case 'quiz':
+        return data.quizTitle && data.quizContent && data.quizContent !== '<p><br></p>' ? (
+          <div key="quiz" className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-emerald-50 p-5 rounded-xl border border-emerald-100'}`}>
+            <h3 className="text-xl font-bold text-emerald-700 mb-3 flex items-center gap-2">
+              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>}
+              {data.quizTitle}
+            </h3>
+            <div 
+              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed [&>p]:mb-2`}
+              dangerouslySetInnerHTML={{ __html: data.quizContent }}
+            />
+          </div>
+        ) : null;
+      case 'childrensCorner':
+        return data.childrensCornerTitle && data.childrensCornerContent && data.childrensCornerContent !== '<p><br></p>' ? (
+          <div key="childrensCorner" className={`${data.theme === 'modern' ? 'bg-gradient-to-br from-pink-50 to-white p-5 rounded-xl shadow-sm border border-pink-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-pink-50 p-5 rounded-xl border border-pink-100'}`}>
+            <h3 className="text-xl font-bold text-pink-600 mb-3 flex items-center gap-2">
+              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-pink-500 rounded-full"></span>}
+              {data.childrensCornerTitle}
+            </h3>
+            {data.childrensCornerImage && (
+              <div className="mb-4 rounded-lg overflow-hidden flex justify-center max-h-48 bg-white border border-pink-100">
+                <img src={data.childrensCornerImage} alt="Childrens corner" className="object-contain w-full h-full" />
+              </div>
+            )}
+            <div 
+              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed [&>p]:mb-2`}
+              dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }}
+            />
+          </div>
+        ) : null;
+      case 'prayerTimes':
+        return (
+          <div key="prayerTimes" className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
+            <div className={`${data.theme === 'modern' ? 'bg-primary/5 text-primary' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-primary/10 text-primary border-b border-primary/10'} font-bold text-center py-3`}>
+              זמני התפילות - {data.synagogueName}
+            </div>
+            <div className={`${data.theme === 'minimal' ? 'p-0' : 'p-4'} space-y-3`}>
+              {data.times.map((t, idx) => (
+                <div key={idx} className="flex justify-between items-center border-b border-dashed border-slate-200 pb-2 last:border-0 last:pb-0">
+                  <span className="font-semibold text-gray-700">{t.label}</span>
+                  <span className="font-bold text-primary tabular-nums tracking-wider" dir="ltr">{t.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'dailyStudy':
+        return data.dailyStudyTitle && data.dailyStudyContent && data.dailyStudyContent !== '<p><br></p>' ? (
+          <div key="dailyStudy" className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
+            <div className={`${data.theme === 'modern' ? 'bg-indigo-50 text-indigo-700' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-indigo-50 text-indigo-800 border-b border-indigo-100'} font-bold text-center py-3`}>
+              {data.dailyStudyTitle}
+            </div>
+            <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'}`}>
+              <div 
+                className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-slate-700 leading-relaxed text-center`}
+                dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }}
+              />
+            </div>
+          </div>
+        ) : null;
+      case 'quote':
+        return data.quoteTitle && data.quoteContent && data.quoteContent !== '<p><br></p>' ? (
+          <div key="quote" className={`${data.theme === 'modern' ? 'bg-gradient-to-br from-yellow-50 to-white rounded-2xl border-0 shadow-md p-5 relative overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-4 relative' : 'bg-yellow-50 rounded-xl border border-yellow-200 p-5 relative shadow-sm'}`}>
+            <div className="absolute top-2 left-3 opacity-10 text-6xl font-serif text-yellow-900 pointer-events-none">"</div>
+            <div className="absolute bottom-[-10px] right-3 opacity-10 text-6xl font-serif text-yellow-900 pointer-events-none">"</div>
+            <div className="relative z-10">
+              <h3 className="text-lg font-bold text-yellow-800 mb-2 text-center">
+                {data.quoteTitle}
+              </h3>
+              <div 
+                className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed text-center font-medium`}
+                dangerouslySetInnerHTML={{ __html: data.quoteContent }}
+              />
+            </div>
+          </div>
+        ) : null;
+      case 'akkoZmanim':
+        return data.akkoZmanim ? (
+          <div key="akkoZmanim" className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
+            <div className={`${data.theme === 'modern' ? 'bg-indigo-600 text-white' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-center text-2xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-slate-800 text-white border-b border-slate-200'} font-bold text-center py-3 text-lg`}>
+              זמני שבת - עכו והסביבה
+            </div>
+            <div className={`${data.theme === 'minimal' ? 'p-0 pt-4' : 'p-5'} text-slate-800 text-center leading-relaxed font-medium`}>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
+                  <span className="text-slate-600 font-bold">כניסת שבת</span>
+                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.candleLighting || '---'}</span>
+                </div>
+                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
+                  <span className="text-slate-600 font-bold">צאת שבת</span>
+                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.havdalah || '---'}</span>
+                </div>
+                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
+                  <span className="text-slate-500">צאת שבת (רבנו תם)</span>
+                  <span className="text-lg font-bold text-slate-700">{data.akkoZmanim.rabbeinuTam || '---'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-7xl animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -876,9 +1168,10 @@ export default function Newsletter() {
         {/* Editor Form */}
         <div className="lg:col-span-4 space-y-4">
           <Tabs defaultValue="content" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="content" className="text-xs md:text-sm"><FileText className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">תוכן</span></TabsTrigger>
               <TabsTrigger value="times" className="text-xs md:text-sm"><Clock className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">זמנים</span></TabsTrigger>
+              <TabsTrigger value="layout" className="text-xs md:text-sm"><LayoutTemplate className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">פריסה</span></TabsTrigger>
               <TabsTrigger value="design" className="text-xs md:text-sm"><Palette className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">עיצוב</span></TabsTrigger>
               <TabsTrigger value="pages" className="text-xs md:text-sm"><FolderOpen className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">עמודים</span></TabsTrigger>
               <TabsTrigger value="backpage" className="text-xs md:text-sm"><PanelBottom className="w-4 h-4 md:ml-1"/><span className="hidden md:inline">אחורי</span></TabsTrigger>
@@ -1781,158 +2074,16 @@ export default function Newsletter() {
                     <div className="grid grid-cols-12 gap-8 flex-1">
                       {/* Main Content Column */}
                       <div className="col-span-8 space-y-6">
-                        {/* Dvar Torah */}
-                        {data.dvarTorahTitle && (
-                          <div className={`${data.theme === 'modern' ? 'bg-white p-6 rounded-2xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent' : 'bg-white'}`}>
-                            <h3 className={`text-2xl font-bold text-primary mb-4 pb-2 ${data.theme === 'minimal' ? 'border-b border-slate-200' : 'border-b-2 border-primary/20 inline-block'}`}>
-                              {data.dvarTorahTitle}
-                            </h3>
-                            <div 
-                              className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
-                              dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
-                            />
-                          </div>
-                        )}
-
-                        {/* Halacha */}
-                        {data.halachaTitle && (
-                          <div className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-slate-50 p-5 rounded-xl border border-slate-100'}`}>
-                            <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
-                              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-primary rounded-full"></span>}
-                              {data.halachaTitle}
-                            </h3>
-                            <div 
-                              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-700 leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:mr-5`}
-                              dangerouslySetInnerHTML={{ __html: data.halachaContent }}
-                            />
-                          </div>
-                        )}
-
-                        {/* Announcements */}
-                        {data.announcementsTitle && (
-                          <div className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-primary/5 p-5 rounded-xl border border-primary/10'}`}>
-                            <h3 className="text-xl font-bold text-primary mb-3 flex items-center gap-2">
-                              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-primary rounded-full"></span>}
-                              {data.announcementsTitle}
-                            </h3>
-                            <div 
-                              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-700 leading-relaxed [&>p]:mb-2`}
-                              dangerouslySetInnerHTML={{ __html: data.announcements }}
-                            />
-                          </div>
-                        )}
-
-                        {/* Quiz */}
-                        {data.quizTitle && data.quizContent && data.quizContent !== '<p><br></p>' && (
-                          <div className={`${data.theme === 'modern' ? 'bg-white p-5 rounded-xl shadow-sm border border-slate-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-emerald-50 p-5 rounded-xl border border-emerald-100'}`}>
-                            <h3 className="text-xl font-bold text-emerald-700 mb-3 flex items-center gap-2">
-                              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>}
-                              {data.quizTitle}
-                            </h3>
-                            <div 
-                              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed [&>p]:mb-2`}
-                              dangerouslySetInnerHTML={{ __html: data.quizContent }}
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Children's Corner */}
-                        {data.childrensCornerTitle && data.childrensCornerContent && data.childrensCornerContent !== '<p><br></p>' && (
-                          <div className={`mt-6 ${data.theme === 'modern' ? 'bg-gradient-to-br from-pink-50 to-white p-5 rounded-xl shadow-sm border border-pink-100' : data.theme === 'minimal' ? 'bg-transparent pt-4 border-t border-slate-100' : 'bg-pink-50 p-5 rounded-xl border border-pink-100'}`}>
-                            <h3 className="text-xl font-bold text-pink-600 mb-3 flex items-center gap-2">
-                              {data.theme !== 'minimal' && <span className="w-2 h-2 bg-pink-500 rounded-full"></span>}
-                              {data.childrensCornerTitle}
-                            </h3>
-                            {data.childrensCornerImage && (
-                              <div className="mb-4 rounded-lg overflow-hidden flex justify-center max-h-48 bg-white border border-pink-100">
-                                <img src={data.childrensCornerImage} alt="Childrens corner" className="object-contain w-full h-full" />
-                              </div>
-                            )}
-                            <div 
-                              className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed [&>p]:mb-2`}
-                              dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }}
-                            />
-                          </div>
-                        )}
+                        {data.layout?.mainColumn.map(id => renderBlock(id, false))}
                       </div>
 
                       {/* Sidebar Column */}
-                      <div className="col-span-4 space-y-6">
-                        {/* Prayer Times */}
-                        <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm'}`}>
-                          <div className={`${data.theme === 'modern' ? 'bg-primary/5 text-primary' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-primary/10 text-primary border-b border-primary/10'} font-bold text-center py-3`}>
-                            זמני התפילות - ברית שלום עכו
-                          </div>
-                          <div className={`${data.theme === 'minimal' ? 'p-0' : 'p-4'} space-y-3`}>
-                            {data.times.map((t, idx) => (
-                              <div key={idx} className="flex justify-between items-center border-b border-dashed border-slate-200 pb-2 last:border-0 last:pb-0">
-                                <span className="font-semibold text-gray-700">{t.label}</span>
-                                <span className="font-bold text-primary tabular-nums tracking-wider" dir="ltr">{t.time}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Daily Study */}
-                        {data.dailyStudyTitle && data.dailyStudyContent && data.dailyStudyContent !== '<p><br></p>' && (
-                          <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-6'}`}>
-                            <div className={`${data.theme === 'modern' ? 'bg-indigo-50 text-indigo-700' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-right text-xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-indigo-50 text-indigo-800 border-b border-indigo-100'} font-bold text-center py-3`}>
-                              {data.dailyStudyTitle}
-                            </div>
-                            <div className={`${data.theme === 'minimal' ? 'p-0 pt-2' : 'p-4'}`}>
-                              <div 
-                                className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-slate-700 leading-relaxed text-center`}
-                                dangerouslySetInnerHTML={{ __html: data.dailyStudyContent }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Weekly Quote */}
-                        {data.quoteTitle && data.quoteContent && data.quoteContent !== '<p><br></p>' && (
-                          <div className={`${data.theme === 'modern' ? 'bg-gradient-to-br from-yellow-50 to-white rounded-2xl border-0 shadow-md p-5 mt-6 relative overflow-hidden' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-4 mt-8 relative' : 'bg-yellow-50 rounded-xl border border-yellow-200 p-5 mt-6 relative shadow-sm'}`}>
-                            <div className="absolute top-2 left-3 opacity-10 text-6xl font-serif text-yellow-900 pointer-events-none">"</div>
-                            <div className="absolute bottom-[-10px] right-3 opacity-10 text-6xl font-serif text-yellow-900 pointer-events-none">"</div>
-                            <div className="relative z-10">
-                              <h3 className="text-lg font-bold text-yellow-800 mb-2 text-center">
-                                {data.quoteTitle}
-                              </h3>
-                              <div 
-                                className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed text-center font-medium`}
-                                dangerouslySetInnerHTML={{ __html: data.quoteContent }}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Akko Zmanim */}
-                        {data.akkoZmanim && (
-                          <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden mt-6' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-6'}`}>
-                            <div className={`${data.theme === 'modern' ? 'bg-indigo-600 text-white' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-center text-2xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-slate-800 text-white border-b border-slate-200'} font-bold text-center py-3 text-lg`}>
-                              זמני שבת - עכו והסביבה
-                            </div>
-                            <div className={`${data.theme === 'minimal' ? 'p-0 pt-4' : 'p-5'} text-slate-800 text-center leading-relaxed font-medium`}>
-                              <div className="grid grid-cols-1 gap-3">
-                                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
-                                  <span className="text-slate-600 font-bold">כניסת שבת</span>
-                                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.candleLighting || '---'}</span>
-                                </div>
-                                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
-                                  <span className="text-slate-600 font-bold">צאת שבת</span>
-                                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.havdalah || '---'}</span>
-                                </div>
-                                <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
-                                  <span className="text-slate-500">צאת שבת (רבנו תם)</span>
-                                  <span className="text-lg font-bold text-slate-700">{data.akkoZmanim.rabbeinuTam || '---'}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                      <div className="col-span-4 space-y-6 flex flex-col">
+                        {data.layout?.sidebarColumn.map(id => renderBlock(id, true))}
                         
-                        {/* Sidebar Ads */}
+                        {/* Sidebar Ads stay at the bottom of the sidebar */}
                         {data.sidebarAds && (
-                          <div className="mt-4 space-y-4 flex flex-col items-center w-full">
+                          <div className="mt-auto pt-4 space-y-4 flex flex-col items-center w-full">
                             {data.sidebarAds.map((ad, idx) => ad ? (
                               <img key={idx} src={ad} alt={`Ad ${idx + 1}`} className="w-full h-auto object-contain rounded-xl shadow-sm border border-slate-100" />
                             ) : (
