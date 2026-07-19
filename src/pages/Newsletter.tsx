@@ -271,7 +271,7 @@ export default function Newsletter() {
       
       const sunset = new Date(zmanim.times.sunset);
       const candleLighting = new Date(sunset.getTime() - 30 * 60000); // 30 minutes before sunset is the standard in Haifa/Akko
-      const havdalah = new Date(zmanim.times.tzeit50min);
+      const havdalah = new Date(zmanim.times.tzeit85deg); // 8.5 degrees is standard in Israel
       const rabbeinuTam = new Date(zmanim.times.tzeit72min);
       
       const formatTime = (d: Date) => d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' });
