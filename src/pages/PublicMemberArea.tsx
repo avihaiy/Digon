@@ -286,28 +286,7 @@ export default function PublicMemberArea() {
   const hebDateString = getHebrewDate(currentTime);
   const gregorianDateString = currentTime.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-  // Confetti effect for Zero Debt
-  useEffect(() => {
-    if (!loading && totalCharges > 0 && netOwed === 0) {
-      setTimeout(async () => {
-        try {
-          const confettiModule = await import("canvas-confetti");
-          const fireConfetti = confettiModule.default || confettiModule;
-          if (typeof fireConfetti === 'function') {
-            fireConfetti({
-              particleCount: 150,
-              spread: 70,
-              origin: { y: 0.6 },
-              colors: ['#10b981', '#3b82f6', '#fbbf24', '#f43f5e', '#8b5cf6'],
-              disableForReducedMotion: true
-            });
-          }
-        } catch (err) {
-          console.error("Confetti failed to load", err);
-        }
-      }, 500);
-    }
-  }, [loading, netOwed, totalCharges]);
+
   const [payboxPhone, setPayboxPhone] = useState<string>("");
   const [payboxEnabled, setPayboxEnabled] = useState(false);
   const [bankAccountDetails, setBankAccountDetails] = useState<string>("");
@@ -807,6 +786,29 @@ export default function PublicMemberArea() {
   const totalOwed = netOwed;
 
   const totalReceipts = useMemo(() => receipts.reduce((s, r) => s + r.total_amount, 0), [receipts]);
+
+  // Confetti effect for Zero Debt
+  useEffect(() => {
+    if (!loading && totalCharges > 0 && netOwed === 0) {
+      setTimeout(async () => {
+        try {
+          const confettiModule = await import("canvas-confetti");
+          const fireConfetti = confettiModule.default || confettiModule;
+          if (typeof fireConfetti === 'function') {
+            fireConfetti({
+              particleCount: 150,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ['#10b981', '#3b82f6', '#fbbf24', '#f43f5e', '#8b5cf6'],
+              disableForReducedMotion: true
+            });
+          }
+        } catch (err) {
+          console.error("Confetti failed to load", err);
+        }
+      }, 500);
+    }
+  }, [loading, netOwed, totalCharges]);
 
   useEffect(() => {
     document.title = memberName ? `אזור אישי — ${memberName} • ברית שלום עכו` : "אזור אישי • ברית שלום עכו";
