@@ -139,7 +139,7 @@ function DailyTehillim() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-zinc-800 min-h-[300px]">
+      <div className="bg-[#fdfbf7] dark:bg-zinc-900 rounded-3xl p-6 md:p-8 shadow-sm border border-amber-100/50 dark:border-zinc-800 min-h-[300px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400">
              <Loader2 className="w-8 h-8 animate-spin mb-4 text-indigo-500" />
@@ -150,10 +150,28 @@ function DailyTehillim() {
             {error}
           </div>
         ) : (
-          <div className="prose prose-slate dark:prose-invert max-w-none text-center leading-loose text-lg font-serif">
-             {chapters.map((verse, idx) => (
-                <span key={idx} dangerouslySetInnerHTML={{ __html: verse + " " }} />
-             ))}
+          <div 
+            className="text-center md:text-right text-slate-800 dark:text-slate-200" 
+            style={{ 
+              fontFamily: '"Frank Ruhl Libre", "David Libre", "Times New Roman", serif',
+              fontSize: '1.45rem', 
+              lineHeight: '2.4',
+            }}
+          >
+             {chapters.map((verse, idx) => {
+               // מרווח קל אחרי פסוק שמסתיים בסימון פרשה פתוחה/סתומה
+               const isBreak = verse.includes('{פ}') || verse.includes('{ס}');
+               return (
+                 <span key={idx}>
+                   <span dangerouslySetInnerHTML={{ __html: verse }} />
+                   {isBreak ? (
+                     <div className="h-6 w-full" /> // שבירת שורה משמעותית
+                   ) : (
+                     <span className="mx-1.5 text-slate-300 dark:text-slate-700">♦</span> // מפריד יפה בין פסוקים במקום רק רווח
+                   )}
+                 </span>
+               );
+             })}
           </div>
         )}
       </div>
