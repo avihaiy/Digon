@@ -37,6 +37,7 @@ interface NewsletterData {
   dailyStudyContent: string;
   childrensCornerTitle: string;
   childrensCornerContent: string;
+  childrensCornerImage?: string;
   announcementsTitle: string;
   announcements: string;
   akkoZmanim?: {
@@ -100,6 +101,7 @@ export default function Newsletter() {
           dailyStudyContent: '',
           childrensCornerTitle: 'פינת הילדים',
           childrensCornerContent: '',
+          childrensCornerImage: '',
           extraPages: [],
           backPage: {
             enabled: false,
@@ -151,6 +153,7 @@ export default function Newsletter() {
       dailyStudyContent: '',
       childrensCornerTitle: 'פינת הילדים',
       childrensCornerContent: '',
+      childrensCornerImage: '',
       announcementsTitle: 'הודעות הקהילה',
       announcements: '<p>זמני שיעורים, תזכורות וכו\'...</p>',
       akkoZmanim: {
@@ -1215,6 +1218,39 @@ export default function Newsletter() {
                       onChange={(e) => setData({ ...data, childrensCornerTitle: e.target.value })}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>תמונה (אופציונלי)</Label>
+                    {data.childrensCornerImage ? (
+                      <div className="relative inline-block border rounded overflow-hidden mt-1">
+                        <img src={data.childrensCornerImage} alt="Childrens corner" className="h-20 object-contain" />
+                        <Button 
+                          variant="destructive" 
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                          onClick={() => setData({ ...data, childrensCornerImage: '' })}
+                        >
+                          <span className="sr-only">Remove</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </Button>
+                      </div>
+                    ) : (
+                      <Input 
+                        type="file" 
+                        accept="image/*"
+                        className="cursor-pointer"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              setData({ ...data, childrensCornerImage: event.target?.result as string });
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
                   <div className="space-y-2" dir="ltr">
                     <Label className="text-right block" dir="rtl">תוכן</Label>
                     <ReactQuill 
@@ -1604,6 +1640,11 @@ export default function Newsletter() {
                               {data.theme !== 'minimal' && <span className="w-2 h-2 bg-pink-500 rounded-full"></span>}
                               {data.childrensCornerTitle}
                             </h3>
+                            {data.childrensCornerImage && (
+                              <div className="mb-4 rounded-lg overflow-hidden flex justify-center max-h-48 bg-white border border-pink-100">
+                                <img src={data.childrensCornerImage} alt="Childrens corner" className="object-contain w-full h-full" />
+                              </div>
+                            )}
                             <div 
                               className={`prose ${data.fontSize === 'text-sm' ? 'prose-sm' : data.fontSize === 'text-lg' ? 'prose-lg' : ''} max-w-none text-gray-800 leading-relaxed [&>p]:mb-2`}
                               dangerouslySetInnerHTML={{ __html: data.childrensCornerContent }}
