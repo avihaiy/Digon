@@ -1371,7 +1371,7 @@ export default function Newsletter() {
 
               {/* PAGE 1: Main Newsletter */}
               <div 
-                className={`a4-page shadow-2xl w-[210mm] h-[297mm] overflow-hidden text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
+                className={`a4-page shadow-2xl w-[210mm] min-h-[297mm] text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
                 style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
               >
                 {/* Outer Page Styles by Theme */}
