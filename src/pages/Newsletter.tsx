@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, ArrowLeft, Loader2, FileText, Clock, Palette, Image as ImageIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Download, ArrowLeft, Loader2, FileText, Clock, Palette, Image as ImageIcon, Sparkles, Save, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -54,6 +55,10 @@ const formats = [
 
 export default function Newsletter() {
   const [isExporting, setIsExporting] = useState(false);
+  const [isSavingArchive, setIsSavingArchive] = useState(false);
+  const [archives, setArchives] = useState<any[]>([]);
+  const [isArchivesOpen, setIsArchivesOpen] = useState(false);
+  const [isGeneratingDvarTorah, setIsGeneratingDvarTorah] = useState(false);
   const newsletterRef = useRef<HTMLDivElement>(null);
   
   const getInitialData = (): NewsletterData => {
@@ -180,6 +185,66 @@ export default function Newsletter() {
     }
   };
 
+  const fetchArchives = async () => {
+    const { data: dbArchives, error } = await supabase
+      .from('newsletters')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && dbArchives) {
+      setArchives(dbArchives);
+    }
+  };
+
+  useEffect(() => {
+    if (isArchivesOpen) {
+      fetchArchives();
+    }
+  }, [isArchivesOpen]);
+
+  const handleSaveArchive = async () => {
+    setIsSavingArchive(true);
+    try {
+      const { error } = await supabase.from('newsletters').insert({
+        parasha: data.parasha || 'כללי',
+        hebrew_date: data.hebrewDate || '',
+        data: data
+      });
+      if (error) throw error;
+      toast.success('העלון נשמר לארכיון בהצלחה!');
+    } catch (error) {
+      console.error(error);
+      toast.error('שגיאה בשמירת העלון');
+    } finally {
+      setIsSavingArchive(false);
+    }
+  };
+
+  const generateDvarTorah = async () => {
+    if (!data.parasha) {
+      toast.error("אנא בחר פרשה קודם");
+      return;
+    }
+    setIsGeneratingDvarTorah(true);
+    const toastId = toast.loading("ה-AI כותב דבר תורה...");
+    try {
+      const { data: result, error } = await supabase.functions.invoke('generate-dvar-torah', {
+        body: { parasha: data.parasha }
+      });
+      if (error) throw error;
+      if (result?.html) {
+        setData({ ...data, dvarTorahContent: result.html });
+        toast.success("דבר תורה נכתב בהצלחה!", { id: toastId });
+      } else {
+        throw new Error(result?.error || "Unknown error");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("שגיאה ביצירת דבר התורה (וודא שהגדרת מפתח API ב-Supabase)", { id: toastId });
+    } finally {
+      setIsGeneratingDvarTorah(false);
+    }
+  };
+
   const handleTimeChange = (idx: number, field: 'label' | 'time', value: string) => {
     const newTimes = [...data.times];
     newTimes[idx] = { ...newTimes[idx], [field]: value };
@@ -218,7 +283,56 @@ export default function Newsletter() {
           <h1 className="text-2xl font-bold text-foreground">מחולל עלון שבת</h1>
         </div>
         
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-2 w-full md:w-auto flex-wrap justify-end">
+          <Button 
+            variant="outline"
+            onClick={handleSaveArchive}
+            disabled={isSavingArchive}
+            className="flex-1 md:flex-none shadow-sm"
+          >
+            {isSavingArchive ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
+            <span className="hidden sm:inline">שמור לארכיון</span>
+          </Button>
+
+          <Dialog open={isArchivesOpen} onOpenChange={setIsArchivesOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex-1 md:flex-none shadow-sm">
+                <FolderOpen className="ml-2 h-4 w-4" />
+                <span className="hidden sm:inline">טען מארכיון</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent dir="rtl" className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>ארכיון עלונים</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                {archives.length === 0 ? (
+                   <p className="text-center text-muted-foreground py-8">אין עלונים בארכיון עדיין.</p>
+                ) : (
+                  <div className="grid gap-3">
+                    {archives.map(arch => (
+                      <Card key={arch.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => {
+                        setData(arch.data);
+                        setIsArchivesOpen(false);
+                        toast.success("עלון נטען בהצלחה");
+                      }}>
+                        <CardContent className="p-4 flex justify-between items-center">
+                          <div>
+                            <div className="font-bold">פרשת {arch.parasha}</div>
+                            <div className="text-sm text-muted-foreground">{arch.hebrew_date}</div>
+                          </div>
+                          <div className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600">
+                            {new Date(arch.created_at).toLocaleDateString('he-IL')}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Button 
             variant="outline"
             onClick={() => {
@@ -476,6 +590,22 @@ export default function Newsletter() {
                   <div className="space-y-2">
                     <Label>שם הפרשה</Label>
                     <Input value={data.parasha} onChange={(e) => setData({...data, parasha: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <Label>תוכן דבר התורה</Label>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={generateDvarTorah}
+                        disabled={isGeneratingDvarTorah}
+                        className="h-8 gap-1 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                      >
+                        {isGeneratingDvarTorah ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        כתוב לי ב-AI
+                      </Button>
+                    </div>
+                    <ReactQuill theme="snow" value={data.dvarTorahContent} onChange={(val) => setData({...data, dvarTorahContent: val})} modules={modules} formats={formats} className="bg-white rounded-md mb-2" />
                   </div>
                   <div className="space-y-2">
                     <Label>תאריך עברי</Label>
