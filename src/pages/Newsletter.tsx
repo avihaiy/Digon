@@ -27,6 +27,7 @@ interface NewsletterData {
   theme: 'classic' | 'modern' | 'minimal' | 'newspaper';
   fontFamily: string;
   contentFontFamily: string;
+  fontSize: string;
   dvarTorahTitle: string;
   dvarTorahContent: string;
   halachaTitle: string;
@@ -75,6 +76,7 @@ export default function Newsletter() {
           theme: 'classic',
           fontFamily: 'Assistant',
           contentFontFamily: 'Frank Ruhl Libre',
+          fontSize: 'text-base',
           dailyStudyTitle: 'לימוד יומי',
           dailyStudyContent: '',
           childrensCornerTitle: 'פינת הילדים',
@@ -93,6 +95,7 @@ export default function Newsletter() {
       theme: 'classic',
       fontFamily: 'Assistant',
       contentFontFamily: 'Frank Ruhl Libre',
+      fontSize: 'text-base',
       dvarTorahTitle: 'דבר תורה לפרשת השבוע',
       dvarTorahContent: '<p>הקלידו כאן את דברי התורה...</p>',
       halachaTitle: 'הלכה שבועית',
@@ -211,7 +214,7 @@ export default function Newsletter() {
       scaledContainer.style.transform = 'scale(1)';
       scaledContainer.style.transformOrigin = 'top left';
       scaledContainer.style.width = '210mm';
-      scaledContainer.style.height = '297mm';
+      scaledContainer.style.minHeight = '297mm';
       
       scaledContainer.appendChild(clone);
       outerContainer.appendChild(scaledContainer);
@@ -224,7 +227,8 @@ export default function Newsletter() {
         filename:     `עלון-שבת-${data.parasha || 'קהילה'}.pdf`,
         image:        { type: 'jpeg', quality: 1 },
         html2canvas:  { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       await html2pdf().set(opt).from(scaledContainer).save();
@@ -502,6 +506,19 @@ export default function Newsletter() {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label>גודל הכתב (לתוכן)</Label>
+                    <Select value={data.fontSize || 'text-base'} onValueChange={(val: string) => setData({...data, fontSize: val})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחר גודל כתב" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="text-sm">קטן יותר (דוחס יותר טקסט בעמוד)</SelectItem>
+                        <SelectItem value="text-base">רגיל (ברירת מחדל)</SelectItem>
+                        <SelectItem value="text-lg">גדול וקריא (למבוגרים)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label>לוגו בית הכנסת (אופציונלי)</Label>
                     <div className="flex items-center gap-4">
                       <Input 
@@ -739,7 +756,7 @@ export default function Newsletter() {
             {/* The actual A4 Page to be captured */}
             <div 
               ref={newsletterRef}
-              className={`w-[210mm] min-h-[297mm] text-black p-[15mm] relative flex flex-col ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
+              className={`w-[210mm] min-h-[297mm] text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
               style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
             >
               <style>
@@ -826,7 +843,7 @@ export default function Newsletter() {
                                {data.dvarTorahTitle}
                              </h3>
                              <div 
-                               className="prose prose-slate max-w-none text-slate-900 leading-relaxed text-justify text-base columns-2 gap-6 [&>p]:mb-4"
+                               className="prose prose-slate max-w-none text-slate-900 leading-relaxed text-justify columns-2 gap-6 [&>p]:mb-4"
                                dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
                              />
                            </div>
@@ -886,7 +903,7 @@ export default function Newsletter() {
                               {data.dvarTorahTitle}
                             </h3>
                             <div 
-                              className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify text-lg [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
+                              className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
                               dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
                             />
                           </div>
