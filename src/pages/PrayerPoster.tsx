@@ -678,7 +678,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
             "{nameParts.quoted}"
           </div>
         )}
-        {nameParts.main && (
+        {(nameParts as any).main && (
           <div
             style={{
               fontSize: `${42 * sf}px`,
@@ -688,7 +688,7 @@ function PosterPreview({ data, variant, orientation = "portrait" }: { data: Post
               marginTop: nameParts.quoted ? "2px" : "6px",
             }}
           >
-            {nameParts.main}
+            {(nameParts as any).main}
           </div>
         )}
         {data.subtitle && (

@@ -580,7 +580,7 @@ export default function PublicMemberArea() {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(50); // Light haptic feedback
     }
-    setActiveTab(tab);
+    setActiveTab(tab as any);
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -612,7 +612,7 @@ export default function PublicMemberArea() {
           parsed.email = email;
           parsed.member_name = memberName;
           localStorage.setItem("memberData", JSON.stringify(parsed));
-          setCachedData(parsed);
+          // setCachedData removed - not defined
         } catch(e) {}
       }
 
@@ -644,7 +644,7 @@ export default function PublicMemberArea() {
       });
       
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Unknown error');
+      if (!(data as any)?.success) throw new Error((data as any)?.error || 'Unknown error');
       
       toast.success("פנייתך נשלחה בהצלחה לגבאי");
       setContactSubject("");
@@ -1104,11 +1104,11 @@ export default function PublicMemberArea() {
                   
                   // Record intent
                   setSendingPayment(true);
-                  supabase.rpc("record_bit_payment_intent", {
+                  Promise.resolve(supabase.rpc("record_bit_payment_intent", {
                     _member_id: memberId!,
                     _amount: netOwed,
                     _user_agent: navigator.userAgent.slice(0, 500),
-                  }).finally(() => {
+                  })).finally(() => {
                     setSendingPayment(false);
                     const amount = Math.round(netOwed * 100) / 100;
                     window.location.href = `https://bitpay.co.il/pay?phone=${cleanPhone}&amount=${amount}`;
