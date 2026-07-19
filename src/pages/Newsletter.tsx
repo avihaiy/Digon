@@ -466,7 +466,7 @@ export default function Newsletter() {
     setIsGeneratingDvarTorah(true);
     const toastId = toast.loading("ה-AI כותב דבר תורה...");
     try {
-      const promptText = `כתוב לי דבר תורה קצר ומרתק על פרשת ${data.parasha}. הדבר תורה מיועד לעלון שבת קהילתי. על המאמר לכלול מסר או מוסר השכל קצר ויפה שאפשר לקחת לחיי היום-יום. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
+      const promptText = `כתוב לי דבר תורה קצר ותמציתי מאוד (עד 80 מילים בלבד!) על פרשת ${data.parasha}. הדבר תורה מיועד לעלון שבת קהילתי מודפס וצפוף, ולכן עליו להיות קצר במיוחד. על המאמר לכלול מסר או מוסר השכל קצר ויפה. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
       
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -524,7 +524,7 @@ export default function Newsletter() {
     setIsGeneratingChildrensCorner(true);
     const toastId = toast.loading("ה-AI כותב פינת ילדים...");
     try {
-      const promptText = `כתוב לי סיפור קצר או חידה לילדים על פרשת ${data.parasha} או לכבוד שבת. הטקסט מיועד לפינת הילדים בעלון שבת קהילתי. על הקטע להיות מנוסח בשפה מותאמת ומרתקת לילדים. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
+      const promptText = `כתוב לי סיפור קצרצר או חידה לילדים (עד 50 מילים בלבד!) על פרשת ${data.parasha} או לכבוד שבת. הטקסט מיועד לפינת הילדים בעלון שבת קהילתי מודפס וצפוף. על הקטע להיות מנוסח בשפה מותאמת ומרתקת לילדים, וקצר במיוחד. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו'). בלי עטיפת markdown.`;
       
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -582,7 +582,7 @@ export default function Newsletter() {
     setIsGeneratingHalacha(true);
     const toastId = toast.loading("ה-AI כותב הלכה שבועית...");
     try {
-      const promptText = `כתוב לי הלכה שבועית קצרה ושימושית לפרשת ${data.parasha} או הלכה שקשורה לשבת/מועדים. הטקסט מיועד לפינת ההלכה בעלון שבת קהילתי. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
+      const promptText = `כתוב לי הלכה שבועית קצרה, שימושית ותמציתית מאוד (עד 40 מילים בלבד!) לפרשת ${data.parasha} או הלכה שקשורה לשבת/מועדים. הטקסט מיועד לפינת ההלכה בעלון שבת קהילתי מודפס, אז חובה לשמור על טקסט קצר מאוד. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו'). בלי עטיפת markdown.`;
       
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -1371,7 +1371,7 @@ export default function Newsletter() {
 
               {/* PAGE 1: Main Newsletter */}
               <div 
-                className={`a4-page shadow-2xl w-[210mm] min-h-[297mm] text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
+                className={`a4-page shadow-2xl w-[210mm] h-[297mm] overflow-hidden text-black p-[10mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
                 style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
               >
                 {/* Outer Page Styles by Theme */}
@@ -1678,7 +1678,7 @@ export default function Newsletter() {
               {data.extraPages.map((page) => (
                 <div 
                   key={page.id}
-                  className={`a4-page shadow-2xl w-[210mm] h-[297mm] overflow-hidden text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
+                  className={`a4-page shadow-2xl w-[210mm] h-[297mm] overflow-hidden text-black p-[10mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
                   style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
                 >
                   {/* Theme Backgrounds */}
