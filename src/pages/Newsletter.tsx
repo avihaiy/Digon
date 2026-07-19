@@ -25,6 +25,7 @@ interface NewsletterData {
   hebrewDate: string;
   logo: string;
   theme: 'classic' | 'modern' | 'minimal' | 'newspaper';
+  fontFamily: string;
   dvarTorahTitle: string;
   dvarTorahContent: string;
   halachaTitle: string;
@@ -71,6 +72,7 @@ export default function Newsletter() {
         return {
           logo: '',
           theme: 'classic',
+          fontFamily: 'Assistant',
           dailyStudyTitle: 'לימוד יומי',
           dailyStudyContent: '',
           childrensCornerTitle: 'פינת הילדים',
@@ -87,6 +89,7 @@ export default function Newsletter() {
       hebrewDate: '',
       logo: '',
       theme: 'classic',
+      fontFamily: 'Assistant',
       dvarTorahTitle: 'דבר תורה לפרשת השבוע',
       dvarTorahContent: '<p>הקלידו כאן את דברי התורה...</p>',
       halachaTitle: 'הלכה שבועית',
@@ -438,6 +441,20 @@ export default function Newsletter() {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label>פונט (גופן)</Label>
+                    <Select value={data.fontFamily || 'Assistant'} onValueChange={(val: string) => setData({...data, fontFamily: val})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחר גופן" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Assistant"><span style={{fontFamily: 'Assistant'}}>Assistant (מודרני וקריא)</span></SelectItem>
+                        <SelectItem value="Heebo"><span style={{fontFamily: 'Heebo'}}>Heebo (עבה ומרשים)</span></SelectItem>
+                        <SelectItem value="Frank Ruhl Libre"><span style={{fontFamily: 'Frank Ruhl Libre'}}>Frank Ruhl Libre (תורני קלאסי)</span></SelectItem>
+                        <SelectItem value="David Libre"><span style={{fontFamily: 'David Libre'}}>David Libre (תורני מסורתי)</span></SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label>לוגו בית הכנסת (אופציונלי)</Label>
                     <div className="flex items-center gap-4">
                       <Input 
@@ -672,12 +689,11 @@ export default function Newsletter() {
         {/* Live Preview */}
         <div className="lg:col-span-8 flex justify-center bg-muted/30 rounded-xl p-4 md:p-8 overflow-auto border border-border/50">
           <div className="relative shadow-2xl bg-white mx-auto transform-gpu origin-top transition-transform duration-300" style={{ width: '210mm', minHeight: '297mm', transform: 'scale(0.85)' }}>
-            
             {/* The actual A4 Page to be captured */}
             <div 
               ref={newsletterRef}
               className={`w-[210mm] min-h-[297mm] text-black p-[15mm] relative flex flex-col ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
-              style={{ direction: 'rtl', fontFamily: '"Heebo", "Frank Ruhl Libre", sans-serif' }}
+              style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
             >
               {/* Outer Page Styles by Theme */}
               {data.theme === 'classic' && (

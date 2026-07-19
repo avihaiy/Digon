@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Printer, Save, ArrowRight, Image as ImageIcon, X, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +29,7 @@ interface PosterData {
   rows: PosterRow[];
   footer: string;
   bottomImage?: string | null;
+  fontFamily?: string;
 }
 
 const DEFAULT_SHABBAT: PosterData = {
@@ -412,6 +414,20 @@ function EditorAndPreview({
           <Label>כותרת ראשית</Label>
           <Input value={data.title} onChange={(e) => updateField("title", e.target.value)} />
         </div>
+        <div className="space-y-2">
+          <Label>פונט (גופן)</Label>
+          <Select value={data.fontFamily || 'Frank Ruhl Libre'} onValueChange={(val) => updateField('fontFamily', val)}>
+            <SelectTrigger>
+              <SelectValue placeholder="בחר גופן" />
+            </SelectTrigger>
+            <SelectContent dir="rtl">
+              <SelectItem value="Frank Ruhl Libre"><span style={{fontFamily: 'Frank Ruhl Libre'}}>Frank Ruhl Libre (תורני קלאסי)</span></SelectItem>
+              <SelectItem value="David Libre"><span style={{fontFamily: 'David Libre'}}>David Libre (תורני מסורתי)</span></SelectItem>
+              <SelectItem value="Assistant"><span style={{fontFamily: 'Assistant'}}>Assistant (מודרני וקריא)</span></SelectItem>
+              <SelectItem value="Heebo"><span style={{fontFamily: 'Heebo'}}>Heebo (עבה ומרשים)</span></SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {isShabbat && (
           <div className="space-y-2">
             <Label>פרשה</Label>
@@ -494,7 +510,7 @@ function EditorAndPreview({
 
       <div className="flex justify-center overflow-auto">
         <div id="poster-scale-wrapper" style={{ transform: orientation === "landscape" ? "scale(0.5)" : "scale(0.55)", transformOrigin: "top center", marginBottom: orientation === "landscape" ? "-200px" : "0" }}>
-          <div ref={posterRef}>
+          <div ref={posterRef} style={{ fontFamily: data.fontFamily || 'Frank Ruhl Libre' }}>
             <PosterPreview data={data} variant={isShabbat ? "shabbat" : "weekday"} orientation={orientation} />
           </div>
         </div>
