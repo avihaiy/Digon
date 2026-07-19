@@ -118,6 +118,49 @@ export default function Newsletter() {
   };
 
   const [data, setData] = useState<NewsletterData>(getInitialData);
+  const innerContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const adjustFit = () => {
+      if (!innerContentRef.current || !newsletterRef.current) return;
+      const content = innerContentRef.current;
+      
+      // Reset styles to measure natural height
+      content.style.transform = 'none';
+      content.style.width = '100%';
+      
+      setTimeout(() => {
+        if (!content || !newsletterRef.current) return;
+        
+        let scrollHeight = content.scrollHeight;
+        let clientHeight = content.clientHeight;
+        
+        if (scrollHeight > clientHeight && clientHeight > 0) {
+          // Content overflows. Let's find the optimal scale.
+          let bestScale = 1;
+          let min = 0.4; // minimum scale
+          let max = 1.0;
+          
+          for (let i = 0; i < 15; i++) {
+            const mid = (min + max) / 2;
+            content.style.width = `${100 / mid}%`;
+            if (content.scrollHeight * mid <= clientHeight) {
+              bestScale = mid;
+              min = mid; 
+            } else {
+              max = mid; 
+            }
+          }
+          
+          content.style.width = `${100 / bestScale}%`;
+          content.style.transform = `scale(${bestScale})`;
+          content.style.transformOrigin = 'top right';
+        }
+      }, 100);
+    };
+    
+    adjustFit();
+  }, [data]);
 
   useEffect(() => {
     localStorage.setItem('newsletter-draft', JSON.stringify(data));
@@ -759,7 +802,7 @@ export default function Newsletter() {
             {/* The actual A4 Page to be captured */}
             <div 
               ref={newsletterRef}
-              className={`w-[210mm] min-h-[297mm] text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
+              className={`w-[210mm] h-[297mm] overflow-hidden text-black p-[15mm] relative flex flex-col ${data.fontSize || 'text-base'} ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
               style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
             >
               <style>
@@ -781,7 +824,7 @@ export default function Newsletter() {
                 <div className="absolute inset-4 border-b-2 border-t-2 border-slate-200 pointer-events-none z-0"></div>
               )}
               
-              <div className="relative z-10 flex-1 flex flex-col">
+              <div className="relative z-10 flex-1 flex flex-col" ref={innerContentRef}>
                 {data.theme === 'newspaper' ? (
                   <div className="flex-1 flex flex-col">
                     {/* Newspaper Header */}
