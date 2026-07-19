@@ -1316,15 +1316,10 @@ export default function Newsletter() {
 
                 {/* Footer Ad */}
                 {data.footerAd && (
-                  <div className="mt-4 pt-4 border-t border-slate-200 flex justify-center w-full">
+                  <div className="mt-auto pt-4 flex justify-center w-full">
                     <img src={data.footerAd} alt="Footer Ad" className="max-h-[150px] object-contain w-full" />
                   </div>
                 )}
-
-                {/* Footer */}
-                <div className={`mt-auto pt-6 text-center text-sm font-medium ${data.theme === 'minimal' ? 'text-slate-500 border-t border-slate-200' : 'text-gray-400'}`}>
-                  שבת שלום ומבורך! הופק באמצעות מערכת ניהול בית הכנסת
-                </div>
                 </div>
               </div>
 
