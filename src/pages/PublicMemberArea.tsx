@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Loader2,
   FileText,
@@ -157,11 +158,16 @@ function DailyTehillim() {
         </div>
       </div>
 
-      <div className="bg-[#fdfbf7] dark:bg-zinc-900 rounded-3xl p-6 md:p-8 shadow-sm border border-amber-100/50 dark:border-zinc-800 min-h-[300px]">
+      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200/50 dark:border-zinc-800/50 min-h-[300px]">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-             <Loader2 className="w-8 h-8 animate-spin mb-4 text-indigo-500" />
-             <p>טוען פרקי תהילים...</p>
+          <div className="space-y-4">
+             <Skeleton className="h-8 w-3/4 mx-auto rounded-full bg-slate-200 dark:bg-zinc-800" />
+             <Skeleton className="h-4 w-full rounded-full bg-slate-200 dark:bg-zinc-800" />
+             <Skeleton className="h-4 w-5/6 mx-auto rounded-full bg-slate-200 dark:bg-zinc-800" />
+             <Skeleton className="h-4 w-full rounded-full bg-slate-200 dark:bg-zinc-800" />
+             <Skeleton className="h-4 w-4/6 mx-auto rounded-full bg-slate-200 dark:bg-zinc-800 mt-8" />
+             <Skeleton className="h-4 w-full rounded-full bg-slate-200 dark:bg-zinc-800" />
+             <Skeleton className="h-4 w-5/6 mx-auto rounded-full bg-slate-200 dark:bg-zinc-800" />
           </div>
         ) : error ? (
           <div className="text-center py-12 text-red-500">
@@ -227,6 +233,14 @@ export default function PublicMemberArea() {
   const [now, setNow] = useState(Date.now());
   const [bitPhone, setBitPhone] = useState<string>("");
   const [bitEnabled, setBitEnabled] = useState(false);
+
+  // Theme background based on time of day
+  const bgTheme = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'bg-gradient-to-b from-sky-100/50 to-slate-50 dark:from-sky-900/20 dark:to-zinc-950'; // Morning
+    if (hour >= 12 && hour < 18) return 'bg-gradient-to-b from-amber-50/50 to-slate-50 dark:from-amber-900/10 dark:to-zinc-950'; // Afternoon
+    return 'bg-gradient-to-b from-indigo-50/50 to-slate-50 dark:from-indigo-950/20 dark:to-zinc-950'; // Evening
+  }, []);
   const [payboxPhone, setPayboxPhone] = useState<string>("");
   const [payboxEnabled, setPayboxEnabled] = useState(false);
   const [bankAccountDetails, setBankAccountDetails] = useState<string>("");
@@ -857,9 +871,9 @@ export default function PublicMemberArea() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 pb-20" dir="rtl">
+    <div className={`min-h-screen pb-20 ${bgTheme}`} dir="rtl">
       {/* HEADER */}
-      <header className="sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-slate-200 dark:border-zinc-800 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm">
+      <header className="sticky top-0 z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl border-b border-slate-200/50 dark:border-zinc-800/50 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm transition-colors duration-500">
         <div className="flex flex-col">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">אזור אישי</span>
           <h1 className="text-lg font-bold text-foreground">שלום {memberName}</h1>
@@ -1112,12 +1126,20 @@ export default function PublicMemberArea() {
               </div>
               
               {charges.length === 0 && pending.length === 0 ? (
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 text-center border border-slate-100 dark:border-zinc-800 shadow-sm">
-                  <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Check className="w-8 h-8" />
-                  </div>
-                  <h4 className="font-bold text-lg mb-1">אין חובות פתוחים</h4>
-                  <p className="text-sm text-muted-foreground">תודה רבה!</p>
+                <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-3xl p-10 text-center border border-slate-200/50 dark:border-zinc-800/50 shadow-sm relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/30 to-teal-100/30 dark:from-emerald-900/10 dark:to-teal-900/10" />
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative z-10"
+                  >
+                    <div className="w-20 h-20 bg-gradient-to-tr from-emerald-400 to-teal-400 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-500/30">
+                      <Check className="w-10 h-10 stroke-[2.5px]" />
+                    </div>
+                    <h4 className="font-bold text-xl text-slate-800 dark:text-slate-100 mb-2">אין חובות פתוחים</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">החשבון שלך נקי, תודה רבה!</p>
+                  </motion.div>
                 </div>
               ) : (
                 <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-zinc-800 shadow-sm divide-y divide-slate-100 dark:divide-zinc-800">
@@ -1203,11 +1225,20 @@ export default function PublicMemberArea() {
               <h3 className="font-bold text-lg px-1 mt-6">הקבלות שלי</h3>
               
               {receipts.length === 0 ? (
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 text-center border border-slate-100 dark:border-zinc-800 shadow-sm">
-                  <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-800 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ReceiptIcon className="w-8 h-8" />
-                  </div>
-                  <h4 className="font-bold text-lg mb-1">אין קבלות עדיין</h4>
+                <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-3xl p-10 text-center border border-slate-200/50 dark:border-zinc-800/50 shadow-sm relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 to-indigo-100/30 dark:from-blue-900/10 dark:to-indigo-900/10" />
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative z-10"
+                  >
+                    <div className="w-20 h-20 bg-gradient-to-tr from-blue-400 to-indigo-400 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-500/30">
+                      <ReceiptIcon className="w-10 h-10 stroke-[2.5px]" />
+                    </div>
+                    <h4 className="font-bold text-xl text-slate-800 dark:text-slate-100 mb-2">אין קבלות עדיין</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">הקבלות שלך יופיעו כאן לאחר תשלום.</p>
+                  </motion.div>
                 </div>
               ) : (
                 <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-zinc-800 shadow-sm divide-y divide-slate-100 dark:divide-zinc-800">
@@ -1251,11 +1282,20 @@ export default function PublicMemberArea() {
               </div>
               
               {visibleMessages.length === 0 ? (
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 text-center border border-slate-100 dark:border-zinc-800 shadow-sm">
-                  <div className="w-16 h-16 bg-slate-100 dark:bg-zinc-800 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="w-8 h-8" />
-                  </div>
-                  <h4 className="font-bold text-lg mb-1">אין הודעות חדשות</h4>
+                <div className="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-3xl p-10 text-center border border-slate-200/50 dark:border-zinc-800/50 shadow-sm relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-100/30 to-orange-100/30 dark:from-amber-900/10 dark:to-orange-900/10" />
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative z-10"
+                  >
+                    <div className="w-20 h-20 bg-gradient-to-tr from-amber-400 to-orange-400 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-amber-500/30">
+                      <MessageSquare className="w-10 h-10 stroke-[2.5px]" />
+                    </div>
+                    <h4 className="font-bold text-xl text-slate-800 dark:text-slate-100 mb-2">אין הודעות חדשות</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">תקבל כאן עדכונים חשובים מהגבאי.</p>
+                  </motion.div>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1448,9 +1488,10 @@ export default function PublicMemberArea() {
       </main>
 
       {/* BOTTOM NAVIGATION (Sticky) */}
-      <nav className="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-zinc-800 px-6 py-2 pb-safe z-50">
+      <nav className="fixed bottom-0 left-0 w-full bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl border-t border-slate-200/50 dark:border-zinc-800/50 px-6 py-2 pb-safe z-50">
         <div className="max-w-md mx-auto flex items-center justify-around">
-          <button 
+          <motion.button 
+            whileTap={{ scale: 0.85 }}
             onClick={() => handleTabChange('debts')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'debts' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
@@ -1458,9 +1499,10 @@ export default function PublicMemberArea() {
               <FileText className={`w-6 h-6 ${activeTab === 'debts' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </div>
             <span className="text-[11px] font-semibold">חובות</span>
-          </button>
+          </motion.button>
           
-          <button 
+          <motion.button 
+            whileTap={{ scale: 0.85 }}
             onClick={() => handleTabChange('receipts')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'receipts' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
@@ -1468,9 +1510,10 @@ export default function PublicMemberArea() {
               <ReceiptIcon className={`w-6 h-6 ${activeTab === 'receipts' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </div>
             <span className="text-[11px] font-semibold">קבלות</span>
-          </button>
+          </motion.button>
 
-          <button 
+          <motion.button 
+            whileTap={{ scale: 0.85 }}
             onClick={() => handleTabChange('messages')} 
             className={`flex flex-col items-center justify-center p-2 transition-all relative ${activeTab === 'messages' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
@@ -1481,9 +1524,10 @@ export default function PublicMemberArea() {
               )}
             </div>
             <span className="text-[11px] font-semibold">הודעות</span>
-          </button>
+          </motion.button>
           
-          <button 
+          <motion.button 
+            whileTap={{ scale: 0.85 }}
             onClick={() => handleTabChange('tehillim')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'tehillim' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
@@ -1491,9 +1535,10 @@ export default function PublicMemberArea() {
               <BookOpen className={`w-6 h-6 ${activeTab === 'tehillim' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </div>
             <span className="text-[11px] font-semibold">תהילים יומי</span>
-          </button>
+          </motion.button>
 
-          <button 
+          <motion.button 
+            whileTap={{ scale: 0.85 }}
             onClick={() => handleTabChange('profile')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'profile' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
@@ -1501,9 +1546,10 @@ export default function PublicMemberArea() {
               <User className={`w-6 h-6 ${activeTab === 'profile' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </div>
             <span className="text-[11px] font-semibold">פרופיל</span>
-          </button>
+          </motion.button>
 
-          <button 
+          <motion.button 
+            whileTap={{ scale: 0.85 }}
             onClick={() => handleTabChange('contact')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'contact' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
@@ -1511,7 +1557,7 @@ export default function PublicMemberArea() {
               <MessageSquare className={`w-6 h-6 ${activeTab === 'contact' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </div>
             <span className="text-[11px] font-semibold">פניות</span>
-          </button>
+          </motion.button>
         </div>
       </nav>
       <style>{`
