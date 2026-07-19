@@ -1740,7 +1740,11 @@ export default function Newsletter() {
                         <div key={idx} className="flex-1 rounded-xl overflow-hidden shadow-sm border border-slate-100 flex items-center justify-center">
                           <img src={ad} alt={`Ad ${idx}`} className="w-full h-full object-cover" />
                         </div>
-                      ) : null
+                      ) : (
+                        <div key={idx} className="flex-1 rounded-xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400/80 p-4 text-center">
+                          <span className="font-bold text-xl">מעוניינים לפרסם בעלון? פנו לגבאי בית הכנסת</span>
+                        </div>
+                      )
                     ))}
                   </div>
 
