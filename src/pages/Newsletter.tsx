@@ -144,7 +144,7 @@ export default function Newsletter() {
       try {
         const parsed = JSON.parse(saved);
         // Ensure new fields exist in old saves
-        return {
+        const result: any = {
           logo: '',
           theme: 'classic',
           fontFamily: 'Assistant',

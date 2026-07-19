@@ -20,7 +20,7 @@ import {
 const Dialog = ({ children, ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) => {
   const isMobile = useIsMobile();
   if (isMobile) {
-    return <Drawer shouldScaleBackground={false} dir="rtl" {...props}>{children}</Drawer>;
+    return <Drawer shouldScaleBackground={false} {...props}>{children}</Drawer>;
   }
   return <DialogPrimitive.Root {...props}>{children}</DialogPrimitive.Root>;
 };
