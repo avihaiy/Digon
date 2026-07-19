@@ -26,6 +26,7 @@ interface NewsletterData {
   logo: string;
   theme: 'classic' | 'modern' | 'minimal' | 'newspaper';
   fontFamily: string;
+  contentFontFamily: string;
   dvarTorahTitle: string;
   dvarTorahContent: string;
   halachaTitle: string;
@@ -73,6 +74,7 @@ export default function Newsletter() {
           logo: '',
           theme: 'classic',
           fontFamily: 'Assistant',
+          contentFontFamily: 'Frank Ruhl Libre',
           dailyStudyTitle: 'לימוד יומי',
           dailyStudyContent: '',
           childrensCornerTitle: 'פינת הילדים',
@@ -90,6 +92,7 @@ export default function Newsletter() {
       logo: '',
       theme: 'classic',
       fontFamily: 'Assistant',
+      contentFontFamily: 'Frank Ruhl Libre',
       dvarTorahTitle: 'דבר תורה לפרשת השבוע',
       dvarTorahContent: '<p>הקלידו כאן את דברי התורה...</p>',
       halachaTitle: 'הלכה שבועית',
@@ -441,7 +444,7 @@ export default function Newsletter() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>פונט (גופן)</Label>
+                    <Label>פונט (כותרות ומסגרת)</Label>
                     <Select value={data.fontFamily || 'Assistant'} onValueChange={(val: string) => setData({...data, fontFamily: val})}>
                       <SelectTrigger>
                         <SelectValue placeholder="בחר גופן" />
@@ -451,6 +454,20 @@ export default function Newsletter() {
                         <SelectItem value="Heebo"><span style={{fontFamily: 'Heebo'}}>Heebo (עבה ומרשים)</span></SelectItem>
                         <SelectItem value="Frank Ruhl Libre"><span style={{fontFamily: 'Frank Ruhl Libre'}}>Frank Ruhl Libre (תורני קלאסי)</span></SelectItem>
                         <SelectItem value="David Libre"><span style={{fontFamily: 'David Libre'}}>David Libre (תורני מסורתי)</span></SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>פונט (תוכן העלון)</Label>
+                    <Select value={data.contentFontFamily || 'Frank Ruhl Libre'} onValueChange={(val: string) => setData({...data, contentFontFamily: val})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחר גופן לתוכן" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Frank Ruhl Libre"><span style={{fontFamily: 'Frank Ruhl Libre'}}>Frank Ruhl Libre (תורני קלאסי)</span></SelectItem>
+                        <SelectItem value="David Libre"><span style={{fontFamily: 'David Libre'}}>David Libre (תורני מסורתי)</span></SelectItem>
+                        <SelectItem value="Assistant"><span style={{fontFamily: 'Assistant'}}>Assistant (מודרני וקריא)</span></SelectItem>
+                        <SelectItem value="Heebo"><span style={{fontFamily: 'Heebo'}}>Heebo (עבה ומרשים)</span></SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -695,6 +712,11 @@ export default function Newsletter() {
               className={`w-[210mm] min-h-[297mm] text-black p-[15mm] relative flex flex-col ${data.theme === 'modern' ? 'bg-slate-50' : 'bg-white'}`}
               style={{ direction: 'rtl', fontFamily: data.fontFamily || 'Assistant' }}
             >
+              <style>
+                {`
+                  .prose, .content-font { font-family: '${data.contentFontFamily || 'Frank Ruhl Libre'}' !important; }
+                `}
+              </style>
               {/* Outer Page Styles by Theme */}
               {data.theme === 'classic' && (
                 <>
@@ -774,7 +796,7 @@ export default function Newsletter() {
                                {data.dvarTorahTitle}
                              </h3>
                              <div 
-                               className="prose prose-slate max-w-none text-slate-900 leading-relaxed text-justify font-serif text-base columns-2 gap-6 [&>p]:mb-4"
+                               className="prose prose-slate max-w-none text-slate-900 leading-relaxed text-justify text-base columns-2 gap-6 [&>p]:mb-4"
                                dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
                              />
                            </div>
@@ -802,7 +824,7 @@ export default function Newsletter() {
                         {data.parnasHashavua && (
                           <div className="border-2 border-slate-900 p-3 mt-auto bg-slate-100">
                             <div className="text-slate-900 font-bold text-center border-b border-slate-400 pb-1 mb-2">פרנס השבוע</div>
-                            <div className="text-slate-800 text-center text-sm whitespace-pre-wrap font-serif">{data.parnasHashavua}</div>
+                            <div className="text-slate-800 text-center text-sm whitespace-pre-wrap content-font">{data.parnasHashavua}</div>
                           </div>
                         )}
                       </div>
@@ -834,7 +856,7 @@ export default function Newsletter() {
                               {data.dvarTorahTitle}
                             </h3>
                             <div 
-                              className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify font-serif text-lg [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
+                              className="prose prose-slate max-w-none text-gray-800 leading-relaxed text-justify text-lg [&>p]:mb-4 [&>ul]:list-disc [&>ul]:mr-5 [&>ol]:list-decimal [&>ol]:mr-5 [&>strong]:font-bold"
                               dangerouslySetInnerHTML={{ __html: data.dvarTorahContent }}
                             />
                           </div>
