@@ -107,8 +107,22 @@ export default function Newsletter() {
               brachaVeHatzlacha: ''
             }
           },
+          akkoZmanim: {
+            candleLighting: '',
+            havdalah: '',
+            rabbeinuTam: ''
+          },
           ...parsed,
         };
+        // Ensure akkoZmanim exists even if parsed from old storage
+        if (!parsed.akkoZmanim) {
+          result.akkoZmanim = {
+            candleLighting: '',
+            havdalah: '',
+            rabbeinuTam: ''
+          };
+        }
+        return result;
       } catch (e) {
         console.error("Failed to parse saved newsletter");
       }
@@ -292,6 +306,9 @@ export default function Newsletter() {
       const havdalahTime = shabbatTimes.havdalah ? shabbatTimes.havdalah.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : "";
 
       setData(prev => {
+        let needsUpdate = false;
+        const updates: Partial<NewsletterData> = {};
+        
         if (!prev.hebrewDate || !prev.parasha || prev.hebrewDate !== heDateStr) {
           const newTimes = [...(prev.times || [])];
           
@@ -304,14 +321,21 @@ export default function Newsletter() {
             if (havdalahIdx >= 0) newTimes[havdalahIdx].time = havdalahTime;
           }
 
-          return {
-            ...prev,
-            parasha: parashaName || prev.parasha,
-            hebrewDate: heDateStr,
-            times: newTimes
-          };
+          needsUpdate = true;
+          updates.parasha = parashaName || prev.parasha;
+          updates.hebrewDate = heDateStr;
+          updates.times = newTimes;
         }
-        return prev;
+
+        return needsUpdate ? { ...prev, ...updates } : prev;
+      });
+      
+      // We must fetch outside of the setData updater function to avoid side effects during render
+      setData(current => {
+        if (!current.akkoZmanim?.candleLighting && !isFetchingAkkoZmanim) {
+           setTimeout(() => fetchAkkoZmanim(), 0);
+        }
+        return current;
       });
     } catch (err) {
       console.error("Error calculating heb dates", err);
@@ -1262,18 +1286,18 @@ export default function Newsletter() {
                           </div>
                         )}
 
-                        {data.akkoZmanim?.candleLighting && (
+                        {data.akkoZmanim && (
                           <div className="border-2 border-slate-900 mt-auto bg-slate-100 flex flex-col items-center">
                             <div className="bg-slate-900 text-white font-bold text-center py-1 w-full text-lg">זמני שבת עכו</div>
                             <div className="p-3 w-full space-y-2">
                               <div className="flex justify-between font-bold border-b border-slate-300 pb-1">
-                                <span>כניסת שבת</span><span className="text-slate-900">{data.akkoZmanim.candleLighting}</span>
+                                <span>כניסת שבת</span><span className="text-slate-900">{data.akkoZmanim.candleLighting || '---'}</span>
                               </div>
                               <div className="flex justify-between font-bold border-b border-slate-300 pb-1">
-                                <span>צאת שבת</span><span className="text-slate-900">{data.akkoZmanim.havdalah}</span>
+                                <span>צאת שבת</span><span className="text-slate-900">{data.akkoZmanim.havdalah || '---'}</span>
                               </div>
                               <div className="flex justify-between font-bold text-slate-700">
-                                <span>רבנו תם</span><span>{data.akkoZmanim.rabbeinuTam}</span>
+                                <span>רבנו תם</span><span>{data.akkoZmanim.rabbeinuTam || '---'}</span>
                               </div>
                             </div>
                           </div>
@@ -1389,7 +1413,7 @@ export default function Newsletter() {
                         )}
 
                         {/* Akko Zmanim */}
-                        {data.akkoZmanim?.candleLighting && (
+                        {data.akkoZmanim && (
                           <div className={`${data.theme === 'modern' ? 'bg-white rounded-2xl border-0 shadow-md overflow-hidden mt-6' : data.theme === 'minimal' ? 'bg-transparent border-t-2 border-slate-800 pt-2 mt-8' : 'bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm mt-6'}`}>
                             <div className={`${data.theme === 'modern' ? 'bg-indigo-600 text-white' : data.theme === 'minimal' ? 'bg-transparent text-slate-800 text-center text-2xl border-b-2 border-slate-800 pb-2 mb-2' : 'bg-slate-800 text-white border-b border-slate-200'} font-bold text-center py-3 text-lg`}>
                               זמני שבת - עכו והסביבה
@@ -1398,15 +1422,15 @@ export default function Newsletter() {
                               <div className="grid grid-cols-1 gap-3">
                                 <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
                                   <span className="text-slate-600 font-bold">כניסת שבת</span>
-                                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.candleLighting}</span>
+                                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.candleLighting || '---'}</span>
                                 </div>
                                 <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
                                   <span className="text-slate-600 font-bold">צאת שבת</span>
-                                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.havdalah}</span>
+                                  <span className="text-xl font-black text-indigo-700">{data.akkoZmanim.havdalah || '---'}</span>
                                 </div>
                                 <div className="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
                                   <span className="text-slate-500">צאת שבת (רבנו תם)</span>
-                                  <span className="text-lg font-bold text-slate-700">{data.akkoZmanim.rabbeinuTam}</span>
+                                  <span className="text-lg font-bold text-slate-700">{data.akkoZmanim.rabbeinuTam || '---'}</span>
                                 </div>
                               </div>
                             </div>
