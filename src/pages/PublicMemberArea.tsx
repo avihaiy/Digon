@@ -37,6 +37,7 @@ import { formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-ut
 import { HDate } from "@hebcal/core";
 import { toast } from "sonner";
 import html2pdf from 'html2pdf.js';
+import confetti from "canvas-confetti";
 
 // תוקף סשן: 24 שעות
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -128,6 +129,22 @@ function DailyTehillim() {
     fetchTehillim();
   }, [dayOfMonth]);
 
+  const handleFinish = () => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([50, 100, 50]); // Success vibration pattern
+    }
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#f59e0b', '#3b82f6', '#10b981', '#6366f1']
+    });
+    toast.success("אשריך! זכות קריאת התהילים תעמוד לך ולכל ישראל!", {
+      duration: 5000,
+      icon: "🎉"
+    });
+  };
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl p-6 shadow-sm border border-indigo-500 relative overflow-hidden">
@@ -176,6 +193,18 @@ function DailyTehillim() {
           </div>
         )}
       </div>
+
+      {!loading && !error && chapters.length > 0 && (
+        <div className="flex justify-center mt-6 mb-4">
+          <Button 
+            onClick={handleFinish}
+            className="rounded-full px-8 py-6 h-auto bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-lg shadow-lg shadow-emerald-500/30 transition-transform active:scale-95"
+          >
+            <Check className="w-6 h-6 ml-2 stroke-[3px]" />
+            סיימתי לקרוא תהילים
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -498,6 +527,15 @@ export default function PublicMemberArea() {
     setPending([]);
     setReceipts([]);
     toast.success("התנתקת מהאזור האישי");
+  };
+
+
+
+  const handleTabChange = (tab: string) => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(50); // Light haptic feedback
+    }
+    setActiveTab(tab);
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -1409,7 +1447,7 @@ export default function PublicMemberArea() {
       <nav className="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-zinc-800 px-6 py-2 pb-safe z-50">
         <div className="max-w-md mx-auto flex items-center justify-around">
           <button 
-            onClick={() => setActiveTab('debts')} 
+            onClick={() => handleTabChange('debts')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'debts' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
             <div className={`${activeTab === 'debts' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
@@ -1419,7 +1457,7 @@ export default function PublicMemberArea() {
           </button>
           
           <button 
-            onClick={() => setActiveTab('receipts')} 
+            onClick={() => handleTabChange('receipts')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'receipts' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
             <div className={`${activeTab === 'receipts' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
@@ -1429,7 +1467,7 @@ export default function PublicMemberArea() {
           </button>
 
           <button 
-            onClick={() => setActiveTab('messages')} 
+            onClick={() => handleTabChange('messages')} 
             className={`flex flex-col items-center justify-center p-2 transition-all relative ${activeTab === 'messages' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
             <div className={`${activeTab === 'messages' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'} relative`}>
@@ -1442,7 +1480,7 @@ export default function PublicMemberArea() {
           </button>
           
           <button 
-            onClick={() => setActiveTab('tehillim')} 
+            onClick={() => handleTabChange('tehillim')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'tehillim' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
             <div className={`${activeTab === 'tehillim' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
@@ -1452,7 +1490,7 @@ export default function PublicMemberArea() {
           </button>
 
           <button 
-            onClick={() => setActiveTab('profile')} 
+            onClick={() => handleTabChange('profile')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'profile' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
             <div className={`${activeTab === 'profile' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
@@ -1462,7 +1500,7 @@ export default function PublicMemberArea() {
           </button>
 
           <button 
-            onClick={() => setActiveTab('contact')} 
+            onClick={() => handleTabChange('contact')} 
             className={`flex flex-col items-center justify-center p-2 transition-all ${activeTab === 'contact' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
             <div className={`${activeTab === 'contact' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
