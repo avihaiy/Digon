@@ -722,7 +722,7 @@ export default function Newsletter() {
                       <h3 className="font-bold border-b pb-2">פרסומות (עד 3)</h3>
                       {[0, 1, 2].map((idx) => (
                         <div key={idx} className="space-y-2 bg-slate-50 p-3 rounded border">
-                          <Label>פרסומת {idx + 1}</Label>
+                          <Label>פרסומת {idx + 1} <span className="text-slate-400 font-normal text-xs mr-2">(גודל מומלץ: 1000x400 פיקסלים)</span></Label>
                           <div className="flex items-center gap-4">
                             <Input 
                               type="file" 
