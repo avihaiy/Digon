@@ -224,22 +224,54 @@ export default function Newsletter() {
       toast.error("אנא בחר פרשה קודם");
       return;
     }
+    
+    // Attempt to get API key from environment, or ask user
+    let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      const savedKey = localStorage.getItem('gemini_api_key');
+      if (savedKey) {
+        apiKey = savedKey;
+      } else {
+        apiKey = prompt("אנא הזן מפתח API של Google Gemini:");
+        if (apiKey) {
+          localStorage.setItem('gemini_api_key', apiKey);
+        } else {
+          return;
+        }
+      }
+    }
+
     setIsGeneratingDvarTorah(true);
     const toastId = toast.loading("ה-AI כותב דבר תורה...");
     try {
-      const { data: result, error } = await supabase.functions.invoke('generate-dvar-torah', {
-        body: { parasha: data.parasha }
+      const promptText = `כתוב לי דבר תורה קצר ומרתק על פרשת ${data.parasha}. הדבר תורה מיועד לעלון שבת קהילתי. על המאמר לכלול מסר או מוסר השכל קצר ויפה שאפשר לקחת לחיי היום-יום. החזר את התשובה בפורמט HTML נקי (רק תגיות p, strong, ul וכו') כדי שאוכל לשתול אותו ישירות. בלי עטיפת markdown של html.`;
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
       });
-      if (error) throw error;
-      if (result?.html) {
-        setData({ ...data, dvarTorahContent: result.html });
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error.message || "שגיאה מה-API");
+      }
+
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleanHtml = text.replace(/```html/g, '').replace(/```/g, '').trim();
+
+      if (cleanHtml) {
+        setData({ ...data, dvarTorahContent: cleanHtml });
         toast.success("דבר תורה נכתב בהצלחה!", { id: toastId });
       } else {
-        throw new Error(result?.error || "Unknown error");
+        throw new Error("לא התקבל טקסט");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("שגיאה ביצירת דבר התורה (וודא שהגדרת מפתח API ב-Supabase)", { id: toastId });
+      toast.error(`שגיאה ביצירת דבר התורה: ${err.message}`, { id: toastId });
     } finally {
       setIsGeneratingDvarTorah(false);
     }
