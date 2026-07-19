@@ -163,6 +163,7 @@ export default function Newsletter() {
         { label: "מנחה ערב שבת", time: "19:10" },
         { label: "שחרית", time: "08:00" },
         { label: "מנחה של שבת", time: "18:30" },
+        { label: 'ערבית מוצ"ש', time: "19:40" },
         { label: "צאת שבת", time: "20:00" },
       ],
       extraPages: [],
