@@ -37,11 +37,10 @@ import {
   Clock
 } from "lucide-react";
 import { formatCurrency, formatShortDate, PAYMENT_METHOD, getHebrewDate } from "@/lib/hebrew-utils";
-import confetti from "canvas-confetti";
 import { HDate } from "@hebcal/core";
 import { toast } from "sonner";
 import html2pdf from 'html2pdf.js';
-import confetti from "canvas-confetti";
+
 import CountUp from 'react-countup';
 
 // תוקף סשן: 24 שעות
@@ -290,14 +289,22 @@ export default function PublicMemberArea() {
   // Confetti effect for Zero Debt
   useEffect(() => {
     if (!loading && totalCharges > 0 && netOwed === 0) {
-      setTimeout(() => {
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#10b981', '#3b82f6', '#fbbf24', '#f43f5e', '#8b5cf6'],
-          disableForReducedMotion: true
-        });
+      setTimeout(async () => {
+        try {
+          const confettiModule = await import("canvas-confetti");
+          const fireConfetti = confettiModule.default || confettiModule;
+          if (typeof fireConfetti === 'function') {
+            fireConfetti({
+              particleCount: 150,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ['#10b981', '#3b82f6', '#fbbf24', '#f43f5e', '#8b5cf6'],
+              disableForReducedMotion: true
+            });
+          }
+        } catch (err) {
+          console.error("Confetti failed to load", err);
+        }
       }, 500);
     }
   }, [loading, netOwed, totalCharges]);
