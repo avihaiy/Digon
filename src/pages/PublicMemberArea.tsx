@@ -168,6 +168,14 @@ function SiddurDashboard() {
             <span className="text-lg font-bold">תהילים</span>
             <span className="text-xs opacity-70">קריאה יומית</span>
           </Button>
+          <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 dark:hover:bg-purple-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('tikkun_klali')}>
+            <span className="text-lg font-bold">תיקון הכללי</span>
+            <span className="text-xs opacity-70">עשרה מזמורים</span>
+          </Button>
+          <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200 dark:hover:bg-teal-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('perek_shirah')}>
+            <span className="text-lg font-bold">פרק שירה</span>
+            <span className="text-xs opacity-70">שירת הבריאה</span>
+          </Button>
         </div>
       </div>
       

@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Check, X, AlertCircle, Info, ChevronRight } from 'lucide-react';
+import { BookOpen, Check, X, AlertCircle, Info, ChevronRight, Sun, Moon } from 'lucide-react';
 import { getSiddurAlerts, SiddurAlert } from '@/lib/siddur-utils';
 import { HDate } from '@hebcal/core';
 import { toast } from 'sonner';
+import { useTheme } from 'next-themes';
 
-export type PrayerType = 'shacharit' | 'mincha' | 'arvit' | 'tehillim' | 'birkat_hashachar' | 'birkat_hamazon';
+export type PrayerType = 'shacharit' | 'mincha' | 'arvit' | 'tehillim' | 'birkat_hashachar' | 'birkat_hamazon' | 'tikkun_klali' | 'perek_shirah';
 
 interface SmartSiddurProps {
   prayer: PrayerType;
@@ -26,6 +27,7 @@ const TEHILLIM_MONTHLY: Record<number, string> = {
 };
 
 export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [textBlocks, setTextBlocks] = useState<string[]>([]);
@@ -45,6 +47,10 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
 
   const increaseFont = () => setFontSize(prev => Math.min(prev + 0.2, 3.0));
   const decreaseFont = () => setFontSize(prev => Math.max(prev - 0.2, 1.0));
+  
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   const getPrayerTitle = () => {
     switch (prayer) {
@@ -54,6 +60,8 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
       case 'tehillim': return 'תהילים יומי';
       case 'birkat_hashachar': return 'ברכות השחר';
       case 'birkat_hamazon': return 'ברכת המזון';
+      case 'tikkun_klali': return 'תיקון הכללי';
+      case 'perek_shirah': return 'פרק שירה';
     }
   };
 
@@ -70,6 +78,10 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
           endpoints = [`Psalms.${range}`];
         } else if (prayer === 'birkat_hamazon') {
           endpoints = ['Siddur_Edot_HaMizrach,_Post_Meal_Blessing'];
+        } else if (prayer === 'tikkun_klali') {
+          endpoints = ['Tikkun_HaKlali'];
+        } else if (prayer === 'perek_shirah') {
+          endpoints = ['Perek_Shirah'];
         } else {
           const base = 'Siddur_Edot_HaMizrach,_Weekday_';
           if (prayer === 'birkat_hashachar') {
@@ -88,13 +100,11 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
         }
 
         const responses = await Promise.all(
-          endpoints.map(ep => fetch(`https://www.sefaria.org/api/texts/${ep}?context=0&he=1`))
+          endpoints.map(async ep => {
+            const res = await fetch(`https://www.sefaria.org/api/texts/${ep}?context=0&he=1`);
+            return res.json();
+          })
         );
-        
-        const dataArr = await Promise.all(responses.map(res => {
-          if (!res.ok) throw new Error("Failed to fetch prayer data");
-          return res.json();
-        }));
         
         const flattenDeep = (arr: any[]): string[] => {
           return arr.reduce((acc, val) => 
@@ -102,8 +112,8 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
         };
 
         let verses: string[] = [];
-        for (const data of dataArr) {
-          if (data.he) {
+        for (const data of responses) {
+          if (data && data.he) {
             if (Array.isArray(data.he)) {
               verses = verses.concat(flattenDeep(data.he));
             } else if (typeof data.he === 'string') {
@@ -129,7 +139,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-zinc-950 flex flex-col h-[100dvh] animate-in slide-in-from-bottom-full duration-300">
+    <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-black flex flex-col h-[100dvh] animate-in slide-in-from-bottom-full duration-300">
       {/* Header */}
       <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between shrink-0 z-10 shadow-sm">
         <div className="min-w-[70px] flex justify-start">
@@ -142,6 +152,9 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
           <p className="text-xs text-slate-500 dark:text-slate-400">{dateString}</p>
         </div>
         <div className="min-w-[70px] flex items-center justify-end gap-1" dir="ltr">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8 rounded-full text-slate-600 dark:text-slate-400 mr-1" title="החלף עיצוב יום/לילה">
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
           <Button variant="ghost" size="sm" onClick={increaseFont} className="text-lg font-bold h-8 w-8 p-0 text-slate-600 dark:text-slate-400" title="הגדל טקסט">
             A+
           </Button>
