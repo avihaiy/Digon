@@ -60,6 +60,7 @@ import CountUp from 'react-countup';
 import { SmartSiddur, PrayerType } from "@/components/siddur/SmartSiddur";
 import { ZmanimWidget } from "@/components/siddur/ZmanimWidget";
 import { DailyLearningTracker } from "@/components/siddur/DailyLearningTracker";
+import { DailyQuoteWidget } from "@/components/siddur/DailyQuoteWidget";
 
 // תוקף סשן: 24 שעות
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -154,7 +155,9 @@ function SiddurDashboard() {
 
   return (
     <>
-      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-slate-200/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <DailyQuoteWidget />
+      
+      <div className="mt-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-slate-200/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-bottom-4 duration-300">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
             <BookOpen className="w-5 h-5" />
