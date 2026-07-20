@@ -505,6 +505,38 @@ export function isFriday(date: Date = new Date()): boolean {
 // Hebrew days of week
 const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
+export function getUpcomingJewishEvent(date: Date = new Date()): string | null {
+  const hdate = new HDate(date);
+  
+  // Find upcoming Shabbat
+  const daysUntilSaturday = (6 - date.getDay()) % 7;
+  const upcomingShabbat = new HDate(new Date(date.getTime() + daysUntilSaturday * 24 * 60 * 60 * 1000));
+  
+  // Get holidays for the current day
+  const todayHolidays = HebrewCalendar.getHolidaysOnDate(hdate, true) || [];
+  const majorHoliday = todayHolidays.find(h => h.mask & flags.CHAG);
+  
+  if (majorHoliday) {
+    return majorHoliday.render('he');
+  }
+
+  // Get Parasha
+  const sedra = new Sedra(upcomingShabbat.getFullYear(), true);
+  if (sedra.isParsha(upcomingShabbat)) {
+    const parsha = sedra.get(upcomingShabbat);
+    if (parsha && parsha.length > 0) {
+      // In Hebcal, parsha is returned as English keys (e.g. 'Bereshit').
+      // We can use HDate's getSedra('h') directly.
+      const parshaHe = upcomingShabbat.getSedra('h');
+      if (parshaHe && parshaHe.length > 0) {
+        return `פרשת ${parshaHe.join('-')}`;
+      }
+    }
+  }
+  
+  return null;
+}
+
 // Convert Gregorian date to Hebrew date using hebcal
 export function getHebrewDate(date: Date): string {
   const hdate = new HDate(date);

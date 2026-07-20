@@ -907,25 +907,54 @@ export default function PublicMemberArea() {
         </div>
       </div>
     );
-  }
+  } // Add the missing brace here
+
+  const getTimeOfDayGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'בוקר טוב';
+    if (hour >= 12 && hour < 17) return 'צהריים טובים';
+    if (hour >= 17 && hour < 21) return 'ערב טוב';
+    return 'לילה טוב';
+  };
+
+  const timeGreeting = getTimeOfDayGreeting();
+  const firstName = memberName ? memberName.split(' ')[0] : '';
+  const initial = firstName ? firstName.charAt(0) : 'ב';
+  
+  // Use Hebrew Calendar to get upcoming Parsha or Event
+  const { getUpcomingJewishEvent } = require('@/lib/hebrew-utils');
+  const jewishEvent = getUpcomingJewishEvent(new Date());
 
   return (
     <div className={`min-h-screen pb-20 ${currentContainerClasses} transition-colors duration-1000`} dir="rtl">
       <AuroraBackground />
       
-      {/* HEADER */}
-      <header className={`sticky top-0 z-10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-2xl border-b border-slate-200/50 dark:border-zinc-800/50 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm transition-colors duration-500`}>
-        <div className="flex flex-col gap-0.5">
-          <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 flex-wrap mb-0.5">
-            <span className="flex items-center gap-0.5"><Calendar className="w-3 h-3" /> {hebDateString}</span>
-            <span className="opacity-50">•</span>
-            <span>{gregorianDateString}</span>
-            <span className="opacity-50">•</span>
-            <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {timeString}</span>
+      {/* PREMIUM HEADER */}
+      <header className={`sticky top-0 z-10 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl border-b border-slate-200/50 dark:border-zinc-800/50 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm transition-colors duration-500`}>
+        <div className="flex items-center gap-3">
+          {/* AVATAR */}
+          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-sky-400 text-white flex items-center justify-center text-xl font-black shadow-md shrink-0 border-2 border-white/50 dark:border-zinc-800/50">
+            {initial}
           </div>
-          <h1 className="text-lg font-bold text-foreground leading-tight">
-            שלום {memberName ? memberName.split(' ')[0] : ''} 👋
-          </h1>
+          
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-lg font-bold text-foreground leading-tight">
+              {timeGreeting}, <span className="bg-gradient-to-l from-indigo-600 to-sky-500 dark:from-indigo-400 dark:to-sky-300 bg-clip-text text-transparent">{firstName}</span>
+            </h1>
+            
+            <div className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5 flex-wrap">
+              <span className="flex items-center gap-0.5"><Calendar className="w-3 h-3" /> {hebDateString}</span>
+              <span className="opacity-40">•</span>
+              <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> {timeString}</span>
+            </div>
+            
+            {jewishEvent && (
+              <div className="mt-1 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-md text-[10px] font-bold self-start border border-indigo-100 dark:border-indigo-800/50">
+                <span>✨</span>
+                {jewishEvent}
+              </div>
+            )}
+          </div>
         </div>
         <Button
           variant="ghost"
