@@ -142,16 +142,25 @@ function DailyTehillim() {
     fetchTehillim();
   }, [dayOfMonth]);
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate([50, 100, 50]); // Success vibration pattern
     }
-    confetti({
-      particleCount: 150,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#f59e0b', '#3b82f6', '#10b981', '#6366f1']
-    });
+    try {
+      const confettiModule = await import("canvas-confetti");
+      const fireConfetti = confettiModule.default || confettiModule;
+      if (typeof fireConfetti === 'function') {
+        fireConfetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#f59e0b', '#3b82f6', '#10b981', '#6366f1'],
+          disableForReducedMotion: true
+        });
+      }
+    } catch (err) {
+      console.error("Confetti failed to load", err);
+    }
     toast.success("אשריך! זכות קריאת התהילים תעמוד לך ולכל ישראל!", {
       duration: 5000,
       icon: "🎉"
