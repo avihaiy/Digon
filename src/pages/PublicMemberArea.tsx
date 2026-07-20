@@ -144,6 +144,10 @@ function SiddurDashboard() {
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">סידור ותהילים</h2>
         </div>
         <div className="grid grid-cols-2 gap-4">
+          <Button variant="outline" className="col-span-2 h-20 flex flex-col items-center justify-center gap-1 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 dark:hover:bg-sky-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('birkat_hashachar')}>
+            <span className="text-lg font-bold">ברכות השחר</span>
+            <span className="text-xs opacity-70">עדות המזרח</span>
+          </Button>
           <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('shacharit')}>
             <span className="text-lg font-bold">שחרית</span>
             <span className="text-xs opacity-70">עדות המזרח</span>
@@ -156,7 +160,7 @@ function SiddurDashboard() {
             <span className="text-lg font-bold">ערבית</span>
             <span className="text-xs opacity-70">עדות המזרח</span>
           </Button>
-          <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:hover:bg-emerald-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('tehillim')}>
+          <Button variant="outline" className="col-span-2 h-20 flex flex-col items-center justify-center gap-1 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:hover:bg-emerald-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('tehillim')}>
             <span className="text-lg font-bold">תהילים</span>
             <span className="text-xs opacity-70">קריאה יומית</span>
           </Button>

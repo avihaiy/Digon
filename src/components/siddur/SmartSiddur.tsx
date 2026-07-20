@@ -7,7 +7,7 @@ import { getSiddurAlerts, SiddurAlert } from '@/lib/siddur-utils';
 import { HDate } from '@hebcal/core';
 import { toast } from 'sonner';
 
-export type PrayerType = 'shacharit' | 'mincha' | 'arvit' | 'tehillim';
+export type PrayerType = 'shacharit' | 'mincha' | 'arvit' | 'tehillim' | 'birkat_hashachar';
 
 interface SmartSiddurProps {
   prayer: PrayerType;
@@ -40,6 +40,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
       case 'mincha': return 'תפילת מנחה';
       case 'arvit': return 'תפילת ערבית';
       case 'tehillim': return 'תהילים יומי';
+      case 'birkat_hashachar': return 'ברכות השחר';
     }
   };
 
@@ -57,14 +58,12 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
         } else {
           // Edot HaMizrach Siddur paths on Sefaria
           const base = 'Siddur_Edot_HaMizrach,_Weekday_';
-          if (prayer === 'shacharit') {
+          if (prayer === 'birkat_hashachar') {
             const prepNodes = ["Modeh Ani", "Morning Blessings", "Torah Blessings"];
+            endpoints = prepNodes.map(n => `Siddur_Edot_HaMizrach,_Preparatory_Prayers,_${n.replace(/ /g, '_')}`);
+          } else if (prayer === 'shacharit') {
             const shacharitNodes = ["Petichat Eliyahu","Order of Talit","Order of Tefillin","Hanna's Prayer","Morning Prayer","Incense Offering","Hodu","Pesukei D'Zimra","The Shema","Amida","Vidui","Torah Reading","Ashrei","Uva LeSion","Beit Yaakov","Song of the Day","Kaveh","Alenu"];
-            
-            endpoints = [
-              ...prepNodes.map(n => `Siddur_Edot_HaMizrach,_Preparatory_Prayers,_${n.replace(/ /g, '_')}`),
-              ...shacharitNodes.map(n => `${base}Shacharit,_${n.replace(/ /g, '_')}`)
-            ];
+            endpoints = shacharitNodes.map(n => `${base}Shacharit,_${n.replace(/ /g, '_')}`);
           } else if (prayer === 'mincha') {
             const nodes = ["Offerings","Amida","Vidui","Alenu"];
             endpoints = nodes.map(n => `${base}Mincha,_${n.replace(/ /g, '_')}`);
