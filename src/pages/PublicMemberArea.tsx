@@ -40,8 +40,8 @@ import { formatCurrency, formatShortDate, PAYMENT_METHOD, getHebrewDate } from "
 import { HDate } from "@hebcal/core";
 import { toast } from "sonner";
 import html2pdf from 'html2pdf.js';
-
 import CountUp from 'react-countup';
+import { SmartSiddur, PrayerType } from "@/components/siddur/SmartSiddur";
 
 // תוקף סשן: 24 שעות
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -106,45 +106,12 @@ const AuroraBackground = () => (
   </div>
 );
 
-function DailyTehillim() {
-  const [chapters, setChapters] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+function SiddurDashboard() {
+  const [activePrayer, setActivePrayer] = useState<PrayerType | null>(null);
   
-  const hdate = useMemo(() => new HDate(), []);
-  const dayOfMonth = hdate.getDate(); // 1 to 30
-  const dateString = hdate.renderGematriya(true); // e.g. "י״ד באלול תשפ״ג"
-
-  useEffect(() => {
-    const fetchTehillim = async () => {
-      try {
-        setLoading(true);
-        const range = TEHILLIM_MONTHLY[dayOfMonth === 30 ? 30 : dayOfMonth] || "1-9";
-        const res = await fetch(`https://www.sefaria.org/api/texts/Psalms.${range}?context=0&he=1`);
-        const data = await res.json();
-        
-        let verses: string[] = [];
-        if (Array.isArray(data.he)) {
-           if (typeof data.he[0] === 'string') {
-             verses = data.he as string[];
-           } else {
-             verses = (data.he as string[][]).flat();
-           }
-        }
-        setChapters(verses.filter(v => typeof v === 'string' && v.trim().length > 0));
-      } catch (err) {
-        console.error("Error fetching Tehillim:", err);
-        setError("שגיאה בטעינת תהילים. נסה שוב מאוחר יותר.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTehillim();
-  }, [dayOfMonth]);
-
   const handleFinish = async () => {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate([50, 100, 50]); // Success vibration pattern
+      navigator.vibrate([50, 100, 50]);
     }
     try {
       const confettiModule = await import("canvas-confetti");
@@ -161,78 +128,49 @@ function DailyTehillim() {
     } catch (err) {
       console.error("Confetti failed to load", err);
     }
-    toast.success("אשריך! זכות קריאת התהילים תעמוד לך ולכל ישראל!", {
+    toast.success("אשריך! זכות התפילה תעמוד לך ולכל ישראל!", {
       duration: 5000,
       icon: "🎉"
     });
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-3xl p-6 shadow-sm border border-indigo-500 relative overflow-hidden">
-        <div className="absolute top-0 right-0 opacity-10">
-          <BookOpen className="w-32 h-32 -mt-4 -mr-4" />
+    <>
+      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-slate-200/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">סידור ותהילים</h2>
         </div>
-        <div className="relative z-10 text-center">
-          <h2 className="text-2xl font-bold mb-1">תהילים יומי</h2>
-          <p className="text-blue-100">{dateString}</p>
-        </div>
-      </div>
-
-      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200/50 dark:border-zinc-800/50 min-h-[300px]">
-        {loading ? (
-          <div className="space-y-4">
-             <Skeleton className="h-8 w-3/4 mx-auto rounded-full bg-slate-200 dark:bg-zinc-800" />
-             <Skeleton className="h-4 w-full rounded-full bg-slate-200 dark:bg-zinc-800" />
-             <Skeleton className="h-4 w-5/6 mx-auto rounded-full bg-slate-200 dark:bg-zinc-800" />
-             <Skeleton className="h-4 w-full rounded-full bg-slate-200 dark:bg-zinc-800" />
-             <Skeleton className="h-4 w-4/6 mx-auto rounded-full bg-slate-200 dark:bg-zinc-800 mt-8" />
-             <Skeleton className="h-4 w-full rounded-full bg-slate-200 dark:bg-zinc-800" />
-             <Skeleton className="h-4 w-5/6 mx-auto rounded-full bg-slate-200 dark:bg-zinc-800" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-12 text-red-500">
-            {error}
-          </div>
-        ) : (
-          <div 
-            className="text-center md:text-right text-slate-800 dark:text-slate-200" 
-            style={{ 
-              fontFamily: '"Frank Ruhl Libre", "David Libre", "Times New Roman", serif',
-              fontSize: '1.45rem', 
-              lineHeight: '2.4',
-            }}
-          >
-             {chapters.map((verse, idx) => {
-               // מרווח קל אחרי פסוק שמסתיים בסימון פרשה פתוחה/סתומה
-               const isBreak = verse.includes('{פ}') || verse.includes('{ס}');
-               return (
-                 <span key={idx}>
-                   <span dangerouslySetInnerHTML={{ __html: verse }} />
-                   {isBreak ? (
-                     <div className="h-6 w-full" /> // שבירת שורה משמעותית
-                   ) : (
-                     <span className="mx-1.5 text-slate-300 dark:text-slate-700">♦</span> // מפריד יפה בין פסוקים במקום רק רווח
-                   )}
-                 </span>
-               );
-             })}
-          </div>
-        )}
-      </div>
-
-      {!loading && !error && chapters.length > 0 && (
-        <div className="flex justify-center mt-6 mb-4">
-          <Button 
-            onClick={handleFinish}
-            className="rounded-full px-8 py-6 h-auto bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-lg shadow-lg shadow-emerald-500/30 transition-transform active:scale-95"
-          >
-            <Check className="w-6 h-6 ml-2 stroke-[3px]" />
-            סיימתי לקרוא תהילים
+        <div className="grid grid-cols-2 gap-4">
+          <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('shacharit')}>
+            <span className="text-lg font-bold">שחרית</span>
+            <span className="text-xs opacity-70">עדות המזרח</span>
+          </Button>
+          <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 dark:hover:bg-amber-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('mincha')}>
+            <span className="text-lg font-bold">מנחה</span>
+            <span className="text-xs opacity-70">עדות המזרח</span>
+          </Button>
+          <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 dark:hover:bg-indigo-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('arvit')}>
+            <span className="text-lg font-bold">ערבית</span>
+            <span className="text-xs opacity-70">עדות המזרח</span>
+          </Button>
+          <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:hover:bg-emerald-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('tehillim')}>
+            <span className="text-lg font-bold">תהילים</span>
+            <span className="text-xs opacity-70">קריאה יומית</span>
           </Button>
         </div>
+      </div>
+      
+      {activePrayer && (
+        <SmartSiddur 
+          prayer={activePrayer} 
+          onClose={() => setActivePrayer(null)} 
+          onFinish={handleFinish} 
+        />
       )}
-    </div>
+    </>
   );
 }
 
@@ -1550,7 +1488,7 @@ export default function PublicMemberArea() {
           )}
 
           {activeTab === 'tehillim' && (
-            <DailyTehillim />
+            <SiddurDashboard />
           )}
 
           {activeTab === 'contact' && (
@@ -1693,7 +1631,7 @@ export default function PublicMemberArea() {
             <div className={`${activeTab === 'tehillim' ? 'bg-indigo-50 dark:bg-indigo-900/30 p-1.5 rounded-xl mb-1' : 'p-1.5 mb-1'}`}>
               <BookOpen className={`w-6 h-6 ${activeTab === 'tehillim' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </div>
-            <span className="text-[11px] font-semibold">תהילים יומי</span>
+            <span className="text-[11px] font-semibold">סידור ותהילים</span>
           </motion.button>
 
           <motion.button 
