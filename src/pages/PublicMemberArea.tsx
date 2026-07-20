@@ -957,11 +957,17 @@ export default function PublicMemberArea() {
             <DropdownMenuContent align="start" className="w-48 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/50 dark:border-zinc-800/50 rounded-xl shadow-xl z-50">
               <DropdownMenuLabel className="font-bold text-slate-800 dark:text-slate-200">החשבון שלי</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800" />
-              <DropdownMenuItem className="cursor-pointer flex items-center gap-2 focus:bg-indigo-50 dark:focus:bg-indigo-900/30 rounded-lg m-1">
+              <DropdownMenuItem 
+                className="cursor-pointer flex items-center gap-2 focus:bg-indigo-50 dark:focus:bg-indigo-900/30 rounded-lg m-1"
+                onClick={() => handleTabChange('profile')}
+              >
                 <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                 <span className="font-medium">הפרופיל שלי</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer flex items-center gap-2 focus:bg-indigo-50 dark:focus:bg-indigo-900/30 rounded-lg m-1">
+              <DropdownMenuItem 
+                className="cursor-pointer flex items-center gap-2 focus:bg-indigo-50 dark:focus:bg-indigo-900/30 rounded-lg m-1"
+                onClick={() => handleTabChange('profile')}
+              >
                 <Settings className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                 <span className="font-medium">הגדרות מתקדמות</span>
               </DropdownMenuItem>
