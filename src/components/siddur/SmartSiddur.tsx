@@ -213,6 +213,11 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
                     formattedBlock = formattedBlock.replace(/<small>(.*?)<\/small>/, '<div class="bg-amber-100/80 dark:bg-amber-900/40 p-4 rounded-xl border-2 border-amber-400 dark:border-amber-600 my-4 shadow-sm text-amber-900 dark:text-amber-100 text-[1.2em] font-medium block !leading-relaxed">$1</div>');
                   }
 
+                  const hasFastDay = alerts.some(a => a.id === 'fast-day');
+                  if (hasFastDay && stripped.includes('עננו אבינו עננו')) {
+                    formattedBlock = formattedBlock.replace(/<small>(.*?)<\/small>/, '<div class="bg-red-100/80 dark:bg-red-900/40 p-4 rounded-xl border-2 border-red-400 dark:border-red-600 my-4 shadow-sm text-red-900 dark:text-red-100 text-[1.2em] font-medium block !leading-relaxed">$1</div>');
+                  }
+
                   const hasChanukah = alerts.some(a => a.id === 'al-hanissim-chanukah');
                   if (hasChanukah && stripped.includes('בימי מתתיהו')) {
                     formattedBlock = formattedBlock.replace(/<small>(.*?)<\/small>/, '<div class="bg-blue-100/80 dark:bg-blue-900/40 p-4 rounded-xl border-2 border-blue-400 dark:border-blue-600 my-4 shadow-sm text-blue-900 dark:text-blue-100 text-[1.2em] font-medium block !leading-relaxed">$1</div>');
