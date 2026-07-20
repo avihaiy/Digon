@@ -520,18 +520,16 @@ export function getUpcomingJewishEvent(date: Date = new Date()): string | null {
     return majorHoliday.render('he');
   }
 
-  // Get Parasha
-  const sedra = new Sedra(upcomingShabbat.getFullYear(), true);
-  if (sedra.isParsha(upcomingShabbat)) {
-    const parsha = sedra.get(upcomingShabbat);
-    if (parsha && parsha.length > 0) {
-      // In Hebcal, parsha is returned as English keys (e.g. 'Bereshit').
-      // We can use HDate's getSedra('h') directly.
-      const parshaHe = upcomingShabbat.getSedra('h');
-      if (parshaHe && parshaHe.length > 0) {
-        return `פרשת ${parshaHe.join('-')}`;
-      }
-    }
+  // Get Parasha using calendar
+  const events = HebrewCalendar.calendar({
+    start: upcomingShabbat.greg(),
+    end: upcomingShabbat.greg(),
+    sedrot: true,
+  });
+  
+  const parshaEvent = events.find(e => e.getFlags() & flags.PARSHA);
+  if (parshaEvent) {
+    return parshaEvent.render('he');
   }
   
   return null;
