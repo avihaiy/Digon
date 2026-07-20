@@ -114,7 +114,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
   return (
     <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-zinc-950 flex flex-col h-[100dvh] animate-in slide-in-from-bottom-full duration-300">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between shrink-0 z-10 shadow-sm">
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
           <ChevronRight className="w-6 h-6" />
         </Button>
@@ -217,7 +217,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
 
       {/* Footer / Finish Button */}
       {!loading && !error && textBlocks.length > 0 && (
-        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-t border-slate-200 dark:border-zinc-800 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sticky bottom-0 z-20">
+        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-t border-slate-200 dark:border-zinc-800 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 z-20">
           <Button 
             onClick={handleFinish}
             className="w-full rounded-full py-6 h-auto bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-lg shadow-lg shadow-emerald-500/30 transition-transform active:scale-[0.98]"
