@@ -181,15 +181,19 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
                 }
                 .siddur-text-container big {
                   font-size: 1.4em;
-                  display: block;
-                  text-align: center;
-                  margin-top: 1.5rem;
-                  margin-bottom: 0.5rem;
                   color: #1e40af;
                   font-weight: 800;
                 }
                 .dark .siddur-text-container big {
                   color: #93c5fd;
+                }
+                /* Only make <big> a centered block if it's the main header of the div (not inside <b> like in Shema) */
+                .siddur-text-container > div > big,
+                .siddur-text-container > div > b > big:only-child {
+                  display: block;
+                  text-align: center;
+                  margin-top: 1.5rem;
+                  margin-bottom: 0.5rem;
                 }
               `}</style>
               <div 
