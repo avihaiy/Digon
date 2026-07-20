@@ -164,31 +164,53 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
               {error}
             </div>
           ) : (
-            <div 
-              className="text-center text-slate-800 dark:text-slate-200 break-words" 
-              style={{ 
-                fontFamily: '"Frank Ruhl Libre", "David Libre", "Times New Roman", serif',
-                fontSize: '1.4rem', 
-                lineHeight: '2.2',
-              }}
-            >
-              {textBlocks.map((block, idx) => {
-                const isBreak = block.includes('{פ}') || block.includes('{ס}');
-                // Small trick to make Hebrew names of God bold if present in Sefaria text
-                const formattedBlock = block.replace(/(יהוה|אדני)/g, '<b>$1</b>');
-                
-                return (
-                  <span key={idx}>
-                    <span dangerouslySetInnerHTML={{ __html: formattedBlock }} />
-                    {isBreak ? (
-                      <div className="h-6 w-full" />
-                    ) : (
-                      <span className="mx-1.5 text-slate-300 dark:text-slate-700">♦</span>
-                    )}
-                  </span>
-                );
-              })}
-            </div>
+            <>
+              <style>{`
+                .siddur-text-container small {
+                  font-size: 0.7em;
+                  color: #64748b;
+                  background: #f1f5f9;
+                  padding: 2px 6px;
+                  border-radius: 6px;
+                  font-family: system-ui, -apple-system, sans-serif;
+                  margin: 0 4px;
+                }
+                .dark .siddur-text-container small {
+                  color: #94a3b8;
+                  background: #1e293b;
+                }
+                .siddur-text-container big {
+                  font-size: 1.4em;
+                  display: block;
+                  text-align: center;
+                  margin-top: 1.5rem;
+                  margin-bottom: 0.5rem;
+                  color: #1e40af;
+                  font-weight: 800;
+                }
+                .dark .siddur-text-container big {
+                  color: #93c5fd;
+                }
+              `}</style>
+              <div 
+                className="siddur-text-container text-right text-slate-800 dark:text-slate-200 break-words space-y-4 md:space-y-5" 
+                style={{ 
+                  fontFamily: '"Frank Ruhl Libre", "David Libre", "Times New Roman", serif',
+                  fontSize: '1.4rem', 
+                  lineHeight: '1.8',
+                }}
+              >
+                {textBlocks.map((block, idx) => {
+                  // Bold the names of God
+                  const formattedBlock = block.replace(/(יהוה|אדני)/g, '<b>$1</b>');
+                  return (
+                    <div key={idx} className="leading-relaxed">
+                      <span dangerouslySetInnerHTML={{ __html: formattedBlock }} />
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>
