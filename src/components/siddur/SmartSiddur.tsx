@@ -58,7 +58,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
           // Edot HaMizrach Siddur paths on Sefaria
           const base = 'Siddur_Edot_HaMizrach,_Weekday_';
           if (prayer === 'shacharit') endpoint = `${base}Shacharit`;
-          if (prayer === 'mincha') endpoint = `${base}Minchah`;
+          if (prayer === 'mincha') endpoint = `${base}Mincha`;
           if (prayer === 'arvit') endpoint = `${base}Arvit`;
         }
 
