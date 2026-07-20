@@ -202,7 +202,37 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
               >
                 {textBlocks.map((block, idx) => {
                   // Bold the names of God
-                  const formattedBlock = block.replace(/(יהוה|אדני)/g, '<b>$1</b>');
+                  let formattedBlock = block.replace(/(יהוה|אדני)/g, '<b>$1</b>');
+                  
+                  // Smart highlighting
+                  const stripNikud = (str: string) => str.replace(/[\u0591-\u05C7]/g, '');
+                  const stripped = stripNikud(formattedBlock);
+                  
+                  const hasYaaleh = alerts.some(a => a.id === 'yaaleh-veyavo');
+                  if (hasYaaleh && stripped.includes('יעלה ויבא')) {
+                    formattedBlock = formattedBlock.replace(/<small>(.*?)<\/small>/, '<div class="bg-amber-100/80 dark:bg-amber-900/40 p-4 rounded-xl border-2 border-amber-400 dark:border-amber-600 my-4 shadow-sm text-amber-900 dark:text-amber-100 text-[1.2em] font-medium block !leading-relaxed">$1</div>');
+                  }
+
+                  const hasChanukah = alerts.some(a => a.id === 'al-hanissim-chanukah');
+                  if (hasChanukah && stripped.includes('בימי מתתיהו')) {
+                    formattedBlock = formattedBlock.replace(/<small>(.*?)<\/small>/, '<div class="bg-blue-100/80 dark:bg-blue-900/40 p-4 rounded-xl border-2 border-blue-400 dark:border-blue-600 my-4 shadow-sm text-blue-900 dark:text-blue-100 text-[1.2em] font-medium block !leading-relaxed">$1</div>');
+                  }
+
+                  const hasPurim = alerts.some(a => a.id === 'al-hanissim-purim');
+                  if (hasPurim && stripped.includes('בימי מרדכי ואסתר')) {
+                    formattedBlock = formattedBlock.replace(/<small>(.*?)<\/small>/, '<div class="bg-purple-100/80 dark:bg-purple-900/40 p-4 rounded-xl border-2 border-purple-400 dark:border-purple-600 my-4 shadow-sm text-purple-900 dark:text-purple-100 text-[1.2em] font-medium block !leading-relaxed">$1</div>');
+                  }
+
+                  const hasRain = alerts.some(a => a.title.includes('משיב הרוח'));
+                  if (hasRain && stripped.includes('משיב הרוח ומוריד הגשם')) {
+                    formattedBlock = formattedBlock.replace(/<small>(.*?מַשִּׁיב הָרֽוּחַ.*?)<\/small>/, '<span class="bg-blue-100 dark:bg-blue-900/60 px-1.5 py-0.5 rounded-md border border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300 font-bold">$1</span>');
+                  }
+
+                  const hasDew = alerts.some(a => a.title.includes('מוריד הטל'));
+                  if (hasDew && stripped.includes('מוריד הטל')) {
+                    formattedBlock = formattedBlock.replace(/<small>(.*?מוֹרִיד הַטָּל.*?)<\/small>/, '<span class="bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded-md border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 font-bold">$1</span>');
+                  }
+
                   return (
                     <div key={idx} className="leading-relaxed">
                       <span dangerouslySetInnerHTML={{ __html: formattedBlock }} />
