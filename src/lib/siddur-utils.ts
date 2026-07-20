@@ -1,4 +1,5 @@
 import { HDate, HebrewCalendar, flags, Event } from '@hebcal/core';
+import { OMER_DAYS } from './omer-data';
 
 export interface SiddurAlert {
   id: string;
@@ -85,3 +86,23 @@ export function getSiddurAlerts(date: Date = new Date()): SiddurAlert[] {
 
   return alerts;
 }
+
+export function getOmerDayString(date: Date = new Date()): string | null {
+  const hdate = new HDate(date);
+  
+  // Sefirat HaOmer is recited at night. If it's after sunset (roughly 18:00), we count for the next Hebrew day.
+  if (date.getHours() >= 18) {
+    hdate.setDate(hdate.getDate() + 1);
+  }
+  
+  const year = hdate.getFullYear();
+  // 15 Nisan of the current Jewish year (Nisan is month 1 in Hebcal core)
+  const nisan15 = new HDate(15, 1, year);
+  const omerDay = hdate.abs() - nisan15.abs();
+  
+  if (omerDay >= 1 && omerDay <= 49) {
+    return OMER_DAYS[omerDay - 1];
+  }
+  return null;
+}
+

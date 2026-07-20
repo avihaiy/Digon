@@ -122,7 +122,24 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
           }
         }
         
-        setTextBlocks(verses.filter(v => typeof v === 'string' && v.trim().length > 0));
+        let filteredVerses = verses.filter(v => typeof v === 'string' && v.trim().length > 0);
+        
+        // Inject Sefirat HaOmer in Arvit before Alenu
+        if (prayer === 'arvit') {
+          const { getOmerDayString } = await import('@/lib/siddur-utils');
+          const omerString = getOmerDayString();
+          if (omerString) {
+            const alenuIndex = filteredVerses.findIndex(v => v.includes('עָלֵינוּ לְשַׁבֵּחַ'));
+            const omerBlock = `<b>ספירת העומר</b><br><div class="text-center font-bold text-xl my-4 p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200">${omerString}</div>`;
+            if (alenuIndex !== -1) {
+              filteredVerses.splice(alenuIndex, 0, omerBlock);
+            } else {
+              filteredVerses.push(omerBlock);
+            }
+          }
+        }
+
+        setTextBlocks(filteredVerses);
       } catch (err) {
         console.error("Error fetching prayer:", err);
         setError("שגיאה בטעינת התפילה. ייתכן שאין חיבור לרשת או שהשרת עמוס.");
