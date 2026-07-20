@@ -7,7 +7,7 @@ import { getSiddurAlerts, SiddurAlert } from '@/lib/siddur-utils';
 import { HDate } from '@hebcal/core';
 import { toast } from 'sonner';
 
-export type PrayerType = 'shacharit' | 'mincha' | 'arvit' | 'tehillim' | 'birkat_hashachar';
+export type PrayerType = 'shacharit' | 'mincha' | 'arvit' | 'tehillim' | 'birkat_hashachar' | 'birkat_hamazon';
 
 interface SmartSiddurProps {
   prayer: PrayerType;
@@ -41,6 +41,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
       case 'arvit': return 'תפילת ערבית';
       case 'tehillim': return 'תהילים יומי';
       case 'birkat_hashachar': return 'ברכות השחר';
+      case 'birkat_hamazon': return 'ברכת המזון';
     }
   };
 
@@ -55,6 +56,8 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
           const dayOfMonth = hdate.getDate();
           const range = TEHILLIM_MONTHLY[dayOfMonth === 30 ? 30 : dayOfMonth] || "1-9";
           endpoints = [`Psalms.${range}`];
+        } else if (prayer === 'birkat_hamazon') {
+          endpoints = ['Siddur_Edot_HaMizrach,_Post_Meal_Blessing'];
         } else {
           // Edot HaMizrach Siddur paths on Sefaria
           const base = 'Siddur_Edot_HaMizrach,_Weekday_';

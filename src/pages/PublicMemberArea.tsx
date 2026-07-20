@@ -160,6 +160,10 @@ function SiddurDashboard() {
             <span className="text-lg font-bold">ערבית</span>
             <span className="text-xs opacity-70">עדות המזרח</span>
           </Button>
+          <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:hover:bg-orange-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('birkat_hamazon')}>
+            <span className="text-lg font-bold">ברכת המזון</span>
+            <span className="text-xs opacity-70">עדות המזרח</span>
+          </Button>
           <Button variant="outline" className="col-span-2 h-20 flex flex-col items-center justify-center gap-1 rounded-2xl border-slate-200 dark:border-zinc-800 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 dark:hover:bg-emerald-900/20 transition-all shadow-sm" onClick={() => setActivePrayer('tehillim')}>
             <span className="text-lg font-bold">תהילים</span>
             <span className="text-xs opacity-70">קריאה יומית</span>
