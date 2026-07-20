@@ -65,6 +65,38 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
     }
   };
 
+  // Wake Lock: Keep screen awake while praying
+  useEffect(() => {
+    let wakeLock: any = null;
+    
+    const requestWakeLock = async () => {
+      try {
+        if (navigator && 'wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (err) {
+        // Silently ignore wake lock errors (e.g., low battery mode)
+      }
+    };
+
+    requestWakeLock();
+
+    const handleVisibilityChange = () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock !== null) {
+        wakeLock.release().catch(() => {});
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const fetchPrayer = async () => {
       try {
