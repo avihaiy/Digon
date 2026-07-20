@@ -207,7 +207,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
                   
                   // Smart highlighting
                   const stripNikud = (str: string) => str.replace(/[\u0591-\u05C7]/g, '');
-                  const stripped = stripNikud(formattedBlock);
+                  const stripped = stripNikud(formattedBlock.replace(/<[^>]*>?/gm, ''));
                   
                   const hasYaaleh = alerts.some(a => a.id === 'yaaleh-veyavo');
                   if (hasYaaleh && stripped.includes('יעלה ויבא')) {
