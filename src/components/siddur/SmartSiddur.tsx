@@ -171,17 +171,11 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
             <>
               <style>{`
                 .siddur-text-container small {
-                  font-size: 0.7em;
+                  font-size: 0.8em;
                   color: #64748b;
-                  background: #f1f5f9;
-                  padding: 2px 6px;
-                  border-radius: 6px;
-                  font-family: system-ui, -apple-system, sans-serif;
-                  margin: 0 4px;
                 }
                 .dark .siddur-text-container small {
                   color: #94a3b8;
-                  background: #1e293b;
                 }
                 .siddur-text-container big {
                   font-size: 1.4em;
@@ -191,7 +185,6 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
                 .dark .siddur-text-container big {
                   color: #93c5fd;
                 }
-                /* Only make <big> a centered block if it's the main header of the div (not inside <b> like in Shema) */
                 .siddur-text-container > div > big,
                 .siddur-text-container > div > b > big:only-child {
                   display: block;
@@ -244,6 +237,32 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
                   const hasDew = alerts.some(a => a.title.includes('מוריד הטל'));
                   if (hasDew && stripped.includes('מוריד הטל')) {
                     formattedBlock = formattedBlock.replace(/<small>(.*?מוֹרִיד הַטָּל.*?)<\/small>/, '<span class="bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded-md border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 font-bold">$1</span>');
+                  }
+
+                  // Kaddish Separation
+                  const isKaddish = stripped.includes('יתגדל ויתקדש');
+                  if (isKaddish) {
+                    return (
+                      <div key={idx} className="bg-slate-50 dark:bg-zinc-900/50 p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 my-8 shadow-sm">
+                        <div className="text-slate-400 dark:text-slate-500 text-sm font-bold mb-2 text-center">קדיש</div>
+                        <div className="leading-relaxed text-center">
+                          <span dangerouslySetInnerHTML={{ __html: formattedBlock }} />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Modim Derabanan Separation
+                  const isModimDerabanan = stripped.includes('מודים אנחנו לך') && formattedBlock.includes('<small>');
+                  if (isModimDerabanan) {
+                    return (
+                      <div key={idx} className="bg-slate-100 dark:bg-zinc-800/80 p-5 rounded-2xl border border-slate-200 dark:border-zinc-700 my-6 shadow-sm">
+                        <div className="text-slate-500 dark:text-slate-400 text-sm font-bold mb-2">מודים דרבנן:</div>
+                        <div className="leading-relaxed text-[0.9em]">
+                          <span dangerouslySetInnerHTML={{ __html: formattedBlock }} />
+                        </div>
+                      </div>
+                    );
                   }
 
                   return (
