@@ -155,9 +155,7 @@ function SiddurDashboard() {
 
   return (
     <>
-      <DailyQuoteWidget />
-      
-      <div className="mt-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-slate-200/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl p-6 shadow-sm border border-slate-200/50 dark:border-zinc-800/50 animate-in fade-in slide-in-from-bottom-4 duration-300">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
             <BookOpen className="w-5 h-5" />
@@ -1020,6 +1018,8 @@ export default function PublicMemberArea() {
       </header>
 
       <main className="p-4 max-w-lg mx-auto space-y-6">
+        <DailyQuoteWidget />
+        
         {/* INSTALL PROMPT */}
         {showInstallPrompt && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex items-start gap-3 shadow-sm relative overflow-hidden">

@@ -17,7 +17,7 @@ export function DailyQuoteWidget() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="mx-5 mt-4 overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/40 dark:to-purple-950/40 border border-indigo-100/50 dark:border-indigo-800/30 shadow-sm relative backdrop-blur-md"
+      className="w-full overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/40 dark:to-purple-950/40 border border-indigo-100/50 dark:border-indigo-800/30 shadow-sm relative backdrop-blur-md"
       dir="rtl"
     >
       <div className="absolute -right-4 -top-4 opacity-[0.03] dark:opacity-10 pointer-events-none">
