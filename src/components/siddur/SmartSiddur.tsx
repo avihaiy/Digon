@@ -29,10 +29,22 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [textBlocks, setTextBlocks] = useState<string[]>([]);
+  const [fontSize, setFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem('siddur_fontSize');
+    return saved ? parseFloat(saved) : 1.4;
+  });
+  
   const alerts = useMemo(() => getSiddurAlerts(new Date()), []);
   
+  useEffect(() => {
+    localStorage.setItem('siddur_fontSize', fontSize.toString());
+  }, [fontSize]);
+
   const hdate = useMemo(() => new HDate(), []);
   const dateString = hdate.renderGematriya(true);
+
+  const increaseFont = () => setFontSize(prev => Math.min(prev + 0.2, 3.0));
+  const decreaseFont = () => setFontSize(prev => Math.max(prev - 0.2, 1.0));
 
   const getPrayerTitle = () => {
     switch (prayer) {
@@ -59,7 +71,6 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
         } else if (prayer === 'birkat_hamazon') {
           endpoints = ['Siddur_Edot_HaMizrach,_Post_Meal_Blessing'];
         } else {
-          // Edot HaMizrach Siddur paths on Sefaria
           const base = 'Siddur_Edot_HaMizrach,_Weekday_';
           if (prayer === 'birkat_hashachar') {
             const prepNodes = ["Modeh Ani", "Morning Blessings", "Torah Blessings"];
@@ -85,7 +96,6 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
           return res.json();
         }));
         
-        // Flatten the Sefaria text array
         const flattenDeep = (arr: any[]): string[] => {
           return arr.reduce((acc, val) => 
             Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
@@ -122,14 +132,23 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
     <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-zinc-950 flex flex-col h-[100dvh] animate-in slide-in-from-bottom-full duration-300">
       {/* Header */}
       <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between shrink-0 z-10 shadow-sm">
-        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
-          <ChevronRight className="w-6 h-6" />
-        </Button>
-        <div className="text-center">
+        <div className="min-w-[70px] flex justify-start">
+          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
+            <ChevronRight className="w-6 h-6" />
+          </Button>
+        </div>
+        <div className="text-center flex-1">
           <h2 className="font-bold text-lg text-slate-800 dark:text-slate-100">{getPrayerTitle()}</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">{dateString}</p>
         </div>
-        <div className="w-10" /> {/* Spacer for centering */}
+        <div className="min-w-[70px] flex items-center justify-end gap-1" dir="ltr">
+          <Button variant="ghost" size="sm" onClick={increaseFont} className="text-lg font-bold h-8 w-8 p-0 text-slate-600 dark:text-slate-400" title="הגדל טקסט">
+            A+
+          </Button>
+          <Button variant="ghost" size="sm" onClick={decreaseFont} className="text-sm font-bold h-8 w-8 p-0 text-slate-600 dark:text-slate-400" title="הקטן טקסט">
+            A-
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6" dir="rtl">
@@ -200,7 +219,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
                 className="siddur-text-container text-right text-slate-800 dark:text-slate-200 break-words space-y-4 md:space-y-5" 
                 style={{ 
                   fontFamily: '"Frank Ruhl Libre", "David Libre", "Times New Roman", serif',
-                  fontSize: '1.4rem', 
+                  fontSize: `${fontSize}rem`, 
                   lineHeight: '1.8',
                 }}
               >
