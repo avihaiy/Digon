@@ -32,10 +32,26 @@ import {
   Save,
   Send,
   Building2,
-  BookOpen,
+  HeartHandshake, 
+  BookOpen, 
+  ArrowRight,
+  Sparkles,
+  CreditCard,
+  History,
   Calendar,
-  Clock
+  Clock,
+  Settings,
+  User,
+  LogOut
 } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { getHebrewDate, getDailyZmanim, formatTime, getUpcomingJewishEvent, formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { HDate } from "@hebcal/core";
 import { toast } from "sonner";
@@ -931,10 +947,38 @@ export default function PublicMemberArea() {
       {/* PREMIUM HEADER */}
       <header className={`sticky top-0 z-10 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl border-b border-slate-200/50 dark:border-zinc-800/50 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4 flex items-center justify-between shadow-sm transition-colors duration-500`}>
         <div className="flex items-center gap-3">
-          {/* AVATAR */}
-          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-sky-400 text-white flex items-center justify-center text-xl font-black shadow-md shrink-0 border-2 border-white/50 dark:border-zinc-800/50">
-            {initial}
-          </div>
+          {/* AVATAR WITH DROPDOWN */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="outline-none">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-sky-400 text-white flex items-center justify-center text-xl font-black shadow-md shrink-0 border-2 border-white/50 dark:border-zinc-800/50 cursor-pointer hover:scale-105 transition-transform hover:shadow-lg active:scale-95">
+                {initial}
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-slate-200/50 dark:border-zinc-800/50 rounded-xl shadow-xl z-50">
+              <DropdownMenuLabel className="font-bold text-slate-800 dark:text-slate-200">החשבון שלי</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800" />
+              <DropdownMenuItem className="cursor-pointer flex items-center gap-2 focus:bg-indigo-50 dark:focus:bg-indigo-900/30 rounded-lg m-1">
+                <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <span className="font-medium">הפרופיל שלי</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer flex items-center gap-2 focus:bg-indigo-50 dark:focus:bg-indigo-900/30 rounded-lg m-1">
+                <Settings className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                <span className="font-medium">הגדרות מתקדמות</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-slate-100 dark:bg-zinc-800" />
+              <DropdownMenuItem 
+                className="cursor-pointer flex items-center gap-2 text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 rounded-lg m-1 focus:text-red-700 dark:focus:text-red-300"
+                onClick={() => {
+                  localStorage.removeItem('memberId');
+                  localStorage.removeItem('memberName');
+                  window.location.reload();
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="font-bold">התנתקות</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           <div className="flex flex-col gap-0.5">
             <h1 className="text-lg font-bold text-foreground leading-tight">
