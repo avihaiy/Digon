@@ -64,12 +64,12 @@ export function ZmanimWidget() {
         <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">זמני היום</h3>
         <span className="text-xs text-slate-400">אופק ירושלים</span>
       </div>
-      <div className="flex overflow-x-auto gap-1 p-3 snap-x pb-4" dir="rtl" style={{ scrollbarWidth: 'none' }}>
+      <div className="grid grid-cols-3 gap-2 p-3" dir="rtl">
         {zmanimList.map((z, idx) => (
-          <div key={idx} className="snap-start shrink-0 flex flex-col items-center justify-center p-3 w-[100px] bg-slate-50 dark:bg-zinc-950 rounded-xl border border-slate-100 dark:border-zinc-800">
+          <div key={idx} className="flex flex-col items-center justify-center p-2 bg-slate-50 dark:bg-zinc-950 rounded-xl border border-slate-100 dark:border-zinc-800">
             <div className="mb-1">{z.icon}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{z.label}</div>
-            <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{formatTime(z.time)}</div>
+            <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-0.5">{z.label}</div>
+            <div className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">{formatTime(z.time)}</div>
           </div>
         ))}
       </div>
