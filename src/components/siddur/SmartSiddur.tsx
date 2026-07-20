@@ -49,22 +49,34 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
         setLoading(true);
         setError('');
         
-        let endpoint = '';
+        let endpoints: string[] = [];
         if (prayer === 'tehillim') {
           const dayOfMonth = hdate.getDate();
           const range = TEHILLIM_MONTHLY[dayOfMonth === 30 ? 30 : dayOfMonth] || "1-9";
-          endpoint = `Psalms.${range}`;
+          endpoints = [`Psalms.${range}`];
         } else {
           // Edot HaMizrach Siddur paths on Sefaria
           const base = 'Siddur_Edot_HaMizrach,_Weekday_';
-          if (prayer === 'shacharit') endpoint = `${base}Shacharit`;
-          if (prayer === 'mincha') endpoint = `${base}Mincha`;
-          if (prayer === 'arvit') endpoint = `${base}Arvit`;
+          if (prayer === 'shacharit') {
+            const nodes = ["Petichat Eliyahu","Order of Talit","Order of Tefillin","Hanna's Prayer","Morning Prayer","Incense Offering","Hodu","Pesukei D'Zimra","The Shema","Amida","Vidui","Torah Reading","Ashrei","Uva LeSion","Beit Yaakov","Song of the Day","Kaveh","Alenu"];
+            endpoints = nodes.map(n => `${base}Shacharit,_${n.replace(/ /g, '_')}`);
+          } else if (prayer === 'mincha') {
+            const nodes = ["Offerings","Amida","Vidui","Alenu"];
+            endpoints = nodes.map(n => `${base}Mincha,_${n.replace(/ /g, '_')}`);
+          } else if (prayer === 'arvit') {
+            const nodes = ["Barchu","The Shema","Amidah","Alenu"];
+            endpoints = nodes.map(n => `${base}Arvit,_${n.replace(/ /g, '_')}`);
+          }
         }
 
-        const res = await fetch(`https://www.sefaria.org/api/texts/${endpoint}?context=0&he=1`);
-        if (!res.ok) throw new Error("Failed to fetch prayer data");
-        const data = await res.json();
+        const responses = await Promise.all(
+          endpoints.map(ep => fetch(`https://www.sefaria.org/api/texts/${ep}?context=0&he=1`))
+        );
+        
+        const dataArr = await Promise.all(responses.map(res => {
+          if (!res.ok) throw new Error("Failed to fetch prayer data");
+          return res.json();
+        }));
         
         // Flatten the Sefaria text array
         const flattenDeep = (arr: any[]): string[] => {
@@ -73,11 +85,13 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
         };
 
         let verses: string[] = [];
-        if (data.he) {
-          if (Array.isArray(data.he)) {
-            verses = flattenDeep(data.he);
-          } else if (typeof data.he === 'string') {
-            verses = [data.he];
+        for (const data of dataArr) {
+          if (data.he) {
+            if (Array.isArray(data.he)) {
+              verses = verses.concat(flattenDeep(data.he));
+            } else if (typeof data.he === 'string') {
+              verses.push(data.he);
+            }
           }
         }
         
