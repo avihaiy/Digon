@@ -918,7 +918,7 @@ export default function PublicMemberArea() {
   };
 
   const timeGreeting = getTimeOfDayGreeting();
-  const firstName = memberName ? memberName.split(' ')[0] : '';
+  const firstName = memberName || '';
   const initial = firstName ? firstName.charAt(0) : 'ב';
   
   // Use Hebrew Calendar to get upcoming Parsha or Event
