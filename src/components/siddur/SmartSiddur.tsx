@@ -125,7 +125,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
         <div className="w-10" /> {/* Spacer for centering */}
       </div>
 
-      <ScrollArea className="flex-1 px-4 py-6" dir="rtl">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6" dir="rtl">
         <div className="max-w-2xl mx-auto space-y-6 pb-24">
           
           {/* Smart Alerts */}
@@ -165,7 +165,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
             </div>
           ) : (
             <div 
-              className="text-center text-slate-800 dark:text-slate-200" 
+              className="text-center text-slate-800 dark:text-slate-200 break-words" 
               style={{ 
                 fontFamily: '"Frank Ruhl Libre", "David Libre", "Times New Roman", serif',
                 fontSize: '1.4rem', 
@@ -191,7 +191,7 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Footer / Finish Button */}
       {!loading && !error && textBlocks.length > 0 && (
