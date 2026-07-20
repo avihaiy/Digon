@@ -98,9 +98,9 @@ export function SmartSiddur({ prayer, onClose, onFinish }: SmartSiddurProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50 dark:bg-zinc-950 flex flex-col animate-in slide-in-from-bottom-full duration-300">
+    <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-zinc-950 flex flex-col h-[100dvh] animate-in slide-in-from-bottom-full duration-300">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <div className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between sticky top-0 z-10 shadow-sm">
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
           <ChevronRight className="w-6 h-6" />
         </Button>
