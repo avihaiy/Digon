@@ -36,7 +36,7 @@ import {
   Calendar,
   Clock
 } from "lucide-react";
-import { formatCurrency, formatShortDate, PAYMENT_METHOD, getHebrewDate } from "@/lib/hebrew-utils";
+import { getHebrewDate, getDailyZmanim, formatTime, getUpcomingJewishEvent, formatCurrency, formatShortDate, PAYMENT_METHOD } from "@/lib/hebrew-utils";
 import { HDate } from "@hebcal/core";
 import { toast } from "sonner";
 import html2pdf from 'html2pdf.js';
@@ -922,7 +922,6 @@ export default function PublicMemberArea() {
   const initial = firstName ? firstName.charAt(0) : 'ב';
   
   // Use Hebrew Calendar to get upcoming Parsha or Event
-  const { getUpcomingJewishEvent } = require('@/lib/hebrew-utils');
   const jewishEvent = getUpcomingJewishEvent(new Date());
 
   return (
