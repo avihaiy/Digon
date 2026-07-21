@@ -7,6 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { APP_CONFIG } from '@/config/app';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ScreensManagementPanel } from '@/components/admin/ScreensManagementPanel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,26 +121,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     enabled: isAdmin,
   });
 
-  const downloadAnyDeskBat = (screenId: string, screenName: string) => {
-    const cleanId = screenId.replace(/\s/g, '');
-    const batContent = `@echo off\r\nchcp 65001 > nul\r\necho מתחבר ל${screenName}...\r\nset ID=${cleanId}\r\n\r\n:: 1. Standard paths\r\nif exist "C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe" start "" "C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe" %ID% ^& exit\r\nif exist "C:\\Program Files\\AnyDesk\\AnyDesk.exe" start "" "C:\\Program Files\\AnyDesk\\AnyDesk.exe" %ID% ^& exit\r\nif exist "%LOCALAPPDATA%\\AnyDesk\\AnyDesk.exe" start "" "%LOCALAPPDATA%\\AnyDesk\\AnyDesk.exe" %ID% ^& exit\r\nif exist "%APPDATA%\\AnyDesk\\AnyDesk.exe" start "" "%APPDATA%\\AnyDesk\\AnyDesk.exe" %ID% ^& exit\r\n\r\n:: 2. Desktop and Downloads (portable version)\r\nif exist "%USERPROFILE%\\Desktop\\AnyDesk.exe" start "" "%USERPROFILE%\\Desktop\\AnyDesk.exe" %ID% ^& exit\r\nif exist "%USERPROFILE%\\Downloads\\AnyDesk.exe" start "" "%USERPROFILE%\\Downloads\\AnyDesk.exe" %ID% ^& exit\r\n\r\n:: 3. Try generic start if registered in Path/App Paths\r\nstart "" anydesk.exe %ID% 2>nul\r\nif %ERRORLEVEL% EQU 0 exit\r\n\r\necho לא מצאתי את תוכנת AnyDesk על המחשב שלך!\r\necho ודא ש-AnyDesk מותקנת, או נמצאת בשולחן העבודה / תיקיית הורדות.\r\npause`;
-
-    const blob = new Blob([batContent], { type: 'application/bat' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `connect-${screenName.replace(/[^a-zA-Zא-ת0-9-]/g, '-')}.bat`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: 'הקובץ הורד בהצלחה',
-      description: 'פתח את הקובץ שהורד כדי להתחבר מיד למסך.',
-    });
-  };
-
+  // downloadAnyDeskBat is now in ScreensManagementPanel
   const triggerHaptic = () => {
     if (navigator.vibrate) {
       navigator.vibrate(10);
@@ -325,51 +307,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </button>
 
           <div className="flex items-center gap-2">
-            {/* AnyDesk Connection Button */}
-            {isAdmin && anydeskScreens && anydeskScreens.length > 0 && (
-              anydeskScreens.length === 1 ? (
+            {/* AnyDesk Connection Button / Screens Panel */}
+            {isAdmin && (
+              <ScreensManagementPanel screens={anydeskScreens || []}>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => downloadAnyDeskBat(anydeskScreens[0].id, anydeskScreens[0].name)}
-                  title={`התחבר ל${anydeskScreens[0].name} (${anydeskScreens[0].id})`}
+                  title="פאנל ניהול מסכים"
                   className="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                 >
                   <Monitor className="w-5 h-5" />
                 </Button>
-              ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="התחבר למסכי בית הכנסת"
-                      className="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                    >
-                      <Monitor className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    {anydeskScreens.map((screen, idx) => (
-                      <DropdownMenuItem key={idx} onClick={() => downloadAnyDeskBat(screen.id, screen.name)}>
-                        <Monitor className="w-4 h-4 mr-2 ml-2" />
-                        <span>{screen.name}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )
-            )}
-            {isAdmin && (!anydeskScreens || anydeskScreens.length === 0) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/settings')}
-                title="הגדר חיבור AnyDesk למסך"
-                className="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-              >
-                <Monitor className="w-5 h-5" />
-              </Button>
+              </ScreensManagementPanel>
             )}
 
             {/* Refresh Button with Update Indicator */}

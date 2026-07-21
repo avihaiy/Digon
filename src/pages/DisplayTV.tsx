@@ -53,6 +53,7 @@ export default function DisplayTV() {
   const [selectedLocation, setSelectedLocation] = useState('akko');
   const [screenDurations, setScreenDurations] = useState(DEFAULT_DURATIONS);
   const [screensEnabled, setScreensEnabled] = useState(DEFAULT_SCREENS_ENABLED);
+  const [popupMessage, setPopupMessage] = useState<string | null>(null);
 
   // Load location from settings
   const { data: locationSetting } = useQuery({
@@ -138,6 +139,23 @@ export default function DisplayTV() {
   }, []);
 
   // Auto-rotate screens
+  useEffect(() => {
+    const channel = supabase.channel('tv-commands');
+    channel.on('broadcast', { event: 'tv-command' }, (payload) => {
+      const { command, content } = payload.payload;
+      if (command === 'refresh') {
+        window.location.reload();
+      } else if (command === 'message' && content) {
+        setPopupMessage(content);
+        // auto dismiss after 15 seconds
+        setTimeout(() => setPopupMessage(null), 15000);
+      }
+    }).subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
   useEffect(() => {
     if (isPaused || enabledScreens.length <= 1) return;
     
@@ -278,6 +296,24 @@ export default function DisplayTV() {
               <span className="text-white text-lg font-medium">
                 {SCREENS.find(s => s.id === currentScreen)?.name}
               </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Broadcast Message Popup */}
+      <AnimatePresence>
+        {popupMessage && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: -50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 50 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none p-12 bg-black/40 backdrop-blur-sm"
+          >
+            <div className="bg-slate-900/90 border-4 border-amber-500 rounded-3xl p-16 shadow-2xl max-w-5xl w-full text-center">
+              <p className="text-6xl md:text-8xl font-bold text-white leading-tight" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
+                {popupMessage}
+              </p>
             </div>
           </motion.div>
         )}
