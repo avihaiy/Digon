@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
 import { APP_CONFIG } from '@/config/app';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -298,9 +299,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
+                onClick={async () => {
                   if (anydeskId) {
-                    window.location.href = `anydesk://${anydeskId}`;
+                    const cleanId = anydeskId.replace(/\s/g, '');
+                    try {
+                      await navigator.clipboard.writeText(cleanId);
+                      toast({
+                        title: 'מתחבר...',
+                        description: `המזהה (${cleanId}) הועתק ללוח במקרה שהחיבור לא נפתח אוטומטית.`,
+                      });
+                    } catch (e) {
+                      console.error('Failed to copy', e);
+                    }
+                    window.location.href = `anydesk:${cleanId}`;
                   } else {
                     navigate('/settings');
                     alert('אנא הגדר מזהה AnyDesk בהגדרות המערכת תחילה.');
