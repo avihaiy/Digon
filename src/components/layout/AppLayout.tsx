@@ -302,16 +302,23 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 onClick={async () => {
                   if (anydeskId) {
                     const cleanId = anydeskId.replace(/\s/g, '');
-                    try {
-                      await navigator.clipboard.writeText(cleanId);
-                      toast({
-                        title: 'מתחבר...',
-                        description: `המזהה (${cleanId}) הועתק ללוח במקרה שהחיבור לא נפתח אוטומטית.`,
-                      });
-                    } catch (e) {
-                      console.error('Failed to copy', e);
-                    }
-                    window.location.href = `anydesk:${cleanId}`;
+                    
+                    const batContent = `@echo off\r\nchcp 65001 > nul\r\necho מתחבר למסך בית הכנסת...\r\nset ID=${cleanId}\r\nif exist "C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe" (\r\n    start "" "C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe" %ID%\r\n    exit\r\n)\r\nif exist "C:\\Program Files\\AnyDesk\\AnyDesk.exe" (\r\n    start "" "C:\\Program Files\\AnyDesk\\AnyDesk.exe" %ID%\r\n    exit\r\n)\r\nif exist "%LOCALAPPDATA%\\AnyDesk\\AnyDesk.exe" (\r\n    start "" "%LOCALAPPDATA%\\AnyDesk\\AnyDesk.exe" %ID%\r\n    exit\r\n)\r\necho לא נמצאה התקנה של AnyDesk בנתיבים הרגילים.\r\npause`;
+
+                    const blob = new Blob([batContent], { type: 'application/bat' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'connect-synagogue.bat';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    toast({
+                      title: 'הקובץ הורד בהצלחה',
+                      description: 'פתח את הקובץ שהורד (connect-synagogue.bat) כדי להתחבר מיד למסך.',
+                    });
                   } else {
                     navigate('/settings');
                     alert('אנא הגדר מזהה AnyDesk בהגדרות המערכת תחילה.');
