@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -22,7 +22,8 @@ import {
   AlertTriangle,
   Mail,
   Receipt,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Upload
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
@@ -104,6 +105,37 @@ export default function Backups() {
   const [backupEmail, setBackupEmail] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const text = e.target?.result as string;
+        const parsed: BackupData = JSON.parse(text);
+        
+        if (!parsed || !parsed.tables) {
+          throw new Error('Invalid backup file format');
+        }
+
+        setBackupData(parsed);
+        setSelectedBackup(`קובץ שהועלה: ${file.name}`);
+        setSelectedTables(Object.keys(parsed.tables).filter(t => parsed.tables[t]?.length > 0));
+        setRestoreDialogOpen(true);
+      } catch (err) {
+        toast({ title: 'שגיאה בקריאת הקובץ', description: 'וודא שזהו קובץ גיבוי תקין בפורמט JSON', variant: 'destructive' });
+      }
+      
+      // Reset input so the same file can be uploaded again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
 
   // Fetch backup files
   const { data: backups, isLoading, refetch } = useQuery({
@@ -403,6 +435,20 @@ export default function Backups() {
           </p>
         </div>
         <div className="flex gap-2">
+          <input 
+            type="file" 
+            accept=".json" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+          />
+          <Button 
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="w-4 h-4 ml-2" />
+            העלה גיבוי JSON
+          </Button>
           <Button 
             variant="outline" 
             onClick={() => refetch()}
