@@ -108,22 +108,22 @@ export function ScreensManagementPanel({ screens, children }: ScreensManagementP
           {/* Global Actions */}
           <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
             <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">פעולות גלובליות (לכל המסכים)</h3>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button 
                 variant="outline" 
                 className="flex-1 bg-background hover:bg-muted"
                 onClick={handleRefreshScreens}
               >
-                <RefreshCw className="w-4 h-4 mr-2 ml-2" />
-                רענן מסכים מרחוק
+                <RefreshCw className="w-4 h-4 mr-2 ml-2 shrink-0" />
+                <span className="truncate">רענן מסכים מרחוק</span>
               </Button>
               <Button 
                 variant="outline" 
                 className="flex-1 bg-background hover:bg-muted"
                 onClick={() => setSelectedScreenForMsg('all')}
               >
-                <Send className="w-4 h-4 mr-2 ml-2" />
-                שלח הודעה צפה
+                <Send className="w-4 h-4 mr-2 ml-2 shrink-0" />
+                <span className="truncate">שלח הודעה צפה</span>
               </Button>
             </div>
 
