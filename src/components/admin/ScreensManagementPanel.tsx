@@ -23,8 +23,23 @@ export function ScreensManagementPanel({ screens, children }: ScreensManagementP
   const [msgContent, setMsgContent] = useState('');
   const [selectedScreenForMsg, setSelectedScreenForMsg] = useState<string | null>(null);
 
-  const downloadAnyDeskBat = (screenId: string, screenName: string) => {
+  const handleConnectAnyDesk = (screenId: string, screenName: string) => {
     const cleanId = screenId.replace(/\s/g, '');
+    
+    // Check if on mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // Use AnyDesk URI scheme for mobile devices
+      window.location.href = `anydesk:${cleanId}`;
+      toast({
+        title: 'מתחבר למסך...',
+        description: `פותח את אפליקציית AnyDesk למסך ${screenName}.`,
+      });
+      return;
+    }
+
+    // Windows Desktop fallback (.bat file)
     const batContent = `@echo off\r\nchcp 65001 > nul\r\necho מתחבר ל${screenName}...\r\nset ID=${cleanId}\r\n\r\n:: 1. Standard paths\r\nif exist "C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe" start "" "C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe" %ID% ^& exit\r\nif exist "C:\\Program Files\\AnyDesk\\AnyDesk.exe" start "" "C:\\Program Files\\AnyDesk\\AnyDesk.exe" %ID% ^& exit\r\nif exist "%LOCALAPPDATA%\\AnyDesk\\AnyDesk.exe" start "" "%LOCALAPPDATA%\\AnyDesk\\AnyDesk.exe" %ID% ^& exit\r\nif exist "%APPDATA%\\AnyDesk\\AnyDesk.exe" start "" "%APPDATA%\\AnyDesk\\AnyDesk.exe" %ID% ^& exit\r\n\r\n:: 2. Desktop and Downloads (portable version)\r\nif exist "%USERPROFILE%\\Desktop\\AnyDesk.exe" start "" "%USERPROFILE%\\Desktop\\AnyDesk.exe" %ID% ^& exit\r\nif exist "%USERPROFILE%\\Downloads\\AnyDesk.exe" start "" "%USERPROFILE%\\Downloads\\AnyDesk.exe" %ID% ^& exit\r\n\r\n:: 3. Try generic start if registered in Path/App Paths\r\nstart "" anydesk.exe %ID% 2>nul\r\nif %ERRORLEVEL% EQU 0 exit\r\n\r\necho לא מצאתי את תוכנת AnyDesk על המחשב שלך!\r\necho ודא ש-AnyDesk מותקנת, או נמצאת בשולחן העבודה / תיקיית הורדות.\r\npause`;
 
     const blob = new Blob([batContent], { type: 'application/bat' });
@@ -81,7 +96,7 @@ export function ScreensManagementPanel({ screens, children }: ScreensManagementP
       <SheetTrigger asChild>
         {children}
       </SheetTrigger>
-      <SheetContent side="left" className="w-[400px] sm:w-[540px] flex flex-col h-full overflow-y-auto">
+      <SheetContent side="left" className="w-[85vw] sm:w-[400px] flex flex-col h-full overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="flex items-center gap-2 text-2xl">
             <Monitor className="w-6 h-6 text-blue-500" />
@@ -167,7 +182,7 @@ export function ScreensManagementPanel({ screens, children }: ScreensManagementP
                   <div className="flex gap-2">
                     <Button 
                       className="flex-1"
-                      onClick={() => downloadAnyDeskBat(screen.id, screen.name)}
+                      onClick={() => handleConnectAnyDesk(screen.id, screen.name)}
                     >
                       <ExternalLink className="w-4 h-4 ml-2" />
                       התחבר עכשיו
