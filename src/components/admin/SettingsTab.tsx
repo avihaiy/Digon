@@ -10,9 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ISRAEL_LOCATIONS } from '@/lib/hebrew-utils';
-import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send, Bell, Volume2, VolumeX, Calendar, Smartphone } from 'lucide-react';
+import { MapPin, Building2, Save, Monitor, Clock, Database, HardDrive, Loader2, Mail, Lock, ShieldAlert, RotateCcw, FileText, Send, Bell, Volume2, VolumeX, Calendar, Smartphone, Plus, Trash2 } from 'lucide-react';
 import { playNotificationSound, getSelectedSound, setSelectedSound, SOUND_PRESETS, type SoundPreset } from '@/lib/notification-sounds';
 import { Link } from 'react-router-dom';
+
+interface AnyDeskScreen {
+  id: string;
+  name: string;
+}
+
 interface SettingsTabProps {
   selectedLocation: string;
   onLocationChange: (location: string) => void;
@@ -43,7 +49,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [payboxPhone, setPayboxPhone] = useState('');
   const [payboxEnabled, setPayboxEnabled] = useState(false);
   const [taxReceiptEnabled, setTaxReceiptEnabled] = useState(true);
-  const [anydeskId, setAnydeskId] = useState('');
+  const [anydeskScreens, setAnydeskScreens] = useState<AnyDeskScreen[]>([]);
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
@@ -541,22 +547,33 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         .select('key, value')
         .eq('key', 'anydesk_id')
         .maybeSingle();
-      return data?.value || '';
+      
+      if (!data?.value) return [];
+      
+      try {
+        if (data.value.startsWith('[')) {
+          return JSON.parse(data.value) as AnyDeskScreen[];
+        } else {
+          return [{ id: data.value, name: 'מסך ראשי' }];
+        }
+      } catch (e) {
+        return [{ id: data.value, name: 'מסך ראשי' }];
+      }
     },
   });
 
   useEffect(() => {
     if (anydeskSettings !== undefined) {
-      setAnydeskId(anydeskSettings);
+      setAnydeskScreens(anydeskSettings);
     }
   }, [anydeskSettings]);
 
   const saveAnydeskMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const previous = anydeskSettings || '';
+    mutationFn: async (screens: AnyDeskScreen[]) => {
+      const valueToSave = JSON.stringify(screens);
       const { error } = await supabase
         .from('app_settings')
-        .upsert({ key: 'anydesk_id', value: id }, { onConflict: 'key' });
+        .upsert({ key: 'anydesk_id', value: valueToSave }, { onConflict: 'key' });
       if (error) throw error;
       
       const { data: u } = await supabase.auth.getUser();
@@ -564,8 +581,8 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         user_id: u.user?.id ?? null,
         action: 'anydesk_settings_changed',
         table_name: 'app_settings',
-        old_data: { anydesk_id: previous },
-        new_data: { anydesk_id: id },
+        old_data: { anydesk_id: anydeskSettings ? JSON.stringify(anydeskSettings) : '' },
+        new_data: { anydesk_id: valueToSave },
       });
     },
     onSuccess: () => {
@@ -643,32 +660,81 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
         </Card>
 
         {/* AnyDesk ID */}
-        <Card>
+        <Card className="col-span-1 md:col-span-2 lg:col-span-3">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Monitor className="w-5 h-5" />
-              חיבור למסך בית הכנסת
+            <CardTitle className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-5 h-5" />
+                חיבור למסכי בית הכנסת
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setAnydeskScreens([...anydeskScreens, { id: '', name: 'מסך חדש' }])}
+              >
+                <Plus className="w-4 h-4 ml-2" />
+                הוסף מסך
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>מזהה AnyDesk של מסך בית הכנסת</Label>
-              <Input 
-                value={anydeskId}
-                onChange={e => setAnydeskId(e.target.value)}
-                placeholder="לדוגמה: 123 456 789"
-                dir="ltr"
-              />
+            <div className="space-y-4">
+              {anydeskScreens.length === 0 && (
+                <div className="text-sm text-muted-foreground p-4 bg-secondary/50 rounded-lg text-center">
+                  לא הוגדרו מסכים. הוסף מסך כדי להתחבר אליו מהתפריט הראשי.
+                </div>
+              )}
+              {anydeskScreens.map((screen, index) => (
+                <div key={index} className="flex flex-col sm:flex-row items-end gap-3 p-4 border rounded-lg bg-card relative">
+                  <div className="space-y-2 w-full">
+                    <Label>שם המסך</Label>
+                    <Input 
+                      value={screen.name}
+                      onChange={e => {
+                        const newScreens = [...anydeskScreens];
+                        newScreens[index].name = e.target.value;
+                        setAnydeskScreens(newScreens);
+                      }}
+                      placeholder="לדוגמה: מסך ראשי"
+                    />
+                  </div>
+                  <div className="space-y-2 w-full">
+                    <Label>מזהה AnyDesk</Label>
+                    <Input 
+                      value={screen.id}
+                      onChange={e => {
+                        const newScreens = [...anydeskScreens];
+                        newScreens[index].id = e.target.value;
+                        setAnydeskScreens(newScreens);
+                      }}
+                      placeholder="לדוגמה: 123 456 789"
+                      dir="ltr"
+                    />
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="text-destructive hover:bg-destructive/10"
+                    onClick={() => {
+                      const newScreens = [...anydeskScreens];
+                      newScreens.splice(index, 1);
+                      setAnydeskScreens(newScreens);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
               <p className="text-xs text-muted-foreground">
-                מאפשר התחברות מהירה למסך בית הכנסת מהתפריט הראשי
+                מאפשר התחברות מהירה למסכי בית הכנסת מהתפריט הראשי בלחיצת כפתור אחת.
               </p>
             </div>
             <Button 
-              onClick={() => saveAnydeskMutation.mutate(anydeskId)}
+              onClick={() => saveAnydeskMutation.mutate(anydeskScreens)}
               disabled={saveAnydeskMutation.isPending}
             >
               <Save className="w-4 h-4 ml-2" />
-              שמור מזהה
+              שמור הגדרות AnyDesk
             </Button>
           </CardContent>
         </Card>
