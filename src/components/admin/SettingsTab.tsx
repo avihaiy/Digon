@@ -43,6 +43,7 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
   const [payboxPhone, setPayboxPhone] = useState('');
   const [payboxEnabled, setPayboxEnabled] = useState(false);
   const [taxReceiptEnabled, setTaxReceiptEnabled] = useState(true);
+  const [anydeskId, setAnydeskId] = useState('');
   // Load synagogue name
   const { data: nameSetting } = useQuery({
     queryKey: ['app-settings-synagogue-name'],
@@ -531,6 +532,49 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
     onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
   });
 
+  // Load AnyDesk settings
+  const { data: anydeskSettings } = useQuery({
+    queryKey: ['app-settings-anydesk'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('key, value')
+        .eq('key', 'anydesk_id')
+        .maybeSingle();
+      return data?.value || '';
+    },
+  });
+
+  useEffect(() => {
+    if (anydeskSettings !== undefined) {
+      setAnydeskId(anydeskSettings);
+    }
+  }, [anydeskSettings]);
+
+  const saveAnydeskMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const previous = anydeskSettings || '';
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key: 'anydesk_id', value: id }, { onConflict: 'key' });
+      if (error) throw error;
+      
+      const { data: u } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        user_id: u.user?.id ?? null,
+        action: 'anydesk_settings_changed',
+        table_name: 'app_settings',
+        old_data: { anydesk_id: previous },
+        new_data: { anydesk_id: id },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['app-settings-anydesk'] });
+      toast({ title: 'הגדרות AnyDesk נשמרו בהצלחה' });
+    },
+    onError: () => toast({ title: 'שגיאה בשמירה', variant: 'destructive' }),
+  });
+
   // Count enabled screens
   const enabledCount = Object.values(tvScreensEnabled).filter(Boolean).length;
 
@@ -594,6 +638,37 @@ export function SettingsTab({ selectedLocation, onLocationChange }: SettingsTabP
             >
               <Save className="w-4 h-4 ml-2" />
               שמור מייל
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* AnyDesk ID */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Monitor className="w-5 h-5" />
+              חיבור למסך בית הכנסת
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>מזהה AnyDesk של מסך בית הכנסת</Label>
+              <Input 
+                value={anydeskId}
+                onChange={e => setAnydeskId(e.target.value)}
+                placeholder="לדוגמה: 123 456 789"
+                dir="ltr"
+              />
+              <p className="text-xs text-muted-foreground">
+                מאפשר התחברות מהירה למסך בית הכנסת מהתפריט הראשי
+              </p>
+            </div>
+            <Button 
+              onClick={() => saveAnydeskMutation.mutate(anydeskId)}
+              disabled={saveAnydeskMutation.isPending}
+            >
+              <Save className="w-4 h-4 ml-2" />
+              שמור מזהה
             </Button>
           </CardContent>
         </Card>

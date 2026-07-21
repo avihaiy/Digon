@@ -1,5 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { APP_CONFIG } from '@/config/app';
 import { Button } from '@/components/ui/button';
@@ -40,6 +42,7 @@ import {
   Printer,
   ScrollText,
   FileText,
+  Monitor,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -90,6 +93,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
     location.pathname === '/reports' || location.pathname === '/expense-reports' || location.pathname === '/debts-report'
   );
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
+
+  // Fetch AnyDesk ID for admin users
+  const { data: anydeskId } = useQuery({
+    queryKey: ['app-settings-anydesk'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'anydesk_id')
+        .maybeSingle();
+      return data?.value || null;
+    },
+    enabled: isAdmin,
+  });
 
   const triggerHaptic = () => {
     if (navigator.vibrate) {
@@ -276,6 +293,26 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </button>
 
           <div className="flex items-center gap-2">
+            {/* AnyDesk Connection Button */}
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (anydeskId) {
+                    window.location.href = `anydesk://${anydeskId}`;
+                  } else {
+                    navigate('/settings');
+                    alert('אנא הגדר מזהה AnyDesk בהגדרות המערכת תחילה.');
+                  }
+                }}
+                title={anydeskId ? `התחבר למסך בית הכנסת (${anydeskId})` : 'הגדר חיבור AnyDesk למסך'}
+                className="text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+              >
+                <Monitor className="w-5 h-5" />
+              </Button>
+            )}
+
             {/* Refresh Button with Update Indicator */}
             <Button 
               variant="ghost" 
