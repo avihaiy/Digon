@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -59,21 +58,7 @@ export default function Login() {
   };
 
   const notifyAdminAboutLock = async (identifier: string, attemptCount: number) => {
-    try {
-      await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-account-locked`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ identifier, attemptCount }),
-        }
-      );
-      console.log('Admin notified about account lock');
-    } catch (err) {
-      console.error('Failed to notify admin:', err);
-    }
+    console.log('Account locked notification logic to be implemented for Appwrite');
   };
 
   const remainingAttempts = MAX_ATTEMPTS - failedAttempts;
@@ -85,66 +70,30 @@ export default function Login() {
     try {
       let email = loginIdentifier;
       
-      // Check if input is not an email (no @ symbol) - treat as username
-      if (!loginIdentifier.includes('@')) {
-        // Look up email by username
-        const { data, error } = await supabase.rpc('get_email_by_username', {
-          _username: loginIdentifier
-        });
-        
-        if (error || !data) {
-          const newAttempts = failedAttempts + 1;
-          updateFailedAttempts(newAttempts);
-          
-          if (newAttempts >= MAX_ATTEMPTS) {
-            notifyAdminAboutLock(loginIdentifier, newAttempts);
-            toast.error('החשבון ננעל', {
-              description: 'נסית להתחבר יותר מדי פעמים. נסה שוב בעוד 15 דקות או פנה למנהל.',
-              duration: 8000,
-            });
-          } else {
-            toast.error('שגיאה בהתחברות', {
-              description: `שם משתמש או סיסמה שגויים. נותרו ${MAX_ATTEMPTS - newAttempts} נסיונות.`,
-            });
-          }
-          setLoading(false);
-          return;
-        }
-        
-        email = data;
+      // Simplification for Appwrite migration: force email login
+      if (!email.includes('@')) {
+        toast.error('שגיאה', { description: 'אנא הזן כתובת אימייל חוקית' });
+        setLoading(false);
+        return;
       }
 
       const { error } = await signIn(email, loginPassword);
 
       if (error) {
+        console.error('Login error:', error);
+        
         const newAttempts = failedAttempts + 1;
         updateFailedAttempts(newAttempts);
         
-        // Check if account is locked
-        const errorMessage = error.message.toLowerCase();
-        if (errorMessage.includes('locked') || errorMessage.includes('banned') || errorMessage.includes('too many')) {
-          notifyAdminAboutLock(loginIdentifier, newAttempts);
-          toast.error('החשבון נעול', {
-            description: 'החשבון שלך נעול עקב נסיונות התחברות כושלים. פנה למנהל המערכת לשחרור החשבון.',
-            duration: 8000,
-          });
-        } else if (newAttempts >= MAX_ATTEMPTS) {
+        if (newAttempts >= MAX_ATTEMPTS) {
           notifyAdminAboutLock(loginIdentifier, newAttempts);
           toast.error('החשבון עלול להינעל', {
             description: 'הגעת למספר המקסימלי של נסיונות. המתן 15 דקות או פנה למנהל.',
             duration: 8000,
           });
-        } else if (errorMessage.includes('invalid login credentials') || errorMessage.includes('invalid')) {
-          toast.error('שגיאה בהתחברות', {
-            description: `אימייל/שם משתמש או סיסמה שגויים. נותרו ${MAX_ATTEMPTS - newAttempts} נסיונות.`,
-          });
-        } else if (errorMessage.includes('email not confirmed')) {
-          toast.error('האימייל לא אומת', {
-            description: 'יש לאמת את כתובת האימייל לפני ההתחברות',
-          });
         } else {
           toast.error('שגיאה בהתחברות', {
-            description: error.message,
+            description: `אימייל או סיסמה שגויים. נותרו ${MAX_ATTEMPTS - newAttempts} נסיונות.`,
           });
         }
       } else {

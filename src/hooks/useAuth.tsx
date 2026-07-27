@@ -1,18 +1,16 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { Models, Query } from 'appwrite';
+import { account, databases, APPWRITE_DB_ID, APPWRITE_PROFILES_ID } from '@/lib/appwrite';
 
-type UserRole = 'admin' | 'gabai' | 'viewer';
+type UserRole = 'ADMIN' | 'gabai' | 'viewer' | 'USER';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: Models.User<Models.Preferences> | null;
+  session: Models.Session | null;
   userRole: UserRole | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
-  signInWithPhone: (phone: string) => Promise<{ error: Error | null }>;
-  verifyOtp: (phone: string, token: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isManager: boolean;
   isAdmin: boolean;
@@ -21,102 +19,83 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+  const [session, setSession] = useState<Models.Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch user role
-          setTimeout(async () => {
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-            const role = roleData?.role as UserRole ?? null;
-            const finalRole = session.user.email === 'avihaidj0@gmail.com' ? 'ADMIN' : role;
-            setUserRole(finalRole);
-          }, 0);
-        } else {
-          setUserRole(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+  const fetchUserAndRole = async () => {
+    try {
+      const currentUser = await account.get();
+      setUser(currentUser);
       
-      if (session?.user) {
-        supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .maybeSingle()
-          .then(({ data: roleData }) => {
-            const role = roleData?.role as UserRole ?? null;
-            const finalRole = session.user.email === 'avihaidj0@gmail.com' ? 'ADMIN' : role;
-            setUserRole(finalRole);
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
-      }
-    });
+      const currentSession = await account.getSession('current');
+      setSession(currentSession);
 
-    return () => subscription.unsubscribe();
+      // Fetch role from profiles collection
+      const docs = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
+        Query.equal('user_id', currentUser.$id)
+      ]);
+      
+      let role: UserRole = 'USER';
+      if (docs.documents.length > 0) {
+        role = docs.documents[0].role as UserRole;
+      }
+      
+      const finalRole = currentUser.email === 'avihaidj0@gmail.com' ? 'ADMIN' : role;
+      setUserRole(finalRole);
+    } catch (e) {
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserAndRole();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    try {
+      const sess = await account.createEmailPasswordSession(email, password);
+      await fetchUserAndRole();
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
-      },
-    });
-    return { error };
-  };
-
-  const signInWithPhone = async (phone: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      phone,
-    });
-    return { error };
-  };
-
-  const verifyOtp = async (phone: string, token: string) => {
-    const { error } = await supabase.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms',
-    });
-    return { error };
+    try {
+      const u = await account.create('unique()', email, password, fullName);
+      // Auto login
+      await account.createEmailPasswordSession(email, password);
+      // Create profile
+      await databases.createDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, 'unique()', {
+        user_id: u.$id,
+        full_name: fullName,
+        role: 'USER'
+      });
+      await fetchUserAndRole();
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await account.deleteSession('current');
+    } catch (e) {}
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
   };
 
-  const isManager = userRole === 'admin' || userRole === 'gabai';
-  const isAdmin = userRole === 'admin';
+  const isManager = userRole === 'ADMIN' || userRole === 'gabai';
+  const isAdmin = userRole === 'ADMIN';
 
   return (
     <AuthContext.Provider value={{
@@ -126,8 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       signIn,
       signUp,
-      signInWithPhone,
-      verifyOtp,
       signOut,
       isManager,
       isAdmin,
