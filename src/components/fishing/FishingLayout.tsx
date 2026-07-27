@@ -7,8 +7,14 @@ interface FishingLayoutProps {
 
 const FishingLayout = ({ children }: FishingLayoutProps) => {
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans pb-16">
-      {children}
+    <div className="min-h-screen bg-[#020610] text-slate-100 font-sans pb-24 relative overflow-x-hidden selection:bg-cyan-500/30">
+      {/* Background ambient lighting */}
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[100px] pointer-events-none" />
+      <div className="fixed bottom-[10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-900/10 blur-[120px] pointer-events-none" />
+      
+      <div className="relative z-10">
+        {children}
+      </div>
       <BottomNav />
     </div>
   );

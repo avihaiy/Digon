@@ -2,9 +2,10 @@ import { useAuth } from "@/hooks/useAuth";
 import FishingLayout from "@/components/fishing/FishingLayout";
 import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, MoreHorizontal, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
-// Helper for circular progress
-const CircularProgress = ({ value, label, subLabel, color }: { value: number, label: string, subLabel: string, color: string }) => {
+// Helper for circular progress with Framer Motion and Glow
+const CircularProgress = ({ value, label, subLabel, color, glowColor }: { value: number, label: string, subLabel: string, color: string, glowColor: string }) => {
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (value / 100) * circumference;
@@ -12,43 +13,58 @@ const CircularProgress = ({ value, label, subLabel, color }: { value: number, la
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-24 h-24 flex items-center justify-center">
-        <svg className="transform -rotate-90 w-24 h-24">
+        <svg className="transform -rotate-90 w-24 h-24 drop-shadow-xl" style={{ filter: `drop-shadow(0 0 6px ${glowColor})` }}>
           <circle
             cx="48"
             cy="48"
             r={radius}
-            stroke="currentColor"
+            stroke="rgba(255,255,255,0.05)"
             strokeWidth="8"
             fill="transparent"
-            className="text-slate-800"
           />
-          <circle
+          <motion.circle
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
             cx="48"
             cy="48"
             r={radius}
             stroke={color}
             strokeWidth="8"
+            strokeLinecap="round"
             fill="transparent"
             strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            className="transition-all duration-1000 ease-in-out"
           />
         </svg>
-        <span className={cn("absolute text-xl font-bold", value > 40 ? "text-orange-500" : "text-red-500")}>
+        <motion.span 
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.8 }}
+          className="absolute text-2xl font-black text-white"
+          style={{ textShadow: `0 0 10px ${glowColor}` }}
+        >
           {value}
-        </span>
+        </motion.span>
       </div>
-      <div className="mt-2 font-medium text-sm">{label}</div>
-      <div className="text-xs text-slate-400 mt-0.5">{subLabel}</div>
+      <div className="mt-3 font-bold text-sm tracking-wide text-slate-200">{label}</div>
+      <div className="text-[11px] text-slate-400 mt-0.5 font-medium">{subLabel}</div>
     </div>
   );
 };
 
-const ActionButton = ({ icon: Icon, label, bgClass }: { icon: LucideIcon, label: string, bgClass?: string }) => (
-  <button className={cn("flex flex-col items-center justify-center p-4 rounded-2xl bg-[#0F1C35] hover:bg-[#152545] transition-colors border border-slate-800", bgClass)}>
-    <Icon className="w-8 h-8 mb-3 text-blue-400 drop-shadow-md" />
-    <span className="font-semibold text-sm">{label}</span>
-  </button>
+const ActionButton = ({ icon: Icon, label, delay }: { icon: LucideIcon, label: string, delay: number }) => (
+  <motion.button 
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay, duration: 0.4 }}
+    className="relative overflow-hidden flex flex-col items-center justify-center p-5 rounded-[2rem] bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border border-white/10 transition-colors group shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    <Icon className="w-8 h-8 mb-3 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover:text-cyan-300 transition-colors z-10" />
+    <span className="font-semibold text-sm text-slate-200 z-10">{label}</span>
+  </motion.button>
 );
 
 const Home = () => {
@@ -56,123 +72,174 @@ const Home = () => {
   
   return (
     <FishingLayout>
-      {/* Top Bar */}
-      <div className="bg-white text-black px-4 py-3 flex items-center justify-between rounded-b-3xl sticky top-0 z-40">
-        <button className="text-blue-500 font-medium">Close</button>
+      {/* Top Bar - Sticky Glassmorphism */}
+      <motion.div 
+        initial={{ y: -50 }}
+        animate={{ y: 0 }}
+        className="sticky top-0 z-40 bg-[#020610]/70 backdrop-blur-2xl border-b border-white/5 px-4 py-3 flex items-center justify-between"
+      >
+        <button className="text-cyan-400 font-medium text-sm">Close</button>
         <div className="text-center flex-1">
-          <h1 className="font-bold text-lg leading-tight">דיג בישראל</h1>
-          <span className="text-xs text-slate-500">mini app</span>
+          <h1 className="font-black text-lg text-white tracking-tight">דיג בישראל</h1>
+          <span className="text-[10px] uppercase tracking-widest text-cyan-500/80 font-bold">mini app</span>
         </div>
-        <button className="text-blue-500">
+        <button className="text-slate-300 hover:text-white transition-colors">
           <MoreHorizontal className="w-6 h-6" />
         </button>
-      </div>
+      </motion.div>
 
-      <div className="px-4 pb-24">
+      <div className="px-4 pb-10">
         {/* Hero Section */}
-        <div className="relative mt-4 rounded-3xl overflow-hidden h-64 shadow-2xl">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="relative mt-5 rounded-[2.5rem] overflow-hidden h-72 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
+        >
           <img 
             src="/fishing_bg.jpg" 
             alt="Fishing Sunset" 
             className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#070b14] via-black/40 to-black/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#020610]/60 via-transparent to-[#020610]"></div>
           
-          <div className="absolute top-4 right-4 text-right">
-            <div className="text-slate-300 text-sm">ברוך הבא,</div>
-            <div className="text-white font-bold text-xl flex items-center justify-end gap-2">
-              {user?.email?.split('@')[0] || 'avihaiy'} <span className="text-2xl">👋</span>
+          <div className="absolute top-5 right-5 text-right z-10">
+            <div className="text-slate-300 text-xs font-medium uppercase tracking-wider mb-1">ברוך הבא,</div>
+            <div className="text-white font-black text-2xl flex items-center justify-end gap-2 drop-shadow-lg">
+              {user?.email?.split('@')[0] || 'avihaiy'} <motion.span animate={{ rotate: [0, 20, 0] }} transition={{ repeat: Infinity, duration: 2, repeatDelay: 3 }} className="text-2xl origin-bottom-right">👋</motion.span>
             </div>
           </div>
           
-          <div className="absolute top-4 left-4 bg-black/40 p-2 rounded-full backdrop-blur-md">
-            <Settings className="w-5 h-5 text-slate-300" />
-          </div>
+          <button className="absolute top-5 left-5 bg-black/30 hover:bg-black/50 p-2.5 rounded-full backdrop-blur-md border border-white/10 transition-colors z-10">
+            <Settings className="w-5 h-5 text-white" />
+          </button>
 
-          <div className="absolute bottom-4 right-4 text-right">
-            <h2 className="text-3xl font-black text-white drop-shadow-lg mb-1 flex items-center justify-end gap-2">
-              דיג בישראל <span className="text-2xl">🎣</span>
+          <div className="absolute bottom-5 right-5 text-right z-10 w-full px-5">
+            <h2 className="text-4xl font-black text-white drop-shadow-2xl mb-2 flex items-center justify-end gap-2">
+              דיג בישראל 
+              <span className="text-3xl filter drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">🎣</span>
             </h2>
-            <div className="flex items-center justify-end gap-2 text-yellow-400 font-medium text-sm">
+            <div className="inline-flex items-center gap-2 bg-yellow-500/20 backdrop-blur-md border border-yellow-500/30 px-3 py-1.5 rounded-full text-yellow-400 font-bold text-sm shadow-[0_0_15px_rgba(234,179,8,0.2)]">
               <span>הכי טוב היום: מרכז — ציון 44</span>
               <Trophy className="w-4 h-4" />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Daily Score Section */}
-        <div className="mt-6 bg-[#0F1C35] rounded-3xl p-5 border border-slate-800 relative overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-            <div className="bg-slate-800/50 text-slate-300 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-6 bg-white/[0.02] backdrop-blur-xl rounded-[2.5rem] p-6 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden"
+        >
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-[50px] -z-10" />
+          
+          <div className="flex justify-between items-center mb-8">
+            <div className="bg-white/5 backdrop-blur-md border border-white/10 text-cyan-300 font-medium text-xs px-3 py-1.5 rounded-full flex items-center gap-2">
               <span>08:53</span>
-              <div className="w-2 h-2 rounded-full bg-slate-400 ml-1"></div>
+              <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] animate-pulse"></div>
             </div>
-            <h3 className="font-bold flex items-center gap-2 text-lg">
+            <h3 className="font-black flex items-center gap-2 text-xl text-white">
               ציון דייג יומי
-              <span className="text-xl">📊</span>
             </h3>
           </div>
           
-          <div className="flex justify-between items-end px-2">
-            <CircularProgress value={37} label="דרום" subLabel="גרוע" color="#ef4444" />
-            <div className="bg-[#15274C] rounded-2xl p-2 -mx-2 shadow-lg border border-slate-700/50 transform scale-110">
-              <CircularProgress value={44} label="מרכז" subLabel="בינוני" color="#f97316" />
-            </div>
-            <CircularProgress value={28} label="צפון" subLabel="גרוע" color="#ef4444" />
+          <div className="flex justify-between items-end px-1 relative">
+            <CircularProgress value={37} label="דרום" subLabel="גרוע" color="#ef4444" glowColor="rgba(239,68,68,0.5)" />
+            
+            {/* Center prominent score */}
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md rounded-[2rem] p-3 -mx-2 shadow-[0_0_30px_rgba(34,211,238,0.15)] border border-white/20 transform scale-110 relative z-10"
+            >
+              <CircularProgress value={44} label="מרכז" subLabel="בינוני" color="#06b6d4" glowColor="rgba(6,182,212,0.6)" />
+            </motion.div>
+            
+            <CircularProgress value={28} label="צפון" subLabel="גרוע" color="#ef4444" glowColor="rgba(239,68,68,0.5)" />
           </div>
-        </div>
+        </motion.div>
 
         {/* Points Banner */}
-        <div className="mt-4 bg-gradient-to-r from-[#2a1c0d] to-[#4a3219] rounded-3xl p-5 border border-yellow-900/50 flex items-center justify-between shadow-lg">
-          <ChevronLeft className="w-5 h-5 text-yellow-600" />
-          <div className="text-right flex-1 pr-4">
-            <div className="text-3xl font-black text-yellow-500 mb-1 drop-shadow-md">165</div>
-            <div className="text-yellow-400/80 font-bold text-sm mb-1">CoinsISR</div>
-            <div className="text-yellow-600/70 text-xs">צבור מטבעות לפתיחת תוכן בלעדי</div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-5 relative overflow-hidden bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 backdrop-blur-xl rounded-[2.5rem] p-6 border border-yellow-500/30 flex items-center justify-between shadow-[0_10px_40px_rgba(245,158,11,0.15)] group cursor-pointer"
+        >
+          {/* Animated shine effect */}
+          <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+          
+          <ChevronLeft className="w-5 h-5 text-yellow-500/70" />
+          <div className="text-right flex-1 pr-5">
+            <div className="flex flex-col items-end">
+              <span className="text-4xl font-black bg-gradient-to-r from-yellow-200 to-amber-500 bg-clip-text text-transparent drop-shadow-sm">165</span>
+              <span className="text-yellow-500 font-bold text-sm uppercase tracking-widest mt-0.5">CoinsISR</span>
+            </div>
+            <div className="text-amber-200/70 text-xs font-medium mt-1.5">צבור מטבעות לפתיחת תוכן בלעדי</div>
           </div>
-          <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center shrink-0 border border-yellow-500/30">
-            <Fish className="w-8 h-8 text-yellow-500" />
+          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] rotate-3 group-hover:rotate-12 transition-transform duration-500">
+            <Fish className="w-8 h-8 text-white drop-shadow-md" />
           </div>
-        </div>
+        </motion.div>
 
         {/* Golden Windows */}
-        <div className="mt-6">
-          <h3 className="font-bold flex items-center gap-2 mb-4 text-right justify-end text-blue-100">
-            חלונות זהב לדייג היום <span className="text-slate-400">🕒</span>
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="relative rounded-2xl overflow-hidden h-28 border border-slate-800">
-              <img src="/fishing_bg.jpg" alt="Evening" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              <div className="absolute bottom-3 w-full text-center">
-                <div className="font-bold text-lg text-white">20:15–19:00</div>
-                <div className="text-xs text-orange-300 flex items-center justify-center gap-1">שעת ערב 🌇</div>
-              </div>
-            </div>
-            <div className="relative rounded-2xl overflow-hidden h-28 border border-slate-800">
-              <img src="/fishing_bg.jpg" alt="Morning" className="absolute inset-0 w-full h-full object-cover opacity-80" />
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 to-transparent"></div>
-              <div className="absolute bottom-3 w-full text-center">
-                <div className="font-bold text-lg text-white">06:45–05:00</div>
-                <div className="text-xs text-blue-300 flex items-center justify-center gap-1">שעת בוקר 🌅</div>
-              </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-8"
+        >
+          <div className="flex items-center justify-end gap-2 mb-4">
+            <h3 className="font-black text-lg text-white">חלונות זהב לדייג היום</h3>
+            <div className="bg-yellow-500/20 p-1.5 rounded-full text-yellow-400">
+              <Trophy className="w-4 h-4" />
             </div>
           </div>
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-[2rem] overflow-hidden h-32 border border-white/10 shadow-lg cursor-pointer">
+              <img src="/fishing_bg.jpg" alt="Evening" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#020610]/90 via-[#020610]/40 to-transparent"></div>
+              <div className="absolute bottom-4 w-full text-center">
+                <div className="font-black text-xl text-white tracking-wide">20:15–19:00</div>
+                <div className="text-xs font-bold text-amber-400 flex items-center justify-center gap-1 mt-1">שעת ערב 🌇</div>
+              </div>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-[2rem] overflow-hidden h-32 border border-white/10 shadow-lg cursor-pointer">
+              <img src="/fishing_bg.jpg" alt="Morning" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-[#020610]/40"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-cyan-950/90 via-cyan-900/30 to-transparent"></div>
+              <div className="absolute bottom-4 w-full text-center">
+                <div className="font-black text-xl text-white tracking-wide">06:45–05:00</div>
+                <div className="text-xs font-bold text-cyan-300 flex items-center justify-center gap-1 mt-1">שעת בוקר 🌅</div>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
 
         {/* Actions Grid */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <ActionButton icon={Waves} label="תחזיות דייג" />
-          <ActionButton icon={MapPin} label="מיקומי דייג" />
-          <ActionButton icon={Fish} label="זיהוי דגים" />
-          <ActionButton icon={Play} label="עדכון מהשטח" />
+        <div className="grid grid-cols-2 gap-4 mt-8">
+          <ActionButton icon={Waves} label="תחזיות דייג" delay={0.5} />
+          <ActionButton icon={MapPin} label="מיקומי דייג" delay={0.6} />
+          <ActionButton icon={Fish} label="זיהוי דגים" delay={0.7} />
+          <ActionButton icon={Play} label="עדכון מהשטח" delay={0.8} />
         </div>
 
         {/* Add Location Button */}
-        <button className="w-full mt-6 py-4 rounded-2xl bg-[#0F1C35] border border-dashed border-slate-700 text-blue-400 font-medium flex items-center justify-center gap-2 hover:bg-[#152545] transition-colors">
-          <MapPin className="w-5 h-5" />
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+          className="w-full mt-6 py-5 rounded-[2rem] bg-cyan-500/10 border border-dashed border-cyan-500/30 text-cyan-400 font-bold text-base flex items-center justify-center gap-3 hover:bg-cyan-500/20 transition-colors"
+        >
+          <div className="bg-cyan-500/20 p-1.5 rounded-full">
+            <MapPin className="w-5 h-5" />
+          </div>
           הוסף מיקום דייג חדש
-        </button>
+        </motion.button>
       </div>
     </FishingLayout>
   );

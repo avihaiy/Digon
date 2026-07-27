@@ -90,9 +90,15 @@
     --sidebar-primary: 42 85% 55%;
     --sidebar-primary-foreground: 224 71% 4%;
     --sidebar-accent: 222.2 47.4% 11.2%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 216 34% 17%;
-    --sidebar-ring: 42 85% 55%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
   }
 }
 
