@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -69,14 +70,18 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2">
-            <Activity className="w-4 h-4" />
-            דוח פעילות יומי
-          </Button>
-          <Button className="gap-2">
-            <Fish className="w-4 h-4" />
-            פרסם עדכון לדייגים
-          </Button>
+          <Link to="/members">
+            <Button variant="outline" className="gap-2 cursor-pointer">
+              <Users className="w-4 h-4" />
+              ניהול וצפייה בדייגים
+            </Button>
+          </Link>
+          <Link to="/manage-ads">
+            <Button className="gap-2 cursor-pointer">
+              <Activity className="w-4 h-4" />
+              פרסום עדכונים באפליקציה
+            </Button>
+          </Link>
         </div>
       </div>
 

@@ -49,7 +49,7 @@ interface AppLayoutProps {
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'לוח בקרה דיגון' },
-  { href: '#', icon: Users, label: 'ניהול דייגים' },
+  { href: '/members', icon: Users, label: 'ניהול דייגים' },
   { href: '#', icon: Fish, label: 'דיווחי תפיסות' },
   { href: '#', icon: MapPin, label: 'ניהול מיקומים' },
   { href: '#', icon: Trophy, label: 'חנות CoinsISR' },
