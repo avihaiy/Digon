@@ -3,6 +3,7 @@ import FishingLayout from "@/components/fishing/FishingLayout";
 import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, ChevronRight, MoreHorizontal, Bell, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 // Helper for circular progress with Framer Motion and Glow
 const CircularProgress = ({ value, label, subLabel, color, glowColor }: { value: number, label: string, subLabel: string, color: string, glowColor: string }) => {
@@ -113,9 +114,9 @@ const Home = () => {
             </div>
           </div>
           
-          <button className="absolute top-5 end-5 bg-black/30 hover:bg-black/50 p-2.5 rounded-full backdrop-blur-md border border-white/10 transition-colors z-10">
+          <Link to="/dashboard" className="absolute top-5 end-5 bg-black/30 hover:bg-black/50 p-2.5 rounded-full backdrop-blur-md border border-white/10 transition-colors z-10 cursor-pointer">
             <Settings className="w-5 h-5 text-white" />
-          </button>
+          </Link>
 
           <div className="absolute bottom-5 start-0 text-start z-10 w-full px-5">
             <h2 className="text-4xl font-black text-white drop-shadow-2xl mb-2 flex items-center justify-start gap-3">
