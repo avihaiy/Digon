@@ -114,9 +114,19 @@ const Home = () => {
             </div>
           </div>
           
-          <Link to="/dashboard" className="absolute top-5 end-5 bg-black/30 hover:bg-black/50 p-2.5 rounded-full backdrop-blur-md border border-white/10 transition-colors z-10 cursor-pointer">
-            <Settings className="w-5 h-5 text-white" />
-          </Link>
+          {/* Action Buttons (Login / Management) */}
+          <div className="absolute top-5 end-5 flex flex-col gap-2 z-10">
+            {!user ? (
+              <Link to="/login" className="bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-colors border border-cyan-400/50 flex items-center gap-1">
+                התחברות למערכת
+              </Link>
+            ) : (
+              <Link to="/dashboard" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-colors border border-blue-500/50 flex items-center gap-1">
+                <Settings className="w-3.5 h-3.5" />
+                ניהול
+              </Link>
+            )}
+          </div>
 
           <div className="absolute bottom-5 start-0 text-start z-10 w-full px-5">
             <h2 className="text-4xl font-black text-white drop-shadow-2xl mb-2 flex items-center justify-start gap-3">
