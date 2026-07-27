@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Users, Waves, MapPin, Fish, BookOpen } from "lucide-react";
+import { Home, Users, Waves, MapPin, Fish } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -10,7 +10,6 @@ const BottomNav = () => {
     { icon: Waves, label: "תחזית", path: "/fishing/forecast" },
     { icon: MapPin, label: "מיקומים", path: "/fishing/locations" },
     { icon: Fish, label: "זיהוי", path: "/fishing/identify" },
-    { icon: BookOpen, label: "אלבום", path: "/fishing/album" },
   ];
 
   return (

@@ -39,6 +39,10 @@ import NotFound from "@/pages/NotFound";
 import ManageAds from "@/pages/ManageAds";
 import Display from "@/pages/Display";
 import FishingHome from "@/pages/fishing/Home";
+import Community from "@/pages/fishing/Community";
+import Forecast from "@/pages/fishing/Forecast";
+import Locations from "@/pages/fishing/Locations";
+import Identify from "@/pages/fishing/Identify";
 import SettingsPage from "@/pages/SettingsPage";
 import Reminders from "@/pages/Reminders";
 import Events from "@/pages/Events";
@@ -119,6 +123,38 @@ const AnimatedRoutes = () => {
           element={
             <PageTransition>
               <FishingHome />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/fishing/community"
+          element={
+            <PageTransition>
+              <Community />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/fishing/forecast"
+          element={
+            <PageTransition>
+              <Forecast />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/fishing/locations"
+          element={
+            <PageTransition>
+              <Locations />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/fishing/identify"
+          element={
+            <PageTransition>
+              <Identify />
             </PageTransition>
           }
         />
