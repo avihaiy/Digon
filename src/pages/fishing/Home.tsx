@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import FishingLayout from "@/components/fishing/FishingLayout";
-import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, MoreHorizontal, LucideIcon } from "lucide-react";
+import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, ChevronRight, MoreHorizontal, Bell, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -76,15 +76,18 @@ const Home = () => {
       <motion.div 
         initial={{ y: -50 }}
         animate={{ y: 0 }}
-        className="sticky top-0 z-40 bg-[#020610]/70 backdrop-blur-2xl border-b border-white/5 px-4 py-3 flex items-center justify-between"
+        className="sticky top-0 z-40 bg-[#020610]/80 backdrop-blur-2xl border-b border-white/5 px-5 py-4 flex items-center justify-between"
       >
-        <button className="text-cyan-400 font-medium text-sm">Close</button>
-        <div className="text-center flex-1">
-          <h1 className="font-black text-lg text-white tracking-tight">דיג בישראל</h1>
-          <span className="text-[10px] uppercase tracking-widest text-cyan-500/80 font-bold">mini app</span>
+        <div className="flex items-center gap-3">
+          <img src="/digon-logo.jpg" alt="Digon" className="w-10 h-10 rounded-xl shadow-lg border border-white/10 object-cover" />
+          <div className="flex flex-col">
+            <h1 className="font-black text-xl text-white tracking-tight leading-none text-start">דיגון</h1>
+            <span className="text-[11px] text-cyan-400 font-medium mt-1">קהילת הדייגים בישראל</span>
+          </div>
         </div>
-        <button className="text-slate-300 hover:text-white transition-colors">
-          <MoreHorizontal className="w-6 h-6" />
+        <button className="relative p-2.5 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/5">
+          <Bell className="w-5 h-5 text-slate-300" />
+          <span className="absolute top-1.5 end-1.5 w-2 h-2 bg-rose-500 rounded-full shadow-[0_0_8px_rgba(225,29,72,0.8)] animate-pulse"></span>
         </button>
       </motion.div>
 
@@ -103,19 +106,19 @@ const Home = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#020610]/60 via-transparent to-[#020610]"></div>
           
-          <div className="absolute top-5 right-5 text-right z-10">
-            <div className="text-slate-300 text-xs font-medium uppercase tracking-wider mb-1">ברוך הבא,</div>
-            <div className="text-white font-black text-2xl flex items-center justify-end gap-2 drop-shadow-lg">
+          <div className="absolute top-5 start-5 text-start z-10">
+            <div className="text-slate-300 text-xs font-medium tracking-wider mb-1">ברוך הבא,</div>
+            <div className="text-white font-black text-2xl flex items-center justify-start gap-2 drop-shadow-lg">
               {user?.email?.split('@')[0] || 'avihaiy'} <motion.span animate={{ rotate: [0, 20, 0] }} transition={{ repeat: Infinity, duration: 2, repeatDelay: 3 }} className="text-2xl origin-bottom-right">👋</motion.span>
             </div>
           </div>
           
-          <button className="absolute top-5 left-5 bg-black/30 hover:bg-black/50 p-2.5 rounded-full backdrop-blur-md border border-white/10 transition-colors z-10">
+          <button className="absolute top-5 end-5 bg-black/30 hover:bg-black/50 p-2.5 rounded-full backdrop-blur-md border border-white/10 transition-colors z-10">
             <Settings className="w-5 h-5 text-white" />
           </button>
 
-          <div className="absolute bottom-5 right-5 text-right z-10 w-full px-5">
-            <h2 className="text-4xl font-black text-white drop-shadow-2xl mb-2 flex items-center justify-end gap-2">
+          <div className="absolute bottom-5 start-0 text-start z-10 w-full px-5">
+            <h2 className="text-4xl font-black text-white drop-shadow-2xl mb-2 flex items-center justify-start gap-3">
               דיג בישראל 
               <span className="text-3xl filter drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">🎣</span>
             </h2>
@@ -171,17 +174,17 @@ const Home = () => {
           {/* Animated shine effect */}
           <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
           
-          <ChevronLeft className="w-5 h-5 text-yellow-500/70" />
-          <div className="text-right flex-1 pr-5">
-            <div className="flex flex-col items-end">
+          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] -rotate-3 group-hover:-rotate-12 transition-transform duration-500">
+            <Fish className="w-8 h-8 text-white drop-shadow-md" />
+          </div>
+          <div className="text-start flex-1 px-5">
+            <div className="flex flex-col items-start">
               <span className="text-4xl font-black bg-gradient-to-r from-yellow-200 to-amber-500 bg-clip-text text-transparent drop-shadow-sm">165</span>
-              <span className="text-yellow-500 font-bold text-sm uppercase tracking-widest mt-0.5">CoinsISR</span>
+              <span className="text-yellow-500 font-bold text-sm tracking-widest mt-0.5">CoinsISR</span>
             </div>
             <div className="text-amber-200/70 text-xs font-medium mt-1.5">צבור מטבעות לפתיחת תוכן בלעדי</div>
           </div>
-          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] rotate-3 group-hover:rotate-12 transition-transform duration-500">
-            <Fish className="w-8 h-8 text-white drop-shadow-md" />
-          </div>
+          <ChevronLeft className="w-5 h-5 text-yellow-500/70" />
         </motion.div>
 
         {/* Golden Windows */}
@@ -191,11 +194,11 @@ const Home = () => {
           transition={{ delay: 0.4 }}
           className="mt-8"
         >
-          <div className="flex items-center justify-end gap-2 mb-4">
-            <h3 className="font-black text-lg text-white">חלונות זהב לדייג היום</h3>
+          <div className="flex items-center justify-start gap-2 mb-4">
             <div className="bg-yellow-500/20 p-1.5 rounded-full text-yellow-400">
               <Trophy className="w-4 h-4" />
             </div>
+            <h3 className="font-black text-lg text-white">חלונות זהב לדייג היום</h3>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <motion.div whileHover={{ scale: 1.02 }} className="relative rounded-[2rem] overflow-hidden h-32 border border-white/10 shadow-lg cursor-pointer">
