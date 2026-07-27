@@ -1,0 +1,26 @@
+import { Client, Users, ID } from 'node-appwrite';
+
+const client = new Client()
+    .setEndpoint('https://fra.cloud.appwrite.io/v1')
+    .setProject('6a6748ef003255232493')
+    .setKey('standard_064228356a05481b9eb9f73424173ebfb2decbc264fdc20554db1e8e3cb216ecc9af8450103ee9ededa76f37f49378d1981156c227ea4c6a03ef3a2e91ca20ca0435668a4047939317295e18784961fe6751138f87fe9f752085566afdced8511b4c6f09a1b271c167c1faa5d31bf792abd4de4bc840b2fb087359dd8f52bdee');
+
+const users = new Users(client);
+
+async function createAdmin() {
+    try {
+        console.log('Creating user avihaidj0@gmail.com...');
+        const user = await users.create(
+            ID.unique(),
+            'avihaidj0@gmail.com',
+            '+972546526856', // Mock phone or undefined
+            'As0546526856',
+            'Avihai Admin'
+        );
+        console.log('Success! Created user:', user.$id);
+    } catch (e) {
+        console.error('Failed to create user:', e.message);
+    }
+}
+
+createAdmin();
