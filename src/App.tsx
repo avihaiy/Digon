@@ -38,6 +38,7 @@ import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
 import ManageAds from "@/pages/ManageAds";
 import Display from "@/pages/Display";
+import FishingHome from "@/pages/fishing/Home";
 import SettingsPage from "@/pages/SettingsPage";
 import Reminders from "@/pages/Reminders";
 import Events from "@/pages/Events";
@@ -115,6 +116,14 @@ const AnimatedRoutes = () => {
         />
         <Route
           path="/"
+          element={
+            <PageTransition>
+              <FishingHome />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <PageTransition>
@@ -382,6 +391,14 @@ const AnimatedRoutes = () => {
           element={
             <PageTransition>
               <DisplayTV />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/fishing"
+          element={
+            <PageTransition>
+              <FishingHome />
             </PageTransition>
           }
         />

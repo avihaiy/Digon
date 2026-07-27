@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import {
   Users,
   CreditCard,
@@ -23,6 +23,7 @@ import {
   Clock,
   CalendarIcon,
   Star,
+  Fish
 } from 'lucide-react';
 import { formatCurrency, getNextShabbat, formatDate, getCurrentParasha, getHebrewDate } from '@/lib/hebrew-utils';
 import { format, startOfMonth, subMonths, endOfMonth } from 'date-fns';
@@ -557,6 +558,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Force redirect to fishing app for the user to see it */}
+      <Navigate to="/fishing" replace />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-up">
         <div>
@@ -592,6 +595,24 @@ export default function Dashboard() {
             </Link>
           ))}
         </div>
+      </div>
+
+      {/* Fishing App Promo Banner */}
+      <div className="bg-gradient-to-r from-[#0F1C35] to-[#1a2f58] rounded-2xl p-4 flex items-center justify-between shadow-lg border border-slate-700/50 animate-fade-up">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+            <Fish className="w-6 h-6 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-lg">אפליקציית דייג בישראל</h3>
+            <p className="text-blue-200 text-sm">הממשק החדש זמין כעת!</p>
+          </div>
+        </div>
+        <Link to="/fishing">
+          <Button variant="secondary" className="bg-blue-500 hover:bg-blue-600 text-white border-0">
+            היכנס לאפליקציה
+          </Button>
+        </Link>
       </div>
 
       {/* Recurring Reminders Summary - Top Section */}
