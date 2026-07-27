@@ -25,21 +25,17 @@
         var isDisplay = /^\/display/.test(window.location.pathname);
         var isMy = /^\/my\//.test(window.location.pathname);
         
-        var icon192 = isMy ? "/pwa-personal-192x192.png" : "/pwa-icon.png";
-        var icon512 = isMy ? "/pwa-personal-512x512.png" : "/pwa-512x512.png";
-        
-        if (isMy) {
-          document.title = "אזור אישי - ברית שלום";
-        }
+        var icon192 = "/digon-logo.jpg";
+        var icon512 = "/digon-logo.jpg";
         
         // Write icons
-        document.write('<link rel="icon" href="' + icon192 + '" type="image/png" />');
+        document.write('<link rel="icon" href="' + icon192 + '" type="image/jpeg" />');
         document.write('<link rel="apple-touch-icon" href="' + icon192 + '" />');
         document.write('<link rel="apple-touch-icon" sizes="180x180" href="' + icon192 + '" />');
         document.write('<link rel="mask-icon" href="' + icon192 + '" color="#1a1a2e" />');
         
         // Write Open Graph
-        document.write('<meta property="og:title" content="' + (isMy ? 'אזור אישי - ברית שלום' : 'ניהול גבאות - מערכת בית הכנסת') + '" />');
+        document.write('<meta property="og:title" content="דיגון - פאנל ניהול" />');
         document.write('<meta property="og:image" content="' + icon512 + '" />');
         
         if (isMy) {

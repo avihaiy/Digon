@@ -133,10 +133,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <div className="p-6 border-b border-sidebar-border" style={{ paddingTop: 'calc(1.5rem + env(safe-area-inset-top))' }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img 
-                  src="/pwa-icon.png" 
-                  alt="ברית שלום" 
-                  className="w-12 h-12 object-contain animate-scale-in hover-scale"
+                <img
+                  src="/digon-logo.jpg"
+                  alt="Digon Logo"
+                  className="w-12 h-12 object-contain animate-scale-in hover-scale rounded-xl shadow-sm"
                 />
                 <div>
                   <h1 className="text-lg font-bold text-sidebar-foreground">דיגון</h1>
