@@ -167,12 +167,12 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <img 
-            src="/pwa-icon.png" 
-            alt="ברית שלום" 
-            className="w-20 h-20 object-contain mx-auto mb-4 animate-scale-in hover-scale"
+            src="/digon-logo.jpg" 
+            alt="דיגון" 
+            className="w-20 h-20 object-cover rounded-2xl shadow-lg mx-auto mb-4 animate-scale-in hover-scale"
           />
-          <h1 className="text-2xl font-bold text-foreground animate-fade-in">ברית שלום</h1>
-          <p className="text-muted-foreground mt-2 animate-fade-in" style={{ animationDelay: '0.1s' }}>מערכת ניהול גבאות</p>
+          <h1 className="text-2xl font-bold text-foreground animate-fade-in">דיגון</h1>
+          <p className="text-muted-foreground mt-2 animate-fade-in" style={{ animationDelay: '0.1s' }}>מערכת הדייג של ישראל</p>
         </div>
 
         <Card className="glass-card animate-fade-in" style={{ animationDelay: '0.2s' }}>
