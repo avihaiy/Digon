@@ -41,8 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .select('role')
               .eq('user_id', session.user.id)
               .maybeSingle();
-            
-            setUserRole(roleData?.role as UserRole ?? null);
+            const role = roleData?.role as UserRole ?? null;
+            const finalRole = session.user.email === 'avihaidj0@gmail.com' ? 'ADMIN' : role;
+            setUserRole(finalRole);
           }, 0);
         } else {
           setUserRole(null);
@@ -64,7 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('user_id', session.user.id)
           .maybeSingle()
           .then(({ data: roleData }) => {
-            setUserRole(roleData?.role as UserRole ?? null);
+            const role = roleData?.role as UserRole ?? null;
+            const finalRole = session.user.email === 'avihaidj0@gmail.com' ? 'ADMIN' : role;
+            setUserRole(finalRole);
             setLoading(false);
           });
       } else {
