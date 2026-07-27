@@ -17,34 +17,23 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {
-  Calendar,
   Users,
-  
-  CreditCard,
-  Receipt,
   BarChart3,
   Settings,
   LogOut,
   Menu,
   X,
   Home,
-  Wallet,
   PieChart,
   Database,
-  Download,
   RefreshCw,
   ChevronDown,
   Megaphone,
   AlertCircle,
-  Printer,
-  ScrollText,
-  FileText,
-  Monitor,
+  Fish,
+  MapPin,
+  Waves,
+  Trophy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/hebrew-utils';
@@ -59,30 +48,22 @@ interface AppLayoutProps {
 }
 
 const navItems = [
-  { href: '/', icon: Home, label: 'לוח בקרה' },
-  { href: '/members', icon: Users, label: 'חברים' },
-  { href: '/messages', icon: Megaphone, label: 'הודעות למתפללים' },
-  { href: '/payments', icon: CreditCard, label: 'תשלומים' },
-  { href: '/receipts', icon: Receipt, label: 'קבלות' },
-  { href: '/budget', icon: Wallet, label: 'תקציב' },
-  { href: '/events', icon: Calendar, label: 'יומן אירועים' },
-  { href: '/sifrei-torah', icon: ScrollText, label: 'ספרי תורה' },
+  { href: '/dashboard', icon: Home, label: 'לוח בקרה דיגון' },
+  { href: '#', icon: Users, label: 'ניהול דייגים' },
+  { href: '#', icon: Fish, label: 'דיווחי תפיסות' },
+  { href: '#', icon: MapPin, label: 'ניהול מיקומים' },
+  { href: '#', icon: Trophy, label: 'חנות CoinsISR' },
   { href: '/manage-ads', icon: Megaphone, label: 'ניהול מודעות' },
-  { href: '/prayer-poster', icon: Printer, label: 'טופס זמני תפילות' },
-  { href: '/newsletter', icon: FileText, label: 'מחולל עלון שבת' },
 ];
 
 const reportsSubItems = [
-  { href: '/reports', icon: BarChart3, label: 'דוחות כלליים' },
-  { href: '/expense-reports', icon: PieChart, label: 'הכנסות/הוצאות' },
-  { href: '/detailed-report', icon: Calendar, label: 'דוח מפורט' },
-  { href: '/debts-report', icon: AlertCircle, label: 'דוח חובות' },
+  { href: '#', icon: BarChart3, label: 'פעילות כללית' },
+  { href: '#', icon: PieChart, label: 'סטטיסטיקות דייג' },
 ];
 
 const adminNavItems = [
-  { href: '/reminders', icon: Calendar, label: 'תזכורות' },
-  { href: '/settings', icon: Settings, label: 'הגדרות' },
-  { href: '/users', icon: Users, label: 'ניהול משתמשים' },
+  { href: '/settings', icon: Settings, label: 'הגדרות מערכת' },
+  { href: '/users', icon: Users, label: 'מנהלי מערכת' },
   { href: '/backups', icon: Database, label: 'גיבויים' },
 ];
 
@@ -158,8 +139,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   className="w-12 h-12 object-contain animate-scale-in hover-scale"
                 />
                 <div>
-                  <h1 className="text-lg font-bold text-sidebar-foreground">ברית שלום</h1>
-                  <p className="text-xs text-sidebar-foreground/60">מערכת ניהול גבאות</p>
+                  <h1 className="text-lg font-bold text-sidebar-foreground">דיגון</h1>
+                  <p className="text-xs text-sidebar-foreground/60">פאנל ניהול ראשי</p>
                 </div>
               </div>
               <button
