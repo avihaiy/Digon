@@ -357,7 +357,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {/* Footer credit */}
         <footer className="border-t border-border px-4 py-3 text-center">
           <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">ברית שלום</span> - מערכת ניהול גבאות
+            <span className="font-medium text-foreground">דיגון</span> - מערכת הדייג של ישראל
             <span className="mx-2">•</span>
             נבנתה ע"י <span className="font-medium text-foreground">{APP_CONFIG.developer.name}</span>
             <span className="mx-2">•</span>

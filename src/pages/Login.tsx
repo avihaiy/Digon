@@ -262,9 +262,8 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          מערכת ניהול גבאות - כל הזכויות שמורות
-        </p>
+        <div className="text-center text-sm text-muted-foreground/60 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          מערכת דיגון - כל הזכויות שמורות &copy; {new Date().getFullYear()}      </div>
       </div>
     </div>
   );
