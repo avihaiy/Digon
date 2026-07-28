@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases } from "@/lib/appwrite";
+import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera } from "lucide-react";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -54,6 +54,16 @@ export default function Admin() {
     enabled: !!user,
   });
 
+  // Fetch Catches
+  const { data: catchesData, isLoading: catchesLoading } = useQuery({
+    queryKey: ["admin-catches"],
+    queryFn: async () => {
+      const res = await databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [Query.orderDesc("$createdAt"), Query.limit(100)]);
+      return res.documents;
+    },
+    enabled: !!user,
+  });
+
   // Add Location Mutation
   const addLocationMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -81,6 +91,26 @@ export default function Admin() {
       toast.success("המיקום נמחק");
       queryClient.invalidateQueries({ queryKey: ["admin-locations"] });
     },
+  });
+
+  // Delete Catch Mutation
+  const deleteCatchMutation = useMutation({
+    mutationFn: async ({ id, imageId }: { id: string, imageId: string }) => {
+      if (imageId) {
+        try {
+          await storage.deleteFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, imageId);
+        } catch (e) {
+          console.error("Failed to delete image", e);
+        }
+      }
+      await databases.deleteDocument(DB_ID, APPWRITE_CATCHES_ID, id);
+    },
+    onSuccess: () => {
+      toast.success("התפיסה נמחקה בהצלחה");
+      queryClient.invalidateQueries({ queryKey: ["admin-catches"] });
+      queryClient.invalidateQueries({ queryKey: ["catches"] });
+    },
+    onError: () => toast.error("שגיאה במחיקת התפיסה"),
   });
 
   // Update Ad Status Mutation
@@ -126,6 +156,13 @@ export default function Admin() {
           className="flex gap-2 items-center"
         >
           <MapPin className="w-4 h-4" /> מיקומי דייג
+        </Button>
+        <Button 
+          variant={activeTab === "catches" ? "default" : "outline"} 
+          onClick={() => setActiveTab("catches")}
+          className="flex gap-2 items-center"
+        >
+          <Camera className="w-4 h-4" /> תפיסות
         </Button>
       </div>
 
@@ -244,6 +281,54 @@ export default function Admin() {
                     ))}
                     {(!locationsData || locationsData.length === 0) && (
                       <TableRow><TableCell colSpan={2} className="text-center">לא הוזנו מיקומים</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "catches" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>ניהול תפיסות</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {catchesLoading ? <p>טוען תפיסות...</p> : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>שם הדייג</TableHead>
+                      <TableHead>סוג דג</TableHead>
+                      <TableHead>תאריך</TableHead>
+                      <TableHead>פעולות</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {catchesData?.map((catchItem: any) => (
+                      <TableRow key={catchItem.$id}>
+                        <TableCell>{catchItem.user_name}</TableCell>
+                        <TableCell>{catchItem.fish_type} {catchItem.weight ? `(${catchItem.weight})` : ""}</TableCell>
+                        <TableCell>{new Date(catchItem.$createdAt).toLocaleDateString("he-IL")}</TableCell>
+                        <TableCell>
+                          <Button 
+                            size="sm" 
+                            variant="destructive" 
+                            onClick={() => {
+                              if(window.confirm("האם למחוק תפיסה זו? (פעולה זו תמחק גם את התמונה)")) {
+                                deleteCatchMutation.mutate({ id: catchItem.$id, imageId: catchItem.image_id });
+                              }
+                            }}
+                            disabled={deleteCatchMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" /> מחק
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!catchesData || catchesData.length === 0) && (
+                      <TableRow><TableCell colSpan={4} className="text-center">אין תפיסות במערכת</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
