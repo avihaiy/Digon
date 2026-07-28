@@ -171,9 +171,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-hidden">
-        {/* Offline Banner */}
-        <OfflineBanner />
-        
         {/* Top header */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(4rem + env(safe-area-inset-top))' }}>
           <button
@@ -198,14 +195,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
               )}
             </Button>
             
-            {/* Offline Indicator */}
-            <OfflineIndicator />
-            
             {/* Theme Toggle */}
             <ThemeToggle />
-            
-            {/* Notifications */}
-            <NotificationDropdown />
 
             {/* Settings dropdown */}
             <DropdownMenu>
