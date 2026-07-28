@@ -213,11 +213,11 @@ export default function Admin() {
   });
 
   const drawRaffleWinner = async () => {
-    if (!usersQuery.data?.documents) return;
+    if (!usersData) return;
     
     // Create a pool of tickets
     const pool: any[] = [];
-    usersQuery.data.documents.forEach(user => {
+    usersData.forEach((user: any) => {
       const tickets = user.tickets || 0;
       for (let i = 0; i < tickets; i++) {
         pool.push(user);
@@ -235,12 +235,12 @@ export default function Admin() {
   };
 
   const resetRaffles = async () => {
-    if (!usersQuery.data?.documents) return;
+    if (!usersData) return;
     if (!confirm("האם אתה בטוח שברצונך לאפס את כרטיסי ההגרלה של כולם ל-0?")) return;
     
     toast.info("מתחיל איפוס...");
     try {
-      const promises = usersQuery.data.documents
+      const promises = usersData
         .filter(u => u.tickets > 0)
         .map(u => databases.updateDocument(DB_ID, PROFILES_ID, u.$id, { tickets: 0 }));
       
@@ -539,7 +539,7 @@ export default function Admin() {
             <CardTitle className="flex items-center gap-2"><Ticket className="w-5 h-5 text-rose-500"/> ניהול הגרלות ופרסים</CardTitle>
           </CardHeader>
           <CardContent>
-            {usersQuery.isLoading ? (
+            {usersLoading ? (
               <p>טוען משתמשים...</p>
             ) : (
               <div className="space-y-6">
@@ -563,14 +563,14 @@ export default function Admin() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {usersQuery.data?.documents.filter((u: any) => u.tickets > 0).map((user: any) => (
+                      {usersData?.filter((u: any) => u.tickets > 0).map((user: any) => (
                         <TableRow key={user.$id}>
                           <TableCell className="font-medium">{user.full_name || 'אנונימי'}</TableCell>
                           <TableCell className="font-bold text-rose-600">{user.tickets}</TableCell>
                           <TableCell>{user.points}</TableCell>
                         </TableRow>
                       ))}
-                      {usersQuery.data?.documents.filter((u: any) => u.tickets > 0).length === 0 && (
+                      {usersData?.filter((u: any) => u.tickets > 0).length === 0 && (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                             אין משתתפים עם כרטיסי הגרלה עדיין.
