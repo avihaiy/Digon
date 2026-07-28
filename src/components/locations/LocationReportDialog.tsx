@@ -27,7 +27,16 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [fishingMethods, setFishingMethods] = useState("");
+  const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
+
+  const AVAILABLE_METHODS = [
+    "ז'רז'ור",
+    "פתיונות",
+    "בוס",
+    "בולונז",
+    "ג'יג",
+    "טרולינג"
+  ];
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -39,6 +48,7 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
       setMapUrl("");
       setImageFile(null);
       setImagePreview(null);
+      setSelectedMethods([]);
     }
   };
 
@@ -191,18 +201,37 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="fishingMethods">שיטות דייג מומלצות</Label>
-            <Input 
-              id="fishingMethods" 
-              placeholder="לדוגמה: ז'רז'ור, פתיונות, בוס" 
-              value={fishingMethods}
-              onChange={(e) => setFishingMethods(e.target.value)}
-            />
+            <Label>שיטות דייג מומלצות</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {AVAILABLE_METHODS.map((method) => {
+                const isSelected = selectedMethods.includes(method);
+                return (
+                  <button
+                    key={method}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedMethods(prev => prev.filter(m => m !== method));
+                      } else {
+                        setSelectedMethods(prev => [...prev, method]);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                      isSelected 
+                        ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50' 
+                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    {method}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <Button 
             className="w-full mt-4" 
-            onClick={() => reportLocationMutation.mutate({ name: newLocationName, mapUrl, imageFile, fishingMethods })}
+            onClick={() => reportLocationMutation.mutate({ name: newLocationName, mapUrl, imageFile, fishingMethods: selectedMethods.join(", ") })}
             disabled={!newLocationName.trim() || reportLocationMutation.isPending}
           >
             {reportLocationMutation.isPending ? "שולח..." : "שלח לאישור מנהל"}
