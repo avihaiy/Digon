@@ -6,6 +6,7 @@ import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw } from 'lucid
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
+import { LocationReportDialog } from '@/components/locations/LocationReportDialog';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
@@ -104,15 +105,21 @@ export default function Home() {
 
       {/* Main CTA */}
       <section className="pt-2">
-        <CatchReportDialog>
-          <Button size="lg" className="w-full h-16 text-lg rounded-2xl shadow-lg shadow-primary/20 gap-3 group">
-            <Camera className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            דיווח על תפיסה חדשה
-            <div className="absolute right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-              <Plus className="w-5 h-5 text-white" />
-            </div>
-          </Button>
-        </CatchReportDialog>
+        <div className="flex gap-2">
+          <CatchReportDialog>
+            <Button size="lg" className="flex-1 h-16 text-lg rounded-2xl shadow-lg shadow-primary/20 gap-3 group">
+              <Camera className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              דיווח תפיסה
+            </Button>
+          </CatchReportDialog>
+
+          <LocationReportDialog>
+            <Button size="lg" variant="outline" className="flex-1 h-16 text-lg rounded-2xl shadow-lg gap-3 group bg-background/50 backdrop-blur-md border-primary/20 hover:bg-primary/5">
+              <MapPin className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+              דיווח מיקום
+            </Button>
+          </LocationReportDialog>
+        </div>
       </section>
 
       {/* Recent Catches Feed */}
