@@ -47,7 +47,7 @@ const navItems = [
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { user, userRole, signOut, isAdmin } = useAuth();
+  const { user, userRole, points, signOut, isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -150,11 +150,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     <p className="text-sm font-medium text-sidebar-foreground truncate">
                       {user.email}
                     </p>
-                    {userRole && (
-                      <Badge variant="outline" className="mt-1 text-xs border-sidebar-primary/50 text-sidebar-primary">
-                        {userRole === 'admin' ? 'מנהל' : 'דייג'}
+                    <div className="flex items-center gap-2 mt-1">
+                      {userRole && (
+                        <Badge variant="outline" className="text-[10px] border-sidebar-primary/50 text-sidebar-primary px-1.5 py-0">
+                          {userRole === 'admin' ? 'מנהל' : 'דייג'}
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-yellow-500/20 text-yellow-600 dark:text-yellow-400">
+                        {points} 🪙
                       </Badge>
-                    )}
+                    </div>
                   </>
                 ) : (
                   <Link to="/login" className="text-sm font-medium text-primary hover:underline">

@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
+import { useCatches, getImageUrl } from '@/hooks/useCatches';
+import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
   const { user } = useAuth();
   const { data: marineData, loading: marineLoading, refreshData, lastUpdated } = useMarineWeather();
+  const { catches, isLoading: catchesLoading } = useCatches();
   
   // Get first name or use default
   const firstName = user?.name?.split(' ')[0] || 'דייג';
@@ -101,13 +104,15 @@ export default function Home() {
 
       {/* Main CTA */}
       <section className="pt-2">
-        <Button size="lg" className="w-full h-16 text-lg rounded-2xl shadow-lg shadow-primary/20 gap-3 group">
-          <Camera className="w-6 h-6 group-hover:scale-110 transition-transform" />
-          דיווח על תפיסה חדשה
-          <div className="absolute right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-            <Plus className="w-5 h-5 text-white" />
-          </div>
-        </Button>
+        <CatchReportDialog>
+          <Button size="lg" className="w-full h-16 text-lg rounded-2xl shadow-lg shadow-primary/20 gap-3 group">
+            <Camera className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            דיווח על תפיסה חדשה
+            <div className="absolute right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+              <Plus className="w-5 h-5 text-white" />
+            </div>
+          </Button>
+        </CatchReportDialog>
       </section>
 
       {/* Recent Catches Feed */}
@@ -118,32 +123,41 @@ export default function Home() {
         </div>
         
         <div className="space-y-4">
-          {[
-            { id: 1, name: "יוסי כהן", fish: "דניס", weight: "1.2 ק״ג", location: "מרינה אשדוד", time: "לפני 10 דק׳", img: "https://images.unsplash.com/photo-1595183888365-9509df636eb0?auto=format&fit=crop&q=80&w=200&h=200" },
-            { id: 2, name: "אביחי יוספוביץ׳", fish: "לוקוס", weight: "3 ק״ג", location: "שובר גלים חיפה", time: "לפני חצי שעה", img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&q=80&w=200&h=200" },
-            { id: 3, name: "דניאל", fish: "בורי", weight: "400 גרם", location: "נמל יפו", time: "לפני שעתיים", img: "https://images.unsplash.com/photo-1524334228333-0f6db392f8a1?auto=format&fit=crop&q=80&w=200&h=200" },
-          ].map((report) => (
-            <Card key={report.id} className="overflow-hidden border-border/50 shadow-sm">
-              <div className="flex p-3 gap-4 items-center">
-                <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-border">
-                  <img src={report.img} alt={report.fish} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-semibold truncate">{report.name}</p>
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">{report.time}</span>
+          {catchesLoading ? (
+            <div className="flex justify-center p-4">
+              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : catches && catches.length > 0 ? (
+            catches.map((report) => (
+              <Card key={report.$id} className="overflow-hidden border-border/50 shadow-sm">
+                <div className="flex p-3 gap-4 items-center">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-border">
+                    <img src={getImageUrl(report.image_id)} alt={report.fish_type} className="w-full h-full object-cover" />
                   </div>
-                  <p className="text-sm font-bold text-primary mb-1">
-                    {report.fish} <span className="text-xs font-normal text-muted-foreground ml-1">({report.weight})</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {report.location}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-semibold truncate">{report.user_name}</p>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                        {new Date(report.$createdAt).toLocaleDateString('he-IL')}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold text-primary mb-1">
+                      {report.fish_type} {report.weight && <span className="text-xs font-normal text-muted-foreground ml-1">({report.weight})</span>}
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {report.location}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))
+          ) : (
+            <div className="text-center p-8 bg-muted/20 rounded-xl border border-dashed">
+              <p className="text-sm text-muted-foreground">עדיין אין תפיסות היום.</p>
+              <p className="text-xs text-muted-foreground mt-1">תהיה הראשון לדווח!</p>
+            </div>
+          )}
         </div>
       </section>
 

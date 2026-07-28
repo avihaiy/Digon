@@ -8,6 +8,7 @@ interface AuthContextType {
   user: Models.User<Models.Preferences> | null;
   session: Models.Session | null;
   userRole: UserRole | null;
+  points: number;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [session, setSession] = useState<Models.Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [points, setPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   const fetchUserAndRole = async () => {
@@ -32,18 +34,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentSession = await account.getSession('current');
       setSession(currentSession);
 
-      // Fetch role from profiles collection
+      // Fetch role and points from profiles collection
       const docs = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
         Query.equal('user_id', currentUser.$id)
       ]);
       
       let role: UserRole = 'USER';
+      let currentPoints = 0;
       if (docs.documents.length > 0) {
         role = docs.documents[0].role as UserRole;
+        currentPoints = docs.documents[0].points || 0;
       }
       
       const finalRole = currentUser.email === 'avihaidj0@gmail.com' ? 'ADMIN' : role;
       setUserRole(finalRole);
+      setPoints(currentPoints);
     } catch (e) {
       setUser(null);
       setSession(null);
@@ -107,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       session,
       userRole,
+      points,
       loading,
       signIn,
       signUp,
