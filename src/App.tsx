@@ -41,6 +41,20 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <AppLayout>{children}</AppLayout>;
 }
 
+function LayoutRoute({ children }: { children: React.ReactNode }) {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  return <AppLayout>{children}</AppLayout>;
+}
+
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
@@ -69,7 +83,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
         
         {/* Appwrite Digon Protected Routes */}
-        <Route path="/" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
+        <Route path="/" element={<LayoutRoute><PageTransition><Home /></PageTransition></LayoutRoute>} />
         <Route path="/admin" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/settings" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
         

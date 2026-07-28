@@ -145,13 +145,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {user?.email}
-                </p>
-                {userRole && (
-                  <Badge variant="outline" className="mt-1 text-xs border-sidebar-primary/50 text-sidebar-primary">
-                    {userRole === 'admin' ? 'מנהל' : 'דייג'}
-                  </Badge>
+                {user ? (
+                  <>
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">
+                      {user.email}
+                    </p>
+                    {userRole && (
+                      <Badge variant="outline" className="mt-1 text-xs border-sidebar-primary/50 text-sidebar-primary">
+                        {userRole === 'admin' ? 'מנהל' : 'דייג'}
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <Link to="/login" className="text-sm font-medium text-primary hover:underline">
+                    התחבר עכשיו
+                  </Link>
                 )}
               </div>
             </div>
@@ -207,10 +215,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                  <LogOut className="w-4 h-4 ml-2" />
-                  יציאה
-                </DropdownMenuItem>
+                {user ? (
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                    <LogOut className="w-4 h-4 ml-2" />
+                    יציאה
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link to="/login" className="flex items-center text-primary">
+                      <Users className="w-4 h-4 ml-2" />
+                      התחברות / הרשמה
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

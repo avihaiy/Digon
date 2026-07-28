@@ -5,14 +5,12 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function BottomNavigation() {
   const location = useLocation();
-  const { user } = useAuth();
-
-  if (!user) return null;
+  const { user, isAdmin } = useAuth();
 
   const tabs = [
     { href: '/', icon: Home, label: 'ראשי' },
     { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
-    { href: '/admin', icon: Activity, label: 'פאנל ניהול' },
+    ...(isAdmin ? [{ href: '/admin', icon: Activity, label: 'פאנל ניהול' }] : []),
   ];
 
   return (
