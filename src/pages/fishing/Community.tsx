@@ -1,92 +1,136 @@
-import FishingLayout from "@/components/fishing/FishingLayout";
+import { useQuery } from "@tanstack/react-query";
+import { databases, storage, APPWRITE_DB_ID, APPWRITE_ADS_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
+import { Query } from "appwrite";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ShoppingCart, Plus, Phone, Tag } from "lucide-react";
+import { MarketplaceAdDialog } from "@/components/community/MarketplaceAdDialog";
 import { motion } from "framer-motion";
-import { Heart, MessageCircle, Share2, Fish } from "lucide-react";
 
 export default function Community() {
-  const posts = [
-    {
-      id: 1,
-      user: "אלירן תפיסות",
-      time: "לפני 2 שעות",
-      location: "מרינה אשדוד",
-      fish: "לוקוס לבן",
-      weight: "2.4 ק״ג",
-      image: "/fishing_bg.jpg",
-      likes: 124,
-      comments: 18,
+  const { data: ads, isLoading } = useQuery({
+    queryKey: ["marketplace-ads"],
+    queryFn: async () => {
+      try {
+        const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_ADS_ID, [
+          Query.orderDesc("$createdAt"),
+          Query.limit(50)
+        ]);
+        // Only show approved ads
+        return res.documents.filter((doc: any) => doc.status === 'approved');
+      } catch (e) {
+        return [];
+      }
     },
-    {
-      id: 2,
-      user: "MikiFish",
-      time: "אתמול",
-      location: "שוברי גלים חיפה",
-      fish: "דניס",
-      weight: "800 גרם",
-      image: "/fishing_bg.jpg",
-      likes: 89,
-      comments: 5,
-    }
-  ];
+  });
 
   return (
-    <FishingLayout>
-      <div className="px-4 pt-6 pb-20">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <h1 className="text-3xl font-black text-white text-start">קהילת הדייגים</h1>
-          <p className="text-cyan-400 text-sm mt-1">שיתופים חמים מהשטח</p>
-        </motion.div>
-
-        <div className="space-y-6">
-          {posts.map((post, i) => (
-            <motion.div 
-              key={post.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-white/5 backdrop-blur-md rounded-[2rem] overflow-hidden border border-white/10 shadow-lg"
-            >
-              <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-[0_0_15px_rgba(34,211,238,0.4)]">
-                    {post.user.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-100 text-sm">{post.user}</div>
-                    <div className="text-xs text-slate-400">{post.time}</div>
-                  </div>
-                </div>
-                <div className="text-end">
-                  <div className="text-xs font-semibold text-cyan-300">{post.location}</div>
-                </div>
-              </div>
-
-              <div className="h-64 w-full relative">
-                <img src={post.image} alt={post.fish} className="w-full h-full object-cover" />
-                <div className="absolute bottom-4 start-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                  <Fish className="w-4 h-4 text-cyan-400" />
-                  <span className="text-sm font-bold text-white">{post.fish} • {post.weight}</span>
-                </div>
-              </div>
-
-              <div className="p-4 flex items-center justify-between border-t border-white/5">
-                <div className="flex gap-4">
-                  <button className="flex items-center gap-1.5 text-rose-400 hover:text-rose-300 transition-colors">
-                    <Heart className="w-5 h-5 fill-rose-400/20" />
-                    <span className="text-sm font-medium">{post.likes}</span>
-                  </button>
-                  <button className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors">
-                    <MessageCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium">{post.comments}</span>
-                  </button>
-                </div>
-                <button className="text-slate-300 hover:text-white transition-colors">
-                  <Share2 className="w-5 h-5" />
-                </button>
-              </div>
-            </motion.div>
-          ))}
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 mt-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            שוק קהילתי <ShoppingCart className="w-6 h-6 text-primary" />
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            קנייה ומכירה של ציוד יד שנייה
+          </p>
         </div>
       </div>
-    </FishingLayout>
+
+      {/* Action Button */}
+      <section className="px-4">
+        <MarketplaceAdDialog>
+          <Button size="lg" className="w-full h-14 text-base rounded-2xl shadow-sm gap-2">
+            <Plus className="w-5 h-5" />
+            פרסם מודעה חדשה
+          </Button>
+        </MarketplaceAdDialog>
+      </section>
+
+      {/* Ads List */}
+      <section className="px-4">
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : ads?.length === 0 ? (
+            <div className="text-center p-12 bg-muted/20 rounded-2xl border border-dashed flex flex-col items-center">
+              <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mb-3" />
+              <p className="text-sm font-medium text-slate-900 dark:text-white">אין מודעות כרגע</p>
+              <p className="text-xs text-muted-foreground mt-1">תהיה הראשון לפרסם ציוד למכירה!</p>
+            </div>
+          ) : (
+            ads?.map((ad: any, i: number) => {
+              const imageUrl = ad.image_url 
+                ? storage.getFilePreview(APPWRITE_CATCH_IMAGES_BUCKET_ID, ad.image_url).href 
+                : null;
+                
+              return (
+                <motion.div 
+                  key={ad.$id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <Card className="overflow-hidden border-border/50 shadow-sm">
+                    {imageUrl && (
+                      <div className="w-full h-48 bg-muted relative">
+                        <img src={imageUrl} alt={ad.title} className="w-full h-full object-cover" />
+                        <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-md px-3 py-1 rounded-full border shadow-sm flex items-center gap-1">
+                          <Tag className="w-3.5 h-3.5 text-primary" />
+                          <span className="font-bold text-sm">{ad.price} ₪</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-4">
+                      {!imageUrl && (
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-bold text-lg leading-tight">{ad.title}</h3>
+                          <Badge variant="secondary" className="font-bold text-base bg-primary/10 text-primary border-0">
+                            {ad.price} ₪
+                          </Badge>
+                        </div>
+                      )}
+                      {imageUrl && (
+                        <h3 className="font-bold text-lg leading-tight mb-2">{ad.title}</h3>
+                      )}
+                      
+                      {ad.description && (
+                        <p className="text-sm text-muted-foreground mb-4 whitespace-pre-wrap">
+                          {ad.description}
+                        </p>
+                      )}
+                      
+                      <div className="flex items-center justify-between pt-4 border-t border-border">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
+                            {ad.user_name?.charAt(0) || "ד"}
+                          </div>
+                          <span className="text-sm font-medium">{ad.user_name}</span>
+                        </div>
+                        
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="rounded-full gap-2 px-4 shadow-md bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => window.location.href = `tel:${ad.phone}`}
+                        >
+                          <Phone className="w-4 h-4 fill-current" />
+                          התקשר
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })
+          )}
+        </div>
+      </section>
+    </div>
   );
 }

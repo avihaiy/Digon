@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, MapPin, Activity, Trophy } from 'lucide-react';
+import { Home, MapPin, Activity, Trophy, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -10,6 +10,7 @@ export default function BottomNavigation() {
   const tabs = [
     { href: '/', icon: Home, label: 'ראשי' },
     { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
+    { href: '/fishing/community', icon: ShoppingCart, label: 'יד 2' },
     { href: '/leaderboard', icon: Trophy, label: 'אלופים' },
     ...(isAdmin ? [{ href: '/admin', icon: Activity, label: 'ניהול' }] : []),
   ];

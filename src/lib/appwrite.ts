@@ -13,5 +13,6 @@ export const APPWRITE_PROFILES_ID = import.meta.env.VITE_APPWRITE_PROFILES_COLLE
 export const APPWRITE_CATCHES_ID = "catches_"; // Based on Appwrite screenshot
 export const APPWRITE_CATCH_IMAGES_BUCKET_ID = "6a684772002def29debb"; // Based on Appwrite screenshot
 export const APPWRITE_LOCATIONS_ID = "locations";
+export const APPWRITE_ADS_ID = "ads";
 
 export default client;

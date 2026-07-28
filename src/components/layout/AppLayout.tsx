@@ -29,7 +29,8 @@ import {
   Fish,
   MapPin,
   Trophy,
-  Download
+  Download,
+  ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -44,6 +45,7 @@ const navItems = [
   { href: '/', icon: Home, label: 'ראשי' },
   { href: '/admin', icon: Settings, label: 'פאנל ניהול', adminOnly: true },
   { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
+  { href: '/fishing/community', icon: ShoppingCart, label: 'שוק יד 2' },
   { href: '/leaderboard', icon: Trophy, label: 'אלופים' },
 ];
 
