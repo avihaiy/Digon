@@ -98,9 +98,13 @@ export function useCatches() {
             { points: currentPoints + 10 }
           );
         }
-      } catch (pointsError) {
+      } catch (pointsError: any) {
         console.error("Failed to update points:", pointsError);
-        // We don't fail the catch report if points fail, just log it.
+        toast({
+          title: "שגיאה בעדכון נקודות",
+          description: pointsError?.message || "לא הצלחנו לעדכן את הנקודות.",
+          variant: "destructive"
+        });
       }
     },
     onSuccess: () => {
