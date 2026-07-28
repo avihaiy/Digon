@@ -110,11 +110,11 @@ export function useCatches() {
       });
       queryClient.invalidateQueries({ queryKey: ["catches"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error(error);
       toast({
-        title: "שגיאה",
-        description: "העלאת הדיווח נכשלה. ודא שהגדרת את אוספי Appwrite כראוי.",
+        title: "שגיאה בהעלאה",
+        description: error?.message || "קרתה תקלה לא צפויה, אנא נסה שוב.",
         variant: "destructive",
       });
     },
