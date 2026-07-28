@@ -44,6 +44,7 @@ const navItems = [
   { href: '/', icon: Home, label: 'ראשי' },
   { href: '/admin', icon: Settings, label: 'פאנל ניהול', adminOnly: true },
   { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
+  { href: '/leaderboard', icon: Trophy, label: 'אלופים' },
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {

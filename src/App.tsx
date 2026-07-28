@@ -19,6 +19,7 @@ import Community from "@/pages/fishing/Community";
 import Forecast from "@/pages/fishing/Forecast";
 import Locations from "@/pages/fishing/Locations";
 import Identify from "@/pages/fishing/Identify";
+import Leaderboard from "@/pages/fishing/Leaderboard";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 
 const queryClient = new QueryClient();
@@ -93,6 +94,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/forecast" element={<ProtectedRoute><PageTransition><Forecast /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/locations" element={<ProtectedRoute><PageTransition><Locations /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/identify" element={<ProtectedRoute><PageTransition><Identify /></PageTransition></ProtectedRoute>} />
+        <Route path="/leaderboard" element={<LayoutRoute><PageTransition><Leaderboard /></PageTransition></LayoutRoute>} />
         
         {/* Redirects for old routes */}
         <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
