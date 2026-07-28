@@ -59,6 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      try {
+        await account.deleteSession('current');
+      } catch (e) {
+        // Ignore if no session exists
+      }
       const sess = await account.createEmailPasswordSession(email, password);
       await fetchUserAndRole();
       return { error: null };
