@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket } from "lucide-react";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
