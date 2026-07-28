@@ -11,6 +11,6 @@ export const storage = new Storage(client);
 export const APPWRITE_DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 export const APPWRITE_PROFILES_ID = import.meta.env.VITE_APPWRITE_PROFILES_COLLECTION_ID;
 export const APPWRITE_CATCHES_ID = "catches_"; // Based on Appwrite screenshot
-export const APPWRITE_CATCH_IMAGES_BUCKET_ID = "catch_images"; // Assumed custom ID
+export const APPWRITE_CATCH_IMAGES_BUCKET_ID = "6a684772002def29debb"; // Based on Appwrite screenshot
 
 export default client;
