@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
+import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -126,6 +126,39 @@ export default function Admin() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-catches"] });
     },
+  });
+
+  // Approve Catch Mutation
+  const approveCatchMutation = useMutation({
+    mutationFn: async ({ catchId, userId }: { catchId: string, userId: string }) => {
+      // 1. Update status to approved
+      await databases.updateDocument(DB_ID, APPWRITE_CATCHES_ID, catchId, {
+        status: 'approved'
+      });
+
+      // 2. Give 10 points to the user
+      const profileResponse = await databases.listDocuments(
+        DB_ID,
+        APPWRITE_PROFILES_ID,
+        [Query.equal("user_id", userId)]
+      );
+      if (profileResponse.documents.length > 0) {
+        const profile = profileResponse.documents[0];
+        await databases.updateDocument(
+          DB_ID,
+          APPWRITE_PROFILES_ID,
+          profile.$id,
+          { points: (profile.points || 0) + 10 }
+        );
+      }
+    },
+    onSuccess: () => {
+      toast.success("התפיסה אושרה בהצלחה והדייג קיבל 10 מטבעות! 🎉");
+      queryClient.invalidateQueries({ queryKey: ["admin-catches"] });
+      queryClient.invalidateQueries({ queryKey: ["catches"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+    },
+    onError: () => toast.error("שגיאה באישור התפיסה"),
   });
 
   // Update Ad Status Mutation
@@ -317,6 +350,7 @@ export default function Admin() {
                       <TableHead>שם הדייג</TableHead>
                       <TableHead>סוג דג</TableHead>
                       <TableHead>תאריך</TableHead>
+                      <TableHead>סטטוס</TableHead>
                       <TableHead>פעולות</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -327,6 +361,24 @@ export default function Admin() {
                         <TableCell>{catchItem.fish_type} {catchItem.weight ? `(${catchItem.weight})` : ""}</TableCell>
                         <TableCell>{new Date(catchItem.$createdAt).toLocaleDateString("he-IL")}</TableCell>
                         <TableCell>
+                          <span className={catchItem.status === 'approved' ? 'text-green-600' : 'text-orange-500 font-bold'}>
+                            {catchItem.status === 'approved' ? 'מאושר' : 'ממתין'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="flex gap-2">
+                          {catchItem.status !== 'approved' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => {
+                                approveCatchMutation.mutate({ catchId: catchItem.$id, userId: catchItem.user_id });
+                              }}
+                              disabled={approveCatchMutation.isPending}
+                            >
+                              <Check className="w-4 h-4" /> אשר
+                            </Button>
+                          )}
                           <Button 
                             size="sm" 
                             variant="destructive" 

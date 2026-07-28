@@ -31,18 +31,21 @@ export default function Dashboard() {
       try {
         const [usersRes, catchesRes, locationsRes] = await Promise.all([
           databases.listDocuments(DB_ID, PROFILES_ID, [Query.limit(100)]),
-          databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [Query.orderDesc("$createdAt"), Query.limit(4)]),
+          databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [Query.orderDesc("$createdAt"), Query.limit(20)]),
           databases.listDocuments(DB_ID, LOCATIONS_ID, [Query.limit(100)])
         ]);
 
         const totalCoins = usersRes.documents.reduce((acc, doc) => acc + (doc.points || 0), 0);
+        
+        // Filter approved catches
+        const approvedCatches = catchesRes.documents.filter((doc: any) => doc.status === 'approved' || !doc.status);
 
         return {
           totalUsers: usersRes.total || usersRes.documents.length,
-          totalCatches: catchesRes.total || 843, // Fallback if no total
+          totalCatches: catchesRes.total || 843, // Keep the total including pending, or change it. Let's keep total for admin perspective.
           totalCoins,
           activeLocations: locationsRes.total || locationsRes.documents.length,
-          recentCatches: catchesRes.documents
+          recentCatches: approvedCatches.slice(0, 4)
         };
       } catch (e) {
         console.error("Failed to load dashboard data", e);

@@ -29,12 +29,12 @@ export function useCatches() {
     queryKey: ["catches"],
     queryFn: async () => {
       try {
-        const response = await databases.listDocuments(
-          APPWRITE_DB_ID,
-          APPWRITE_CATCHES_ID,
-          [Query.orderDesc("$createdAt"), Query.limit(20)]
-        );
-        return response.documents as unknown as CatchReport[];
+        const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, [
+          Query.orderDesc("$createdAt"),
+          Query.limit(50)
+        ]);
+        // Only show approved catches (or old catches without status) in the community feed
+        return res.documents.filter((doc: any) => doc.status === 'approved' || !doc.status) as unknown as CatchReport[];
       } catch (error) {
         console.error("Failed to fetch catches (Appwrite collection might not exist yet):", error);
         return []; // Return empty gracefully if collection doesn't exist yet
@@ -44,12 +44,7 @@ export function useCatches() {
 
   // Report Catch Mutation
   const reportCatchMutation = useMutation({
-    mutationFn: async ({
-      fishType,
-      weight,
-      location,
-      imageFile,
-    }: {
+    mutationFn: async (data: {
       fishType: string;
       weight: string;
       location: string;
@@ -58,59 +53,28 @@ export function useCatches() {
       if (!user) throw new Error("חובה להתחבר כדי לדווח על תפיסה");
 
       // 1. Upload Image to Storage Bucket
-      const fileUpload = await storage.createFile(
-        APPWRITE_CATCH_IMAGES_BUCKET_ID,
-        ID.unique(),
-        imageFile
-      );
+      const file = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), data.imageFile);
+      const imageId = file.$id;
 
       // 2. Create Document in Catches Collection
-      await databases.createDocument(
-        APPWRITE_DB_ID,
-        APPWRITE_CATCHES_ID,
-        ID.unique(),
-        {
-          user_id: user.$id,
-          user_name: user.name || "דייג אנונימי",
-          fish_type: fishType,
-          weight: weight || "",
-          location: location,
-          image_id: fileUpload.$id,
-        }
-      );
+      const catchData = {
+        user_id: user.$id,
+        user_name: user.name || user.email?.split("@")[0] || "דייג אנונימי",
+        fish_type: data.fishType,
+        weight: data.weight || null,
+        location: data.location,
+        image_id: imageId,
+        status: 'pending' // Requires admin approval
+      };
 
-      // 3. Increment User Points (Give 10 CoinsISR)
-      try {
-        const profileResponse = await databases.listDocuments(
-          APPWRITE_DB_ID,
-          APPWRITE_PROFILES_ID,
-          [Query.equal("user_id", user.$id)]
-        );
-        
-        if (profileResponse.documents.length > 0) {
-          const profile = profileResponse.documents[0];
-          const newTotal = (profile.points || 0) + 10;
-          await databases.updateDocument(
-            APPWRITE_DB_ID,
-            APPWRITE_PROFILES_ID,
-            profile.$id,
-            { points: newTotal }
-          );
-          updateLocalPoints(newTotal);
-        }
-      } catch (pointsError: any) {
-        console.error("Failed to update points:", pointsError);
-        toast({
-          title: "שגיאה בעדכון נקודות",
-          description: pointsError?.message || "לא הצלחנו לעדכן את הנקודות.",
-          variant: "destructive"
-        });
-      }
+      await databases.createDocument(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, ID.unique(), catchData);
+      
+      // Points will be awarded when the admin approves the catch in the Admin Panel
     },
     onSuccess: () => {
       toast({
-        title: "הדיווח עלה בהצלחה! 🎉",
-        description: "קיבלת 10 מטבעות על הדיווח, המשך כך!",
+        title: "הדיווח נשלח לאישור! 🎉",
+        description: "התפיסה תפורסם בקהילה ותזכה אותך ב-10 מטבעות מיד לאחר אישור מנהל.",
       });
       queryClient.invalidateQueries({ queryKey: ["catches"] });
     },
