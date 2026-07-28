@@ -210,6 +210,9 @@ export default function Admin() {
       toast.success("סטטוס המודעה עודכן");
       queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
     },
+    onError: (err: any) => {
+      toast.error("שגיאה בעדכון הסטטוס: " + err.message);
+    }
   });
 
   const drawRaffleWinner = async () => {
@@ -358,12 +361,16 @@ export default function Admin() {
                         <TableCell>{ad.price} ₪</TableCell>
                         <TableCell>{ad.status === 'approved' ? 'מאושר' : ad.status === 'rejected' ? 'נדחה' : 'ממתין'}</TableCell>
                         <TableCell className="flex gap-2">
-                          <Button size="sm" variant="outline" className="text-green-600" onClick={() => updateAdStatusMutation.mutate({ id: ad.$id, status: 'approved' })}>
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-red-600" onClick={() => updateAdStatusMutation.mutate({ id: ad.$id, status: 'rejected' })}>
-                            <X className="w-4 h-4" />
-                          </Button>
+                          {ad.status !== 'approved' && (
+                            <Button size="sm" variant="outline" className="text-green-600" onClick={() => updateAdStatusMutation.mutate({ id: ad.$id, status: 'approved' })} disabled={updateAdStatusMutation.isPending}>
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {ad.status !== 'rejected' && (
+                            <Button size="sm" variant="outline" className="text-red-600" onClick={() => updateAdStatusMutation.mutate({ id: ad.$id, status: 'rejected' })} disabled={updateAdStatusMutation.isPending}>
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
