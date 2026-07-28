@@ -136,48 +136,48 @@ export default function Home() {
 
       {/* Useful Tools */}
       <section className="pt-2">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          <Link to="/fishing/tackle-box" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-orange-500/10 p-3 rounded-full mb-2">
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+          <Link to="/fishing/tackle-box" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-orange-500/10 p-2.5 rounded-full mb-1.5">
               <Package className="w-5 h-5 text-orange-500" />
             </div>
-            <span className="font-bold text-sm">קופסת ציוד</span>
+            <span className="font-bold text-xs">קופסת ציוד</span>
           </Link>
-          <Link to="/fishing/wiki" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-primary/10 p-3 rounded-full mb-2">
+          <Link to="/fishing/wiki" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-primary/10 p-2.5 rounded-full mb-1.5">
               <Fish className="w-5 h-5 text-primary" />
             </div>
-            <span className="font-bold text-sm">ויקי-דג</span>
+            <span className="font-bold text-xs">ויקי-דג</span>
           </Link>
-          <Link to="/fishing/identify" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-blue-500/10 p-3 rounded-full mb-2">
+          <Link to="/fishing/identify" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-blue-500/10 p-2.5 rounded-full mb-1.5">
               <Camera className="w-5 h-5 text-blue-500" />
             </div>
-            <span className="font-bold text-sm">זיהוי AI</span>
+            <span className="font-bold text-xs">זיהוי AI</span>
           </Link>
-          <Link to="/fishing/knots" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-emerald-500/10 p-3 rounded-full mb-2">
+          <Link to="/fishing/knots" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-emerald-500/10 p-2.5 rounded-full mb-1.5">
               <Link2 className="w-5 h-5 text-emerald-500" />
             </div>
-            <span className="font-bold text-sm">מדריך קשרים</span>
+            <span className="font-bold text-xs">מדריך קשרים</span>
           </Link>
-          <Link to="/fishing/analytics" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-purple-500/10 p-3 rounded-full mb-2">
+          <Link to="/fishing/analytics" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-purple-500/10 p-2.5 rounded-full mb-1.5">
               <Activity className="w-5 h-5 text-purple-500" />
             </div>
-            <span className="font-bold text-sm">סטטיסטיקות</span>
+            <span className="font-bold text-xs">סטטיסטיקות</span>
           </Link>
-          <Link to="/fishing/radar" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-rose-500/10 p-3 rounded-full mb-2">
+          <Link to="/fishing/radar" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-rose-500/10 p-2.5 rounded-full mb-1.5">
               <RadarIcon className="w-5 h-5 text-rose-500" />
             </div>
-            <span className="font-bold text-sm">ראדאר חם</span>
+            <span className="font-bold text-xs">ראדאר חם</span>
           </Link>
-          <Link to="/fishing/weight-calculator" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-amber-500/10 p-3 rounded-full mb-2">
+          <Link to="/fishing/weight-calculator" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-amber-500/10 p-2.5 rounded-full mb-1.5">
               <Scale className="w-5 h-5 text-amber-500" />
             </div>
-            <span className="font-bold text-sm">מחשבון משקל</span>
+            <span className="font-bold text-xs">מחשבון משקל</span>
           </Link>
         </div>
       </section>
