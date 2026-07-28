@@ -1,21 +1,16 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { databases, storage, APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
-import { ID, Query } from "appwrite";
+import { Query } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import FishingLayout from "@/components/fishing/FishingLayout";
-import { MapPin, Plus, Navigation2, Star, ExternalLink, Image as ImageIcon } from "lucide-react";
-import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Plus, Navigation2, Map as MapIcon, Star } from "lucide-react";
 import { LocationReportDialog } from "@/components/locations/LocationReportDialog";
 
 export default function Locations() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: locations, isLoading } = useQuery({
     queryKey: ["fishing-locations"],
@@ -34,115 +29,129 @@ export default function Locations() {
   });
 
   return (
-    <FishingLayout>
-      <div className="px-4 pt-6 pb-20">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-black text-white text-start">מיקומי דייג</h1>
-            <p className="text-cyan-400 text-sm mt-1">גלה ספוטים מומלצים על ידי הקהילה</p>
-          </div>
-          
-          <LocationReportDialog>
-            <Button className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full flex gap-2 shadow-lg shadow-cyan-500/30">
-              <Plus className="w-4 h-4" /> דיווח מיקום
-            </Button>
-          </LocationReportDialog>
-        </motion.div>
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            מיקומי דייג
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            גלה ספוטים שווים באזור שלך
+          </p>
+        </div>
+        <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+          <MapIcon className="w-6 h-6 text-primary" />
+        </div>
+      </div>
 
-        {/* Map Placeholder */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full h-48 rounded-[2rem] bg-slate-800 relative overflow-hidden mb-8 border border-white/10"
-        >
-          <img src="/fishing_bg.jpg" alt="Map" className="w-full h-full object-cover opacity-50 blur-sm scale-110" />
-          <div className="absolute inset-0 bg-blue-900/40 mix-blend-overlay"></div>
-          
-          {/* Fake Map Pins */}
-          <div className="absolute top-1/4 start-1/3">
-            <div className="relative">
-              <div className="w-4 h-4 bg-cyan-400 rounded-full animate-ping absolute opacity-75"></div>
-              <div className="w-4 h-4 bg-cyan-400 rounded-full relative border-2 border-white shadow-[0_0_10px_cyan]"></div>
-            </div>
-          </div>
-          <div className="absolute bottom-1/3 end-1/4">
-            <div className="w-4 h-4 bg-rose-500 rounded-full border-2 border-white shadow-[0_0_10px_red]"></div>
-          </div>
-          
-          <button className="absolute bottom-4 end-4 bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 shadow-lg text-white">
-            <Navigation2 className="w-5 h-5" />
-          </button>
-        </motion.div>
+      {/* Action Button */}
+      <section>
+        <LocationReportDialog>
+          <Button size="lg" variant="outline" className="w-full h-16 text-lg rounded-2xl shadow-sm gap-3 group bg-background border-primary/20 hover:bg-primary/5">
+            <Plus className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+            דווח על מיקום חדש
+          </Button>
+        </LocationReportDialog>
+      </section>
 
+      {/* Locations List */}
+      <section className="pt-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold tracking-tight">ספוטים מומלצים</h2>
+        </div>
+        
         <div className="space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold text-white">מיקומים מומלצים</h3>
-          </div>
-          
           {isLoading ? (
-            <div className="text-center text-slate-400 py-8">טוען מיקומים...</div>
+            <div className="flex justify-center p-4">
+              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
           ) : locations?.length === 0 ? (
-             <div className="text-center text-slate-400 py-8">עדיין אין מיקומים מומלצים. תהיה הראשון לדווח!</div>
+            <div className="text-center p-8 bg-muted/20 rounded-xl border border-dashed">
+              <p className="text-sm text-muted-foreground">עדיין אין ספוטים במערכת.</p>
+              <p className="text-xs text-muted-foreground mt-1">תהיה הראשון לדווח!</p>
+            </div>
           ) : (
-            locations?.map((loc: any, i: number) => {
+            locations?.map((loc: any) => {
               const previewUrl = loc.image_url 
                 ? storage.getFilePreview(APPWRITE_CATCH_IMAGES_BUCKET_ID, loc.image_url).href 
                 : null;
+              
+              const methodsArray = loc.fishing_methods 
+                ? loc.fishing_methods.split(",").map((m: string) => m.trim()).filter(Boolean)
+                : [];
                 
               return (
-                <motion.div 
-                  key={loc.$id || i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-white/5 backdrop-blur-md rounded-[1.5rem] overflow-hidden border border-white/5 flex flex-col hover:bg-white/10 transition-colors"
-                >
-                  {previewUrl && (
-                    <div className="w-full h-32 relative">
-                      <img src={previewUrl} alt={loc.name} className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  
-                  <div className="p-4 flex gap-4 items-center">
-                    {!previewUrl && (
-                      <div className="w-16 h-16 rounded-2xl bg-cyan-900/50 border border-cyan-500/20 flex items-center justify-center shrink-0">
-                        <MapPin className="w-6 h-6 text-cyan-400" />
+                <Card key={loc.$id} className="overflow-hidden border-border/50 shadow-sm relative group">
+                  <div className="flex flex-col p-4">
+                    {/* Top Section: Name and Navigate */}
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-bold text-base text-slate-900 dark:text-white leading-tight">
+                          {loc.name}
+                        </h3>
+                        <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold mt-1">
+                          <Star className="w-3.5 h-3.5 fill-yellow-500" />
+                          5.0 <span className="text-muted-foreground ml-1 font-normal">(קהילה)</span>
+                        </div>
                       </div>
-                    )}
-                    
-                    <div className="flex-1">
-                      <h4 className="font-bold text-white text-lg leading-tight">{loc.name}</h4>
-                      {loc.fishing_methods && (
-                        <p className="text-cyan-400 text-xs mt-1 font-medium">{loc.fishing_methods}</p>
+                      
+                      {loc.map_url && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-primary bg-primary/10 hover:bg-primary/20 rounded-full shrink-0"
+                          onClick={() => window.open(loc.map_url, '_blank')}
+                        >
+                          <Navigation2 className="w-4 h-4" />
+                        </Button>
                       )}
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-1 text-yellow-400 text-xs font-bold">
-                          <Star className="w-3.5 h-3.5 fill-yellow-400" />
-                          5.0
+                    </div>
+                    
+                    <div className="flex gap-4">
+                      {/* Left: Info */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div className="space-y-3">
+                          {methodsArray.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {methodsArray.map((method: string, i: number) => (
+                                <Badge key={i} variant="secondary" className="text-[10px] font-normal bg-muted">
+                                  {method}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {!methodsArray.length && (
+                            <p className="text-xs text-muted-foreground">
+                              לא צויינו שיטות דייג
+                            </p>
+                          )}
                         </div>
-                        <div className="px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 text-emerald-400 bg-emerald-400/10">
-                          מאושר
+                        <div className="mt-4 flex items-center text-[10px] text-muted-foreground">
+                          <MapPin className="w-3 h-3 ml-1" />
+                          מיקום מאושר
                         </div>
                       </div>
+                      
+                      {/* Right: Image */}
+                      {previewUrl ? (
+                        <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 border border-border/50">
+                          <img src={previewUrl} alt={loc.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 rounded-xl shrink-0 border border-border/50 bg-muted flex items-center justify-center text-muted-foreground">
+                          <MapIcon className="w-6 h-6 opacity-50" />
+                        </div>
+                      )}
                     </div>
-
-                    {loc.map_url && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/30 rounded-full"
-                        onClick={() => window.open(loc.map_url, '_blank')}
-                      >
-                        <Navigation2 className="w-5 h-5" />
-                      </Button>
-                    )}
                   </div>
-                </motion.div>
+                </Card>
               );
             })
           )}
         </div>
-      </div>
-    </FishingLayout>
+      </section>
+    </div>
   );
 }
