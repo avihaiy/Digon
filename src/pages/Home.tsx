@@ -1,12 +1,14 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw } from 'lucide-react';
+import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
   const { user } = useAuth();
+  const { data: marineData, loading: marineLoading, refreshData, lastUpdated } = useMarineWeather();
   
   // Get first name or use default
   const firstName = user?.name?.split(' ')[0] || 'דייג';
@@ -32,13 +34,25 @@ export default function Home() {
       {/* Sea Conditions Widget */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold tracking-tight">מצב הים כעת</h2>
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            עודכן עכשיו
-          </span>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold tracking-tight">מצב הים כעת</h2>
+            <Badge variant="outline" className="text-[10px] font-normal">{marineData.locationName}</Badge>
+          </div>
+          <button 
+            onClick={refreshData}
+            disabled={marineLoading}
+            className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={cn("w-3 h-3", marineLoading && "animate-spin")} />
+            {marineLoading ? 'מעדכן...' : `עודכן ב-${lastUpdated.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`}
+          </button>
         </div>
-        <Card className="border-border/50 shadow-sm bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
+        <Card className="border-border/50 shadow-sm bg-gradient-to-br from-blue-500/5 to-cyan-500/5 relative overflow-hidden">
+          {marineLoading && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center">
+              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          )}
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col items-center justify-center gap-2">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full text-blue-600 dark:text-blue-400">
@@ -46,7 +60,9 @@ export default function Home() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold">גובה גלים</p>
-                <p className="text-xs text-muted-foreground">40-60 ס״מ</p>
+                <p className="text-xs text-muted-foreground" dir="ltr">
+                  {marineData.waveHeight !== null ? `${marineData.waveHeight.toFixed(1)}m` : '---'}
+                </p>
               </div>
             </div>
             
@@ -58,7 +74,11 @@ export default function Home() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold">רוח</p>
-                <p className="text-xs text-muted-foreground">12 קמ״ש דרומית</p>
+                <p className="text-xs text-muted-foreground">
+                  {marineData.windSpeed !== null ? `${Math.round(marineData.windSpeed)} קמ״ש` : '---'}
+                  <br/>
+                  <span className="text-[10px]">{getWindDirectionHebrew(marineData.windDirection)}</span>
+                </p>
               </div>
             </div>
             
@@ -66,11 +86,13 @@ export default function Home() {
             
             <div className="flex flex-col items-center justify-center gap-2">
               <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-full text-orange-600 dark:text-orange-400">
-                <span className="text-lg font-bold leading-none">24°</span>
+                <span className="text-lg font-bold leading-none">
+                  {marineData.temperature !== null ? `${Math.round(marineData.temperature)}°` : '--°'}
+                </span>
               </div>
               <div className="text-center">
-                <p className="text-sm font-semibold">טמפ׳ מים</p>
-                <p className="text-xs text-muted-foreground">נעים</p>
+                <p className="text-sm font-semibold">טמפ׳ אוויר</p>
+                <p className="text-xs text-muted-foreground">מעלות</p>
               </div>
             </div>
           </CardContent>
