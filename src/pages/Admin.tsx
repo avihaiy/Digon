@@ -23,10 +23,6 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("users");
   const [newLocationName, setNewLocationName] = useState("");
 
-  // Redirect if not logged in
-  if (!loading && !user) {
-    return <Navigate to="/login" replace />;
-  }
 
   // Fetch Users (Profiles)
   const { data: usersData, isLoading: usersLoading } = useQuery({
@@ -97,6 +93,11 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
     },
   });
+
+  // Redirect if not logged in
+  if (!loading && !user) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (loading) return <div className="p-8 text-center">טוען...</div>;
 
