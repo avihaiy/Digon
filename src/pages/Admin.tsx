@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID } from "@/lib/appwrite";
+import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -15,7 +15,7 @@ import { Users, MapPin, LayoutList, Trash2, Check, X, Camera } from "lucide-reac
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const PROFILES_ID = import.meta.env.VITE_APPWRITE_PROFILES_COLLECTION_ID;
 const ADS_ID = "ads";
-const LOCATIONS_ID = "locations";
+const LOCATIONS_ID = APPWRITE_LOCATIONS_ID;
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -88,9 +88,42 @@ export default function Admin() {
       await databases.deleteDocument(DB_ID, LOCATIONS_ID, id);
     },
     onSuccess: () => {
-      toast.success("המיקום נמחק");
+      toast.success("המיקום נמחק בהצלחה!");
       queryClient.invalidateQueries({ queryKey: ["admin-locations"] });
+      queryClient.invalidateQueries({ queryKey: ["fishing-locations"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
     },
+  });
+
+  // Approve Location Mutation
+  const approveLocationMutation = useMutation({
+    mutationFn: async ({ locId, userId }: { locId: string, userId: string }) => {
+      await databases.updateDocument(DB_ID, LOCATIONS_ID, locId, {
+        status: 'approved'
+      });
+
+      const profileResponse = await databases.listDocuments(
+        DB_ID,
+        APPWRITE_PROFILES_ID,
+        [Query.equal("user_id", userId)]
+      );
+      if (profileResponse.documents.length > 0) {
+        const profile = profileResponse.documents[0];
+        await databases.updateDocument(
+          DB_ID,
+          APPWRITE_PROFILES_ID,
+          profile.$id,
+          { points: (profile.points || 0) + 10 }
+        );
+      }
+    },
+    onSuccess: () => {
+      toast.success("המיקום אושר והדייג קיבל 10 מטבעות! 🎉");
+      queryClient.invalidateQueries({ queryKey: ["admin-locations"] });
+      queryClient.invalidateQueries({ queryKey: ["fishing-locations"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
+    },
+    onError: () => toast.error("שגיאה באישור המיקום"),
   });
 
   // Delete Catch Mutation
@@ -313,6 +346,7 @@ export default function Admin() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>שם המיקום</TableHead>
+                      <TableHead>סטטוס</TableHead>
                       <TableHead>פעולות</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -321,6 +355,22 @@ export default function Admin() {
                       <TableRow key={loc.$id}>
                         <TableCell>{loc.name}</TableCell>
                         <TableCell>
+                          <span className={loc.status === 'approved' ? 'text-green-600' : 'text-orange-500 font-bold'}>
+                            {loc.status === 'approved' ? 'מאושר' : 'ממתין'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="flex gap-2">
+                          {loc.status !== 'approved' && loc.user_id && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => approveLocationMutation.mutate({ locId: loc.$id, userId: loc.user_id })}
+                              disabled={approveLocationMutation.isPending}
+                            >
+                              <Check className="w-4 h-4" /> אשר
+                            </Button>
+                          )}
                           <Button size="sm" variant="destructive" onClick={() => deleteLocationMutation.mutate(loc.$id)}>
                             <Trash2 className="w-4 h-4" /> מחק
                           </Button>
