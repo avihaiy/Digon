@@ -8,6 +8,7 @@ import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
 import { LocationReportDialog } from '@/components/locations/LocationReportDialog';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 export default function Home() {
   const { user } = useAuth();
@@ -100,6 +101,12 @@ export default function Home() {
               </div>
             </div>
           </CardContent>
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <Link to="/fishing/forecast" className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
+              לתחזית המלאה
+              <span className="text-xs">→</span>
+            </Link>
+          </div>
         </Card>
       </section>
 

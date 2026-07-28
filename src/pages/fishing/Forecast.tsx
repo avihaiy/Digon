@@ -1,79 +1,200 @@
-import FishingLayout from "@/components/fishing/FishingLayout";
-import { motion } from "framer-motion";
-import { Waves, Wind, Sun, Clock } from "lucide-react";
+import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Simulated Solunar logic based on current hour
+const getSolunarRating = () => {
+  const hour = new Date().getHours();
+  // Best fishing times usually at dawn (5-8) and dusk (17-20)
+  if ((hour >= 5 && hour <= 8) || (hour >= 17 && hour <= 20)) {
+    return { rating: "מצוין", score: 95, color: "text-emerald-500", bg: "bg-emerald-500/10", message: "זמן מעולה לדייג! הדגים בשיא הפעילות." };
+  } else if ((hour >= 9 && hour <= 11) || (hour >= 15 && hour <= 16)) {
+    return { rating: "טוב", score: 65, color: "text-yellow-500", bg: "bg-yellow-500/10", message: "זמן טוב לדייג. פעילות בינונית צפויה." };
+  } else {
+    return { rating: "חלש", score: 35, color: "text-rose-500", bg: "bg-rose-500/10", message: "זמן חלש לדייג. מומלץ לחכות לשעות הפעילות." };
+  }
+};
 
 export default function Forecast() {
+  const { data: marineData, loading: marineLoading, lastUpdated } = useMarineWeather();
+  const solunar = getSolunarRating();
+
   return (
-    <FishingLayout>
-      <div className="px-4 pt-6 pb-20">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <h1 className="text-3xl font-black text-white text-start">תחזית דייג</h1>
-          <p className="text-cyan-400 text-sm mt-1">מצב הים וסיכויי תפיסה</p>
-        </motion.div>
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 mt-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            תחזית דייג <Sun className="w-6 h-6 text-yellow-500" />
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            מצב הים, זמני פעילות (Solunar) ותנאים
+          </p>
+        </div>
+      </div>
 
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-blue-600/30 to-cyan-800/30 backdrop-blur-xl rounded-[2.5rem] p-6 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden"
-        >
-          <div className="absolute top-0 end-0 p-4">
-            <Sun className="w-12 h-12 text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)] animate-[spin_10s_linear_infinite]" />
-          </div>
-          
-          <h2 className="text-2xl font-bold text-white mb-6">מרינה אשדוד</h2>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 p-4 rounded-[1.5rem] flex flex-col items-center justify-center border border-white/5">
-              <Waves className="w-8 h-8 text-cyan-400 mb-2" />
-              <div className="text-2xl font-black text-white">40<span className="text-sm font-normal text-slate-300 ms-1">ס״מ</span></div>
-              <div className="text-xs text-cyan-200 mt-1">גובה גלים</div>
+      {/* Solunar Fishing Score */}
+      <section className="px-4">
+        <Card className="border-border/50 shadow-sm overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-[50px] -z-10" />
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="font-bold text-lg">פעילות הדגים עכשיו</h2>
+                <p className="text-sm text-muted-foreground mt-1">{solunar.message}</p>
+              </div>
+              <Badge variant="outline" className={cn("font-bold px-3 py-1 text-sm border-0", solunar.bg, solunar.color)}>
+                {solunar.rating}
+              </Badge>
             </div>
-            
-            <div className="bg-white/5 p-4 rounded-[1.5rem] flex flex-col items-center justify-center border border-white/5">
-              <Wind className="w-8 h-8 text-blue-400 mb-2" />
-              <div className="text-2xl font-black text-white">12<span className="text-sm font-normal text-slate-300 ms-1">קמ״ש</span></div>
-              <div className="text-xs text-blue-200 mt-1">רוח צפון-מערבית</div>
-            </div>
-          </div>
 
-          <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between">
-            <div>
-              <div className="text-emerald-400 font-bold text-lg">תנאים אופטימליים!</div>
-              <div className="text-emerald-200/70 text-sm">הים רגוע והמים צלולים.</div>
-            </div>
-            <div className="text-4xl">🎣</div>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-6"
-        >
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-cyan-400" />
-            חלונות זמן פוטנציאליים
-          </h3>
-          <div className="space-y-3">
-            {[
-              { time: "06:00 - 08:30", label: "בוקר", rating: "מעולה", color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20" },
-              { time: "11:00 - 15:00", label: "צהריים", rating: "חלש", color: "text-rose-400", bg: "bg-rose-400/10 border-rose-400/20" },
-              { time: "18:30 - 21:00", label: "ערב", rating: "טוב מאוד", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/20" },
-            ].map((slot, i) => (
-              <div key={i} className={`p-4 rounded-[1.5rem] border ${slot.bg} flex items-center justify-between backdrop-blur-sm`}>
-                <div>
-                  <div className="font-bold text-white text-lg">{slot.time}</div>
-                  <div className="text-sm text-slate-300">{slot.label}</div>
-                </div>
-                <div className={`font-black ${slot.color}`}>
-                  {slot.rating}
+            <div className="flex flex-col items-center justify-center">
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <svg className="transform -rotate-90 w-32 h-32">
+                  <circle cx="64" cy="64" r="54" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-muted/20" />
+                  <circle
+                    cx="64" cy="64" r="54"
+                    stroke="currentColor" strokeWidth="8" strokeLinecap="round" fill="transparent"
+                    strokeDasharray={2 * Math.PI * 54}
+                    strokeDashoffset={(2 * Math.PI * 54) - ((solunar.score / 100) * (2 * Math.PI * 54))}
+                    className={solunar.color}
+                  />
+                </svg>
+                <div className="absolute flex flex-col items-center">
+                  <span className={cn("text-3xl font-black", solunar.color)}>{solunar.score}</span>
+                  <span className="text-[10px] text-muted-foreground font-bold">ציון משוקלל</span>
                 </div>
               </div>
-            ))}
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Daily Windows */}
+      <section className="px-4">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Clock className="w-5 h-5 text-primary" />
+          חלונות זהב להיום
+        </h3>
+        <div className="space-y-3">
+          <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between shadow-sm">
+            <div>
+              <div className="font-bold text-lg">05:30 - 08:00</div>
+              <div className="text-sm text-muted-foreground flex items-center gap-1">
+                <Sun className="w-3.5 h-3.5" /> שעות הזריחה
+              </div>
+            </div>
+            <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold">מצוין</Badge>
           </div>
-        </motion.div>
-      </div>
-    </FishingLayout>
+          <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between shadow-sm">
+            <div>
+              <div className="font-bold text-lg">18:15 - 20:30</div>
+              <div className="text-sm text-muted-foreground flex items-center gap-1">
+                <Sun className="w-3.5 h-3.5" /> שעות השקיעה
+              </div>
+            </div>
+            <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold">מצוין</Badge>
+          </div>
+        </div>
+      </section>
+
+      {/* Sea Conditions */}
+      <section className="px-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <Waves className="w-5 h-5 text-primary" />
+            מצב הים המעודכן
+          </h3>
+          <span className="text-[10px] text-muted-foreground">
+            {lastUpdated.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="border-border/50 shadow-sm">
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="p-3 bg-blue-500/10 rounded-full text-blue-500 mb-3">
+                <Waves className="w-6 h-6" />
+              </div>
+              <p className="text-2xl font-black">
+                {marineLoading ? "..." : marineData.waveHeight !== null ? marineData.waveHeight.toFixed(1) : "---"}
+                <span className="text-sm font-normal text-muted-foreground ms-1">מ'</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">גובה גלים</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-border/50 shadow-sm">
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="p-3 bg-cyan-500/10 rounded-full text-cyan-500 mb-3">
+                <Wind className="w-6 h-6" />
+              </div>
+              <p className="text-2xl font-black">
+                {marineLoading ? "..." : marineData.windSpeed !== null ? Math.round(marineData.windSpeed) : "---"}
+                <span className="text-sm font-normal text-muted-foreground ms-1">קמ״ש</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                {marineLoading ? "טוען..." : getWindDirectionHebrew(marineData.windDirection)}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-border/50 shadow-sm">
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="p-3 bg-orange-500/10 rounded-full text-orange-500 mb-3">
+                <ThermometerSun className="w-6 h-6" />
+              </div>
+              <p className="text-2xl font-black">
+                {marineLoading ? "..." : marineData.temperature !== null ? Math.round(marineData.temperature) : "---"}
+                <span className="text-sm font-normal text-muted-foreground ms-1">°C</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">טמפרטורת אוויר</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-border/50 shadow-sm">
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <div className="p-3 bg-indigo-500/10 rounded-full text-indigo-500 mb-3">
+                <Compass className="w-6 h-6" />
+              </div>
+              <p className="text-base font-bold mt-1 text-muted-foreground">
+                {marineLoading ? "..." : marineData.locationName}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">מיקום מדידה</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Safety Alert (Example) */}
+      <section className="px-4">
+        {marineData.waveHeight && marineData.waveHeight > 1.2 && (
+          <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex gap-3 items-start">
+            <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-bold text-rose-500 text-sm">זהירות: ים גלי עד רוגש</h4>
+              <p className="text-xs text-rose-500/80 mt-1">
+                גובה הגלים מעל 1.2 מטר. מומלץ להיזהר בעמידה על שוברי גלים וסלעים קרובים למים.
+              </p>
+            </div>
+          </div>
+        )}
+        {marineData.waveHeight && marineData.waveHeight <= 1.2 && (
+          <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex gap-3 items-start">
+            <Info className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-bold text-emerald-500 text-sm">תנאי בטיחות מצוינים</h4>
+              <p className="text-xs text-emerald-500/80 mt-1">
+                הים נוח יחסית ומתאים גם למתחילים ולדייג משפחתי.
+              </p>
+            </div>
+          </div>
+        )}
+      </section>
+
+    </div>
   );
 }
