@@ -226,6 +226,20 @@ export default function Admin() {
     }
   });
 
+  // Delete Ad Mutation
+  const deleteAdMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await databases.deleteDocument(DB_ID, ADS_ID, id);
+    },
+    onSuccess: () => {
+      toast.success("המודעה נמחקה בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
+    },
+    onError: (err: any) => {
+      toast.error("שגיאה במחיקת מודעה: " + err.message);
+    }
+  });
+
   // Add Store Item Mutation
   const addStoreItemMutation = useMutation({
     mutationFn: async (data: any) => {
