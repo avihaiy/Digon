@@ -16,6 +16,7 @@ interface AuthContextType {
   isManager: boolean;
   isAdmin: boolean;
   refreshProfile: () => Promise<void>;
+  updateLocalPoints: (points: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -121,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isManager,
       isAdmin,
       refreshProfile: fetchUserAndRole,
+      updateLocalPoints: setPoints,
     }}>
       {children}
     </AuthContext.Provider>

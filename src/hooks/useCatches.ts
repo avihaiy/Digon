@@ -22,7 +22,7 @@ export function getImageUrl(imageId: string) {
 
 export function useCatches() {
   const queryClient = useQueryClient();
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, updateLocalPoints } = useAuth();
 
   // Fetch Catches
   const { data: catches, isLoading } = useQuery({
@@ -89,14 +89,14 @@ export function useCatches() {
         
         if (profileResponse.documents.length > 0) {
           const profile = profileResponse.documents[0];
-          const currentPoints = profile.points || 0;
-          
+          const newTotal = (profile.points || 0) + 10;
           await databases.updateDocument(
             APPWRITE_DB_ID,
             APPWRITE_PROFILES_ID,
             profile.$id,
-            { points: currentPoints + 10 }
+            { points: newTotal }
           );
+          updateLocalPoints(newTotal);
         }
       } catch (pointsError: any) {
         console.error("Failed to update points:", pointsError);
@@ -113,7 +113,6 @@ export function useCatches() {
         description: "קיבלת 10 מטבעות על הדיווח, המשך כך!",
       });
       queryClient.invalidateQueries({ queryKey: ["catches"] });
-      refreshProfile();
     },
     onError: (error: any) => {
       console.error(error);
