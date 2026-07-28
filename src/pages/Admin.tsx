@@ -354,6 +354,7 @@ export default function Admin() {
                     <TableRow>
                       <TableHead>תמונה</TableHead>
                       <TableHead>שם המיקום</TableHead>
+                      <TableHead>שיטות</TableHead>
                       <TableHead>מפה</TableHead>
                       <TableHead>סטטוס</TableHead>
                       <TableHead>פעולות</TableHead>
@@ -374,6 +375,7 @@ export default function Admin() {
                           )}
                         </TableCell>
                         <TableCell className="font-medium">{loc.name}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{loc.fishing_methods || "לא צוין"}</TableCell>
                         <TableCell>
                           {loc.map_url ? (
                             <a href={loc.map_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline text-xs">

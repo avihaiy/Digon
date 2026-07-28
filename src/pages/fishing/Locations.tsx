@@ -112,6 +112,9 @@ export default function Locations() {
                     
                     <div className="flex-1">
                       <h4 className="font-bold text-white text-lg leading-tight">{loc.name}</h4>
+                      {loc.fishing_methods && (
+                        <p className="text-cyan-400 text-xs mt-1 font-medium">{loc.fishing_methods}</p>
+                      )}
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center gap-1 text-yellow-400 text-xs font-bold">
                           <Star className="w-3.5 h-3.5 fill-yellow-400" />

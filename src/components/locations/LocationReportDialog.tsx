@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { databases, storage, APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
 import { ID } from "appwrite";
@@ -27,6 +27,7 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [fishingMethods, setFishingMethods] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +55,7 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
   };
 
   const reportLocationMutation = useMutation({
-    mutationFn: async (data: { name: string, mapUrl: string, imageFile: File | null }) => {
+    mutationFn: async (data: { name: string, mapUrl: string, imageFile: File | null, fishingMethods: string }) => {
       if (!user) throw new Error("חובה להתחבר כדי לדווח");
       
       let imageId = "";
@@ -73,7 +74,8 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
         latitude: 31.0,
         longitude: 35.0,
         map_url: data.mapUrl,
-        image_url: imageUrl
+        image_url: imageUrl,
+        fishing_methods: data.fishingMethods
       });
     },
     onSuccess: () => {
@@ -188,9 +190,19 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="fishingMethods">שיטות דייג מומלצות</Label>
+            <Input 
+              id="fishingMethods" 
+              placeholder="לדוגמה: ז'רז'ור, פתיונות, בוס" 
+              value={fishingMethods}
+              onChange={(e) => setFishingMethods(e.target.value)}
+            />
+          </div>
+
           <Button 
             className="w-full mt-4" 
-            onClick={() => reportLocationMutation.mutate({ name: newLocationName, mapUrl, imageFile })}
+            onClick={() => reportLocationMutation.mutate({ name: newLocationName, mapUrl, imageFile, fishingMethods })}
             disabled={!newLocationName.trim() || reportLocationMutation.isPending}
           >
             {reportLocationMutation.isPending ? "שולח..." : "שלח לאישור מנהל"}
