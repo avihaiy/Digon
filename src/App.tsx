@@ -78,6 +78,9 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/locations" element={<ProtectedRoute><PageTransition><Locations /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/identify" element={<ProtectedRoute><PageTransition><Identify /></PageTransition></ProtectedRoute>} />
         
+        {/* Redirects for old routes */}
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
+        
         {/* Catch-all */}
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
