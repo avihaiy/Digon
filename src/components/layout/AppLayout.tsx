@@ -119,61 +119,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               );
             })}
             
-            {/* Reports Submenu */}
-            <Collapsible open={reportsOpen} onOpenChange={setReportsOpen}>
-              <CollapsibleTrigger className={cn(
-                'nav-item w-full justify-between',
-                (location.pathname === '/reports' || location.pathname === '/expense-reports') && 'active'
-              )}>
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="w-5 h-5" />
-                  <span>דוחות</span>
-                </div>
-                <ChevronDown className={cn(
-                  'w-4 h-4 transition-transform duration-200',
-                  reportsOpen && 'rotate-180'
-                )} />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pr-4 space-y-1 mt-1">
-                {reportsSubItems.map((item) => {
-                  const isActive = location.pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={cn('nav-item text-sm', isActive && 'active')}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </CollapsibleContent>
-            </Collapsible>
-            
-            {/* Admin Navigation */}
-            {isAdmin && (
-              <>
-                <div className="my-3 border-t border-sidebar-border pt-3">
-                  <p className="text-xs text-sidebar-foreground/50 mb-2 px-3">ניהול מערכת</p>
-                </div>
-                {adminNavItems.map((item) => {
-                  const isActive = location.pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={cn('nav-item', isActive && 'active')}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </>
-            )}
+
             
             {/* Install App Link */}
             <div className="my-3 border-t border-sidebar-border pt-3">
