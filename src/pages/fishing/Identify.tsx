@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ScanResult {
   name: string;
@@ -17,6 +18,7 @@ interface ScanResult {
 }
 
 export default function Identify() {
+  const { points, updateProfileField } = useAuth();
   const [image, setImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -37,9 +39,21 @@ export default function Identify() {
   };
 
   const analyzeImage = async (base64Str: string) => {
+    if (points < 2) {
+      toast.error("אין לך מספיק נקודות דיגון! אתה צריך 2 נקודות בשביל לזהות דג.");
+      return;
+    }
+
     setIsScanning(true);
     setResult(null);
     
+    // Deduct points
+    try {
+      await updateProfileField('points', points - 2);
+    } catch (e) {
+      // Ignore
+    }
+
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       
@@ -154,12 +168,10 @@ export default function Identify() {
               
               <div className="w-full space-y-3">
                 <Button 
-                  size="lg" 
-                  className="w-full h-14 text-base rounded-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg gap-2"
+                  className="w-full h-14 rounded-2xl text-lg font-bold shadow-lg"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Camera className="w-5 h-5" />
-                  פתח מצלמה
+                  <Camera className="w-5 h-5 ml-2" /> העלה תמונה לזיהוי (עלות: 2 🪙)
                 </Button>
                 
                 <Button 

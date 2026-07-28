@@ -4,11 +4,34 @@ import { databases, APPWRITE_DB_ID, APPWRITE_CATCHES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { MapPin, Target, Flame, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Radar() {
+  const { profileData, points, updateProfileField, loading: authLoading } = useAuth();
   const [scanning, setScanning] = useState(true);
+  const [unlocking, setUnlocking] = useState(false);
+
+  const isUnlocked = profileData?.radar_unlocked === true;
+
+  const handleUnlock = async () => {
+    if (points < 50) {
+      toast.error("אין לך מספיק נקודות לפתוח את הראדאר!");
+      return;
+    }
+    setUnlocking(true);
+    const success = await updateProfileField('radar_unlocked', true);
+    if (success) {
+      updateProfileField('points', points - 50);
+      toast.success("הראדאר נפתח עבורך לתמיד! 🎯");
+    } else {
+      toast.error("שגיאה בפתיחת הראדאר");
+    }
+    setUnlocking(false);
+  };
 
   const { data: hotspots, isLoading } = useQuery({
     queryKey: ["hotspots"],
@@ -69,58 +92,81 @@ export default function Radar() {
         </p>
       </div>
 
-      <div className="px-4">
-        {/* Radar Animation Area */}
-        <div className="relative w-full aspect-square max-w-[300px] mx-auto my-8 bg-slate-900 rounded-full overflow-hidden border-4 border-slate-800 shadow-[0_0_30px_rgba(225,29,72,0.3)]">
-          {/* Grid lines */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-full h-[1px] bg-emerald-500/20" />
-            <div className="absolute h-full w-[1px] bg-emerald-500/20" />
-            <div className="absolute w-[33%] h-[33%] rounded-full border border-emerald-500/20" />
-            <div className="absolute w-[66%] h-[66%] rounded-full border border-emerald-500/20" />
-          </div>
-
-          {/* Sweeping scanner */}
-          <motion.div 
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-            className="absolute inset-0 origin-center"
-            style={{
-              background: "conic-gradient(from 0deg, transparent 70%, rgba(16, 185, 129, 0.4) 100%)",
-            }}
-          />
-
-          {/* Blips (Dots) */}
-          {!scanning && hotspots && hotspots.slice(0, 5).map((spot, i) => {
-            // Random position for visual effect
-            const angle = Math.random() * Math.PI * 2;
-            const distance = 20 + Math.random() * 30; // 20% to 50% from center
-            const top = 50 + Math.sin(angle) * distance;
-            const left = 50 + Math.cos(angle) * distance;
-            
-            return (
-              <motion.div
-                key={spot.name}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: [0, 1, 0.5, 1], scale: [0, 1.2, 1, 1] }}
-                transition={{ duration: 1, delay: i * 0.3 }}
-                className="absolute w-3 h-3 bg-rose-500 rounded-full shadow-[0_0_10px_rgba(225,29,72,1)]"
-                style={{ top: `${top}%`, left: `${left}%`, transform: 'translate(-50%, -50%)' }}
-              />
-            );
-          })}
-          
-          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-            {scanning ? (
-              <span className="text-emerald-400 font-mono text-sm tracking-widest animate-pulse">סורק...</span>
-            ) : (
-              <span className="text-emerald-500/50 font-mono text-xs tracking-widest">LIVE RADAR</span>
-            )}
-          </div>
+      {!isUnlocked && !authLoading ? (
+        <div className="px-4 mt-8">
+          <Card className="border-rose-500/30 bg-rose-500/5 text-center">
+            <CardContent className="p-8">
+              <div className="w-20 h-20 bg-rose-500/20 rounded-full mx-auto flex items-center justify-center mb-4">
+                <Target className="w-10 h-10 text-rose-500" />
+              </div>
+              <h2 className="text-xl font-bold mb-2">ראדאר סודי נעול</h2>
+              <p className="text-muted-foreground text-sm mb-6">
+                גלה בדיוק איפה תופסים דגים ברגע זה. הראדאר סורק נתונים מהקהילה ומציג את החופים הכי חמים לדיג!
+              </p>
+              <Button 
+                onClick={handleUnlock} 
+                disabled={unlocking || points < 50}
+                className="w-full h-14 text-lg font-bold bg-rose-500 hover:bg-rose-600 rounded-2xl"
+              >
+                פתח לצמיתות (50 🪙)
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="px-4">
+            {/* Radar Animation Area */}
+            <div className="relative w-full aspect-square max-w-[300px] mx-auto my-8 bg-slate-900 rounded-full overflow-hidden border-4 border-slate-800 shadow-[0_0_30px_rgba(225,29,72,0.3)]">
+              {/* Grid lines */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-full h-[1px] bg-emerald-500/20" />
+                <div className="absolute h-full w-[1px] bg-emerald-500/20" />
+                <div className="absolute w-[33%] h-[33%] rounded-full border border-emerald-500/20" />
+                <div className="absolute w-[66%] h-[66%] rounded-full border border-emerald-500/20" />
+              </div>
 
-      <div className="px-4 flex-1">
+              {/* Sweeping scanner */}
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                className="absolute inset-0 origin-center"
+                style={{
+                  background: "conic-gradient(from 0deg, transparent 70%, rgba(16, 185, 129, 0.4) 100%)",
+                }}
+              />
+
+              {/* Blips (Dots) */}
+              {!scanning && hotspots && hotspots.slice(0, 5).map((spot, i) => {
+                // Random position for visual effect
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 20 + Math.random() * 30; // 20% to 50% from center
+                const top = 50 + Math.sin(angle) * distance;
+                const left = 50 + Math.cos(angle) * distance;
+                
+                return (
+                  <motion.div
+                    key={spot.name}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: [0, 1, 0.5, 1], scale: [0, 1.2, 1, 1] }}
+                    transition={{ duration: 1, delay: i * 0.3 }}
+                    className="absolute w-3 h-3 bg-rose-500 rounded-full shadow-[0_0_10px_rgba(225,29,72,1)]"
+                    style={{ top: `${top}%`, left: `${left}%`, transform: 'translate(-50%, -50%)' }}
+                  />
+                );
+              })}
+              
+              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                {scanning ? (
+                  <span className="text-emerald-400 font-mono text-sm tracking-widest animate-pulse">סורק...</span>
+                ) : (
+                  <span className="text-emerald-500/50 font-mono text-xs tracking-widest">LIVE RADAR</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-4 flex-1">
         <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
           <Flame className="w-5 h-5 text-rose-500" /> רותח עכשיו בקהילה
         </h3>
@@ -168,8 +214,10 @@ export default function Radar() {
               </motion.div>
             ))
           )}
+          </div>
         </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

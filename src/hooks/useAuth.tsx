@@ -17,6 +17,8 @@ interface AuthContextType {
   isAdmin: boolean;
   refreshProfile: () => Promise<void>;
   updateLocalPoints: (points: number) => void;
+  profileData: any;
+  updateProfileField: (field: string, value: any) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Models.Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [points, setPoints] = useState<number>(0);
+  const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUserAndRole = async () => {
@@ -63,10 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const finalRole = currentUser.email === 'avihaidj0@gmail.com' ? 'ADMIN' : role;
       setUserRole(finalRole);
       setPoints(currentPoints);
+      if (docs.documents.length > 0) {
+        setProfileData(docs.documents[0]);
+      }
     } catch (e) {
       setUser(null);
       setSession(null);
       setUserRole(null);
+      setProfileData(null);
     } finally {
       setLoading(false);
     }
@@ -116,6 +123,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setUserRole(null);
+    setProfileData(null);
+  };
+
+  const updateProfileField = async (field: string, value: any) => {
+    if (!profileData?.$id) return false;
+    try {
+      const updated = await databases.updateDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, profileData.$id, {
+        [field]: value
+      });
+      setProfileData(updated);
+      if (field === 'points') setPoints(value);
+      return true;
+    } catch (e) {
+      console.error(`Failed to update ${field}:`, e);
+      return false;
+    }
   };
 
   const isManager = userRole === 'ADMIN' || userRole === 'gabai';
@@ -135,6 +158,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       refreshProfile: fetchUserAndRole,
       updateLocalPoints: setPoints,
+      profileData,
+      updateProfileField
     }}>
       {children}
     </AuthContext.Provider>

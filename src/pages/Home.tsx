@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package } from 'lucide-react';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
@@ -154,6 +154,12 @@ export default function Home() {
               <Camera className="w-5 h-5 text-blue-500" />
             </div>
             <span className="font-bold text-xs">זיהוי AI</span>
+          </Link>
+          <Link to="/fishing/store" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-yellow-500/10 p-2.5 rounded-full mb-1.5">
+              <StoreIcon className="w-5 h-5 text-yellow-500" />
+            </div>
+            <span className="font-bold text-xs">חנות</span>
           </Link>
           <Link to="/fishing/knots" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
             <div className="bg-emerald-500/10 p-2.5 rounded-full mb-1.5">

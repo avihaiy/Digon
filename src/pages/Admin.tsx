@@ -212,6 +212,46 @@ export default function Admin() {
     },
   });
 
+  const drawRaffleWinner = async () => {
+    if (!usersQuery.data?.documents) return;
+    
+    // Create a pool of tickets
+    const pool: any[] = [];
+    usersQuery.data.documents.forEach(user => {
+      const tickets = user.tickets || 0;
+      for (let i = 0; i < tickets; i++) {
+        pool.push(user);
+      }
+    });
+
+    if (pool.length === 0) {
+      toast.error("אף אחד לא קנה כרטיסי הגרלה עדיין!");
+      return;
+    }
+
+    // Pick random
+    const winner = pool[Math.floor(Math.random() * pool.length)];
+    toast.success(`🎉 המנצח בהגרלה הוא: ${winner.full_name} (${winner.tickets} כרטיסים)!`, { duration: 10000 });
+  };
+
+  const resetRaffles = async () => {
+    if (!usersQuery.data?.documents) return;
+    if (!confirm("האם אתה בטוח שברצונך לאפס את כרטיסי ההגרלה של כולם ל-0?")) return;
+    
+    toast.info("מתחיל איפוס...");
+    try {
+      const promises = usersQuery.data.documents
+        .filter(u => u.tickets > 0)
+        .map(u => databases.updateDocument(DB_ID, PROFILES_ID, u.$id, { tickets: 0 }));
+      
+      await Promise.all(promises);
+      toast.success("איפוס הסתיים בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    } catch (e) {
+      toast.error("שגיאה באיפוס");
+    }
+  };
+
   // Redirect if not logged in
   if (!loading && !user) {
     return <Navigate to="/login" replace />;
@@ -251,6 +291,13 @@ export default function Admin() {
           className="flex gap-2 items-center"
         >
           <Camera className="w-4 h-4" /> תפיסות
+        </Button>
+        <Button 
+          variant={activeTab === "raffles" ? "default" : "outline"} 
+          onClick={() => setActiveTab("raffles")}
+          className="flex gap-2 items-center bg-rose-500/10 text-rose-600 border-rose-200 hover:bg-rose-500 hover:text-white"
+        >
+          <Ticket className="w-4 h-4" /> ניהול הגרלות
         </Button>
       </div>
 
@@ -485,6 +532,60 @@ export default function Admin() {
           </Card>
         )}
       </div>
+      {/* Raffles Tab */}
+      {activeTab === "raffles" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Ticket className="w-5 h-5 text-rose-500"/> ניהול הגרלות ופרסים</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {usersQuery.isLoading ? (
+              <p>טוען משתמשים...</p>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <Button onClick={drawRaffleWinner} className="bg-rose-500 hover:bg-rose-600 gap-2 h-12 text-lg px-8">
+                    <Ticket className="w-5 h-5" /> בצע הגרלה עכשיו!
+                  </Button>
+                  <Button onClick={resetRaffles} variant="destructive" className="h-12 px-8">
+                    אפס כרטיסים לכולם
+                  </Button>
+                </div>
+                
+                <h3 className="font-bold mt-8 mb-4">משתתפים בעלי כרטיסים:</h3>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-right">שם</TableHead>
+                        <TableHead className="text-right">כרטיסים 🎟️</TableHead>
+                        <TableHead className="text-right">סה״כ נקודות</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {usersQuery.data?.documents.filter((u: any) => u.tickets > 0).map((user: any) => (
+                        <TableRow key={user.$id}>
+                          <TableCell className="font-medium">{user.full_name || 'אנונימי'}</TableCell>
+                          <TableCell className="font-bold text-rose-600">{user.tickets}</TableCell>
+                          <TableCell>{user.points}</TableCell>
+                        </TableRow>
+                      ))}
+                      {usersQuery.data?.documents.filter((u: any) => u.tickets > 0).length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                            אין משתתפים עם כרטיסי הגרלה עדיין.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
     </div>
   );
 }

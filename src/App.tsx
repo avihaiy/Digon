@@ -24,6 +24,7 @@ import Knots from "@/pages/fishing/Knots";
 import Radar from "@/pages/fishing/Radar";
 import WeightCalculator from "@/pages/fishing/WeightCalculator";
 import TackleBox from "@/pages/fishing/TackleBox";
+import Store from "@/pages/fishing/Store";
 import Analytics from "@/pages/fishing/Analytics";
 import Settings from "@/pages/fishing/Settings";
 import Leaderboard from "@/pages/fishing/Leaderboard";
@@ -108,6 +109,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/radar" element={<ProtectedRoute><PageTransition><Radar /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/weight-calculator" element={<ProtectedRoute><PageTransition><WeightCalculator /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/tackle-box" element={<ProtectedRoute><PageTransition><TackleBox /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/store" element={<ProtectedRoute><PageTransition><Store /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/analytics" element={<ProtectedRoute><PageTransition><Analytics /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/settings" element={<ProtectedRoute><PageTransition><Settings /></PageTransition></ProtectedRoute>} />
         <Route path="/leaderboard" element={<LayoutRoute><PageTransition><Leaderboard /></PageTransition></LayoutRoute>} />

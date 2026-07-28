@@ -47,7 +47,7 @@ export default function Leaderboard() {
             className="flex flex-col items-center w-24"
           >
             <div className="relative">
-              <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-xl font-bold border-4 border-slate-300 dark:border-slate-600 shadow-lg">
+              <div className={`w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-xl font-bold border-4 ${leaders[1]?.border === 'gold' ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)]' : 'border-slate-300 dark:border-slate-600'} shadow-lg`}>
                 {leaders[1]?.name?.charAt(0) || "ד"}
               </div>
               <div className="absolute -bottom-2 -right-2 bg-slate-300 dark:bg-slate-600 rounded-full p-1 border-2 border-background">
@@ -55,6 +55,7 @@ export default function Leaderboard() {
               </div>
             </div>
             <p className="font-bold text-sm mt-3 truncate w-full text-center">{leaders[1]?.name?.split(' ')[0]}</p>
+            {leaders[1]?.title && <p className="text-[10px] text-primary font-bold -mt-1 mb-1">{leaders[1].title}</p>}
             <p className="text-xs text-yellow-600 dark:text-yellow-500 font-bold">{leaders[1]?.points || 0} נק׳</p>
             <div className="w-full h-16 bg-gradient-to-t from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700/50 mt-2 rounded-t-xl border-x border-t border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
               <div className="absolute inset-0 flex items-center justify-center text-3xl font-black text-slate-300 dark:text-slate-600/50">2</div>
@@ -68,11 +69,12 @@ export default function Leaderboard() {
           >
             <div className="relative">
               <Crown className="w-8 h-8 text-yellow-500 absolute -top-6 left-1/2 -translate-x-1/2 -rotate-12" />
-              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center text-2xl font-bold border-4 border-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+              <div className={`w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center text-2xl font-bold border-4 ${leaders[0]?.border === 'gold' ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.8)]' : 'border-yellow-400'} shadow-[0_0_15px_rgba(234,179,8,0.5)]`}>
                 {leaders[0]?.name?.charAt(0) || "ד"}
               </div>
             </div>
             <p className="font-black text-base mt-3 truncate w-full text-center text-yellow-600 dark:text-yellow-500">{leaders[0]?.name?.split(' ')[0]}</p>
+            {leaders[0]?.title && <p className="text-[10px] text-primary font-bold -mt-1 mb-1">{leaders[0].title}</p>}
             <p className="text-sm text-yellow-600 dark:text-yellow-500 font-bold bg-yellow-500/10 px-2 py-0.5 rounded-full mt-1">{leaders[0]?.points || 0} נק׳</p>
             <div className="w-full h-24 bg-gradient-to-t from-yellow-500/20 to-yellow-500/5 mt-2 rounded-t-xl border-x border-t border-yellow-500/30 relative overflow-hidden">
               <div className="absolute inset-0 flex items-center justify-center text-5xl font-black text-yellow-500/20">1</div>
@@ -85,7 +87,7 @@ export default function Leaderboard() {
             className="flex flex-col items-center w-24"
           >
             <div className="relative">
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center text-xl font-bold border-4 border-orange-400 dark:border-orange-700 shadow-lg">
+              <div className={`w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center text-xl font-bold border-4 ${leaders[2]?.border === 'gold' ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)]' : 'border-orange-400 dark:border-orange-700'} shadow-lg`}>
                 {leaders[2]?.name?.charAt(0) || "ד"}
               </div>
               <div className="absolute -bottom-2 -right-2 bg-orange-200 dark:bg-orange-800 rounded-full p-1 border-2 border-background">
@@ -93,6 +95,7 @@ export default function Leaderboard() {
               </div>
             </div>
             <p className="font-bold text-sm mt-3 truncate w-full text-center">{leaders[2]?.name?.split(' ')[0]}</p>
+            {leaders[2]?.title && <p className="text-[10px] text-primary font-bold -mt-1 mb-1">{leaders[2].title}</p>}
             <p className="text-xs text-yellow-600 dark:text-yellow-500 font-bold">{leaders[2]?.points || 0} נק׳</p>
             <div className="w-full h-12 bg-gradient-to-t from-orange-200/50 to-orange-100/50 dark:from-orange-900/30 dark:to-orange-800/10 mt-2 rounded-t-xl border-x border-t border-orange-300 dark:border-orange-800/50 relative overflow-hidden">
               <div className="absolute inset-0 flex items-center justify-center text-3xl font-black text-orange-400/20 dark:text-orange-700/30">3</div>
@@ -128,7 +131,7 @@ export default function Leaderboard() {
                     #{rank}
                   </div>
                   
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold shrink-0 mx-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 mx-3 ${leader.border === 'gold' ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'bg-muted text-muted-foreground'}`}>
                     {leader.name?.charAt(0) || "ד"}
                   </div>
                   
@@ -137,6 +140,7 @@ export default function Leaderboard() {
                       {leader.name || "משתמש לא ידוע"}
                       {isCurrentUser && <span className="ml-2 text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-normal">אתה</span>}
                     </p>
+                    {leader.title && <p className="text-[10px] text-primary/80 font-bold truncate">{leader.title}</p>}
                   </div>
                   
                   <div className="flex items-center gap-1.5 bg-yellow-500/10 px-3 py-1 rounded-full">
