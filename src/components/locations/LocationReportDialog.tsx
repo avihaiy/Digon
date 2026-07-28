@@ -30,6 +30,7 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, ID.unique(), {
         name,
         user_id: user.$id,
+        added_by: user.$id,
         status: 'pending',
         latitude: 31.0,
         longitude: 35.0
