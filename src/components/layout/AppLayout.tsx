@@ -34,6 +34,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { usePWAUpdate } from '@/hooks/usePWAUpdate';
+import BottomNavigation from './BottomNavigation';
 
 interface AppLayoutProps {
   children: ReactNode;
