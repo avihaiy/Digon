@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID } from "@/lib/appwrite";
+import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID, APPWRITE_STORE_ITEMS_ID } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon } from "lucide-react";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -22,6 +22,7 @@ export default function Admin() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("users");
   const [newLocationName, setNewLocationName] = useState("");
+  const [newStoreItem, setNewStoreItem] = useState({ name: "", description: "", cost: "", type: "title", value: "" });
 
 
   // Fetch Users (Profiles)
@@ -59,6 +60,16 @@ export default function Admin() {
     queryKey: ["admin-catches"],
     queryFn: async () => {
       const res = await databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [Query.orderDesc("$createdAt"), Query.limit(100)]);
+      return res.documents;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch Store Items
+  const { data: storeItemsData, isLoading: storeItemsLoading } = useQuery({
+    queryKey: ["admin-store-items"],
+    queryFn: async () => {
+      const res = await databases.listDocuments(DB_ID, APPWRITE_STORE_ITEMS_ID, [Query.limit(100)]);
       return res.documents;
     },
     enabled: !!user,
@@ -215,6 +226,38 @@ export default function Admin() {
     }
   });
 
+  // Add Store Item Mutation
+  const addStoreItemMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await databases.createDocument(DB_ID, APPWRITE_STORE_ITEMS_ID, ID.unique(), {
+        name: data.name,
+        description: data.description,
+        cost: parseInt(data.cost),
+        type: data.type,
+        value: data.value,
+        is_active: true
+      });
+    },
+    onSuccess: () => {
+      toast.success("הפריט נוסף לחנות בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-store-items"] });
+    },
+    onError: (err: any) => {
+      toast.error("שגיאה בהוספת פריט: " + err.message);
+    }
+  });
+
+  // Toggle Store Item Mutation
+  const toggleStoreItemMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      await databases.updateDocument(DB_ID, APPWRITE_STORE_ITEMS_ID, id, { is_active: isActive });
+    },
+    onSuccess: () => {
+      toast.success("סטטוס הפריט עודכן!");
+      queryClient.invalidateQueries({ queryKey: ["admin-store-items"] });
+    }
+  });
+
   const drawRaffleWinner = async () => {
     if (!usersData) return;
     
@@ -301,6 +344,13 @@ export default function Admin() {
           className="flex gap-2 items-center bg-rose-500/10 text-rose-600 border-rose-200 hover:bg-rose-500 hover:text-white"
         >
           <Ticket className="w-4 h-4" /> ניהול הגרלות
+        </Button>
+        <Button 
+          variant={activeTab === "store" ? "default" : "outline"} 
+          onClick={() => setActiveTab("store")}
+          className="flex gap-2 items-center bg-yellow-500/10 text-yellow-600 border-yellow-200 hover:bg-yellow-500 hover:text-white"
+        >
+          <StoreIcon className="w-4 h-4" /> ניהול חנות
         </Button>
       </div>
 
@@ -593,6 +643,83 @@ export default function Admin() {
         </Card>
       )}
 
+      {/* Store Management Tab */}
+      {activeTab === "store" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><StoreIcon className="w-5 h-5 text-yellow-500"/> ניהול חנות דיגון</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl mb-8 border border-slate-200 dark:border-slate-800">
+              <h3 className="font-bold mb-4">הוספת חבילה חדשה</h3>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <Input placeholder="שם החבילה (למשל: תואר מלך)" value={newStoreItem.name} onChange={e => setNewStoreItem({...newStoreItem, name: e.target.value})} />
+                <Input placeholder="תיאור קצר" value={newStoreItem.description} onChange={e => setNewStoreItem({...newStoreItem, description: e.target.value})} />
+                <Input type="number" placeholder="עלות (נקודות)" value={newStoreItem.cost} onChange={e => setNewStoreItem({...newStoreItem, cost: e.target.value})} />
+                <select 
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={newStoreItem.type} 
+                  onChange={e => setNewStoreItem({...newStoreItem, type: e.target.value})}
+                >
+                  <option value="title">תואר (Title)</option>
+                  <option value="border">מסגרת (Border)</option>
+                  <option value="tickets">כרטיסי הגרלה</option>
+                  <option value="feature">פיצ'ר מיוחד</option>
+                </select>
+                <Input placeholder="ערך פנימי (למשל: gold או 1)" value={newStoreItem.value} onChange={e => setNewStoreItem({...newStoreItem, value: e.target.value})} />
+              </div>
+              <Button 
+                className="mt-4 bg-yellow-500 hover:bg-yellow-600 w-full md:w-auto"
+                disabled={!newStoreItem.name || !newStoreItem.cost || !newStoreItem.value || addStoreItemMutation.isPending}
+                onClick={() => {
+                  addStoreItemMutation.mutate(newStoreItem);
+                  setNewStoreItem({ name: "", description: "", cost: "", type: "title", value: "" });
+                }}
+              >
+                הוסף לחנות
+              </Button>
+            </div>
+
+            {storeItemsLoading ? <p>טוען חבילות...</p> : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>שם החבילה</TableHead>
+                    <TableHead>עלות</TableHead>
+                    <TableHead>סוג</TableHead>
+                    <TableHead>סטטוס (פעיל/כבוי)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {storeItemsData?.map((item: any) => (
+                    <TableRow key={item.$id} className={item.is_active ? '' : 'opacity-50'}>
+                      <TableCell>
+                        <div className="font-medium">{item.name}</div>
+                        <div className="text-xs text-muted-foreground">{item.description}</div>
+                      </TableCell>
+                      <TableCell className="font-bold text-yellow-600">{item.cost} נק'</TableCell>
+                      <TableCell>{item.type}</TableCell>
+                      <TableCell>
+                        <Button 
+                          variant={item.is_active ? "default" : "outline"}
+                          size="sm"
+                          className={item.is_active ? "bg-green-500 hover:bg-green-600" : ""}
+                          onClick={() => toggleStoreItemMutation.mutate({ id: item.$id, isActive: !item.is_active })}
+                        >
+                          {item.is_active ? "פעיל - מוצג" : "כבוי - מוסתר"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!storeItemsData || storeItemsData.length === 0) && (
+                    <TableRow><TableCell colSpan={4} className="text-center">אין חבילות בחנות</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

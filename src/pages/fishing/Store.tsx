@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { databases, APPWRITE_STORE_ITEMS_ID } from "@/lib/appwrite";
+import { Query } from "appwrite";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Store as StoreIcon, ShieldCheck, Ticket, User, Gem, AlertTriangle } from "lucide-react";
@@ -9,6 +12,18 @@ import { motion } from "framer-motion";
 export default function Store() {
   const { points, profileData, updateProfileField } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  // Fetch Store Items
+  const { data: storeItems, isLoading: itemsLoading } = useQuery({
+    queryKey: ["store-items"],
+    queryFn: async () => {
+      const res = await databases.listDocuments(import.meta.env.VITE_APPWRITE_DATABASE_ID, APPWRITE_STORE_ITEMS_ID, [
+        Query.equal("is_active", true),
+        Query.limit(100)
+      ]);
+      return res.documents;
+    }
+  });
 
   const buyItem = async (cost: number, field: string, value: any, itemName: string, isIncrement = false) => {
     if (points < cost) {
@@ -79,81 +94,101 @@ export default function Store() {
       </div>
 
       <div className="px-4 space-y-4">
+        {itemsLoading && <p className="text-center py-8">טוען את מוצרי החנות...</p>}
+        
         {/* Cosmetics */}
-        <div>
-          <h3 className="font-bold text-base mb-3 flex items-center gap-2">
-            <Gem className="w-5 h-5 text-purple-500" /> עיצוב פרופיל
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <Card className={`border-2 ${hasGoldBorder ? 'border-yellow-500' : 'border-border/50'}`}>
-              <CardContent className="p-4 text-center">
-                <div className="w-16 h-16 rounded-full mx-auto border-4 border-yellow-400 bg-muted mb-3 flex items-center justify-center">
-                  <User className="w-6 h-6 text-yellow-600" />
-                </div>
-                <h4 className="font-bold text-sm mb-1">טבעת פרופיל מוזהבת</h4>
-                <p className="text-xs text-muted-foreground mb-3">יופיע בטבלת המובילים</p>
-                {hasGoldBorder ? (
-                  <Button disabled variant="outline" className="w-full h-8 text-xs font-bold text-yellow-600 border-yellow-500">בבעלותך</Button>
-                ) : (
-                  <Button 
-                    disabled={loading || points < 50} 
-                    onClick={() => buyItem(50, 'border', 'gold', 'טבעת מוזהבת')}
-                    className="w-full h-8 text-xs font-bold bg-yellow-500 hover:bg-yellow-600 text-white"
-                  >
-                    50 נק׳
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className={`border-2 ${hasTitleMaster ? 'border-primary' : 'border-border/50'}`}>
-              <CardContent className="p-4 text-center">
-                <div className="w-16 h-16 rounded-full mx-auto bg-primary/10 mb-3 flex items-center justify-center">
-                  <ShieldCheck className="w-8 h-8 text-primary" />
-                </div>
-                <h4 className="font-bold text-sm mb-1">תואר "מלך הלוקוסים"</h4>
-                <p className="text-xs text-muted-foreground mb-3">יופיע ליד שמך</p>
-                {hasTitleMaster ? (
-                  <Button disabled variant="outline" className="w-full h-8 text-xs font-bold text-primary border-primary">בבעלותך</Button>
-                ) : (
-                  <Button 
-                    disabled={loading || points < 30} 
-                    onClick={() => buyItem(30, 'title', 'מלך הלוקוסים', 'תואר חדש')}
-                    className="w-full h-8 text-xs font-bold bg-primary hover:bg-primary/90 text-white"
-                  >
-                    30 נק׳
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+        {storeItems && storeItems.filter(i => i.type === 'title' || i.type === 'border').length > 0 && (
+          <div>
+            <h3 className="font-bold text-base mb-3 flex items-center gap-2">
+              <Gem className="w-5 h-5 text-purple-500" /> עיצוב פרופיל
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {storeItems.filter(i => i.type === 'title' || i.type === 'border').map((item) => {
+                const isOwned = profileData?.[item.type] === item.value;
+                const isGold = item.value === 'gold';
+                const Icon = isGold ? User : ShieldCheck;
+                
+                return (
+                  <Card key={item.$id} className={`border-2 ${isOwned ? 'border-primary' : 'border-border/50'}`}>
+                    <CardContent className="p-4 text-center flex flex-col h-full">
+                      <div className={`w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center ${isGold ? 'border-4 border-yellow-400 bg-muted' : 'bg-primary/10'}`}>
+                        <Icon className={`w-6 h-6 ${isGold ? 'text-yellow-600' : 'text-primary'}`} />
+                      </div>
+                      <h4 className="font-bold text-sm mb-1">{item.name}</h4>
+                      <p className="text-xs text-muted-foreground mb-3 flex-1">{item.description}</p>
+                      {isOwned ? (
+                        <Button disabled variant="outline" className="w-full h-8 text-xs font-bold text-primary border-primary mt-auto">בבעלותך</Button>
+                      ) : (
+                        <Button 
+                          disabled={loading || points < item.cost} 
+                          onClick={() => buyItem(item.cost, item.type, item.value, item.name)}
+                          className={`w-full h-8 text-xs font-bold text-white mt-auto ${isGold ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-primary hover:bg-primary/90'}`}
+                        >
+                          {item.cost} נק׳
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Raffles */}
-        <div className="mt-8">
-          <h3 className="font-bold text-base mb-3 flex items-center gap-2">
-            <Ticket className="w-5 h-5 text-rose-500" /> כרטיסי הגרלה
-          </h3>
-          <Card className="border-rose-500/30 bg-rose-500/5">
-            <CardContent className="p-5 flex items-center justify-between">
-              <div>
-                <h4 className="font-bold">הגרלת ציוד חודשית</h4>
-                <p className="text-xs text-muted-foreground mt-1">ככל שתקנה יותר כרטיסים, הסיכוי לזכות עולה!</p>
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 text-rose-600 rounded-full text-xs font-bold border border-rose-500/20">
-                  <Ticket className="w-3.5 h-3.5" /> יש לך {ticketsCount} כרטיסים
-                </div>
-              </div>
-              <Button 
-                disabled={loading || points < 20} 
-                onClick={() => buyItem(20, 'tickets', 1, 'כרטיס הגרלה', true)}
-                className="h-12 rounded-2xl bg-rose-500 hover:bg-rose-600 font-bold px-6 shrink-0"
-              >
-                20 נק׳
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        {storeItems && storeItems.filter(i => i.type === 'tickets').length > 0 && (
+          <div className="mt-8">
+            <h3 className="font-bold text-base mb-3 flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-rose-500" /> כרטיסי הגרלה
+            </h3>
+            {storeItems.filter(i => i.type === 'tickets').map((item) => (
+              <Card key={item.$id} className="border-rose-500/30 bg-rose-500/5 mb-3">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold">{item.name}</h4>
+                    <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 text-rose-600 rounded-full text-xs font-bold border border-rose-500/20">
+                      <Ticket className="w-3.5 h-3.5" /> יש לך {ticketsCount} כרטיסים
+                    </div>
+                  </div>
+                  <Button 
+                    disabled={loading || points < item.cost} 
+                    onClick={() => buyItem(item.cost, item.type, parseInt(item.value) || 1, item.name, true)}
+                    className="h-12 rounded-2xl bg-rose-500 hover:bg-rose-600 font-bold px-6 shrink-0"
+                  >
+                    {item.cost} נק׳
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
+        {/* Other Features */}
+        {storeItems && storeItems.filter(i => i.type !== 'title' && i.type !== 'border' && i.type !== 'tickets').length > 0 && (
+          <div className="mt-8">
+            <h3 className="font-bold text-base mb-3 flex items-center gap-2">
+              <StoreIcon className="w-5 h-5 text-blue-500" /> מוצרים נוספים
+            </h3>
+            {storeItems.filter(i => i.type !== 'title' && i.type !== 'border' && i.type !== 'tickets').map((item) => (
+              <Card key={item.$id} className="mb-3">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold">{item.name}</h4>
+                    <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                  </div>
+                  <Button 
+                    disabled={loading || points < item.cost} 
+                    onClick={() => buyItem(item.cost, item.type, item.value, item.name)}
+                    className="h-12 rounded-2xl font-bold px-6 shrink-0"
+                  >
+                    {item.cost} נק׳
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
