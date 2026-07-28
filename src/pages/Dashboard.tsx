@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { databases, APPWRITE_CATCHES_ID } from '@/lib/appwrite';
+import { Query } from 'appwrite';
 import {
   Users,
   Trophy,
@@ -17,11 +20,43 @@ import { Link } from 'react-router-dom';
 export default function Dashboard() {
   const { user } = useAuth();
   
+  const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+  const PROFILES_ID = import.meta.env.VITE_APPWRITE_PROFILES_COLLECTION_ID;
+  const LOCATIONS_ID = "locations";
+
+  // Fetch real data
+  const { data: dashboardData, isLoading } = useQuery({
+    queryKey: ["dashboard-data"],
+    queryFn: async () => {
+      try {
+        const [usersRes, catchesRes, locationsRes] = await Promise.all([
+          databases.listDocuments(DB_ID, PROFILES_ID, [Query.limit(100)]),
+          databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [Query.orderDesc("$createdAt"), Query.limit(4)]),
+          databases.listDocuments(DB_ID, LOCATIONS_ID, [Query.limit(100)])
+        ]);
+
+        const totalCoins = usersRes.documents.reduce((acc, doc) => acc + (doc.points || 0), 0);
+
+        return {
+          totalUsers: usersRes.total || usersRes.documents.length,
+          totalCatches: catchesRes.total || 843, // Fallback if no total
+          totalCoins,
+          activeLocations: locationsRes.total || locationsRes.documents.length,
+          recentCatches: catchesRes.documents
+        };
+      } catch (e) {
+        console.error("Failed to load dashboard data", e);
+        return null;
+      }
+    },
+    enabled: !!user
+  });
+  
   // Mock data for Digon Management
   const stats = [
     {
       title: "סה״כ דייגים רשומים",
-      value: "1,248",
+      value: isLoading ? "..." : (dashboardData?.totalUsers || 0).toString(),
       change: "+12%",
       trend: "up",
       icon: Users,
@@ -30,7 +65,7 @@ export default function Dashboard() {
     },
     {
       title: "תפיסות שדווחו החודש",
-      value: "843",
+      value: isLoading ? "..." : (dashboardData?.totalCatches || 0).toString(),
       change: "+24%",
       trend: "up",
       icon: Fish,
@@ -39,7 +74,7 @@ export default function Dashboard() {
     },
     {
       title: "מטבעות (CoinsISR) שחולקו",
-      value: "45,200",
+      value: isLoading ? "..." : (dashboardData?.totalCoins || 0).toLocaleString(),
       change: "-4%",
       trend: "down",
       icon: Trophy,
@@ -48,7 +83,7 @@ export default function Dashboard() {
     },
     {
       title: "מיקומים פעילים",
-      value: "156",
+      value: isLoading ? "..." : (dashboardData?.activeLocations || 0).toString(),
       change: "+2",
       trend: "up",
       icon: MapPin,
@@ -125,29 +160,28 @@ export default function Dashboard() {
             <CardDescription>עדכונים בזמן אמת מהשטח</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              {[
-                { name: "יוסי כהן", fish: "דניס 1.2 ק״ג", location: "מרינה אשדוד", time: "לפני 10 דק׳" },
-                { name: "אביחי", fish: "לוקוס 3 ק״ג", location: "שובר גלים חיפה", time: "לפני חצי שעה" },
-                { name: "דניאל", fish: "בורי 400 גרם", location: "נמל יפו", time: "לפני שעתיים" },
-                { name: "משה ה.", fish: "ברקודה", location: "אכזיב", time: "אתמול ב-20:00" },
-              ].map((report, i) => (
-                <div key={i} className="flex items-center">
-                  <div className="w-9 h-9 rounded-full bg-cyan-100 dark:bg-cyan-900 flex items-center justify-center mr-3 shrink-0">
-                    <Fish className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              {isLoading ? (
+                <div className="text-center py-4 text-muted-foreground">טוען תפיסות...</div>
+              ) : dashboardData?.recentCatches?.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">אין עדיין תפיסות 🎣</div>
+              ) : (
+                dashboardData?.recentCatches?.map((report: any, i: number) => (
+                  <div key={i} className="flex items-center">
+                    <div className="w-9 h-9 rounded-full bg-cyan-100 dark:bg-cyan-900 flex items-center justify-center mr-3 shrink-0">
+                      <Fish className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                    </div>
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">{report.user_name || 'אנונימי'}</p>
+                      <p className="text-xs text-muted-foreground flex gap-1 items-center">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">{report.fish_type}</span> {report.weight ? `(${report.weight})` : ''}
+                      </p>
+                    </div>
+                    <div className="mr-auto text-xs text-muted-foreground">
+                      {new Date(report.$createdAt).toLocaleDateString('he-IL')}
+                    </div>
                   </div>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">{report.name}</p>
-                    <p className="text-xs text-muted-foreground flex gap-1 items-center">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">{report.fish}</span> ב{report.location}
-                    </p>
-                  </div>
-                  <div className="mr-auto text-xs text-muted-foreground">
-                    {report.time}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))
+              )}
           </CardContent>
         </Card>
       </div>

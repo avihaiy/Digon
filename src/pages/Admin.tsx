@@ -105,12 +105,27 @@ export default function Admin() {
       }
       await databases.deleteDocument(DB_ID, APPWRITE_CATCHES_ID, id);
     },
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-catches"] });
+      const previousCatches = queryClient.getQueryData(["admin-catches"]);
+      queryClient.setQueryData(["admin-catches"], (old: any) => 
+        old ? old.filter((c: any) => c.$id !== id) : []
+      );
+      return { previousCatches };
+    },
     onSuccess: () => {
       toast.success("התפיסה נמחקה בהצלחה");
-      queryClient.invalidateQueries({ queryKey: ["admin-catches"] });
       queryClient.invalidateQueries({ queryKey: ["catches"] });
     },
-    onError: () => toast.error("שגיאה במחיקת התפיסה"),
+    onError: (err, variables, context: any) => {
+      toast.error("שגיאה במחיקת התפיסה");
+      if (context?.previousCatches) {
+        queryClient.setQueryData(["admin-catches"], context.previousCatches);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-catches"] });
+    },
   });
 
   // Update Ad Status Mutation
