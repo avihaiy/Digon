@@ -345,21 +345,43 @@ export default function Admin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>תמונה</TableHead>
                       <TableHead>שם המיקום</TableHead>
+                      <TableHead>מפה</TableHead>
                       <TableHead>סטטוס</TableHead>
                       <TableHead>פעולות</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {locationsData?.map((loc: any) => (
+                    {locationsData?.map((loc: any) => {
+                      const previewUrl = loc.image_url 
+                        ? storage.getFilePreview(APPWRITE_CATCH_IMAGES_BUCKET_ID, loc.image_url).href 
+                        : null;
+                      return (
                       <TableRow key={loc.$id}>
-                        <TableCell>{loc.name}</TableCell>
+                        <TableCell>
+                          {previewUrl ? (
+                            <img src={previewUrl} alt={loc.name} className="w-12 h-12 object-cover rounded-md" />
+                          ) : (
+                            <div className="w-12 h-12 bg-slate-100 rounded-md flex items-center justify-center text-xs text-slate-400">אין</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{loc.name}</TableCell>
+                        <TableCell>
+                          {loc.map_url ? (
+                            <a href={loc.map_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline text-xs">
+                              פתח מפה
+                            </a>
+                          ) : (
+                            <span className="text-slate-400 text-xs">אין קישור</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <span className={loc.status === 'approved' ? 'text-green-600' : 'text-orange-500 font-bold'}>
                             {loc.status === 'approved' ? 'מאושר' : 'ממתין'}
                           </span>
                         </TableCell>
-                        <TableCell className="flex gap-2">
+                        <TableCell className="flex gap-2 items-center h-16">
                           {loc.status !== 'approved' && loc.user_id && (
                             <Button 
                               size="sm" 
@@ -376,7 +398,7 @@ export default function Admin() {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )})}
                     {(!locationsData || locationsData.length === 0) && (
                       <TableRow><TableCell colSpan={2} className="text-center">לא הוזנו מיקומים</TableCell></TableRow>
                     )}
