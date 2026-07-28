@@ -42,7 +42,7 @@ interface AppLayoutProps {
 
 const navItems = [
   { href: '/', icon: Home, label: 'ראשי' },
-  { href: '/admin', icon: Settings, label: 'פאנל ניהול' },
+  { href: '/admin', icon: Settings, label: 'פאנל ניהול', adminOnly: true },
   { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
 ];
 
@@ -105,7 +105,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map((item, index) => {
+            {navItems.filter(item => !item.adminOnly || isAdmin).map((item, index) => {
               const isActive = location.pathname === item.href;
               return (
                 <Link

@@ -12,6 +12,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Admin from "@/pages/Admin";
+import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
 import FishingHome from "@/pages/fishing/Home";
 import Community from "@/pages/fishing/Community";
@@ -68,8 +69,9 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
         
         {/* Appwrite Digon Protected Routes */}
-        <Route path="/" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
         
         {/* Fishing Specific Routes */}
         <Route path="/fishing" element={<ProtectedRoute><PageTransition><FishingHome /></PageTransition></ProtectedRoute>} />
@@ -79,7 +81,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/identify" element={<ProtectedRoute><PageTransition><Identify /></PageTransition></ProtectedRoute>} />
         
         {/* Redirects for old routes */}
-        <Route path="/dashboard" element={<Navigate to="/" replace />} />
+        <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
         
         {/* Catch-all */}
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
