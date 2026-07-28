@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2 } from 'lucide-react';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
@@ -160,6 +160,18 @@ export default function Home() {
               <Activity className="w-5 h-5 text-purple-500" />
             </div>
             <span className="font-bold text-sm">סטטיסטיקות</span>
+          </Link>
+          <Link to="/fishing/radar" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-rose-500/10 p-3 rounded-full mb-2">
+              <RadarIcon className="w-5 h-5 text-rose-500" />
+            </div>
+            <span className="font-bold text-sm">ראדאר חם</span>
+          </Link>
+          <Link to="/fishing/weight-calculator" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-amber-500/10 p-3 rounded-full mb-2">
+              <Scale className="w-5 h-5 text-amber-500" />
+            </div>
+            <span className="font-bold text-sm">מחשבון משקל</span>
           </Link>
         </div>
       </section>

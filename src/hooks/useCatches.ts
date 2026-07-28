@@ -49,8 +49,30 @@ export function useCatches() {
       weight: string;
       location: string;
       imageFile: File;
+      imageBase64?: string;
     }) => {
       if (!user) throw new Error("חובה להתחבר כדי לדווח על תפיסה");
+
+      if (!navigator.onLine) {
+        if (!data.imageBase64) throw new Error("חסרה תמונה בפורמט אופליין");
+        
+        const offlineCatch = {
+          id: Date.now().toString(),
+          user_id: user.$id,
+          user_name: user.name || user.email?.split("@")[0] || "דייג אנונימי",
+          fish_type: data.fishType,
+          weight: data.weight || null,
+          location: data.location,
+          imageBase64: data.imageBase64,
+          timestamp: new Date().toISOString()
+        };
+        
+        const existing = JSON.parse(localStorage.getItem("offline_catches") || "[]");
+        existing.push(offlineCatch);
+        localStorage.setItem("offline_catches", JSON.stringify(existing));
+        
+        return { offline: true };
+      }
 
       // 1. Upload Image to Storage Bucket
       const file = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), data.imageFile);
@@ -68,14 +90,20 @@ export function useCatches() {
       };
 
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, ID.unique(), catchData);
-      
-      // Points will be awarded when the admin approves the catch in the Admin Panel
+      return { offline: false };
     },
-    onSuccess: () => {
-      toast({
-        title: "הדיווח נשלח לאישור! 🎉",
-        description: "התפיסה תפורסם בקהילה ותזכה אותך ב-10 מטבעות מיד לאחר אישור מנהל.",
-      });
+    onSuccess: (data) => {
+      if (data?.offline) {
+        toast({
+          title: "נשמר במצב אופליין 📡",
+          description: "אין חיבור לאינטרנט. התפיסה נשמרה ותעלה ברגע שהקליטה תחזור!",
+        });
+      } else {
+        toast({
+          title: "הדיווח נשלח לאישור! 🎉",
+          description: "התפיסה תפורסם בקהילה ותזכה אותך ב-10 מטבעות מיד לאחר אישור מנהל.",
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["catches"] });
     },
     onError: (error: any) => {

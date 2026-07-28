@@ -1,8 +1,9 @@
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info } from "lucide-react";
+import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info, Droplets } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 // Simulated Solunar logic based on current hour
 const getSolunarRating = () => {
@@ -168,6 +169,55 @@ export default function Forecast() {
           </Card>
         </div>
       </section>
+
+      {/* Tide Chart Section */}
+      {marineData.hourlyTides && marineData.hourlyTides.length > 0 && (
+        <section className="px-4">
+          <Card className="border-border/50 shadow-sm">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Droplets className="w-5 h-5 text-blue-500" />
+                <h3 className="font-bold text-lg">גאות ושפל (24 שעות)</h3>
+              </div>
+              <div className="h-48 w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={marineData.hourlyTides}>
+                    <defs>
+                      <linearGradient id="colorTide" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis 
+                      dataKey="time" 
+                      fontSize={10} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickFormatter={(val) => val.split(':')[0] + ':00'}
+                      interval="preserveStartEnd"
+                      minTickGap={30}
+                    />
+                    <YAxis hide domain={['auto', 'auto']} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      labelStyle={{ fontWeight: 'bold', color: '#64748b' }}
+                      formatter={(value: number) => [`${value > 0 ? '+' : ''}${value.toFixed(2)}m`, 'מפלס מים']}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="height" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorTide)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Safety Alert (Example) */}
       <section className="px-4">

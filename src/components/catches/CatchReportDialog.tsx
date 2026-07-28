@@ -88,7 +88,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
     }
 
     try {
-      await reportCatch({ fishType, weight, location, imageFile });
+      await reportCatch({ fishType, weight, location, imageFile, imageBase64: imagePreview || undefined });
       setOpen(false);
     } catch (error) {
       // Error is handled in the hook
