@@ -22,7 +22,7 @@ export function getImageUrl(imageId: string) {
 
 export function useCatches() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   // Fetch Catches
   const { data: catches, isLoading } = useQuery({
@@ -109,6 +109,7 @@ export function useCatches() {
         description: "קיבלת 10 מטבעות על הדיווח, המשך כך!",
       });
       queryClient.invalidateQueries({ queryKey: ["catches"] });
+      refreshProfile();
     },
     onError: (error: any) => {
       console.error(error);

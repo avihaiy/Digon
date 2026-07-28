@@ -15,6 +15,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isManager: boolean;
   isAdmin: boolean;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -119,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       isManager,
       isAdmin,
+      refreshProfile: fetchUserAndRole,
     }}>
       {children}
     </AuthContext.Provider>
