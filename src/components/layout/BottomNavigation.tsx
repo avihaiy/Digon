@@ -1,96 +1,39 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, CreditCard, Bell, Settings, Megaphone } from 'lucide-react';
+import { Home, MapPin, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-
-const tabs = [
-  { href: '/', icon: Home, label: 'בקרה', badge: false },
-  { href: '/members', icon: Users, label: 'חברים', badge: false },
-  { href: '/messages', icon: Megaphone, label: 'הודעות', badge: false },
-  { href: '/payments', icon: CreditCard, label: 'תשלומים', badge: false },
-  { href: '/reminders', icon: Bell, label: 'תזכורות', badge: 'reminders' as const },
-];
+import { useAuth } from '@/hooks/useAuth';
 
 export default function BottomNavigation() {
   const location = useLocation();
+  const { user } = useAuth();
 
-  const { data: activeRemindersCount = 0 } = useQuery({
-    queryKey: ['active-reminders-count'],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from('reminders')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_dismissed', false)
-        .lte('reminder_date', new Date().toISOString());
-      return count || 0;
-    },
-    refetchInterval: 60000,
-  });
+  if (!user) return null;
 
-  const triggerHaptic = () => {
-    if (navigator.vibrate) {
-      navigator.vibrate(10);
-    }
-  };
+  const tabs = [
+    { href: '/', icon: Home, label: 'ראשי' },
+    { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
+    { href: '/admin', icon: Activity, label: 'פאנל ניהול' },
+  ];
 
   return (
-    <nav
-      className="fixed bottom-0 inset-x-0 z-50 lg:hidden"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      {/* Glass background */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-xl border-t border-border/40 shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.4)]" />
-      
-      <div className="relative flex items-center justify-around h-[68px]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border pb-safe">
+      <div className="flex items-center justify-around p-2">
         {tabs.map((tab) => {
           const isActive = location.pathname === tab.href;
           return (
             <Link
               key={tab.href}
               to={tab.href}
-              onClick={triggerHaptic}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 flex-1 h-full transition-all duration-300 relative',
-                isActive
-                  ? 'text-primary'
-                  : 'text-muted-foreground active:scale-90'
+                'flex flex-col items-center justify-center w-16 h-12 transition-colors relative',
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              {/* Active indicator line - top */}
-              <div
-                className={cn(
-                  'absolute top-0 left-1/2 -translate-x-1/2 h-[3px] rounded-b-full bg-primary transition-all duration-400 ease-out',
-                  isActive ? 'w-10 opacity-100' : 'w-0 opacity-0'
-                )}
-              />
-
-              <div className="relative flex items-center justify-center w-10 h-7">
-                {/* Glow effect behind icon */}
-                {isActive && (
-                  <div className="absolute inset-0 mx-auto w-8 h-8 -top-0.5 bg-primary/15 rounded-full blur-lg glow-pulse" />
-                )}
-                <tab.icon
-                  className={cn(
-                    'w-[22px] h-[22px] transition-all duration-300 relative z-10',
-                    isActive ? 'scale-115 text-primary' : 'text-muted-foreground'
-                  )}
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-                {tab.badge === 'reminders' && activeRemindersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold z-20 shadow-sm">
-                    {activeRemindersCount}
-                  </span>
-                )}
-              </div>
-              <span
-                className={cn(
-                  'text-[10px] leading-tight transition-all duration-300',
-                  isActive ? 'font-bold text-primary' : 'font-medium text-muted-foreground'
-                )}
-              >
-                {tab.label}
-              </span>
+              <tab.icon className={cn("w-5 h-5 mb-1", isActive && "animate-bounce-subtle")} />
+              <span className="text-[10px] font-medium">{tab.label}</span>
+              {isActive && (
+                <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+              )}
             </Link>
           );
         })}
