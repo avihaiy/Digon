@@ -46,6 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (docs.documents.length > 0) {
         role = docs.documents[0].role as UserRole;
         currentPoints = docs.documents[0].points || 0;
+      } else {
+        // Failsafe: Auto-create missing profile for older users
+        try {
+          await databases.createDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, 'unique()', {
+            user_id: currentUser.$id,
+            full_name: currentUser.name || currentUser.email || 'משתמש',
+            role: 'USER',
+            points: 0
+          });
+        } catch (createErr) {
+          console.error("Failed to auto-create missing profile:", createErr);
+        }
       }
       
       const finalRole = currentUser.email === 'avihaidj0@gmail.com' ? 'ADMIN' : role;
