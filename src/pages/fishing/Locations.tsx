@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { databases, storage, APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import FishingLayout from "@/components/layouts/FishingLayout";
+import FishingLayout from "@/components/fishing/FishingLayout";
 import { MapPin, Plus, Navigation2, Star, ExternalLink, Image as ImageIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { LocationReportDialog } from "@/components/locations/LocationReportDialog";
@@ -117,7 +117,7 @@ export default function Locations() {
                           <Star className="w-3.5 h-3.5 fill-yellow-400" />
                           5.0
                         </div>
-                        <div className={px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 text-emerald-400 bg-emerald-400/10}>
+                        <div className="px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 text-emerald-400 bg-emerald-400/10">
                           מאושר
                         </div>
                       </div>
