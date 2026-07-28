@@ -563,14 +563,14 @@ export default function Admin() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {usersData?.filter((u: any) => u.tickets > 0).map((user: any) => (
+                      {(usersData || []).filter((u: any) => u.tickets > 0).map((user: any) => (
                         <TableRow key={user.$id}>
                           <TableCell className="font-medium">{user.full_name || 'אנונימי'}</TableCell>
                           <TableCell className="font-bold text-rose-600">{user.tickets}</TableCell>
                           <TableCell>{user.points}</TableCell>
                         </TableRow>
                       ))}
-                      {usersData?.filter((u: any) => u.tickets > 0).length === 0 && (
+                      {(usersData || []).filter((u: any) => u.tickets > 0).length === 0 && (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                             אין משתתפים עם כרטיסי הגרלה עדיין.

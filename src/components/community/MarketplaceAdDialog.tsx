@@ -70,7 +70,7 @@ export function MarketplaceAdDialog({ children }: { children: React.ReactNode })
         user_id: user.$id,
         user_name: user.name,
         title,
-        price,
+        price: parseFloat(price) || 0,
         description,
         phone,
         image_url: imageUrl,
