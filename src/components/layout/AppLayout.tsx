@@ -28,7 +28,8 @@ import {
   Megaphone,
   Fish,
   MapPin,
-  Trophy
+  Trophy,
+  Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
