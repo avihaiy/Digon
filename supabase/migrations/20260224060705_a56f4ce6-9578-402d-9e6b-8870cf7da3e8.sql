@@ -1,1 +1,0 @@
-ALTER TABLE public.scheduled_announcements ADD COLUMN duration_seconds integer DEFAULT 10;

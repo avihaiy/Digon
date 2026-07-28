@@ -1,1 +1,0 @@
-ALTER TABLE public.reminders ADD COLUMN notified boolean NOT NULL DEFAULT false;
