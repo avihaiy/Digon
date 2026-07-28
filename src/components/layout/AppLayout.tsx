@@ -212,6 +212,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
             {/* Theme Toggle */}
             <ThemeToggle />
 
+            {/* Points Badge */}
+            {user && (
+              <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border border-yellow-500/30 shadow-sm animate-fade-in hover-scale cursor-default">
+                <span className="font-bold text-sm">{points}</span>
+                <span className="text-xs">נק׳</span>
+              </Badge>
+            )}
+
             {/* Settings dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
