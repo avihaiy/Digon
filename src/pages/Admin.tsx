@@ -1,1160 +1,256 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { databases } from "@/lib/appwrite";
+import { ID, Query } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  HEBREW_MONTHS,
-  getHebrewDate,
-  formatCurrency,
-  getCurrentParasha,
-  getShabbatTimes,
-  formatTimeOnly,
-  ISRAEL_LOCATIONS,
-} from "@/lib/hebrew-utils";
-import {
-  Clock,
-  Users,
-  DollarSign,
-  Bell,
-  Plus,
-  Edit,
-  Trash2,
-  Flame,
-  Calendar,
-  Monitor,
-  MessageSquare,
-  Settings,
-  MapPin,
-  Sunset,
-  Star,
-} from "lucide-react";
-import { SettingsTab } from "@/components/admin/SettingsTab";
+import { Users, MapPin, LayoutList, Trash2, Check, X } from "lucide-react";
+
+// The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
+const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+const PROFILES_ID = import.meta.env.VITE_APPWRITE_PROFILES_COLLECTION_ID;
+const ADS_ID = "ads";
+const LOCATIONS_ID = "locations";
 
 export default function Admin() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [selectedLocation, setSelectedLocation] = useState("akko");
-  const [locationLoaded, setLocationLoaded] = useState(false);
-  const shabbatTimes = getShabbatTimes(selectedLocation);
+  const [activeTab, setActiveTab] = useState("users");
+  const [newLocationName, setNewLocationName] = useState("");
 
-  // Dialog states
-  const [prayerDialogOpen, setPrayerDialogOpen] = useState(false);
-  const [memorialDialogOpen, setMemorialDialogOpen] = useState(false);
-  const [announcementDialogOpen, setAnnouncementDialogOpen] = useState(false);
-  const [heichalDialogOpen, setHeichalDialogOpen] = useState(false);
-
-  // Form states
-  const [prayerForm, setPrayerForm] = useState({ name: "", time: "", day_type: "weekday", notes: "" });
-  const [memorialForm, setMemorialForm] = useState({
-    deceased_name: "",
-    father_name: "",
-    is_male: true,
-    hebrew_death_day: 1,
-    hebrew_death_month: 1,
-    notes: "",
-  });
-  const [announcementForm, setAnnouncementForm] = useState({
-    content: "",
-    priority: 0,
-    show_on_shabbat: false,
-  });
-  const [heichalForm, setHeichalForm] = useState({
-    name: "",
-    father_name: "",
-    is_male: true,
-    hebrew_day: 1,
-    hebrew_month: 1,
-  });
-
-  const [editingPrayer, setEditingPrayer] = useState<string | null>(null);
-  const [editingMemorial, setEditingMemorial] = useState<string | null>(null);
-  const [editingAnnouncement, setEditingAnnouncement] = useState<string | null>(null);
-  const [editingHeichal, setEditingHeichal] = useState<string | null>(null);
-
-  const { data: locationSetting } = useQuery({
-    queryKey: ["app-settings-location"],
-    queryFn: async () => {
-      const { data } = await supabase.from("app_settings").select("value").eq("key", "display_location").single();
-      return data?.value || "akko";
-    },
-  });
-
-  useEffect(() => {
-    if (locationSetting && !locationLoaded) {
-      setSelectedLocation(locationSetting);
-      setLocationLoaded(true);
-    }
-  }, [locationSetting, locationLoaded]);
-
-  const saveLocationMutation = useMutation({
-    mutationFn: async (location: string) => {
-      const { error } = await supabase
-        .from("app_settings")
-        .upsert({ key: "display_location", value: location }, { onConflict: "key" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["app-settings-location"] });
-      toast({ title: "המיקום נשמר בהצלחה" });
-    },
-    onError: () => toast({ title: "שגיאה בשמירת המיקום", variant: "destructive" }),
-  });
-
-  const handleLocationChange = (location: string) => {
-    setSelectedLocation(location);
-    saveLocationMutation.mutate(location);
-  };
-
-  // Queries
-  const { data: stats } = useQuery({
-    queryKey: ["admin-stats"],
-    queryFn: async () => {
-      const [members, payments, receipts] = await Promise.all([
-        supabase.from("members").select("id", { count: "exact" }).eq("active", true),
-        supabase.from("payments").select("amount").eq("status", "confirmed"),
-        supabase.from("receipts").select("id", { count: "exact" }),
-      ]);
-      return {
-        activeMembers: members.count || 0,
-        totalIncome: payments.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0,
-        totalReceipts: receipts.count || 0,
-      };
-    },
-  });
-
-  const { data: prayerTimes = [] } = useQuery({
-    queryKey: ["prayer-times"],
-    queryFn: async () => {
-      const { data } = await supabase.from("prayer_times").select("*").order("time");
-      return data || [];
-    },
-  });
-
-  const { data: memorialNames = [] } = useQuery({
-    queryKey: ["memorial-names"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("memorial_names")
-        .select("*")
-        .order("hebrew_death_month", { ascending: true })
-        .order("hebrew_death_day", { ascending: true });
-      return data || [];
-    },
-  });
-
-  const { data: announcements = [] } = useQuery({
-    queryKey: ["announcements"],
-    queryFn: async () => {
-      const { data } = await supabase.from("announcements").select("*").order("priority", { ascending: false });
-      return data || [];
-    },
-  });
-
-  // ===== שאילתת היכל ה' =====
-  const { data: heichalNames = [] } = useQuery({
-    queryKey: ["heichal-names-admin"],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("heichal_names")
-        .select("*")
-        .order("hebrew_month", { ascending: true })
-        .order("hebrew_day", { ascending: true });
-      return data || [];
-    },
-  });
-
-  // Mutations
-  const savePrayerMutation = useMutation({
-    mutationFn: async (data: typeof prayerForm & { id?: string }) => {
-      if (data.id) {
-        const { error } = await supabase.from("prayer_times").update(data).eq("id", data.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("prayer_times").insert(data);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["prayer-times"] });
-      toast({ title: "זמן התפילה נשמר בהצלחה" });
-      setPrayerDialogOpen(false);
-      setPrayerForm({ name: "", time: "", day_type: "weekday", notes: "" });
-      setEditingPrayer(null);
-    },
-    onError: () => toast({ title: "שגיאה בשמירה", variant: "destructive" }),
-  });
-
-  const deletePrayerMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("prayer_times").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["prayer-times"] });
-      toast({ title: "זמן התפילה נמחק" });
-    },
-  });
-
-  const saveMemorialMutation = useMutation({
-    mutationFn: async (data: typeof memorialForm & { id?: string }) => {
-      if (data.id) {
-        const { error } = await supabase.from("memorial_names").update(data).eq("id", data.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("memorial_names").insert(data);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["memorial-names"] });
-      toast({ title: "שם הנפטר נשמר בהצלחה" });
-      setMemorialDialogOpen(false);
-      setMemorialForm({
-        deceased_name: "",
-        father_name: "",
-        is_male: true,
-        hebrew_death_day: 1,
-        hebrew_death_month: 1,
-        notes: "",
-      });
-      setEditingMemorial(null);
-    },
-    onError: () => toast({ title: "שגיאה בשמירה", variant: "destructive" }),
-  });
-
-  const deleteMemorialMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("memorial_names").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["memorial-names"] });
-      toast({ title: "שם הנפטר נמחק" });
-    },
-  });
-
-  const saveAnnouncementMutation = useMutation({
-    mutationFn: async (data: typeof announcementForm & { id?: string }) => {
-      if (data.id) {
-        const { error } = await supabase.from("announcements").update(data).eq("id", data.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("announcements").insert(data);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      toast({ title: "ההודעה נשמרה בהצלחה" });
-      setAnnouncementDialogOpen(false);
-      setAnnouncementForm({ content: "", priority: 0, show_on_shabbat: false });
-      setEditingAnnouncement(null);
-    },
-    onError: () => toast({ title: "שגיאה בשמירה", variant: "destructive" }),
-  });
-
-  const deleteAnnouncementMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("announcements").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      toast({ title: "ההודעה נמחקה" });
-    },
-  });
-
-  // ===== Mutations היכל ה' =====
-  const saveHeichalMutation = useMutation({
-    mutationFn: async (data: typeof heichalForm & { id?: string }) => {
-      if (data.id) {
-        const { error } = await (supabase as any).from("heichal_names").update(data).eq("id", data.id);
-        if (error) throw error;
-      } else {
-        const { error } = await (supabase as any).from("heichal_names").insert(data);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["heichal-names-admin"] });
-      toast({ title: "השם נשמר בהצלחה" });
-      setHeichalDialogOpen(false);
-      setHeichalForm({ name: "", father_name: "", is_male: true, hebrew_day: 1, hebrew_month: 1 });
-      setEditingHeichal(null);
-    },
-    onError: () => toast({ title: "שגיאה בשמירה", variant: "destructive" }),
-  });
-
-  const deleteHeichalMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("heichal_names").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["heichal-names-admin"] });
-      toast({ title: "השם נמחק" });
-    },
-  });
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!user) {
+  // Redirect if not logged in
+  if (!loading && !user) {
     return <Navigate to="/login" replace />;
   }
 
-  const getMonthLabel = (month: number) => {
-    return HEBREW_MONTHS.find((m) => m.value === month)?.label || month.toString();
-  };
+  // Fetch Users (Profiles)
+  const { data: usersData, isLoading: usersLoading } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const res = await databases.listDocuments(DB_ID, PROFILES_ID, [Query.limit(100)]);
+      return res.documents;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch Ads
+  const { data: adsData, isLoading: adsLoading } = useQuery({
+    queryKey: ["admin-ads"],
+    queryFn: async () => {
+      const res = await databases.listDocuments(DB_ID, ADS_ID, [Query.limit(100)]);
+      return res.documents;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch Locations
+  const { data: locationsData, isLoading: locationsLoading } = useQuery({
+    queryKey: ["admin-locations"],
+    queryFn: async () => {
+      const res = await databases.listDocuments(DB_ID, LOCATIONS_ID, [Query.limit(100)]);
+      return res.documents;
+    },
+    enabled: !!user,
+  });
+
+  // Add Location Mutation
+  const addLocationMutation = useMutation({
+    mutationFn: async (name: string) => {
+      await databases.createDocument(DB_ID, LOCATIONS_ID, ID.unique(), {
+        name,
+        added_by: user?.$id,
+        latitude: 31.0, // Default mock
+        longitude: 35.0, // Default mock
+      });
+    },
+    onSuccess: () => {
+      toast.success("המיקום נוסף בהצלחה");
+      setNewLocationName("");
+      queryClient.invalidateQueries({ queryKey: ["admin-locations"] });
+    },
+    onError: () => toast.error("שגיאה בהוספת מיקום"),
+  });
+
+  // Delete Location Mutation
+  const deleteLocationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await databases.deleteDocument(DB_ID, LOCATIONS_ID, id);
+    },
+    onSuccess: () => {
+      toast.success("המיקום נמחק");
+      queryClient.invalidateQueries({ queryKey: ["admin-locations"] });
+    },
+  });
+
+  // Update Ad Status Mutation
+  const updateAdStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      await databases.updateDocument(DB_ID, ADS_ID, id, { status });
+    },
+    onSuccess: () => {
+      toast.success("סטטוס המודעה עודכן");
+      queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
+    },
+  });
+
+  if (loading) return <div className="p-8 text-center">טוען...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
-      {/* Sidebar */}
-      <aside
-        className="fixed right-0 top-0 h-full w-64 bg-gradient-to-b from-maroon-900 to-maroon-950 text-white p-6 shadow-xl"
-        style={{ background: "linear-gradient(to bottom, #5D0E1F, #3D0A14)" }}
-      >
-        <div className="text-2xl font-bold mb-8 text-center">
-          <Flame className="w-8 h-8 mx-auto mb-2 text-amber-400" />
-          ניהול בית הכנסת
-        </div>
+    <div className="container mx-auto p-4 md:p-8 animate-fade-in" dir="rtl">
+      <h1 className="text-3xl font-bold mb-8 text-foreground">פאנל ניהול - דיגון</h1>
 
-        <nav className="space-y-2">
-          {[
-            { id: "overview", label: "סקירה כללית", icon: Monitor },
-            { id: "prayers", label: "זמני תפילות", icon: Clock },
-            { id: "memorial", label: "לוח אזכרות", icon: Flame },
-            { id: "heichal", label: "היכל ה'", icon: Star },
-            { id: "announcements", label: "הודעות", icon: MessageSquare },
-            { id: "settings", label: "הגדרות תצוגה", icon: Settings },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === item.id ? "bg-white/20 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </button>
-          ))}
-        </nav>
+      <div className="flex space-x-4 space-x-reverse mb-8 overflow-x-auto pb-2">
+        <Button 
+          variant={activeTab === "users" ? "default" : "outline"} 
+          onClick={() => setActiveTab("users")}
+          className="flex gap-2 items-center"
+        >
+          <Users className="w-4 h-4" /> דייגים
+        </Button>
+        <Button 
+          variant={activeTab === "ads" ? "default" : "outline"} 
+          onClick={() => setActiveTab("ads")}
+          className="flex gap-2 items-center"
+        >
+          <LayoutList className="w-4 h-4" /> מודעות
+        </Button>
+        <Button 
+          variant={activeTab === "locations" ? "default" : "outline"} 
+          onClick={() => setActiveTab("locations")}
+          className="flex gap-2 items-center"
+        >
+          <MapPin className="w-4 h-4" /> מיקומי דייג
+        </Button>
+      </div>
 
-        <div className="absolute bottom-6 left-6 right-6">
-          <div className="text-center text-sm text-white/50 mb-4">קישורים לתצוגות</div>
-          <div className="space-y-2">
-            <a
-              href="/display-general"
-              target="_blank"
-              className="block w-full text-center px-4 py-2 rounded-lg bg-blue-600/30 text-blue-200 hover:bg-blue-600/50 transition-colors"
-            >
-              📺 תצוגה כללית
-            </a>
-            <a
-              href="/display-memorial"
-              target="_blank"
-              className="block w-full text-center px-4 py-2 rounded-lg bg-amber-600/30 text-amber-200 hover:bg-amber-600/50 transition-colors"
-            >
-              🕯️ לוח אזכרות
-            </a>
-            <a
-              href="/prayer-poster"
-              className="block w-full text-center px-4 py-2 rounded-lg bg-emerald-600/30 text-emerald-200 hover:bg-emerald-600/50 transition-colors"
-            >
-              📜 טופס זמני תפילות
-            </a>
-          </div>
-        </div>
-      </aside>
-
-      {/* Top Navigation Bar - עם כפתור חברים בצבע כתום 🟧 */}
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 shadow-md z-40 mr-64">
-        <div className="flex items-center gap-3 px-6 h-full">
-          {/* כפתור "קבל תשלום" - ירוק 📥 */}
-          <a
-            href="/payments"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 active:bg-green-800 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
-          >
-            📥 קבל תשלום
-          </a>
-
-          {/* כפתור "הוצאות" - אדום 📤 */}
-          <a
-            href="/expenses"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 active:bg-red-800 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
-          >
-            📤 הוצאות
-          </a>
-
-          {/* כפתור "חברים" - כתום 🟧 ✨ */}
-          <a
-            href="/members"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-orange-600 text-white hover:bg-orange-700 active:bg-orange-800 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
-          >
-            <Users className="w-5 h-5" />
-            חברים
-          </a>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="mr-64 mt-16 p-8">
-        {/* Overview Tab */}
-        {activeTab === "overview" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">שלום, {user.email}</h1>
-                <p className="text-gray-500 mt-1">
-                  {getHebrewDate(new Date())} • פרשת {getCurrentParasha()}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
-                <Select value={selectedLocation} onValueChange={handleLocationChange}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(ISRAEL_LOCATIONS).map(([key, loc]) => (
-                      <SelectItem key={key} value={key}>
-                        {loc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-purple-800">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  זמני שבת - {ISRAEL_LOCATIONS[selectedLocation]?.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-4 gap-4">
-                  {[
-                    {
-                      icon: Flame,
-                      color: "orange",
-                      label: "הדלקת נרות",
-                      value: formatTimeOnly(shabbatTimes.candleLighting),
-                    },
-                    {
-                      icon: Sunset,
-                      color: "amber",
-                      label: "כניסת שבת",
-                      value: formatTimeOnly(shabbatTimes.shabbatStart),
-                    },
-                    { icon: Sunset, color: "blue", label: "צאת שבת", value: formatTimeOnly(shabbatTimes.shabbatEnd) },
-                    { icon: Star, color: "purple", label: "הבדלה", value: formatTimeOnly(shabbatTimes.havdalah) },
-                  ].map((item, i) => (
-                    <div key={i} className="text-center p-4 bg-white/80 rounded-xl">
-                      <item.icon className={`w-8 h-8 mx-auto text-${item.color}-500 mb-2`} />
-                      <div className="text-sm text-gray-500">{item.label}</div>
-                      <div className={`text-2xl font-bold text-${item.color}-600`}>{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-4 gap-6">
-              {[
-                { icon: Users, color: "blue", value: stats?.activeMembers || 0, label: "חברים פעילים" },
-                {
-                  icon: DollarSign,
-                  color: "green",
-                  value: formatCurrency(stats?.totalIncome || 0),
-                  label: "סה״כ הכנסות",
-                },
-                { icon: Bell, color: "amber", value: stats?.totalReceipts || 0, label: "קבלות" },
-              ].map((item, i) => (
-                <Card key={i}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-lg bg-${item.color}-100 flex items-center justify-center`}>
-                        <item.icon className={`w-6 h-6 text-${item.color}-600`} />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold">{item.value}</div>
-                        <div className="text-sm text-gray-500">{item.label}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    זמני תפילות להיום
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {prayerTimes
-                      .filter((p: any) => p.is_active)
-                      .slice(0, 5)
-                      .map((prayer: any) => (
-                        <div key={prayer.id} className="flex justify-between items-center">
-                          <span className="font-medium">{prayer.name}</span>
-                          <span className="text-lg font-bold text-primary">{prayer.time.slice(0, 5)}</span>
-                        </div>
-                      ))}
-                    {prayerTimes.length === 0 && (
-                      <p className="text-gray-500 text-center py-4">לא הוגדרו זמני תפילות</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Flame className="w-5 h-5 text-amber-500" />
-                    יארצייטים קרובים
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {memorialNames.slice(0, 5).map((name: any) => (
-                      <div key={name.id} className="flex justify-between items-center">
-                        <span>
-                          {name.deceased_name} {name.is_male ? "בן" : "בת"} {name.father_name}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {name.hebrew_death_day} {getMonthLabel(name.hebrew_death_month)}
-                        </span>
-                      </div>
-                    ))}
-                    {memorialNames.length === 0 && (
-                      <p className="text-gray-500 text-center py-4">לא הוזנו שמות נפטרים</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {/* Prayers Tab */}
-        {activeTab === "prayers" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">זמני תפילות</h2>
-              <Dialog open={prayerDialogOpen} onOpenChange={setPrayerDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      setEditingPrayer(null);
-                      setPrayerForm({ name: "", time: "", day_type: "weekday", notes: "" });
-                    }}
-                  >
-                    <Plus className="w-4 h-4 ml-2" />
-                    הוסף זמן תפילה
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{editingPrayer ? "עריכת זמן תפילה" : "הוספת זמן תפילה"}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>שם התפילה</Label>
-                      <Input
-                        value={prayerForm.name}
-                        onChange={(e) => setPrayerForm({ ...prayerForm, name: e.target.value })}
-                        placeholder="לדוגמה: שחרית, מנחה, ערבית"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>שעה</Label>
-                      <Input
-                        type="time"
-                        value={prayerForm.time}
-                        onChange={(e) => setPrayerForm({ ...prayerForm, time: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>סוג</Label>
-                      <Select
-                        value={prayerForm.day_type}
-                        onValueChange={(v) => setPrayerForm({ ...prayerForm, day_type: v })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="weekday">תפילה - יום חול</SelectItem>
-                          <SelectItem value="shabbat">תפילה - שבת</SelectItem>
-                          <SelectItem value="holiday">תפילה - חג</SelectItem>
-                          <SelectItem value="torah_class">שיעור תורה - יום חול</SelectItem>
-                          <SelectItem value="shabbat_torah_class">שיעור תורה - שבת</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>הערות</Label>
-                      <Textarea
-                        value={prayerForm.notes || ""}
-                        onChange={(e) => setPrayerForm({ ...prayerForm, notes: e.target.value })}
-                      />
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() =>
-                        savePrayerMutation.mutate(editingPrayer ? { ...prayerForm, id: editingPrayer } : prayerForm)
-                      }
-                    >
-                      שמור
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>שם התפילה</TableHead>
-                    <TableHead>שעה</TableHead>
-                    <TableHead>סוג יום</TableHead>
-                    <TableHead>פעיל</TableHead>
-                    <TableHead>פעולות</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {prayerTimes.map((prayer: any) => (
-                    <TableRow key={prayer.id}>
-                      <TableCell className="font-medium">{prayer.name}</TableCell>
-                      <TableCell>{prayer.time.slice(0, 5)}</TableCell>
-                      <TableCell>
-                        {{
-                          weekday: "יום חול",
-                          shabbat: "שבת",
-                          holiday: "חג",
-                          torah_class: "שיעור - חול",
-                          shabbat_torah_class: "שיעור - שבת",
-                        }[prayer.day_type as string] || prayer.day_type}
-                      </TableCell>
-                      <TableCell>{prayer.is_active ? "✓" : "✗"}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingPrayer(prayer.id);
-                              setPrayerForm({
-                                name: prayer.name,
-                                time: prayer.time.slice(0, 5),
-                                day_type: prayer.day_type,
-                                notes: prayer.notes || "",
-                              });
-                              setPrayerDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => deletePrayerMutation.mutate(prayer.id)}>
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </div>
-        )}
-
-        {/* Memorial Tab */}
-        {activeTab === "memorial" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">לוח אזכרות (יארצייט)</h2>
-              <Dialog open={memorialDialogOpen} onOpenChange={setMemorialDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      setEditingMemorial(null);
-                      setMemorialForm({
-                        deceased_name: "",
-                        father_name: "",
-                        is_male: true,
-                        hebrew_death_day: 1,
-                        hebrew_death_month: 1,
-                        notes: "",
-                      });
-                    }}
-                  >
-                    <Plus className="w-4 h-4 ml-2" />
-                    הוסף שם נפטר
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{editingMemorial ? "עריכת נפטר" : "הוספת נפטר חדש"}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>שם הנפטר/ת</Label>
-                      <Input
-                        value={memorialForm.deceased_name}
-                        onChange={(e) => setMemorialForm({ ...memorialForm, deceased_name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>שם האב</Label>
-                      <Input
-                        value={memorialForm.father_name}
-                        onChange={(e) => setMemorialForm({ ...memorialForm, father_name: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Label>מין</Label>
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={memorialForm.is_male}
-                            onChange={() => setMemorialForm({ ...memorialForm, is_male: true })}
-                          />
-                          זכר
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={!memorialForm.is_male}
-                            onChange={() => setMemorialForm({ ...memorialForm, is_male: false })}
-                          />
-                          נקבה
-                        </label>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>יום פטירה (עברי)</Label>
-                        <Select
-                          value={memorialForm.hebrew_death_day.toString()}
-                          onValueChange={(v) => setMemorialForm({ ...memorialForm, hebrew_death_day: parseInt(v) })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
-                              <SelectItem key={day} value={day.toString()}>
-                                {day}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>חודש פטירה (עברי)</Label>
-                        <Select
-                          value={memorialForm.hebrew_death_month.toString()}
-                          onValueChange={(v) => setMemorialForm({ ...memorialForm, hebrew_death_month: parseInt(v) })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {HEBREW_MONTHS.map((month) => (
-                              <SelectItem key={month.value} value={month.value.toString()}>
-                                {month.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>הערות</Label>
-                      <Textarea
-                        value={memorialForm.notes || ""}
-                        onChange={(e) => setMemorialForm({ ...memorialForm, notes: e.target.value })}
-                      />
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() =>
-                        saveMemorialMutation.mutate(
-                          editingMemorial ? { ...memorialForm, id: editingMemorial } : memorialForm,
-                        )
-                      }
-                    >
-                      שמור
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>שם הנפטר/ת</TableHead>
-                    <TableHead>בן/בת</TableHead>
-                    <TableHead>תאריך פטירה (עברי)</TableHead>
-                    <TableHead>פעולות</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {memorialNames.map((name: any) => (
-                    <TableRow key={name.id}>
-                      <TableCell className="font-medium">{name.deceased_name}</TableCell>
-                      <TableCell>
-                        {name.is_male ? "בן" : "בת"} {name.father_name}
-                      </TableCell>
-                      <TableCell>
-                        {name.hebrew_death_day} {getMonthLabel(name.hebrew_death_month)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingMemorial(name.id);
-                              setMemorialForm({
-                                deceased_name: name.deceased_name,
-                                father_name: name.father_name,
-                                is_male: name.is_male,
-                                hebrew_death_day: name.hebrew_death_day,
-                                hebrew_death_month: name.hebrew_death_month,
-                                notes: name.notes || "",
-                              });
-                              setMemorialDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => deleteMemorialMutation.mutate(name.id)}>
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </div>
-        )}
-
-        {/* ===== טאב היכל ה' ===== */}
-        {activeTab === "heichal" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">היכל ה׳ — לזכרון עולם</h2>
-              <Dialog open={heichalDialogOpen} onOpenChange={setHeichalDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      setEditingHeichal(null);
-                      setHeichalForm({ name: "", father_name: "", is_male: true, hebrew_day: 1, hebrew_month: 1 });
-                    }}
-                  >
-                    <Plus className="w-4 h-4 ml-2" />
-                    הוסף שם להיכל
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{editingHeichal ? "עריכת שם" : "הוספת שם להיכל ה'"}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>שם הנפטר/ת</Label>
-                      <Input
-                        value={heichalForm.name}
-                        onChange={(e) => setHeichalForm({ ...heichalForm, name: e.target.value })}
-                        placeholder="לדוגמה: יצחק"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>שם האב</Label>
-                      <Input
-                        value={heichalForm.father_name}
-                        onChange={(e) => setHeichalForm({ ...heichalForm, father_name: e.target.value })}
-                        placeholder="לדוגמה: אברהם"
-                      />
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Label>מין</Label>
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={heichalForm.is_male}
-                            onChange={() => setHeichalForm({ ...heichalForm, is_male: true })}
-                          />
-                          זכר
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={!heichalForm.is_male}
-                            onChange={() => setHeichalForm({ ...heichalForm, is_male: false })}
-                          />
-                          נקבה
-                        </label>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>יום פטירה (עברי)</Label>
-                        <Select
-                          value={heichalForm.hebrew_day.toString()}
-                          onValueChange={(v) => setHeichalForm({ ...heichalForm, hebrew_day: parseInt(v) })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
-                              <SelectItem key={day} value={day.toString()}>
-                                {day}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>חודש פטירה (עברי)</Label>
-                        <Select
-                          value={heichalForm.hebrew_month.toString()}
-                          onValueChange={(v) => setHeichalForm({ ...heichalForm, hebrew_month: parseInt(v) })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {HEBREW_MONTHS.map((month) => (
-                              <SelectItem key={month.value} value={month.value.toString()}>
-                                {month.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() =>
-                        saveHeichalMutation.mutate(
-                          editingHeichal ? { ...heichalForm, id: editingHeichal } : heichalForm,
-                        )
-                      }
-                    >
-                      שמור
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>שם</TableHead>
-                    <TableHead>בן/בת</TableHead>
-                    <TableHead>תאריך פטירה (עברי)</TableHead>
-                    <TableHead>פעולות</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {heichalNames.length === 0 ? (
+      <div className="grid gap-6">
+        {activeTab === "users" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>ניהול משתמשים (דייגים)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {usersLoading ? <p>טוען משתמשים...</p> : (
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-gray-400 py-8">
-                        אין שמות — לחץ "הוסף שם להיכל"
-                      </TableCell>
+                      <TableHead>שם / אימייל</TableHead>
+                      <TableHead>תפקיד</TableHead>
+                      <TableHead>מספר טלפון</TableHead>
                     </TableRow>
-                  ) : (
-                    heichalNames.map((person: any) => (
-                      <TableRow key={person.id}>
-                        <TableCell className="font-medium">
-                          {person.is_male ? "ר'" : "מרת"} {person.name} ז״ל
-                        </TableCell>
-                        <TableCell>
-                          {person.is_male ? "בן" : "בת"} {person.father_name}
-                        </TableCell>
-                        <TableCell>
-                          {person.hebrew_day} {getMonthLabel(person.hebrew_month)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingHeichal(person.id);
-                                setHeichalForm({
-                                  name: person.name,
-                                  father_name: person.father_name || "",
-                                  is_male: person.is_male,
-                                  hebrew_day: person.hebrew_day,
-                                  hebrew_month: person.hebrew_month,
-                                });
-                                setHeichalDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => deleteHeichalMutation.mutate(person.id)}>
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
-                          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {usersData?.map((u: any) => (
+                      <TableRow key={u.$id}>
+                        <TableCell>{u.full_name || 'ללא שם'}</TableCell>
+                        <TableCell>{u.role === 'ADMIN' ? 'מנהל' : 'משתמש רגיל'}</TableCell>
+                        <TableCell>{u.phone_number || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                    {(!usersData || usersData.length === 0) && (
+                      <TableRow><TableCell colSpan={3} className="text-center">אין משתמשים</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "ads" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>אישור מודעות</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {adsLoading ? <p>טוען מודעות...</p> : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>כותרת</TableHead>
+                      <TableHead>מחיר</TableHead>
+                      <TableHead>סטטוס</TableHead>
+                      <TableHead>פעולות</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {adsData?.map((ad: any) => (
+                      <TableRow key={ad.$id}>
+                        <TableCell>{ad.title}</TableCell>
+                        <TableCell>{ad.price} ₪</TableCell>
+                        <TableCell>{ad.status === 'approved' ? 'מאושר' : ad.status === 'rejected' ? 'נדחה' : 'ממתין'}</TableCell>
+                        <TableCell className="flex gap-2">
+                          <Button size="sm" variant="outline" className="text-green-600" onClick={() => updateAdStatusMutation.mutate({ id: ad.$id, status: 'approved' })}>
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-red-600" onClick={() => updateAdStatusMutation.mutate({ id: ad.$id, status: 'rejected' })}>
+                            <X className="w-4 h-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </Card>
-          </div>
+                    ))}
+                    {(!adsData || adsData.length === 0) && (
+                      <TableRow><TableCell colSpan={4} className="text-center">אין מודעות במערכת</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         )}
 
-        {/* Announcements Tab */}
-        {activeTab === "announcements" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">הודעות לרצועה</h2>
-              <Dialog open={announcementDialogOpen} onOpenChange={setAnnouncementDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      setEditingAnnouncement(null);
-                      setAnnouncementForm({ content: "", priority: 0, show_on_shabbat: false });
-                    }}
-                  >
-                    <Plus className="w-4 h-4 ml-2" />
-                    הוסף הודעה
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{editingAnnouncement ? "עריכת הודעה" : "הוספת הודעה חדשה"}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>תוכן ההודעה</Label>
-                      <Textarea
-                        value={announcementForm.content}
-                        onChange={(e) => setAnnouncementForm({ ...announcementForm, content: e.target.value })}
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>עדיפות (מספר גבוה = קודם)</Label>
-                      <Input
-                        type="number"
-                        value={announcementForm.priority}
-                        onChange={(e) =>
-                          setAnnouncementForm({ ...announcementForm, priority: parseInt(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={announcementForm.show_on_shabbat}
-                        onCheckedChange={(v) => setAnnouncementForm({ ...announcementForm, show_on_shabbat: v })}
-                      />
-                      <Label>הצג גם בשבת</Label>
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() =>
-                        saveAnnouncementMutation.mutate(
-                          editingAnnouncement ? { ...announcementForm, id: editingAnnouncement } : announcementForm,
-                        )
-                      }
-                    >
-                      שמור
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>תוכן</TableHead>
-                    <TableHead>עדיפות</TableHead>
-                    <TableHead>שבת</TableHead>
-                    <TableHead>פעולות</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {announcements.map((ann: any) => (
-                    <TableRow key={ann.id}>
-                      <TableCell className="font-medium max-w-md truncate">{ann.content}</TableCell>
-                      <TableCell>{ann.priority}</TableCell>
-                      <TableCell>{ann.show_on_shabbat ? "✓" : "✗"}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingAnnouncement(ann.id);
-                              setAnnouncementForm({
-                                content: ann.content,
-                                priority: ann.priority,
-                                show_on_shabbat: ann.show_on_shabbat,
-                              });
-                              setAnnouncementDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => deleteAnnouncementMutation.mutate(ann.id)}>
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
+        {activeTab === "locations" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>מיקומי דייג</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 mb-6">
+                <Input 
+                  placeholder="הזן שם של מיקום דייג חדש..." 
+                  value={newLocationName}
+                  onChange={(e) => setNewLocationName(e.target.value)}
+                  className="max-w-xs"
+                />
+                <Button onClick={() => addLocationMutation.mutate(newLocationName)} disabled={!newLocationName || addLocationMutation.isPending}>
+                  הוסף מיקום
+                </Button>
+              </div>
+
+              {locationsLoading ? <p>טוען מיקומים...</p> : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>שם המיקום</TableHead>
+                      <TableHead>פעולות</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {locationsData?.map((loc: any) => (
+                      <TableRow key={loc.$id}>
+                        <TableCell>{loc.name}</TableCell>
+                        <TableCell>
+                          <Button size="sm" variant="destructive" onClick={() => deleteLocationMutation.mutate(loc.$id)}>
+                            <Trash2 className="w-4 h-4" /> מחק
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!locationsData || locationsData.length === 0) && (
+                      <TableRow><TableCell colSpan={2} className="text-center">לא הוזנו מיקומים</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         )}
-
-        {/* Settings Tab */}
-        {activeTab === "settings" && (
-          <SettingsTab selectedLocation={selectedLocation} onLocationChange={handleLocationChange} />
-        )}
-      </main>
+      </div>
     </div>
   );
 }

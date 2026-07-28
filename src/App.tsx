@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useManifestSwitcher } from "@/hooks/useManifestSwitcher";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -12,47 +11,13 @@ import { DirectionProvider } from "@radix-ui/react-direction";
 import AppLayout from "@/components/layout/AppLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
-
-import Members from "@/pages/Members";
-import Messages from "@/pages/Messages";
-
-import Payments from "@/pages/Payments";
-import Receipts from "@/pages/Receipts";
-import Reports from "@/pages/Reports";
-import UserManagement from "@/pages/UserManagement";
-import Budget from "@/pages/Budget";
-import Equipment from "@/pages/Equipment";
-import Expenses from "@/pages/Expenses";
-import ExpenseReports from "@/pages/ExpenseReports";
-import DetailedReport from "@/pages/DetailedReport";
-import DebtsReport from "@/pages/DebtsReport";
-import WeeklyBalanceReport from "@/pages/WeeklyBalanceReport";
 import Admin from "@/pages/Admin";
-import AdminMobile from "@/pages/AdminMobile";
-import Backups from "@/pages/Backups";
-import DisplayGeneral from "@/pages/DisplayGeneral";
-import DisplayMemorial from "@/pages/DisplayMemorial";
-import DisplayFinance from "@/pages/DisplayFinance";
-import DisplayTV from "@/pages/DisplayTV";
-import Install from "@/pages/Install";
 import NotFound from "@/pages/NotFound";
-import ManageAds from "@/pages/ManageAds";
-import Display from "@/pages/Display";
 import FishingHome from "@/pages/fishing/Home";
 import Community from "@/pages/fishing/Community";
 import Forecast from "@/pages/fishing/Forecast";
 import Locations from "@/pages/fishing/Locations";
 import Identify from "@/pages/fishing/Identify";
-import SettingsPage from "@/pages/SettingsPage";
-import Reminders from "@/pages/Reminders";
-import Events from "@/pages/Events";
-import PrayerPoster from "@/pages/PrayerPoster";
-import Newsletter from "@/pages/Newsletter";
-import PublicReceipt from "@/pages/PublicReceipt";
-import PublicMemberDebts from "@/pages/PublicMemberDebts";
-import PublicMemberArea from "@/pages/PublicMemberArea";
-import SifreiTorah from "@/pages/SifreiTorah";
-import { OfflineSyncProvider } from "@/hooks/useOfflineSync";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 
 const queryClient = new QueryClient();
@@ -95,386 +60,51 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  useManifestSwitcher();
 
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <PageTransition>
-                <Login />
-              </PageTransition>
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/install"
-          element={
-            <PageTransition>
-              <Install />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/"
-          element={
-            <PageTransition>
-              <FishingHome />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/fishing/community"
-          element={
-            <PageTransition>
-              <Community />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/fishing/forecast"
-          element={
-            <PageTransition>
-              <Forecast />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/fishing/locations"
-          element={
-            <PageTransition>
-              <Locations />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/fishing/identify"
-          element={
-            <PageTransition>
-              <Identify />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Dashboard />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/members"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Members />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/messages"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Messages />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/payments"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Payments />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/receipts"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Receipts />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Reports />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <UserManagement />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/budget"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Budget />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/equipment"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Equipment />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/expenses"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Expenses />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/expense-reports"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <ExpenseReports />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/detailed-report"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <DetailedReport />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/debts-report"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <DebtsReport />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/weekly-balance"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <WeeklyBalanceReport />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Admin />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/backups"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Backups />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <SettingsPage />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/manage-ads"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <ManageAds />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reminders"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Reminders />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/events"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Events />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/sifrei-torah"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <SifreiTorah />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin-mobile"
-          element={
-            <PageTransition>
-              <AdminMobile />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/prayer-poster"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <PrayerPoster />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/newsletter"
-          element={
-            <ProtectedRoute>
-              <PageTransition>
-                <Newsletter />
-              </PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/display-general"
-          element={
-            <PageTransition>
-              <DisplayGeneral />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/display-memorial"
-          element={
-            <PageTransition>
-              <DisplayMemorial />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/display-finance"
-          element={
-            <PageTransition>
-              <DisplayFinance />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/display-tv"
-          element={
-            <PageTransition>
-              <DisplayTV />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/fishing"
-          element={
-            <PageTransition>
-              <FishingHome />
-            </PageTransition>
-          }
-        />
-        <Route path="/display" element={<Display />} />
-        <Route path="/r/:receiptNumber" element={<PublicReceipt />} />
-        <Route path="/d/:memberId" element={<PublicMemberDebts />} />
-        <Route path="/my/:memberId" element={<PublicMemberArea />} />
-        <Route
-          path="*"
-          element={
-            <PageTransition>
-              <NotFound />
-            </PageTransition>
-          }
-        />
+        {/* Public Routes */}
+        <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
+        
+        {/* Appwrite Digon Protected Routes */}
+        <Route path="/" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
+        
+        {/* Fishing Specific Routes */}
+        <Route path="/fishing" element={<ProtectedRoute><PageTransition><FishingHome /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/community" element={<ProtectedRoute><PageTransition><Community /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/forecast" element={<ProtectedRoute><PageTransition><Forecast /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/locations" element={<ProtectedRoute><PageTransition><Locations /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/identify" element={<ProtectedRoute><PageTransition><Identify /></PageTransition></ProtectedRoute>} />
+        
+        {/* Catch-all */}
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   );
 };
 
-const App = () => (
-  <DirectionProvider dir="rtl">
+const App = () => {
+  return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-        <TooltipProvider>
-          <OfflineSyncProvider>
+      <ThemeProvider defaultTheme="system" storageKey="app-theme">
+        <DirectionProvider dir="rtl">
+          <AuthProvider>
             <PWAUpdateProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <AuthProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
                   <AnimatedRoutes />
-                </AuthProvider>
-              </BrowserRouter>
+                </BrowserRouter>
+              </TooltipProvider>
             </PWAUpdateProvider>
-          </OfflineSyncProvider>
-        </TooltipProvider>
+          </AuthProvider>
+        </DirectionProvider>
       </ThemeProvider>
     </QueryClientProvider>
-  </DirectionProvider>
-);
+  );
+};
 
 export default App;

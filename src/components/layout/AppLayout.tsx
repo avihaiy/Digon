@@ -1,13 +1,10 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { APP_CONFIG } from '@/config/app';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ScreensManagementPanel } from '@/components/admin/ScreensManagementPanel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,46 +22,25 @@ import {
   X,
   Home,
   PieChart,
-  Database,
   RefreshCw,
   ChevronDown,
   Megaphone,
-  AlertCircle,
   Fish,
   MapPin,
-  Waves,
   Trophy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { USER_ROLES } from '@/lib/hebrew-utils';
-import { OfflineIndicator, OfflineBanner } from './OfflineIndicator';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { usePWAUpdate } from '@/hooks/usePWAUpdate';
-import NotificationDropdown from './NotificationDropdown';
-import BottomNavigation from './BottomNavigation';
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
 const navItems = [
-  { href: '/dashboard', icon: Home, label: 'לוח בקרה דיגון' },
-  { href: '/members', icon: Users, label: 'ניהול דייגים' },
-  { href: '#', icon: Fish, label: 'דיווחי תפיסות' },
-  { href: '#', icon: MapPin, label: 'ניהול מיקומים' },
-  { href: '#', icon: Trophy, label: 'חנות CoinsISR' },
-  { href: '/manage-ads', icon: Megaphone, label: 'ניהול מודעות' },
-];
-
-const reportsSubItems = [
-  { href: '#', icon: BarChart3, label: 'פעילות כללית' },
-  { href: '#', icon: PieChart, label: 'סטטיסטיקות דייג' },
-];
-
-const adminNavItems = [
-  { href: '/settings', icon: Settings, label: 'הגדרות מערכת' },
-  { href: '/users', icon: Users, label: 'מנהלי מערכת' },
-  { href: '/backups', icon: Database, label: 'גיבויים' },
+  { href: '/', icon: Home, label: 'ראשי' },
+  { href: '/admin', icon: Settings, label: 'פאנל ניהול' },
+  { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
@@ -72,35 +48,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [reportsOpen, setReportsOpen] = useState(
-    location.pathname === '/reports' || location.pathname === '/expense-reports' || location.pathname === '/debts-report'
-  );
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
-
-  // Fetch AnyDesk screens for admin users
-  const { data: anydeskScreens } = useQuery({
-    queryKey: ['app-settings-anydesk'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'anydesk_id')
-        .maybeSingle();
-      
-      if (!data?.value) return [];
-      
-      try {
-        if (data.value.startsWith('[')) {
-          return JSON.parse(data.value) as { id: string; name: string }[];
-        } else {
-          return [{ id: data.value, name: 'מסך ראשי' }];
-        }
-      } catch (e) {
-        return [{ id: data.value, name: 'מסך ראשי' }];
-      }
-    },
-    enabled: isAdmin,
-  });
 
   // downloadAnyDeskBat is now in ScreensManagementPanel
   const triggerHaptic = () => {
