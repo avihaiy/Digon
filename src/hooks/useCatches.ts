@@ -17,7 +17,7 @@ export interface CatchReport {
 
 export function getImageUrl(imageId: string) {
   if (!imageId) return "";
-  return storage.getFilePreview(APPWRITE_CATCH_IMAGES_BUCKET_ID, imageId).toString();
+  return storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, imageId).toString();
 }
 
 export function useCatches() {
