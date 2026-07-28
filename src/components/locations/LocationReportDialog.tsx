@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID } from "@/lib/appwrite";
 import { ID } from "appwrite";
@@ -30,7 +30,9 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, ID.unique(), {
         name,
         user_id: user.$id,
-        status: 'pending'
+        status: 'pending',
+        latitude: 31.0,
+        longitude: 35.0
       });
     },
     onSuccess: () => {
