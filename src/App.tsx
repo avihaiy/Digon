@@ -23,6 +23,7 @@ import Wiki from "@/pages/fishing/Wiki";
 import Knots from "@/pages/fishing/Knots";
 import Radar from "@/pages/fishing/Radar";
 import WeightCalculator from "@/pages/fishing/WeightCalculator";
+import TackleBox from "@/pages/fishing/TackleBox";
 import Analytics from "@/pages/fishing/Analytics";
 import Settings from "@/pages/fishing/Settings";
 import Leaderboard from "@/pages/fishing/Leaderboard";
@@ -106,6 +107,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/knots" element={<ProtectedRoute><PageTransition><Knots /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/radar" element={<ProtectedRoute><PageTransition><Radar /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/weight-calculator" element={<ProtectedRoute><PageTransition><WeightCalculator /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/tackle-box" element={<ProtectedRoute><PageTransition><TackleBox /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/analytics" element={<ProtectedRoute><PageTransition><Analytics /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/settings" element={<ProtectedRoute><PageTransition><Settings /></PageTransition></ProtectedRoute>} />
         <Route path="/leaderboard" element={<LayoutRoute><PageTransition><Leaderboard /></PageTransition></LayoutRoute>} />
@@ -124,7 +126,7 @@ const App = () => {
   useOfflineSync();
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" storageKey="app-theme">
+      <ThemeProvider defaultTheme="system" storageKey="app-theme" themes={['light', 'dark', 'ocean']}>
         <DirectionProvider dir="rtl">
           <AuthProvider>
             <PWAUpdateProvider>

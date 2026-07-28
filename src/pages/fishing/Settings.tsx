@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Bell, BellRing, Settings2, Info } from "lucide-react";
+import { Bell, BellRing, Settings2, Info, Moon, Sun, Waves } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
 
 export default function Settings() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -80,7 +82,43 @@ export default function Settings() {
       </div>
 
       <div className="px-4 space-y-4">
+        {/* Theme Settings */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="border-border/50 shadow-sm overflow-hidden">
+            <CardContent className="p-5">
+              <h3 className="font-bold text-base mb-4">תצוגה ועיצוב</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <Button 
+                  variant={theme === 'light' ? 'default' : 'outline'} 
+                  className={`flex flex-col items-center justify-center h-20 gap-2 rounded-2xl ${theme === 'light' ? 'bg-primary text-primary-foreground' : ''}`}
+                  onClick={() => setTheme('light')}
+                >
+                  <Sun className="w-6 h-6" />
+                  <span className="text-xs">בהיר</span>
+                </Button>
+                <Button 
+                  variant={theme === 'dark' ? 'default' : 'outline'} 
+                  className={`flex flex-col items-center justify-center h-20 gap-2 rounded-2xl ${theme === 'dark' ? 'bg-slate-800 text-white border-slate-700' : ''}`}
+                  onClick={() => setTheme('dark')}
+                >
+                  <Moon className="w-6 h-6" />
+                  <span className="text-xs">כהה</span>
+                </Button>
+                <Button 
+                  variant={theme === 'ocean' ? 'default' : 'outline'} 
+                  className={`flex flex-col items-center justify-center h-20 gap-2 rounded-2xl ${theme === 'ocean' ? 'bg-blue-900 text-cyan-400 border-blue-800' : ''}`}
+                  onClick={() => setTheme('ocean')}
+                >
+                  <Waves className="w-6 h-6" />
+                  <span className="text-xs">אוקיינוס</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Push Notifications */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="border-border/50 shadow-sm overflow-hidden">
             <CardContent className="p-0">
               <div className="p-5 flex items-center justify-between border-b border-border/50">

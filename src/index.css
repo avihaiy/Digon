@@ -95,6 +95,40 @@
     --sidebar-ring: 199 89% 48%;
   }
 
+  .ocean {
+    --background: 220 80% 8%; /* Very Deep Blue */
+    --foreground: 210 40% 98%;
+    --card: 218 50% 12%; /* Deep Ocean Blue */
+    --card-foreground: 210 40% 98%;
+    --popover: 220 80% 8%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 216 40% 18%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 216 40% 18%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 180 100% 40%;
+    --accent-foreground: 210 40% 98%;
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 144.9 80.4% 10%;
+    --warning: 35 90% 55%;
+    --warning-foreground: 224 71% 4%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 216 40% 18%;
+    --input: 216 40% 18%;
+    --ring: 199 89% 48%;
+    --sidebar-background: 220 80% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 216 40% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 216 40% 18%;
+    --sidebar-ring: 199 89% 48%;
+  }
+
   @keyframes shimmer {
     100% {
       transform: translateX(100%);

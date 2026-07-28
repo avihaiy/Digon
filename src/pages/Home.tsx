@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon } from 'lucide-react';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
@@ -136,7 +136,13 @@ export default function Home() {
 
       {/* Useful Tools */}
       <section className="pt-2">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          <Link to="/fishing/tackle-box" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-orange-500/10 p-3 rounded-full mb-2">
+              <Package className="w-5 h-5 text-orange-500" />
+            </div>
+            <span className="font-bold text-sm">קופסת ציוד</span>
+          </Link>
           <Link to="/fishing/wiki" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
             <div className="bg-primary/10 p-3 rounded-full mb-2">
               <Fish className="w-5 h-5 text-primary" />
