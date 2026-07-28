@@ -117,8 +117,15 @@ export default function Admin() {
         );
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("המיקום אושר והדייג קיבל 10 מטבעות! 🎉");
+      // עדכון מיידי של התצוגה בלי לחכות לשרת
+      queryClient.setQueryData(["admin-locations"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((loc: any) => 
+          loc.$id === variables.locId ? { ...loc, status: 'approved' } : loc
+        );
+      });
       queryClient.invalidateQueries({ queryKey: ["admin-locations"] });
       queryClient.invalidateQueries({ queryKey: ["fishing-locations"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
