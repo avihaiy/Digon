@@ -54,7 +54,7 @@ self.addEventListener('push', (event: PushEvent) => {
     data = { body: event.data?.text() || 'התראה חדשה' };
   }
 
-  const title = data.title || 'ברית שלום';
+  const title = data.title || 'דיגון (Digon)';
   const options: NotificationOptions = {
     body: data.body || '',
     icon: data.icon || '/pwa-icon.png',

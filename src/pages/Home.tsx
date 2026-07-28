@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw } from 'lucide-react';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2 } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
@@ -31,8 +31,13 @@ export default function Home() {
             מוכן לזרוק חכה למים?
           </p>
         </div>
-        <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-          <Fish className="w-6 h-6 text-primary" />
+        <div className="flex gap-2">
+          <Link to="/fishing/settings" className="h-12 w-12 bg-muted rounded-full flex items-center justify-center hover:bg-muted/80 transition-colors">
+            <Settings2 className="w-5 h-5 text-muted-foreground" />
+          </Link>
+          <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+            <Fish className="w-6 h-6 text-primary" />
+          </div>
         </div>
       </div>
 
@@ -131,18 +136,30 @@ export default function Home() {
 
       {/* Useful Tools */}
       <section className="pt-2">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Link to="/fishing/wiki" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
             <div className="bg-primary/10 p-3 rounded-full mb-2">
               <Fish className="w-5 h-5 text-primary" />
             </div>
-            <span className="font-bold text-sm">ויקיפדיה לדגים</span>
+            <span className="font-bold text-sm">ויקי-דג</span>
           </Link>
           <Link to="/fishing/identify" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
             <div className="bg-blue-500/10 p-3 rounded-full mb-2">
               <Camera className="w-5 h-5 text-blue-500" />
             </div>
-            <span className="font-bold text-sm">זיהוי דגים חכם</span>
+            <span className="font-bold text-sm">זיהוי AI</span>
+          </Link>
+          <Link to="/fishing/knots" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-emerald-500/10 p-3 rounded-full mb-2">
+              <Link2 className="w-5 h-5 text-emerald-500" />
+            </div>
+            <span className="font-bold text-sm">מדריך קשרים</span>
+          </Link>
+          <Link to="/fishing/analytics" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-purple-500/10 p-3 rounded-full mb-2">
+              <Activity className="w-5 h-5 text-purple-500" />
+            </div>
+            <span className="font-bold text-sm">סטטיסטיקות</span>
           </Link>
         </div>
       </section>

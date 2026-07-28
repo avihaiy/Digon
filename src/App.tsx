@@ -20,7 +20,11 @@ import Forecast from "@/pages/fishing/Forecast";
 import Locations from "@/pages/fishing/Locations";
 import Identify from "@/pages/fishing/Identify";
 import Wiki from "@/pages/fishing/Wiki";
+import Knots from "@/pages/fishing/Knots";
+import Analytics from "@/pages/fishing/Analytics";
+import Settings from "@/pages/fishing/Settings";
 import Leaderboard from "@/pages/fishing/Leaderboard";
+
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 
 const queryClient = new QueryClient();
@@ -96,6 +100,9 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/locations" element={<ProtectedRoute><PageTransition><Locations /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/identify" element={<ProtectedRoute><PageTransition><Identify /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/wiki" element={<ProtectedRoute><PageTransition><Wiki /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/knots" element={<ProtectedRoute><PageTransition><Knots /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/analytics" element={<ProtectedRoute><PageTransition><Analytics /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/settings" element={<ProtectedRoute><PageTransition><Settings /></PageTransition></ProtectedRoute>} />
         <Route path="/leaderboard" element={<LayoutRoute><PageTransition><Leaderboard /></PageTransition></LayoutRoute>} />
         
         {/* Redirects for old routes */}
