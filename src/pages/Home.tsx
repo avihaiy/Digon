@@ -129,6 +129,24 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Useful Tools */}
+      <section className="pt-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Link to="/fishing/wiki" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-primary/10 p-3 rounded-full mb-2">
+              <Fish className="w-5 h-5 text-primary" />
+            </div>
+            <span className="font-bold text-sm">ויקיפדיה לדגים</span>
+          </Link>
+          <Link to="/fishing/identify" className="bg-card border border-border shadow-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
+            <div className="bg-blue-500/10 p-3 rounded-full mb-2">
+              <Camera className="w-5 h-5 text-blue-500" />
+            </div>
+            <span className="font-bold text-sm">זיהוי דגים חכם</span>
+          </Link>
+        </div>
+      </section>
+
       {/* Recent Catches Feed */}
       <section className="pt-2">
         <div className="flex items-center justify-between mb-4">
