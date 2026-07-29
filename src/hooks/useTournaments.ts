@@ -82,13 +82,24 @@ export function useTournaments() {
     }
   });
 
+  const deleteTournamentMutation = useMutation({
+    mutationFn: async (tournamentId: string) => {
+      await databases.deleteDocument(APPWRITE_DB_ID, APPWRITE_TOURNAMENTS_ID, tournamentId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+    }
+  });
+
   return {
     tournaments,
     activeTournaments,
     isLoading,
     createTournament: (data: any) => createTournamentMutation.mutate(data),
     endTournament: (data: any) => endTournamentMutation.mutate(data),
+    deleteTournament: (id: string) => deleteTournamentMutation.mutate(id),
     isCreating: createTournamentMutation.isPending,
-    isEnding: endTournamentMutation.isPending
+    isEnding: endTournamentMutation.isPending,
+    isDeleting: deleteTournamentMutation.isPending
   };
 }

@@ -22,7 +22,7 @@ export default function Admin() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("users"); // users, locations, catches, raffles, store, settings, tournaments
-  const { tournaments, createTournament, endTournament } = useTournaments();
+  const { tournaments, createTournament, endTournament, deleteTournament } = useTournaments();
   const [newLocationName, setNewLocationName] = useState("");
   const [newStoreItem, setNewStoreItem] = useState({ name: "", description: "", cost: "", type: "title", value: "" });
   
@@ -1015,19 +1015,33 @@ export default function Admin() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {t.is_active && (
-                        <div className="flex gap-2 items-center">
-                          <Input id={`winner_${t.$id}`} placeholder="ID המנצח (או שם משתמש)" className="h-8 text-xs w-40" />
-                          <Button size="sm" variant="outline" className="h-8" onClick={() => {
-                            const winnerId = (document.getElementById(`winner_${t.$id}`) as HTMLInputElement).value;
-                            if(!winnerId) return toast({ title: "שגיאה", description: "יש להזין ID מנצח", variant: "destructive" });
-                            endTournament({ tournamentId: t.$id, winnerId, prize: t.prize_points });
-                          }}>הכרז על מנצח וסיים!</Button>
-                        </div>
-                      )}
-                      {!t.is_active && t.winner_user_id && (
-                        <span className="text-xs text-muted-foreground">מנצח: {t.winner_user_id}</span>
-                      )}
+                      <div className="flex gap-2 items-center flex-wrap">
+                        {t.is_active && (
+                          <div className="flex gap-2 items-center">
+                            <Input id={`winner_${t.$id}`} placeholder="ID המנצח (או שם משתמש)" className="h-8 text-xs w-40" />
+                            <Button size="sm" variant="outline" className="h-8" onClick={() => {
+                              const winnerId = (document.getElementById(`winner_${t.$id}`) as HTMLInputElement).value;
+                              if(!winnerId) return toast({ title: "שגיאה", description: "יש להזין ID מנצח", variant: "destructive" });
+                              endTournament({ tournamentId: t.$id, winnerId, prize: t.prize_points });
+                            }}>הכרז על מנצח וסיים!</Button>
+                          </div>
+                        )}
+                        {!t.is_active && t.winner_user_id && (
+                          <span className="text-xs text-muted-foreground ml-4">מנצח: {t.winner_user_id}</span>
+                        )}
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          className="h-8 ml-auto" 
+                          onClick={() => {
+                            if(confirm('למחוק תחרות זו? (פעולה זו לא תמחק את הנקודות שכבר חולקו)')) {
+                              deleteTournament(t.$id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
