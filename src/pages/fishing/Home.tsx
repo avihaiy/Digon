@@ -65,9 +65,9 @@ const ActionButton = ({ icon: Icon, label, delay, onClick }: { icon: LucideIcon,
     className="w-full relative overflow-hidden flex flex-col items-center justify-center p-5 rounded-[2rem] bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border border-white/10 transition-colors group shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
   >
     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-    <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 3, delay, ease: "easeInOut" }}>
+    <div className="animate-float" style={{ animationDelay: `${delay}s` }}>
       <Icon className="w-8 h-8 mb-3 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover:text-cyan-300 transition-colors z-10" />
-    </motion.div>
+    </div>
     <span className="font-semibold text-sm text-slate-200 z-10">{label}</span>
   </motion.button>
 );
@@ -85,12 +85,10 @@ const Home = () => {
       >
         <div className="flex items-center gap-3">
           <motion.img 
-            animate={{ boxShadow: ["0px 0px 0px rgba(34,211,238,0)", "0px 0px 20px rgba(34,211,238,0.4)", "0px 0px 0px rgba(34,211,238,0)"] }}
-            transition={{ repeat: Infinity, duration: 3 }}
             whileHover={{ rotate: 15, scale: 1.1 }}
             src="/digon-logo.jpg" 
             alt="Digon" 
-            className="w-10 h-10 rounded-xl shadow-lg border border-white/10 object-cover" 
+            className="w-10 h-10 rounded-xl shadow-lg border border-white/10 object-cover animate-pulse-glow" 
           />
           <div className="flex flex-col">
             <h1 className="font-black text-xl text-white tracking-tight leading-none text-start">דיגון</h1>
@@ -117,14 +115,14 @@ const Home = () => {
             transition={{ repeat: Infinity, duration: 10, repeatType: "reverse", ease: "easeInOut" }}
             src="/fishing_bg.jpg" 
             alt="Fishing Sunset" 
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover origin-center"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#020610]/60 via-transparent to-[#020610]"></div>
           
           <div className="absolute top-5 start-5 text-start z-10">
             <div className="text-slate-300 text-xs font-medium tracking-wider mb-1">ברוך הבא,</div>
             <div className="text-white font-black text-2xl flex items-center justify-start gap-2 drop-shadow-lg">
-              {user?.email?.split('@')[0] || 'avihaiy'} <motion.span animate={{ rotate: [0, 30, -10, 20, 0] }} transition={{ repeat: Infinity, duration: 2.5, repeatDelay: 1 }} className="text-2xl origin-bottom-right">👋</motion.span>
+              {user?.email?.split('@')[0] || 'avihaiy'} <span className="text-2xl origin-bottom-right animate-wave inline-block">👋</span>
             </div>
           </div>
           
@@ -145,13 +143,9 @@ const Home = () => {
           <div className="absolute bottom-5 start-0 text-start z-10 w-full px-5">
             <h2 className="text-4xl font-black text-white drop-shadow-2xl mb-2 flex items-center justify-start gap-3">
               דיג בישראל 
-              <motion.span 
-                animate={{ y: [0, -8, 0], rotate: [0, 5, -5, 0] }}
-                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                className="text-3xl filter drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] inline-block origin-bottom"
-              >
+              <span className="text-3xl filter drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] inline-block origin-bottom animate-float">
                 🎣
-              </motion.span>
+              </span>
             </h2>
             <div className="inline-flex items-center gap-2 bg-yellow-500/20 backdrop-blur-md border border-yellow-500/30 px-3 py-1.5 rounded-full text-yellow-400 font-bold text-sm shadow-[0_0_15px_rgba(234,179,8,0.2)]">
               <span>הכי טוב היום: מרכז — ציון 44</span>
@@ -181,23 +175,18 @@ const Home = () => {
           </div>
           
           <div className="flex justify-between items-end px-1 relative">
-            <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 3, delay: 0.5, ease: "easeInOut" }}>
+            <div className="animate-float" style={{ animationDelay: "0.5s" }}>
               <CircularProgress value={37} label="דרום" subLabel="גרוע" color="#ef4444" glowColor="rgba(239,68,68,0.5)" />
-            </motion.div>
+            </div>
             
             {/* Center prominent score */}
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              animate={{ y: [0, -10, 0] }}
-              transition={{ y: { repeat: Infinity, duration: 4, ease: "easeInOut" } }}
-              className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md rounded-[2rem] p-3 -mx-2 shadow-[0_0_30px_rgba(34,211,238,0.15)] border border-white/20 transform scale-110 relative z-10"
-            >
+            <div className="animate-float shadow-[0_0_30px_rgba(34,211,238,0.15)] bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md rounded-[2rem] p-3 -mx-2 border border-white/20 transform scale-110 relative z-10 hover:scale-125 transition-transform cursor-pointer">
               <CircularProgress value={44} label="מרכז" subLabel="בינוני" color="#06b6d4" glowColor="rgba(6,182,212,0.6)" />
-            </motion.div>
+            </div>
             
-            <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 3.5, delay: 1, ease: "easeInOut" }}>
+            <div className="animate-float" style={{ animationDelay: "1s" }}>
               <CircularProgress value={28} label="צפון" subLabel="גרוע" color="#ef4444" glowColor="rgba(239,68,68,0.5)" />
-            </motion.div>
+            </div>
           </div>
         </motion.div>
 
@@ -210,15 +199,11 @@ const Home = () => {
             className="mt-5 relative overflow-hidden bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 backdrop-blur-xl rounded-[2.5rem] p-6 border border-yellow-500/30 flex items-center justify-between shadow-[0_10px_40px_rgba(245,158,11,0.15)] group cursor-pointer"
           >
             {/* Animated shine effect */}
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_2.5s_infinite]" />
             
-            <motion.div 
-              animate={{ rotate: [0, 5, -5, 0] }}
-              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-              className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] group-hover:-rotate-12 transition-transform duration-500"
-            >
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] animate-swim">
               <Fish className="w-8 h-8 text-white drop-shadow-md" />
-            </motion.div>
+            </div>
             <div className="text-start flex-1 px-5">
               <div className="flex flex-col items-start">
                 <span className="text-4xl font-black bg-gradient-to-r from-yellow-200 to-amber-500 bg-clip-text text-transparent drop-shadow-sm">חנות דיגון</span>
@@ -298,13 +283,9 @@ const Home = () => {
             className="w-full mt-6 py-5 rounded-[2rem] bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-dashed border-cyan-500/40 text-cyan-400 font-bold text-base flex items-center justify-center gap-3 hover:bg-cyan-500/20 transition-all overflow-hidden relative group"
           >
             <div className="absolute inset-0 bg-cyan-400/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-            <motion.div 
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-              className="bg-cyan-500/20 p-1.5 rounded-full relative z-10 group-hover:scale-110 transition-transform"
-            >
+            <div className="bg-cyan-500/20 p-1.5 rounded-full relative z-10 group-hover:scale-110 transition-transform animate-float">
               <Play className="w-5 h-5 fill-cyan-400" />
-            </motion.div>
+            </div>
             <span className="relative z-10">שתף תפיסה חדשה (+10 נק׳)</span>
           </motion.button>
         </CatchReportDialog>
