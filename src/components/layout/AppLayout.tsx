@@ -30,7 +30,8 @@ import {
   MapPin,
   Trophy,
   Download,
-  ShoppingCart
+  ShoppingCart,
+  Settings2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -235,10 +236,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
                 {user ? (
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                    <LogOut className="w-4 h-4 ml-2" />
-                    יציאה
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/fishing/settings" className="flex items-center w-full">
+                        <Settings2 className="w-4 h-4 ml-2" />
+                        הגדרות חשבון
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                      <LogOut className="w-4 h-4 ml-2" />
+                      יציאה
+                    </DropdownMenuItem>
+                  </>
                 ) : (
                   <DropdownMenuItem asChild>
                     <Link to="/login" className="flex items-center text-primary">

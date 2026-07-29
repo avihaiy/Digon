@@ -27,20 +27,12 @@ export default function Home() {
       {/* Header / Welcome */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            שלום, {firstName} 👋
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            שלום, {firstName} <span className="animate-wave inline-block origin-bottom-right">👋</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             מוכן לזרוק חכה למים?
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Link to="/fishing/settings" className="h-12 w-12 bg-muted rounded-full flex items-center justify-center hover:bg-muted/80 transition-colors">
-            <Settings2 className="w-5 h-5 text-muted-foreground" />
-          </Link>
-          <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <Fish className="w-6 h-6 text-primary" />
-          </div>
         </div>
       </div>
 
