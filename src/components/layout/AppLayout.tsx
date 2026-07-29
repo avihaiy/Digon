@@ -186,6 +186,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 רענן
               </Button>
             </div>
+            </div>
           </div>
         </div>
       </aside>
