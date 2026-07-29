@@ -230,6 +230,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <NotificationsPanel />
             )}
 
+            {/* Search Icon */}
+            {user && (
+              <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                <Link to="/fishing/search">
+                  <Search className="w-5 h-5" />
+                </Link>
+              </Button>
+            )}
+
             {/* Points Badge linked to Store */}
             {user && (
               <Link to="/fishing/store">
