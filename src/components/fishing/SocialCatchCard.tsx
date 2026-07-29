@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export function SocialCatchCard({ report }: { report: any }) {
   const { user } = useAuth();
   const { likesCount, hasLiked, toggleLike, comments, commentsCount, addComment, isCommentLoading } = useSocial(report.$id);
-  const { badges } = useUserBadges(report.user_id);
+  const { badges, title } = useUserBadges(report.user_id);
   const [commentText, setCommentText] = useState("");
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
@@ -53,8 +53,13 @@ export function SocialCatchCard({ report }: { report: any }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold truncate text-white">{report.user_name}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-sm font-semibold text-white">{report.user_name}</p>
+              {title && (
+                <span className="text-[10px] bg-cyan-900/40 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded-md font-bold">
+                  {title}
+                </span>
+              )}
               {badges?.length > 0 && (
                 <div className="flex items-center gap-0.5">
                   {badges.slice(0, 3).map((badgeId: string) => (
