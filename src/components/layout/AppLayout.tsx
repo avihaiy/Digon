@@ -21,7 +21,7 @@ import {
   Settings,
   LogOut,
   Menu,
-  X, Home, Compass, MessageCircle, MapPin, Search, RefreshCw,
+  X, Home, Compass, MessageCircle, MapPin, Search, RefreshCw, Settings2,
   ShoppingCart, Droplets, Fish, Trophy, Activity, Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
