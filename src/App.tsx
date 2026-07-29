@@ -14,6 +14,7 @@ import Dashboard from "@/pages/Dashboard";
 import Admin from "@/pages/Admin";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
+import Install from "@/pages/Install";
 import FishingHome from "@/pages/fishing/Home";
 import Community from "@/pages/fishing/Community";
 import Forecast from "@/pages/fishing/Forecast";
@@ -99,6 +100,7 @@ const AnimatedRoutes = () => {
         
         {/* Appwrite Digon Protected Routes */}
         <Route path="/" element={<LayoutRoute><PageTransition><Home /></PageTransition></LayoutRoute>} />
+        <Route path="/install" element={<LayoutRoute><PageTransition><Install /></PageTransition></LayoutRoute>} />
         <Route path="/admin" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/settings" element={<ProtectedRoute><PageTransition><Admin /></PageTransition></ProtectedRoute>} />
         
