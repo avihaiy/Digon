@@ -18,7 +18,8 @@ interface ScanResult {
 }
 
 export default function Identify() {
-  const { points, updateProfileField } = useAuth();
+  const { points, profileData, updateProfileField } = useAuth();
+  const aiCredits = profileData?.ai_credits || 0;
   const [image, setImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -39,17 +40,17 @@ export default function Identify() {
   };
 
   const analyzeImage = async (base64Str: string) => {
-    if (points < 2) {
-      toast.error("אין לך מספיק נקודות דיגון! אתה צריך 2 נקודות בשביל לזהות דג.");
+    if (aiCredits < 1) {
+      toast.error("אין לך מספיק סריקות AI! תוכל לרכוש חבילת סריקות בחנות.");
       return;
     }
 
     setIsScanning(true);
     setResult(null);
     
-    // Deduct points
+    // Deduct credit
     try {
-      await updateProfileField('points', points - 2);
+      await updateProfileField('ai_credits', aiCredits - 1);
     } catch (e) {
       // Ignore
     }
@@ -134,9 +135,12 @@ export default function Identify() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
           זיהוי דגים חכם <ScanSearch className="w-6 h-6 text-blue-500" />
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1 mb-2">
           צלם או העלה תמונה, וה-AI שלנו יזהה את הדג
         </p>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 text-indigo-600 rounded-full text-xs font-bold border border-indigo-500/20 w-fit">
+          <ScanSearch className="w-3.5 h-3.5" /> נשארו לך {aiCredits} סריקות AI
+        </div>
       </div>
 
       <div className="flex-1 px-4 flex flex-col">
@@ -171,7 +175,7 @@ export default function Identify() {
                   className="w-full h-14 rounded-2xl text-lg font-bold shadow-lg"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Camera className="w-5 h-5 ml-2" /> העלה תמונה לזיהוי (עלות: 2 🪙)
+                  <Camera className="w-5 h-5 ml-2" /> צלם / העלה תמונה (סריקה 1)
                 </Button>
                 
                 <Button 

@@ -5,7 +5,7 @@ import { databases, APPWRITE_STORE_ITEMS_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Store as StoreIcon, ShieldCheck, Ticket, User, Gem, AlertTriangle } from "lucide-react";
+import { Store as StoreIcon, ShieldCheck, Ticket, User, Gem, Sparkles, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -60,6 +60,7 @@ export default function Store() {
   const hasGoldBorder = profileData?.border === 'gold';
   const hasTitleMaster = profileData?.title === 'מלך הלוקוסים';
   const ticketsCount = profileData?.tickets || 0;
+  const aiCredits = profileData?.ai_credits || 0;
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto min-h-[calc(100vh-80px)]">
@@ -164,13 +165,42 @@ export default function Store() {
           </div>
         )}
 
+        {/* AI Credits */}
+        {storeItems && storeItems.filter(i => i.type === 'ai_credits').length > 0 && (
+          <div className="mt-8">
+            <h3 className="font-bold text-base mb-3 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-indigo-500" /> זיהוי דגים ב-AI
+            </h3>
+            {storeItems.filter(i => i.type === 'ai_credits').map((item) => (
+              <Card key={item.$id} className="border-indigo-500/30 bg-indigo-500/5 mb-3">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold">{item.name}</h4>
+                    <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                    <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 text-indigo-600 rounded-full text-xs font-bold border border-indigo-500/20">
+                      <Sparkles className="w-3.5 h-3.5" /> נשארו לך {aiCredits} סריקות
+                    </div>
+                  </div>
+                  <Button 
+                    disabled={loading || points < item.cost} 
+                    onClick={() => buyItem(item.cost, item.type, parseInt(item.value) || 1, item.name, true)}
+                    className="h-12 rounded-2xl bg-indigo-500 hover:bg-indigo-600 font-bold px-6 shrink-0"
+                  >
+                    {item.cost} נק׳
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
         {/* Other Features */}
-        {storeItems && storeItems.filter(i => i.type !== 'title' && i.type !== 'border' && i.type !== 'tickets').length > 0 && (
+        {storeItems && storeItems.filter(i => i.type !== 'title' && i.type !== 'border' && i.type !== 'tickets' && i.type !== 'ai_credits').length > 0 && (
           <div className="mt-8">
             <h3 className="font-bold text-base mb-3 flex items-center gap-2">
               <StoreIcon className="w-5 h-5 text-blue-500" /> מוצרים נוספים
             </h3>
-            {storeItems.filter(i => i.type !== 'title' && i.type !== 'border' && i.type !== 'tickets').map((item) => (
+            {storeItems.filter(i => i.type !== 'title' && i.type !== 'border' && i.type !== 'tickets' && i.type !== 'ai_credits').map((item) => (
               <Card key={item.$id} className="mb-3">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div>

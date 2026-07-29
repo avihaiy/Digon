@@ -684,6 +684,7 @@ export default function Admin() {
                   <option value="title">תואר (Title)</option>
                   <option value="border">מסגרת (Border)</option>
                   <option value="tickets">כרטיסי הגרלה</option>
+                  <option value="ai_credits">סריקות AI</option>
                   <option value="feature">פיצ'ר מיוחד</option>
                 </select>
                 <Input placeholder="ערך פנימי (למשל: gold או 1)" value={newStoreItem.value} onChange={e => setNewStoreItem({...newStoreItem, value: e.target.value})} />
