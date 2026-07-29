@@ -38,6 +38,7 @@ export default function Admin() {
   const [editFishType, setEditFishType] = useState("");
   const [editWeight, setEditWeight] = useState("");
   const [editLocation, setEditLocation] = useState("");
+  const [editMapUrl, setEditMapUrl] = useState("");
 
 
   // Fetch Users (Profiles)
@@ -769,7 +770,11 @@ export default function Admin() {
                               setSelectedCatchToEdit(catchItem);
                               setEditFishType(catchItem.fish_type || "");
                               setEditWeight(catchItem.weight || "");
-                              setEditLocation(catchItem.location || "");
+                              
+                              const locParts = (catchItem.location || "").split("|||");
+                              setEditLocation(locParts[0] ? locParts[0].trim() : "");
+                              setEditMapUrl(locParts[1] ? locParts[1].trim() : "");
+                              
                               setEditCatchModalOpen(true);
                             }}
                           >
@@ -1270,6 +1275,18 @@ export default function Admin() {
                 />
               </div>
 
+              <div>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                  קישור למפה (אופציונלי)
+                </label>
+                <Input 
+                  value={editMapUrl}
+                  onChange={e => setEditMapUrl(e.target.value)}
+                  className="h-10 text-left dir-ltr"
+                  placeholder="https://maps.app.goo.gl/..."
+                />
+              </div>
+
               <Button 
                 className="w-full h-12 text-lg font-bold mt-4" 
                 disabled={editCatchMutation.isPending || !editFishType || !editLocation}
@@ -1279,7 +1296,7 @@ export default function Admin() {
                     data: {
                       fish_type: editFishType,
                       weight: editWeight,
-                      location: editLocation
+                      location: editMapUrl.trim() ? `${editLocation.trim()} ||| ${editMapUrl.trim()}` : editLocation.trim()
                     }
                   });
                 }}
