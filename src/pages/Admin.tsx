@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil } from "lucide-react";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -31,6 +31,13 @@ export default function Admin() {
   const [selectedUserForPoints, setSelectedUserForPoints] = useState<any>(null);
   const [pointsAmount, setPointsAmount] = useState<string>("0");
   const [pointsOperation, setPointsOperation] = useState<"add" | "remove">("add");
+
+  // Edit Catch Modal State
+  const [editCatchModalOpen, setEditCatchModalOpen] = useState(false);
+  const [selectedCatchToEdit, setSelectedCatchToEdit] = useState<any>(null);
+  const [editFishType, setEditFishType] = useState("");
+  const [editWeight, setEditWeight] = useState("");
+  const [editLocation, setEditLocation] = useState("");
 
 
   // Fetch Users (Profiles)
@@ -200,6 +207,21 @@ export default function Admin() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-catches"] });
     },
+  });
+
+  // Edit Catch Mutation
+  const editCatchMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string, data: any }) => {
+      await databases.updateDocument(DB_ID, APPWRITE_CATCHES_ID, id, data);
+    },
+    onSuccess: () => {
+      toast.success("התפיסה עודכנה בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-catches"] });
+      queryClient.invalidateQueries({ queryKey: ["catches"] });
+      queryClient.invalidateQueries({ queryKey: ["map-catches"] });
+      setEditCatchModalOpen(false);
+    },
+    onError: () => toast.error("שגיאה בעדכון התפיסה"),
   });
 
   // Approve Catch Mutation
@@ -739,6 +761,20 @@ export default function Admin() {
                               <Check className="w-4 h-4" /> אשר
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-slate-100"
+                            onClick={() => {
+                              setSelectedCatchToEdit(catchItem);
+                              setEditFishType(catchItem.fish_type || "");
+                              setEditWeight(catchItem.weight || "");
+                              setEditLocation(catchItem.location || "");
+                              setEditCatchModalOpen(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" /> ערוך
+                          </Button>
                           <Button 
                             size="sm" 
                             variant="destructive" 
@@ -1174,6 +1210,81 @@ export default function Admin() {
                 }}
               >
                 בצע עדכון
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Catch Modal */}
+      {editCatchModalOpen && selectedCatchToEdit && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl w-full max-w-sm shadow-xl relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setEditCatchModalOpen(false)}
+              className="absolute top-4 end-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-3">
+                <Pencil className="w-8 h-8 text-blue-500" />
+              </div>
+              <h2 className="text-xl font-bold text-center">עריכת תפיסה</h2>
+              <p className="text-sm text-center text-muted-foreground mt-1">
+                {selectedCatchToEdit.user_name}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                  סוג הדג
+                </label>
+                <Input 
+                  value={editFishType}
+                  onChange={e => setEditFishType(e.target.value)}
+                  className="h-10 font-bold"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                  משקל
+                </label>
+                <Input 
+                  value={editWeight}
+                  onChange={e => setEditWeight(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                  מיקום
+                </label>
+                <Input 
+                  value={editLocation}
+                  onChange={e => setEditLocation(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+
+              <Button 
+                className="w-full h-12 text-lg font-bold mt-4" 
+                disabled={editCatchMutation.isPending || !editFishType || !editLocation}
+                onClick={() => {
+                  editCatchMutation.mutate({ 
+                    id: selectedCatchToEdit.$id, 
+                    data: {
+                      fish_type: editFishType,
+                      weight: editWeight,
+                      location: editLocation
+                    }
+                  });
+                }}
+              >
+                שמור שינויים
               </Button>
             </div>
           </div>
