@@ -28,6 +28,9 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 // Rough coordinates for common Israel fishing spots
 const LOCATIONS_MAP: Record<string, [number, number]> = {
+  "חוף לגונה עכו": [32.9160, 35.0830],
+  "לגונה עכו": [32.9160, 35.0830],
+  "חוף ארגמן": [32.9150, 35.0820],
   "תל אביב": [32.0853, 34.7818],
   "אשדוד": [31.8044, 34.6553],
   "אשקלון": [31.6693, 34.5715],
@@ -97,7 +100,8 @@ export default function Radar() {
       if (!c.location) return;
       let coords = LOCATIONS_MAP[c.location];
       if (!coords) {
-        const match = Object.keys(LOCATIONS_MAP).find(k => c.location.includes(k));
+        const sortedKeys = Object.keys(LOCATIONS_MAP).sort((a, b) => b.length - a.length);
+        const match = sortedKeys.find(k => c.location.includes(k));
         if (match) coords = LOCATIONS_MAP[match];
       }
       if (coords) {
@@ -176,7 +180,8 @@ export default function Radar() {
                     if (!c.location) return null;
                     let coords = LOCATIONS_MAP[c.location];
                     if (!coords) {
-                      const match = Object.keys(LOCATIONS_MAP).find(k => c.location.includes(k));
+                      const sortedKeys = Object.keys(LOCATIONS_MAP).sort((a, b) => b.length - a.length);
+                      const match = sortedKeys.find(k => c.location.includes(k));
                       if (match) coords = LOCATIONS_MAP[match];
                     }
                     if (!coords) return null;
