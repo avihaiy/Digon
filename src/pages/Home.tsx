@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +11,13 @@ import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
 import { LocationReportDialog } from '@/components/locations/LocationReportDialog';
 import { SocialCatchCard } from '@/components/fishing/SocialCatchCard';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 
 export default function Home() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
   const { data: marineData, loading: marineLoading, refreshData, lastUpdated } = useMarineWeather();
   const { catches, isLoading: catchesLoading } = useCatches();
   const { activeTournaments } = useTournaments();
@@ -35,6 +39,28 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      {/* Global Search Bar */}
+      {user && (
+        <div className="relative mt-2">
+          <form onSubmit={(e) => { e.preventDefault(); if (searchQuery) navigate(`/fishing/search?q=${encodeURIComponent(searchQuery)}`); }}>
+            <div className="relative flex items-center w-full">
+              <Search className="absolute right-4 w-5 h-5 text-muted-foreground" />
+              <input 
+                type="text" 
+                placeholder="חפש דייגים אחרים..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-12 pr-12 pl-4 rounded-2xl bg-white dark:bg-white/5 border border-border/50 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                dir="rtl"
+              />
+              <Button type="submit" size="sm" className="absolute left-2 h-8 rounded-xl bg-cyan-600 hover:bg-cyan-700">
+                חפש
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Active Tournament Banner */}
       {activeTournaments && activeTournaments.length > 0 && (

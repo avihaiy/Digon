@@ -7,10 +7,13 @@ import { useQuery } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_PROFILES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { BadgeIcon } from "@/components/fishing/BadgeIcon";
+import { useSearchParams } from "react-router-dom";
 
 export default function SearchUsers() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const initialQuery = searchParams.get("q") || "";
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialQuery);
 
   // Debounce the search term to avoid spamming Appwrite
   useEffect(() => {
