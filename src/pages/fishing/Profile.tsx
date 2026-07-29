@@ -4,12 +4,17 @@ import { databases, APPWRITE_DB_ID, APPWRITE_PROFILES_ID, APPWRITE_CATCHES_ID } 
 import { Query } from "appwrite";
 import { BadgeIcon } from "@/components/fishing/BadgeIcon";
 import { getImageUrl } from "@/hooks/useCatches";
-import { ArrowRight, Trophy, Fish, Star, MapPin } from "lucide-react";
+import { ArrowRight, Trophy, Fish, Star, MapPin, Scale, Activity, UserPlus, Check, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { useFollowers } from "@/hooks/useFollowers";
+import { Button } from "@/components/ui/button";
 
 export default function Profile() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+  const { followersCount, followingCount, isFollowing, toggleFollow, isToggling } = useFollowers(userId || "");
 
   // Fetch Profile
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -59,6 +64,40 @@ export default function Profile() {
 
   const badges = (profile.badges as string[]) || [];
 
+  // Calculate Stats
+  let mostCaughtSpecies = "אין מידע";
+  let biggestCatchWeight = "אין מידע";
+
+  if (catches.length > 0) {
+    const speciesCount: Record<string, number> = {};
+    let maxWeight = 0;
+
+    catches.forEach((c: any) => {
+      if (c.fish_type) {
+        speciesCount[c.fish_type] = (speciesCount[c.fish_type] || 0) + 1;
+      }
+      
+      if (c.weight) {
+        const match = c.weight.match(/([\d.]+)/);
+        if (match) {
+          let val = parseFloat(match[1]);
+          // Convert grams to kg for comparison
+          if (c.weight.toLowerCase().includes("g") && !c.weight.toLowerCase().includes("kg")) {
+            val = val / 1000;
+          }
+          if (val > maxWeight) {
+            maxWeight = val;
+            biggestCatchWeight = c.weight;
+          }
+        }
+      }
+    });
+
+    if (Object.keys(speciesCount).length > 0) {
+      mostCaughtSpecies = Object.keys(speciesCount).reduce((a, b) => speciesCount[a] > speciesCount[b] ? a : b);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#020610] text-white pb-20">
       {/* Header Cover */}
@@ -86,7 +125,32 @@ export default function Profile() {
                 {profile.title}
               </span>
             )}
+            <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+              <span><strong className="text-white">{followersCount}</strong> עוקבים</span>
+              <span><strong className="text-white">{followingCount}</strong> נעקבים</span>
+            </div>
           </div>
+          {currentUser && currentUser.$id !== userId && (
+            <Button
+              size="sm"
+              variant={isFollowing ? "outline" : "default"}
+              onClick={() => toggleFollow()}
+              disabled={isToggling}
+              className={`rounded-full h-8 px-4 text-xs font-bold ${isFollowing ? 'border-cyan-500/50 text-cyan-400' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+            >
+              {isFollowing ? (
+                <>
+                  <Check className="w-3 h-3 ml-1" />
+                  נעקב
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-3 h-3 ml-1" />
+                  עקוב
+                </>
+              )}
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-6 mt-6 bg-white/5 rounded-2xl p-4 border border-white/5">
@@ -102,6 +166,35 @@ export default function Profile() {
             <span className="text-[10px] text-slate-400">מוניטין</span>
           </div>
         </div>
+
+        {catches.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-cyan-500" />
+              סטטיסטיקות אישיות
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
+                <div className="bg-cyan-500/20 p-2 rounded-lg">
+                  <Fish className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400">הדג הכי נפוץ</p>
+                  <p className="font-bold text-sm text-white truncate max-w-[100px]">{mostCaughtSpecies}</p>
+                </div>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
+                <div className="bg-emerald-500/20 p-2 rounded-lg">
+                  <Scale className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400">משקל שיא</p>
+                  <p className="font-bold text-sm text-white truncate max-w-[100px]">{biggestCatchWeight}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {badges.length > 0 && (
           <div className="mt-8">

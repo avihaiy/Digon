@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { APP_CONFIG } from '@/config/app';
 import { Button } from '@/components/ui/button';
+import { NotificationsPanel } from '@/components/notifications/NotificationsPanel';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -232,6 +233,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="hidden lg:block">
               <ThemeToggle />
             </div>
+
+            {/* Notifications */}
+            {user && (
+              <NotificationsPanel />
+            )}
 
             {/* Points Badge linked to Store */}
             {user && (
