@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useTournaments } from "@/hooks/useTournaments";
+import { Switch } from "@/components/ui/switch";
 
 interface CatchReportDialogProps {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedTournament, setSelectedTournament] = useState<string>("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const { activeTournaments } = useTournaments();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +60,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
       setImagePreview(null);
       setSelectedTournament("");
       setMapUrl("");
+      setIsPrivate(false);
     }
   };
 
@@ -100,7 +103,8 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
         location: mapUrl.trim() ? `${location} ||| ${mapUrl.trim()}` : location,
         imageFile,
         tournamentId: selectedTournament || undefined,
-        imageBase64: imagePreview || undefined 
+        imageBase64: imagePreview || undefined,
+        isPrivate
       });
       setOpen(false);
     } catch (error) {
@@ -237,13 +241,28 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
             </div>
           )}
 
+          <div className="flex items-center justify-between border border-border bg-slate-50 dark:bg-white/5 p-3 rounded-xl mt-4">
+            <div className="space-y-0.5">
+              <Label className="text-base font-bold flex items-center gap-2">
+                יומן אישי (פרטי) 🔒
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                שמור את התפיסה רק ביומן האישי שלך. המיקום והתמונה לא יפורסמו בקהילה.
+              </p>
+            </div>
+            <Switch 
+              checked={isPrivate} 
+              onCheckedChange={setIsPrivate} 
+            />
+          </div>
+
           <DialogFooter className="mt-6 sm:justify-start">
             <Button 
               type="submit" 
               className="w-full h-12 rounded-xl text-md" 
               disabled={isReporting || !imageFile || !fishType || !location}
             >
-              {isReporting ? "שולח דיווח..." : "שתף תפיסה (+10 נק׳)"}
+              {isReporting ? "שולח דיווח..." : (isPrivate ? "שמור ליומן האישי 🔒" : "שתף תפיסה בקהילה (+10 נק׳)")}
             </Button>
           </DialogFooter>
         </form>

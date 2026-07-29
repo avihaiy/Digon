@@ -24,6 +24,7 @@ import Wiki from "@/pages/fishing/Wiki";
 import Knots from "@/pages/fishing/Knots";
 import Radar from "@/pages/fishing/Radar";
 import WeightCalculator from "@/pages/fishing/WeightCalculator";
+import Logbook from "@/pages/fishing/Logbook";
 import TackleBox from "@/pages/fishing/TackleBox";
 import Store from "@/pages/fishing/Store";
 import Analytics from "@/pages/fishing/Analytics";
@@ -35,7 +36,7 @@ import Messages from "@/pages/fishing/Messages";
 import SearchUsers from "@/pages/fishing/Search";
 
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
-import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { OfflineSyncManager } from "@/hooks/useOfflineSync";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +115,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/knots" element={<ProtectedRoute><PageTransition><Knots /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/radar" element={<ProtectedRoute><PageTransition><Radar /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/weight-calculator" element={<ProtectedRoute><PageTransition><WeightCalculator /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/logbook" element={<ProtectedRoute><PageTransition><Logbook /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/tackle-box" element={<ProtectedRoute><PageTransition><TackleBox /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/store" element={<ProtectedRoute><PageTransition><Store /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/analytics" element={<ProtectedRoute><PageTransition><Analytics /></PageTransition></ProtectedRoute>} />
@@ -137,9 +139,9 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => {
-  useOfflineSync();
   return (
     <QueryClientProvider client={queryClient}>
+      <OfflineSyncManager />
       <ThemeProvider defaultTheme="system" storageKey="app-theme" themes={['light', 'dark', 'ocean']}>
         <DirectionProvider dir="rtl">
           <AuthProvider>

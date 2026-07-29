@@ -51,6 +51,7 @@ export function useCatches() {
       imageFile: File;
       imageBase64?: string;
       tournamentId?: string;
+      isPrivate?: boolean;
     }) => {
       if (!user) throw new Error("חובה להתחבר כדי לדווח על תפיסה");
 
@@ -65,6 +66,7 @@ export function useCatches() {
           weight: data.weight || null,
           location: data.location,
           imageBase64: data.imageBase64,
+          isPrivate: data.isPrivate || false,
           timestamp: new Date().toISOString()
         };
         
@@ -87,18 +89,23 @@ export function useCatches() {
         weight: data.weight || null,
         location: data.location,
         image_id: imageId,
-        status: 'pending', // Requires admin approval
+        status: data.isPrivate ? 'private' : 'pending', // Private skips approval and community feed
         tournament_id: data.tournamentId || ""
       };
 
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, ID.unique(), catchData);
-      return { offline: false };
+      return { offline: false, isPrivate: data.isPrivate };
     },
     onSuccess: (data) => {
       if (data?.offline) {
         toast({
           title: "נשמר במצב אופליין 📡",
           description: "אין חיבור לאינטרנט. התפיסה נשמרה ותעלה ברגע שהקליטה תחזור!",
+        });
+      } else if (data?.isPrivate) {
+        toast({
+          title: "נשמר ביומן האישי 🔒",
+          description: "התפיסה נשמרה בהצלחה ביומן הדיג הפרטי שלך.",
         });
       } else {
         toast({
