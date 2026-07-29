@@ -1,7 +1,7 @@
 import { useCatches, getImageUrl } from "@/hooks/useCatches";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
-import { Fish, MapPin, Scale, Trophy, CalendarDays, Activity } from "lucide-react";
+import { Fish, MapPin, Scale, Trophy, CalendarDays, Activity, PieChart as PieChartIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Analytics() {
@@ -134,7 +134,7 @@ export default function Analytics() {
             <Card className="border-border/50 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
-                  <PieChart className="w-4 h-4 text-primary" /> פילוג תפיסות לפי סוג דג
+                  <PieChartIcon className="w-4 h-4 text-primary" /> פילוג תפיסות לפי סוג דג
                 </CardTitle>
               </CardHeader>
               <CardContent>

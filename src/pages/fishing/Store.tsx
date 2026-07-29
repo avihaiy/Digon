@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { databases, APPWRITE_STORE_ITEMS_ID } from "@/lib/appwrite";
+import { databases, APPWRITE_DB_ID, APPWRITE_STORE_ITEMS_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ export default function Store() {
   const { data: storeItems, isLoading: itemsLoading } = useQuery({
     queryKey: ["store-items"],
     queryFn: async () => {
-      const res = await databases.listDocuments(import.meta.env.VITE_APPWRITE_DATABASE_ID, APPWRITE_STORE_ITEMS_ID, [
+      const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_STORE_ITEMS_ID, [
         Query.equal("is_active", true),
         Query.limit(100)
       ]);
