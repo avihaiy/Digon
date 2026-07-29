@@ -5,7 +5,7 @@ import { ID, Query, AppwriteException } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { useTournaments } from "@/hooks/useTournaments";
 import { Navigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1024,7 +1024,7 @@ export default function Admin() {
                 const prize = parseInt((document.getElementById('new_tournament_prize') as HTMLInputElement).value) || 0;
                 const end = (document.getElementById('new_tournament_end') as HTMLInputElement).value;
                 if (!title || !end) {
-                  toast({ title: "שגיאה", description: "חובה למלא כותרת ותאריך סיום", variant: "destructive" });
+                  toast.error("חובה למלא כותרת ותאריך סיום");
                   return;
                 }
                 createTournament({
