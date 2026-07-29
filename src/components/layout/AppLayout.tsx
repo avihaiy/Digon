@@ -46,6 +46,7 @@ const navItems = [
   { href: '/admin', icon: Settings, label: 'פאנל ניהול', adminOnly: true },
   { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
   { href: '/fishing/community', icon: ShoppingCart, label: 'שוק יד 2' },
+  { href: '/fishing/tournaments', icon: Trophy, label: 'תחרויות' },
   { href: '/leaderboard', icon: Trophy, label: 'אלופים' },
 ];
 

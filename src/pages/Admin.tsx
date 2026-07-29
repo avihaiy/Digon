@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_SETTINGS_ID, APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
 import { ID, Query, AppwriteException } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
+import { useTournaments } from "@/hooks/useTournaments";
 import { Navigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy } from "lucide-react";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -20,7 +21,8 @@ const LOCATIONS_ID = APPWRITE_LOCATIONS_ID;
 export default function Admin() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("users"); // users, locations, catches, raffles, store, settings
+  const [activeTab, setActiveTab] = useState("users"); // users, locations, catches, raffles, store, settings, tournaments
+  const { tournaments, createTournament, endTournament } = useTournaments();
   const [newLocationName, setNewLocationName] = useState("");
   const [newStoreItem, setNewStoreItem] = useState({ name: "", description: "", cost: "", type: "title", value: "" });
   
@@ -496,6 +498,13 @@ export default function Admin() {
           <StoreIcon className="w-4 h-4" /> ניהול חנות
         </Button>
         <Button 
+          variant={activeTab === "tournaments" ? "default" : "outline"} 
+          onClick={() => setActiveTab("tournaments")}
+          className="flex gap-2 items-center bg-orange-500/10 text-orange-600 border-orange-200 hover:bg-orange-500 hover:text-white"
+        >
+          <Trophy className="w-4 h-4" /> ניהול תחרויות
+        </Button>
+        <Button 
           variant={activeTab === "settings" ? "default" : "outline"} 
           onClick={() => setActiveTab("settings")}
           className="flex gap-2 items-center bg-slate-500/10 text-slate-600 border-slate-200 hover:bg-slate-500 hover:text-white"
@@ -940,6 +949,90 @@ export default function Admin() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tournaments Tab */}
+      {activeTab === "tournaments" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Trophy className="w-5 h-5 text-orange-500"/> ניהול תחרויות ואתגרים</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-orange-500/5 border border-orange-500/20 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 space-y-2 w-full">
+                <label className="text-xs font-bold text-slate-500">כותרת התחרות (למשל: תחרות לוקוסים חורף 2026)</label>
+                <Input id="new_tournament_title" placeholder="כותרת" />
+              </div>
+              <div className="flex-1 space-y-2 w-full">
+                <label className="text-xs font-bold text-slate-500">תיאור (למשל: תפסו את הלוקוס הכי גדול)</label>
+                <Input id="new_tournament_desc" placeholder="תיאור התחרות" />
+              </div>
+              <div className="w-full md:w-32 space-y-2">
+                <label className="text-xs font-bold text-slate-500">פרס (נקודות)</label>
+                <Input id="new_tournament_prize" type="number" defaultValue="5000" />
+              </div>
+              <div className="w-full md:w-40 space-y-2">
+                <label className="text-xs font-bold text-slate-500">תאריך סיום</label>
+                <Input id="new_tournament_end" type="date" />
+              </div>
+              <Button onClick={() => {
+                const title = (document.getElementById('new_tournament_title') as HTMLInputElement).value;
+                const desc = (document.getElementById('new_tournament_desc') as HTMLInputElement).value;
+                const prize = parseInt((document.getElementById('new_tournament_prize') as HTMLInputElement).value) || 0;
+                const end = (document.getElementById('new_tournament_end') as HTMLInputElement).value;
+                if (!title || !end) {
+                  toast({ title: "שגיאה", description: "חובה למלא כותרת ותאריך סיום", variant: "destructive" });
+                  return;
+                }
+                createTournament({
+                  title, description: desc, prize_points: prize, start_date: new Date().toISOString(), end_date: new Date(end).toISOString(), is_active: true
+                });
+                (document.getElementById('new_tournament_title') as HTMLInputElement).value = "";
+              }}>יצירת תחרות חדשה</Button>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>שם התחרות</TableHead>
+                  <TableHead>פרס</TableHead>
+                  <TableHead>סטטוס</TableHead>
+                  <TableHead>פעולות</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tournaments.map((t) => (
+                  <TableRow key={t.$id}>
+                    <TableCell className="font-bold">{t.title}</TableCell>
+                    <TableCell>{t.prize_points} 🪙</TableCell>
+                    <TableCell>
+                      {t.is_active ? (
+                        <span className="bg-green-500/20 text-green-600 px-2 py-1 rounded-full text-xs font-bold">פעילה</span>
+                      ) : (
+                        <span className="bg-slate-500/20 text-slate-600 px-2 py-1 rounded-full text-xs font-bold">הסתיימה</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {t.is_active && (
+                        <div className="flex gap-2 items-center">
+                          <Input id={`winner_${t.$id}`} placeholder="ID המנצח (או שם משתמש)" className="h-8 text-xs w-40" />
+                          <Button size="sm" variant="outline" className="h-8" onClick={() => {
+                            const winnerId = (document.getElementById(`winner_${t.$id}`) as HTMLInputElement).value;
+                            if(!winnerId) return toast({ title: "שגיאה", description: "יש להזין ID מנצח", variant: "destructive" });
+                            endTournament({ tournamentId: t.$id, winnerId, prize: t.prize_points });
+                          }}>הכרז על מנצח וסיים!</Button>
+                        </div>
+                      )}
+                      {!t.is_active && t.winner_user_id && (
+                        <span className="text-xs text-muted-foreground">מנצח: {t.winner_user_id}</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}

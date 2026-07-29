@@ -13,6 +13,7 @@ import { useUserBadges } from "@/hooks/useUserBadges";
 import { BadgeIcon } from "@/components/fishing/BadgeIcon";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 export function SocialCatchCard({ report }: { report: any }) {
   const { user } = useAuth();
@@ -54,7 +55,9 @@ export function SocialCatchCard({ report }: { report: any }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-sm font-semibold text-white">{report.user_name}</p>
+              <Link to={`/profile/${report.user_id}`} className="text-sm font-semibold text-white hover:text-cyan-400 transition-colors">
+                {report.user_name}
+              </Link>
               {title && (
                 <span className="text-[10px] bg-cyan-900/40 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded-md font-bold">
                   {title}

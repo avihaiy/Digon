@@ -15,6 +15,7 @@ import { Camera, Image as ImageIcon, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useTournaments } from "@/hooks/useTournaments";
 
 interface CatchReportDialogProps {
   children: React.ReactNode;
@@ -31,6 +32,8 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
   const [location, setLocation] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedTournament, setSelectedTournament] = useState<string>("");
+  const { activeTournaments } = useTournaments();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +55,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
       setLocation("");
       setImageFile(null);
       setImagePreview(null);
+      setSelectedTournament("");
     }
   };
 
@@ -88,7 +92,14 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
     }
 
     try {
-      await reportCatch({ fishType, weight, location, imageFile, imageBase64: imagePreview || undefined });
+      await reportCatch({
+        fishType,
+        weight,
+        location,
+        imageFile,
+        tournamentId: selectedTournament || undefined,
+        imageBase64: imagePreview || undefined 
+      });
       setOpen(false);
     } catch (error) {
       // Error is handled in the hook
@@ -193,6 +204,25 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
               />
             </div>
           </div>
+
+          {activeTournaments.length > 0 && (
+            <div className="space-y-2 border border-yellow-500/30 bg-yellow-500/10 p-3 rounded-xl mt-4">
+              <Label htmlFor="tournament" className="text-yellow-400 font-bold flex items-center gap-1">
+                <span>🏆</span> שיוך לתחרות (אופציונלי)
+              </Label>
+              <select
+                id="tournament"
+                value={selectedTournament}
+                onChange={(e) => setSelectedTournament(e.target.value)}
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm"
+              >
+                <option value="">-- ללא תחרות --</option>
+                {activeTournaments.map(t => (
+                  <option key={t.$id} value={t.$id}>{t.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <DialogFooter className="mt-6 sm:justify-start">
             <Button 

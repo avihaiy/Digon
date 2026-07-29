@@ -10,7 +10,7 @@ export default function BottomNavigation() {
   const tabs = [
     { href: '/', icon: Home, label: 'ראשי' },
     { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
-    { href: '/fishing/community', icon: ShoppingCart, label: 'יד 2' },
+    { href: '/fishing/tournaments', icon: Trophy, label: 'תחרויות' },
     { href: '/leaderboard', icon: Trophy, label: 'אלופים' },
     ...(isAdmin ? [{ href: '/admin', icon: Activity, label: 'ניהול' }] : []),
   ];

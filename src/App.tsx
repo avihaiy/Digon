@@ -28,6 +28,8 @@ import Store from "@/pages/fishing/Store";
 import Analytics from "@/pages/fishing/Analytics";
 import Settings from "@/pages/fishing/Settings";
 import Leaderboard from "@/pages/fishing/Leaderboard";
+import Profile from "@/pages/fishing/Profile";
+import Tournaments from "@/pages/fishing/Tournaments";
 
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
@@ -112,6 +114,8 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/store" element={<ProtectedRoute><PageTransition><Store /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/analytics" element={<ProtectedRoute><PageTransition><Analytics /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/settings" element={<ProtectedRoute><PageTransition><Settings /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/tournaments" element={<ProtectedRoute><PageTransition><Tournaments /></PageTransition></ProtectedRoute>} />
+        <Route path="/profile/:userId" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
         <Route path="/leaderboard" element={<LayoutRoute><PageTransition><Leaderboard /></PageTransition></LayoutRoute>} />
         
         {/* Redirects for old routes */}

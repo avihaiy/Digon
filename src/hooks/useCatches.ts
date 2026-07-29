@@ -50,6 +50,7 @@ export function useCatches() {
       location: string;
       imageFile: File;
       imageBase64?: string;
+      tournamentId?: string;
     }) => {
       if (!user) throw new Error("חובה להתחבר כדי לדווח על תפיסה");
 
@@ -86,7 +87,8 @@ export function useCatches() {
         weight: data.weight || null,
         location: data.location,
         image_id: imageId,
-        status: 'pending' // Requires admin approval
+        status: 'pending', // Requires admin approval
+        tournament_id: data.tournamentId || ""
       };
 
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, ID.unique(), catchData);

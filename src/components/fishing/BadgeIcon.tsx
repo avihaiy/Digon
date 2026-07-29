@@ -6,7 +6,8 @@ export const BADGE_DEFINITIONS: Record<string, { label: string; icon: any; color
   "pro": { label: "דייג מקצוען", icon: Trophy, color: "text-amber-400", bg: "bg-amber-500/10" },
   "veteran": { label: "ותיק הים", icon: Medal, color: "text-blue-400", bg: "bg-blue-500/10" },
   "100_club": { label: "מועדון ה-100", icon: Star, color: "text-purple-400", bg: "bg-purple-500/10" },
-  "admin": { label: "מנהל קהילה", icon: Fish, color: "text-rose-400", bg: "bg-rose-500/10" }
+  "admin": { label: "מנהל קהילה", icon: Fish, color: "text-rose-400", bg: "bg-rose-500/10" },
+  "tournament_winner": { label: "אלוף תחרות", icon: Trophy, color: "text-yellow-400", bg: "bg-yellow-500/20 shadow-[0_0_10px_rgba(250,204,21,0.5)] border-yellow-500/50" }
 };
 
 export function BadgeIcon({ badgeId }: { badgeId: string }) {
