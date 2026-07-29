@@ -37,9 +37,12 @@ export function useMarineWeather() {
       );
       const weatherJson = await weatherRes.json();
       
-      // Fetch Marine (Waves & Tides)
+      // Fetch Marine (Waves & Tides) - We use fixed coastal coordinates for marine data
+      // because Open-Meteo returns null if the exact GPS location is inland.
+      const marineLat = 32.08;
+      const marineLon = 34.75;
       const marineRes = await fetch(
-        `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height&hourly=ocean_current_velocity,sea_level&timezone=auto`
+        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height&hourly=ocean_current_velocity,sea_level&timezone=auto`
       );
       const marineJson = await marineRes.json();
 
