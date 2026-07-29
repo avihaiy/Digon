@@ -141,12 +141,12 @@ const AnimatedRoutes = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <OfflineSyncManager />
       <ThemeProvider defaultTheme="system" storageKey="app-theme" themes={['light', 'dark', 'ocean']}>
         <DirectionProvider dir="rtl">
           <AuthProvider>
             <PWAUpdateProvider>
               <TooltipProvider>
+                <OfflineSyncManager />
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
