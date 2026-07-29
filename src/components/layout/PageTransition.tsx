@@ -1,5 +1,6 @@
 import { motion, Variants } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -33,6 +34,12 @@ const pageVariants: Variants = {
 };
 
 export const PageTransition = ({ children }: PageTransitionProps) => {
+  const { playSwoosh } = useSoundEffects();
+
+  useEffect(() => {
+    playSwoosh();
+  }, [playSwoosh]);
+
   return (
     <motion.div
       initial="initial"

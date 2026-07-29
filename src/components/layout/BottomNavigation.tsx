@@ -2,10 +2,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, MapPin, Activity, Trophy, ShoppingCart, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 
 export default function BottomNavigation() {
   const location = useLocation();
   const { user, isAdmin } = useAuth();
+  const { playPop, triggerHaptic } = useSoundEffects();
 
   const tabs = [
     { href: '/', icon: Home, label: 'ראשי' },
@@ -25,6 +27,12 @@ export default function BottomNavigation() {
             <Link
               key={tab.href}
               to={tab.href}
+              onClick={() => {
+                if (!isActive) {
+                  playPop();
+                  triggerHaptic('light');
+                }
+              }}
               className={cn(
                 'flex flex-col items-center justify-center w-16 h-12 transition-colors relative',
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'

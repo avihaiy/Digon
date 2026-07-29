@@ -102,6 +102,34 @@ export function useSoundEffects() {
     }
   }, []);
 
+  // Play a soft swoosh (for page transitions/loads)
+  const playSwoosh = useCallback(() => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(150, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.15);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.3);
+      
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch (e) {
+      console.warn("AudioContext not supported", e);
+    }
+  }, []);
+
   // Trigger Phone Vibration (Haptics)
   const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' | 'success') => {
     if (!navigator.vibrate) return;
@@ -117,5 +145,5 @@ export function useSoundEffects() {
     }
   }, []);
 
-  return { playSuccessChime, playPop, triggerHaptic };
+  return { playSuccessChime, playPop, playSwoosh, triggerHaptic };
 }
