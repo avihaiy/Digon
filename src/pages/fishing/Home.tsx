@@ -4,6 +4,7 @@ import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, ChevronRight,
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { CatchReportDialog } from "@/components/catches/CatchReportDialog";
 
 // Helper for circular progress with Framer Motion and Glow
 const CircularProgress = ({ value, label, subLabel, color, glowColor }: { value: number, label: string, subLabel: string, color: string, glowColor: string }) => {
@@ -53,14 +54,15 @@ const CircularProgress = ({ value, label, subLabel, color, glowColor }: { value:
   );
 };
 
-const ActionButton = ({ icon: Icon, label, delay }: { icon: LucideIcon, label: string, delay: number }) => (
+const ActionButton = ({ icon: Icon, label, delay, onClick }: { icon: LucideIcon, label: string, delay: number, onClick?: () => void }) => (
   <motion.button 
+    onClick={onClick}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.4 }}
-    className="relative overflow-hidden flex flex-col items-center justify-center p-5 rounded-[2rem] bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border border-white/10 transition-colors group shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+    className="w-full relative overflow-hidden flex flex-col items-center justify-center p-5 rounded-[2rem] bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border border-white/10 transition-colors group shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
   >
     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
     <Icon className="w-8 h-8 mb-3 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] group-hover:text-cyan-300 transition-colors z-10" />
@@ -176,27 +178,29 @@ const Home = () => {
         </motion.div>
 
         {/* Points Banner */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-5 relative overflow-hidden bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 backdrop-blur-xl rounded-[2.5rem] p-6 border border-yellow-500/30 flex items-center justify-between shadow-[0_10px_40px_rgba(245,158,11,0.15)] group cursor-pointer"
-        >
-          {/* Animated shine effect */}
-          <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
-          
-          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] -rotate-3 group-hover:-rotate-12 transition-transform duration-500">
-            <Fish className="w-8 h-8 text-white drop-shadow-md" />
-          </div>
-          <div className="text-start flex-1 px-5">
-            <div className="flex flex-col items-start">
-              <span className="text-4xl font-black bg-gradient-to-r from-yellow-200 to-amber-500 bg-clip-text text-transparent drop-shadow-sm">165</span>
-              <span className="text-yellow-500 font-bold text-sm tracking-widest mt-0.5">CoinsISR</span>
+        <Link to="/fishing/store">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-5 relative overflow-hidden bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 backdrop-blur-xl rounded-[2.5rem] p-6 border border-yellow-500/30 flex items-center justify-between shadow-[0_10px_40px_rgba(245,158,11,0.15)] group cursor-pointer"
+          >
+            {/* Animated shine effect */}
+            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
+            
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] -rotate-3 group-hover:-rotate-12 transition-transform duration-500">
+              <Fish className="w-8 h-8 text-white drop-shadow-md" />
             </div>
-            <div className="text-amber-200/70 text-xs font-medium mt-1.5">צבור מטבעות לפתיחת תוכן בלעדי</div>
-          </div>
-          <ChevronLeft className="w-5 h-5 text-yellow-500/70" />
-        </motion.div>
+            <div className="text-start flex-1 px-5">
+              <div className="flex flex-col items-start">
+                <span className="text-4xl font-black bg-gradient-to-r from-yellow-200 to-amber-500 bg-clip-text text-transparent drop-shadow-sm">חנות דיגון</span>
+                <span className="text-yellow-500 font-bold text-sm tracking-widest mt-0.5">CoinsISR</span>
+              </div>
+              <div className="text-amber-200/70 text-xs font-medium mt-1.5">המר נקודות להטבות ועיצובים!</div>
+            </div>
+            <ChevronLeft className="w-5 h-5 text-yellow-500/70" />
+          </motion.div>
+        </Link>
 
         {/* Golden Windows */}
         <motion.div 
@@ -234,26 +238,38 @@ const Home = () => {
 
         {/* Actions Grid */}
         <div className="grid grid-cols-2 gap-4 mt-8">
-          <ActionButton icon={Waves} label="תחזיות דייג" delay={0.5} />
-          <ActionButton icon={MapPin} label="מיקומי דייג" delay={0.6} />
-          <ActionButton icon={Fish} label="זיהוי דגים" delay={0.7} />
-          <ActionButton icon={Play} label="עדכון מהשטח" delay={0.8} />
+          <Link to="/fishing/forecast" className="w-full">
+            <ActionButton icon={Waves} label="תחזיות דייג" delay={0.5} />
+          </Link>
+          <Link to="/fishing/radar" className="w-full">
+            <ActionButton icon={MapPin} label="מפת תפיסות" delay={0.6} />
+          </Link>
+          <Link to="/fishing/identify" className="w-full">
+            <ActionButton icon={Fish} label="זיהוי דגים ב-AI" delay={0.7} />
+          </Link>
+          <CatchReportDialog>
+            <div className="w-full">
+              <ActionButton icon={Play} label="דיווח תפיסה" delay={0.8} />
+            </div>
+          </CatchReportDialog>
         </div>
 
         {/* Add Location Button */}
-        <motion.button 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
-          className="w-full mt-6 py-5 rounded-[2rem] bg-cyan-500/10 border border-dashed border-cyan-500/30 text-cyan-400 font-bold text-base flex items-center justify-center gap-3 hover:bg-cyan-500/20 transition-colors"
-        >
-          <div className="bg-cyan-500/20 p-1.5 rounded-full">
-            <MapPin className="w-5 h-5" />
-          </div>
-          הוסף מיקום דייג חדש
-        </motion.button>
+        <CatchReportDialog>
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+            className="w-full mt-6 py-5 rounded-[2rem] bg-cyan-500/10 border border-dashed border-cyan-500/30 text-cyan-400 font-bold text-base flex items-center justify-center gap-3 hover:bg-cyan-500/20 transition-colors"
+          >
+            <div className="bg-cyan-500/20 p-1.5 rounded-full">
+              <Play className="w-5 h-5 fill-cyan-400" />
+            </div>
+            שתף תפיסה חדשה (+10 נק׳)
+          </motion.button>
+        </CatchReportDialog>
       </div>
     </FishingLayout>
   );
