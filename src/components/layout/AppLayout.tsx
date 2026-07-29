@@ -171,7 +171,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     התחבר עכשיו
                   </Link>
                 )}
-              </div>
+            </div>
+            
+            {/* Sidebar Actions */}
+            <div className="flex items-center justify-between mt-3 px-2 lg:hidden">
+              <ThemeToggle />
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => needRefresh ? updateServiceWorker() : window.location.reload()}
+                className="text-xs text-muted-foreground flex items-center gap-1"
+              >
+                <RefreshCw className={cn("w-3 h-3", needRefresh && "animate-spin text-primary")} />
+                רענן
+              </Button>
             </div>
           </div>
         </div>
@@ -206,7 +219,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               size="icon" 
               onClick={() => needRefresh ? updateServiceWorker() : window.location.reload()}
               title={needRefresh ? "עדכון זמין - לחץ לרענון" : "רענן עמוד"}
-              className="relative"
+              className="relative hidden lg:flex"
             >
               <RefreshCw className={cn("w-5 h-5", needRefresh && "animate-spin")} />
               {needRefresh && (
@@ -214,8 +227,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
               )}
             </Button>
             
-            {/* Theme Toggle */}
-            <ThemeToggle />
+            {/* Theme Toggle - Hidden on mobile, they can use it on desktop or we can add it to sidebar later */}
+            <div className="hidden lg:block">
+              <ThemeToggle />
+            </div>
 
             {/* Points Badge linked to Store */}
             {user && (

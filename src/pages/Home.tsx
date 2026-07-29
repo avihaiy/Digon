@@ -62,8 +62,10 @@ export default function Home() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight">מצב הים כעת</h2>
-            <Badge variant="outline" className="text-[10px] font-normal">{marineData.locationName}</Badge>
+            <h2 className="text-lg font-bold tracking-tight">מצב הים כעת</h2>
+            <Link to="/fishing/forecast" className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full hover:bg-primary/20 transition-colors">
+              תחזית מלאה &larr;
+            </Link>
           </div>
           <button 
             onClick={refreshData}
@@ -123,12 +125,6 @@ export default function Home() {
               </div>
             </div>
           </CardContent>
-          <div className="mt-4 pt-4 border-t border-border/50">
-            <Link to="/fishing/forecast" className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-              לתחזית המלאה
-              <span className="text-xs">→</span>
-            </Link>
-          </div>
         </Card>
       </section>
 
