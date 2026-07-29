@@ -19,7 +19,14 @@ export default function Analytics() {
   const totalCatches = catches?.length || 0;
   
   const totalWeight = catches?.reduce((sum, current) => {
-    return sum + (current.weight || 0);
+    let weightVal = 0;
+    if (typeof current.weight === 'number') {
+      weightVal = current.weight;
+    } else if (typeof current.weight === 'string') {
+      const match = current.weight.match(/[\d.]+/);
+      if (match) weightVal = parseFloat(match[0]);
+    }
+    return sum + weightVal;
   }, 0) || 0;
 
   // Most common fish
