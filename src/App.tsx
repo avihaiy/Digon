@@ -113,6 +113,8 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/radar" element={<ProtectedRoute><PageTransition><Radar /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/weight-calculator" element={<ProtectedRoute><PageTransition><WeightCalculator /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/tackle-box" element={<ProtectedRoute><PageTransition><TackleBox /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/store" element={<ProtectedRoute><PageTransition><Store /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/analytics" element={<ProtectedRoute><PageTransition><Analytics /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/leaderboard" element={<ProtectedRoute><PageTransition><Leaderboard /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/profile/:userId" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/profile" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
