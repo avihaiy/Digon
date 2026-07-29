@@ -68,7 +68,7 @@ export default function Install() {
             </div>
             <CardTitle className="text-2xl">האפליקציה מותקנת!</CardTitle>
             <CardDescription>
-              מערכת ניהול הגבאות מותקנת על המכשיר שלך
+              אפליקציית דיגון מותקנת על המכשיר שלך
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -87,14 +87,14 @@ export default function Install() {
         <CardHeader className="text-center">
           <div className="mx-auto w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center mb-4">
             <img 
-              src="/brit-shalom-logo.jpeg" 
-              alt="לוגו" 
-              className="w-16 h-16 rounded-xl object-cover"
+              src="/digon-logo.jpg" 
+              alt="לוגו דיגון" 
+              className="w-16 h-16 rounded-xl object-cover shadow-sm"
             />
           </div>
           <CardTitle className="text-2xl">התקן את האפליקציה</CardTitle>
           <CardDescription>
-            קבל גישה מהירה למערכת ניהול הגבאות ישירות מהמסך הראשי
+            קבל גישה מהירה לאפליקציית דיגון ישירות מהמסך הראשי
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
