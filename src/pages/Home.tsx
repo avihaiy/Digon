@@ -110,7 +110,7 @@ export default function Home() {
           )}
           <CardContent className="p-3 py-2 flex items-center justify-between">
             <div className="flex flex-col items-center justify-center gap-1">
-              <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-full text-blue-600 dark:text-blue-400">
+              <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-full text-blue-600 dark:text-blue-400 animate-float">
                 <Waves className="w-5 h-5" />
               </div>
               <div className="text-center">
@@ -124,7 +124,7 @@ export default function Home() {
             <div className="w-px h-10 bg-border/50"></div>
             
             <div className="flex flex-col items-center justify-center gap-1">
-              <div className="p-1.5 bg-cyan-100 dark:bg-cyan-900/50 rounded-full text-cyan-600 dark:text-cyan-400">
+              <div className="p-1.5 bg-cyan-100 dark:bg-cyan-900/50 rounded-full text-cyan-600 dark:text-cyan-400 animate-swim">
                 <Wind className="w-5 h-5" />
               </div>
               <div className="text-center">
@@ -140,7 +140,7 @@ export default function Home() {
             <div className="w-px h-10 bg-border/50"></div>
             
             <div className="flex flex-col items-center justify-center gap-1">
-              <div className="p-1.5 bg-orange-100 dark:bg-orange-900/50 rounded-full text-orange-600 dark:text-orange-400">
+              <div className="p-1.5 bg-orange-100 dark:bg-orange-900/50 rounded-full text-orange-600 dark:text-orange-400 animate-pulse-glow">
                 <span className="text-lg font-bold leading-none">
                   {marineData.temperature !== null ? `${Math.round(marineData.temperature)}°` : '--°'}
                 </span>
@@ -159,14 +159,14 @@ export default function Home() {
         <div className="flex gap-2">
           <CatchReportDialog>
             <Button size="default" className="flex-1 h-12 text-base font-bold rounded-xl shadow-lg shadow-primary/20 gap-2 group">
-              <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <Camera className="w-5 h-5 group-hover:scale-110 transition-transform animate-float" />
               דיווח תפיסה
             </Button>
           </CatchReportDialog>
 
           <LocationReportDialog>
             <Button size="default" variant="outline" className="flex-1 h-12 text-base font-bold rounded-xl shadow-md gap-2 group bg-background/50 backdrop-blur-md border-primary/20 hover:bg-primary/5">
-              <MapPin className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+              <MapPin className="w-5 h-5 text-primary group-hover:scale-110 transition-transform animate-float" style={{ animationDelay: "1s" }} />
               דיווח מיקום
             </Button>
           </LocationReportDialog>
@@ -177,25 +177,25 @@ export default function Home() {
       <section className="pt-1">
         <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
           <Link to="/fishing/tackle-box" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-orange-500/10 p-2 rounded-full mb-1">
+            <div className="bg-orange-500/10 p-2 rounded-full mb-1 animate-float">
               <Package className="w-4 h-4 text-orange-500" />
             </div>
             <span className="font-bold text-[11px]">קופסת ציוד</span>
           </Link>
           <Link to="/fishing/wiki" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-primary/10 p-2 rounded-full mb-1">
+            <div className="bg-primary/10 p-2 rounded-full mb-1 animate-swim">
               <Fish className="w-4 h-4 text-primary" />
             </div>
             <span className="font-bold text-[11px]">ויקי-דג</span>
           </Link>
           <Link to="/fishing/identify" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-blue-500/10 p-2 rounded-full mb-1">
+            <div className="bg-blue-500/10 p-2 rounded-full mb-1 animate-pulse-glow">
               <Camera className="w-4 h-4 text-blue-500" />
             </div>
             <span className="font-bold text-[11px]">זיהוי AI</span>
           </Link>
           <Link to="/fishing/store" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-yellow-500/10 p-2 rounded-full mb-1">
+            <div className="bg-yellow-500/10 p-2 rounded-full mb-1 animate-float" style={{ animationDelay: "0.5s" }}>
               <StoreIcon className="w-4 h-4 text-yellow-600" />
             </div>
             <span className="font-bold text-[11px]">חנות</span>
@@ -213,7 +213,7 @@ export default function Home() {
             <span className="font-bold text-[11px]">סטטיסטיקה</span>
           </Link>
           <Link to="/fishing/radar" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-rose-500/10 p-2 rounded-full mb-1">
+            <div className="bg-rose-500/10 p-2 rounded-full mb-1 animate-pulse-glow" style={{ animationDelay: "1s" }}>
               <RadarIcon className="w-4 h-4 text-rose-500" />
             </div>
             <span className="font-bold text-[11px]">ראדאר חם</span>
