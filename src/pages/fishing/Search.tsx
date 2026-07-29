@@ -29,11 +29,17 @@ export default function SearchUsers() {
       if (!debouncedSearch.trim()) return [];
       
       try {
+        // Fetch recent profiles and filter client-side to avoid requiring an Appwrite Full-text index
         const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
-          Query.search("full_name", debouncedSearch),
-          Query.limit(20)
+          Query.limit(100)
         ]);
-        return res.documents;
+        
+        const lowerQuery = debouncedSearch.toLowerCase();
+        return res.documents.filter(doc => 
+          (doc.full_name && doc.full_name.toLowerCase().includes(lowerQuery)) ||
+          (doc.user_name && doc.user_name.toLowerCase().includes(lowerQuery)) ||
+          (doc.email && doc.email.toLowerCase().includes(lowerQuery))
+        ).slice(0, 20);
       } catch (e) {
         console.error("Search failed", e);
         return [];
