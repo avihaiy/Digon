@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
+import { useTournaments } from '@/hooks/useTournaments';
 import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
 import { LocationReportDialog } from '@/components/locations/LocationReportDialog';
 import { SocialCatchCard } from '@/components/fishing/SocialCatchCard';
@@ -15,6 +16,7 @@ export default function Home() {
   const { user } = useAuth();
   const { data: marineData, loading: marineLoading, refreshData, lastUpdated } = useMarineWeather();
   const { catches, isLoading: catchesLoading } = useCatches();
+  const { activeTournaments } = useTournaments();
   
   // Get first name or use default
   const firstName = user?.name?.split(' ')[0] || 'דייג';
@@ -41,6 +43,28 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Active Tournament Banner */}
+      {activeTournaments && activeTournaments.length > 0 && (
+        <Link to="/fishing/tournaments" className="block">
+          <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-2xl p-4 shadow-lg shadow-yellow-500/20 text-white relative overflow-hidden group">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div className="absolute -right-4 -top-4 bg-white/20 w-16 h-16 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <div className="flex items-center gap-1 text-yellow-100 text-xs font-bold mb-1 animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span> פעיל עכשיו
+                </div>
+                <h3 className="font-black text-lg">{activeTournaments[0].title}</h3>
+                <p className="text-sm text-yellow-100 font-medium mt-0.5 opacity-90">{activeTournaments[0].prize_points} נקודות למנצח!</p>
+              </div>
+              <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm">
+                <span className="text-2xl">🏆</span>
+              </div>
+            </div>
+          </div>
+        </Link>
+      )}
 
       {/* Sea Conditions Widget */}
       <section>
