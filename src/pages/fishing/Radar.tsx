@@ -52,7 +52,7 @@ export default function Radar() {
   const [unlocking, setUnlocking] = useState(false);
   const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
 
-  const isUnlocked = profileData?.radar_unlocked === true;
+  const isUnlocked = profileData?.radar_unlocked === "true";
 
   const handleUnlock = async () => {
     if (points < 50) {
@@ -60,7 +60,7 @@ export default function Radar() {
       return;
     }
     setUnlocking(true);
-    const success = await updateProfileField('radar_unlocked', true);
+    const success = await updateProfileField('radar_unlocked', "true");
     if (success) {
       updateProfileField('points', points - 50);
       toast.success("הראדאר נפתח עבורך לתמיד! 🎯");
