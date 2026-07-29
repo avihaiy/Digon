@@ -3,6 +3,7 @@ import { databases, storage, APPWRITE_DB_ID, APPWRITE_CATCHES_ID, APPWRITE_PROFI
 import { ID, Query } from "appwrite";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 export interface CatchReport {
   $id: string;
@@ -23,6 +24,7 @@ export function getImageUrl(imageId: string) {
 export function useCatches() {
   const queryClient = useQueryClient();
   const { user, refreshProfile, updateLocalPoints } = useAuth();
+  const { playSuccessChime, triggerHaptic } = useSoundEffects();
 
   // Fetch Catches
   const { data: catches, isLoading } = useQuery({
@@ -98,16 +100,21 @@ export function useCatches() {
     },
     onSuccess: (data) => {
       if (data?.offline) {
+        triggerHaptic('heavy');
         toast({
           title: "נשמר במצב אופליין 📡",
           description: "אין חיבור לאינטרנט. התפיסה נשמרה ותעלה ברגע שהקליטה תחזור!",
         });
       } else if (data?.isPrivate) {
+        triggerHaptic('success');
+        playSuccessChime();
         toast({
           title: "נשמר ביומן האישי 🔒",
           description: "התפיסה נשמרה בהצלחה ביומן הדיג הפרטי שלך.",
         });
       } else {
+        triggerHaptic('success');
+        playSuccessChime();
         toast({
           title: "הדיווח נשלח לאישור! 🎉",
           description: "התפיסה תפורסם בקהילה ותזכה אותך ב-10 מטבעות מיד לאחר אישור מנהל.",

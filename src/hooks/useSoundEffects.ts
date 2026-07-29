@@ -1,0 +1,83 @@
+import { useCallback } from 'react';
+
+export function useSoundEffects() {
+  // Play a satisfying "Level Up" / Success Chime
+  const playSuccessChime = useCallback(() => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      
+      // First note
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+      gain1.gain.setValueAtTime(0, ctx.currentTime);
+      gain1.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+      gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start();
+      osc1.stop(ctx.currentTime + 0.3);
+
+      // Second note (higher)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.1); // C6
+      gain2.gain.setValueAtTime(0, ctx.currentTime + 0.1);
+      gain2.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.15);
+      gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(ctx.currentTime + 0.1);
+      osc2.stop(ctx.currentTime + 0.6);
+
+    } catch (e) {
+      console.warn("AudioContext not supported or blocked", e);
+    }
+  }, []);
+
+  // Play a short click (like a UI button or small reel click)
+  const playPop = useCallback(() => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.1);
+      
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } catch (e) {
+      console.warn("AudioContext not supported", e);
+    }
+  }, []);
+
+  // Trigger Phone Vibration (Haptics)
+  const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' | 'success') => {
+    if (!navigator.vibrate) return;
+    try {
+      switch (type) {
+        case 'light': navigator.vibrate(30); break;
+        case 'medium': navigator.vibrate(80); break;
+        case 'heavy': navigator.vibrate(150); break;
+        case 'success': navigator.vibrate([100, 50, 100, 50, 200]); break;
+      }
+    } catch (e) {
+      // Vibrate might fail on some devices if not user-initiated
+    }
+  }, []);
+
+  return { playSuccessChime, playPop, triggerHaptic };
+}

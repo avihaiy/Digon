@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_LIKES_ID, APPWRITE_COMMENTS_ID, APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
 import { Query, ID } from "appwrite";
 import { useAuth } from "./useAuth";
-
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 export function useSocial(catchId: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { playPop, triggerHaptic } = useSoundEffects();
 
   // Fetch Likes
   const { data: likes = [] } = useQuery({
@@ -44,6 +45,8 @@ export function useSocial(catchId: string) {
           catch_id: catchId,
           user_id: user.$id
         });
+        triggerHaptic('light');
+        playPop();
       }
     },
     onSuccess: () => {
@@ -74,6 +77,8 @@ export function useSocial(catchId: string) {
           console.error("Failed to notify owner", e);
         }
       }
+      
+      triggerHaptic('medium');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", catchId] });
