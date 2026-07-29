@@ -243,7 +243,7 @@ export default function Admin() {
   // Add Store Item Mutation
   const addStoreItemMutation = useMutation({
     mutationFn: async (data: any) => {
-      await databases.createDocument(DB_ID, APPWRITE_STORE_ITEMS_ID, ID.unique(), {
+      const res = await databases.createDocument(DB_ID, APPWRITE_STORE_ITEMS_ID, ID.unique(), {
         name: data.name,
         description: data.description,
         cost: parseInt(data.cost),
@@ -251,9 +251,15 @@ export default function Admin() {
         value: data.value,
         is_active: true
       });
+      return res;
     },
-    onSuccess: () => {
+    onSuccess: (newDoc) => {
       toast.success("הפריט נוסף לחנות בהצלחה!");
+      // Update cache instantly
+      queryClient.setQueryData(["admin-store-items"], (old: any) => {
+        return old ? [newDoc, ...old] : [newDoc];
+      });
+      // Also invalidate to be safe
       queryClient.invalidateQueries({ queryKey: ["admin-store-items"] });
     },
     onError: (err: any) => {
