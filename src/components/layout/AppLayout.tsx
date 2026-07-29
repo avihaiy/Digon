@@ -15,24 +15,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from '@/components/ui/badge';
-import {
+import { 
   Users,
   BarChart3,
   Settings,
   LogOut,
   Menu,
-  X,
-  Home,
-  PieChart,
-  RefreshCw,
-  ChevronDown,
-  Megaphone,
-  Fish,
-  MapPin,
-  Trophy,
-  Download,
-  ShoppingCart,
-  Settings2
+  X, Home, Compass, MessageCircle, MapPin, Search,
+  ShoppingCart, Droplets, Fish, Trophy, Activity, Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -46,6 +36,7 @@ interface AppLayoutProps {
 const navItems = [
   { href: '/', icon: Home, label: 'ראשי' },
   { href: '/admin', icon: Settings, label: 'פאנל ניהול', adminOnly: true },
+  { href: '/fishing/search', icon: Search, label: 'חיפוש' },
   { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
   { href: '/fishing/community', icon: ShoppingCart, label: 'שוק יד 2' },
   { href: '/fishing/tournaments', icon: Trophy, label: 'תחרויות' },

@@ -31,6 +31,7 @@ import Leaderboard from "@/pages/fishing/Leaderboard";
 import Profile from "@/pages/fishing/Profile";
 import Tournaments from "@/pages/fishing/Tournaments";
 import Messages from "@/pages/fishing/Messages";
+import SearchUsers from "@/pages/fishing/Search";
 
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
@@ -117,6 +118,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/profile" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/tournaments" element={<ProtectedRoute><PageTransition><Tournaments /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/messages" element={<ProtectedRoute><PageTransition><Messages /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/search" element={<ProtectedRoute><PageTransition><SearchUsers /></PageTransition></ProtectedRoute>} />
         <Route path="/profile/:userId" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
         <Route path="/leaderboard" element={<LayoutRoute><PageTransition><Leaderboard /></PageTransition></LayoutRoute>} />
         
