@@ -42,7 +42,7 @@ export function useMarineWeather() {
       const marineLat = 32.08;
       const marineLon = 34.75;
       const marineRes = await fetch(
-        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height&hourly=ocean_current_velocity,sea_level&timezone=auto`
+        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height&hourly=wave_height&timezone=auto`
       );
       const marineJson = await marineRes.json();
 
