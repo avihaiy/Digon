@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_SETTINGS_ID } from "@/lib/appwrite";
+import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_SETTINGS_ID, APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
 import { ID, Query, AppwriteException } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -219,7 +219,7 @@ export default function Admin() {
         // Fallback
       }
 
-      // 3. Give points to the user
+      // 3. Give points and badges to the user
       const profileResponse = await databases.listDocuments(
         DB_ID,
         APPWRITE_PROFILES_ID,
@@ -227,13 +227,58 @@ export default function Admin() {
       );
       if (profileResponse.documents.length > 0) {
         const profile = profileResponse.documents[0];
+        const currentBadges = (profile.badges as string[]) || [];
+        
+        let newBadges = [...currentBadges];
+        let gotFirstCatchBadge = false;
+
+        // Auto award First Catch badge
+        if (!currentBadges.includes("first_catch")) {
+          newBadges.push("first_catch");
+          gotFirstCatchBadge = true;
+        }
+
         await databases.updateDocument(
           DB_ID,
           APPWRITE_PROFILES_ID,
           profile.$id,
-          { points: (profile.points || 0) + catchPoints }
+          { 
+            points: (profile.points || 0) + catchPoints,
+            badges: newBadges
+          }
         );
+
+        if (gotFirstCatchBadge) {
+          try {
+            await databases.createDocument(DB_ID, APPWRITE_NOTIFICATIONS_ID, ID.unique(), {
+              user_id: userId,
+              title: "תג חדש! 🏅",
+              message: "קיבלת את תג 'דייג מתחיל' על אישור התפיסה הראשונה שלך!",
+              is_read: "false",
+              type: "new_badge"
+            });
+          } catch (e) { console.error("Badge notif error", e); }
+        }
       }
+
+      // 4. Send notification
+      try {
+        await databases.createDocument(
+          DB_ID,
+          APPWRITE_NOTIFICATIONS_ID,
+          ID.unique(),
+          {
+            user_id: userId,
+            title: "תפיסה אושרה! 🎉",
+            message: `המנהל אישר את התפיסה שלך וזכית ב-${catchPoints} מטבעות דיגון!`,
+            is_read: "false",
+            type: "catch_approved"
+          }
+        );
+      } catch (e) {
+        console.error("Failed to send notification", e);
+      }
+
       return catchPoints;
     },
     onSuccess: (catchPoints) => {

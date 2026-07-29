@@ -7,6 +7,7 @@ import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeath
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { CatchReportDialog } from '@/components/catches/CatchReportDialog';
 import { LocationReportDialog } from '@/components/locations/LocationReportDialog';
+import { SocialCatchCard } from '@/components/fishing/SocialCatchCard';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 
@@ -202,28 +203,7 @@ export default function Home() {
             </div>
           ) : catches && catches.length > 0 ? (
             catches.map((report) => (
-              <Card key={report.$id} className="overflow-hidden border-border/50 shadow-sm">
-                <div className="flex p-3 gap-4 items-center">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-border">
-                    <img src={getImageUrl(report.image_id)} alt={report.fish_type} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-semibold truncate">{report.user_name}</p>
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                        {new Date(report.$createdAt).toLocaleDateString('he-IL')}
-                      </span>
-                    </div>
-                    <p className="text-sm font-bold text-primary mb-1">
-                      {report.fish_type} {report.weight && <span className="text-xs font-normal text-muted-foreground ml-1">({report.weight})</span>}
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {report.location}
-                    </p>
-                  </div>
-                </div>
-              </Card>
+              <SocialCatchCard key={report.$id} report={report} />
             ))
           ) : (
             <div className="text-center p-8 bg-muted/20 rounded-xl border border-dashed">

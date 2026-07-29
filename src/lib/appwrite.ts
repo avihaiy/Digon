@@ -16,5 +16,8 @@ export const APPWRITE_LOCATIONS_ID = "locations";
 export const APPWRITE_ADS_ID = "ads";
 export const APPWRITE_STORE_ITEMS_ID = "store_items";
 export const APPWRITE_SETTINGS_ID = "settings";
+export const APPWRITE_LIKES_ID = "likes";
+export const APPWRITE_COMMENTS_ID = "comments";
+export const APPWRITE_NOTIFICATIONS_ID = "notifications";
 
 export default client;
