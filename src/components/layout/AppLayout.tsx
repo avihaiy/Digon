@@ -205,7 +205,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-hidden">
         {/* Top header */}
-        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(4rem + env(safe-area-inset-top))' }}>
+        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(3.5rem + env(safe-area-inset-top))' }}>
           <button
             onClick={() => { triggerHaptic(); setSidebarOpen(true); }}
             className="lg:hidden p-2 hover:bg-secondary rounded-lg active:scale-95 transition-transform"
