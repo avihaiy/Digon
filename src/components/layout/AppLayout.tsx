@@ -249,6 +249,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Link>
             )}
 
+            {!user && (
+              <Button asChild variant="default" size="sm" className="bg-cyan-600 hover:bg-cyan-700 font-bold rounded-full text-xs">
+                <Link to="/login">
+                  התחבר / הירשם
+                </Link>
+              </Button>
+            )}
+
             {/* Settings dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
