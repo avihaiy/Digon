@@ -16,14 +16,16 @@ const ATTEMPT_RESET_TIME = 15 * 60 * 1000; // 15 minutes
 
 export default function Login() {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  // Login form state - can be email or username
+  // Form state
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [fullName, setFullName] = useState('');
 
   // Load failed attempts from localStorage on mount
   useEffect(() => {
@@ -63,46 +65,65 @@ export default function Login() {
 
   const remainingAttempts = MAX_ATTEMPTS - failedAttempts;
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       let email = loginIdentifier;
       
-      // Simplification for Appwrite migration: force email login
       if (!email.includes('@')) {
         toast.error('שגיאה', { description: 'אנא הזן כתובת אימייל חוקית' });
         setLoading(false);
         return;
       }
 
-      const { error } = await signIn(email, loginPassword);
-
-      if (error) {
-        console.error('Login error:', error);
+      if (isRegistering) {
+        if (!fullName.trim()) {
+          toast.error('שגיאה', { description: 'אנא הזן שם מלא' });
+          setLoading(false);
+          return;
+        }
         
-        const newAttempts = failedAttempts + 1;
-        updateFailedAttempts(newAttempts);
+        const { error } = await signUp(email, loginPassword, fullName);
         
-        if (newAttempts >= MAX_ATTEMPTS) {
-          notifyAdminAboutLock(loginIdentifier, newAttempts);
-          toast.error('החשבון עלול להינעל', {
-            description: 'הגעת למספר המקסימלי של נסיונות. המתן 15 דקות או פנה למנהל.',
-            duration: 8000,
+        if (error) {
+          console.error('Registration error:', error);
+          toast.error('שגיאה בהרשמה', {
+            description: error.message || 'אירעה שגיאה בלתי צפויה',
           });
         } else {
-          toast.error('שגיאה בהתחברות', {
-            description: `אימייל או סיסמה שגויים. נותרו ${MAX_ATTEMPTS - newAttempts} נסיונות.`,
-          });
+          toast.success('ברוכים הבאים לדיגון!');
+          navigate('/');
         }
       } else {
-        resetFailedAttempts();
-        toast.success('ברוכים הבאים!');
-        navigate('/');
+        const { error } = await signIn(email, loginPassword);
+
+        if (error) {
+          console.error('Login error:', error);
+          
+          const newAttempts = failedAttempts + 1;
+          updateFailedAttempts(newAttempts);
+          
+          if (newAttempts >= MAX_ATTEMPTS) {
+            notifyAdminAboutLock(loginIdentifier, newAttempts);
+            toast.error('החשבון עלול להינעל', {
+              description: 'הגעת למספר המקסימלי של נסיונות. המתן 15 דקות או פנה למנהל.',
+              duration: 8000,
+            });
+          } else {
+            toast.error('שגיאה בהתחברות', {
+              description: `אימייל או סיסמה שגויים. נותרו ${MAX_ATTEMPTS - newAttempts} נסיונות.`,
+            });
+          }
+        } else {
+          resetFailedAttempts();
+          toast.success('התחברת בהצלחה!');
+          navigate('/');
+        }
       }
     } catch (err) {
-      toast.error('שגיאה בהתחברות', {
+      toast.error('שגיאה', {
         description: 'אירעה שגיאה בלתי צפויה',
       });
     }
@@ -126,7 +147,9 @@ export default function Login() {
 
         <Card className="glass-card animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <CardHeader className="pb-4">
-            <CardTitle className="text-center">התחברות למערכת</CardTitle>
+            <CardTitle className="text-center">
+              {isRegistering ? 'הרשמה למערכת' : 'התחברות למערכת'}
+            </CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-4">
@@ -150,13 +173,27 @@ export default function Login() {
               </Alert>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {isRegistering && (
+                <div className="space-y-2">
+                  <Label htmlFor="full-name">שם מלא</Label>
+                  <Input
+                    id="full-name"
+                    type="text"
+                    placeholder="שם מלא"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="login-identifier">אימייל או שם משתמש</Label>
+                <Label htmlFor="login-identifier">אימייל</Label>
                 <Input
                   id="login-identifier"
-                  type="text"
-                  placeholder="אימייל או שם משתמש"
+                  type="email"
+                  placeholder="כתובת אימייל"
                   value={loginIdentifier}
                   onChange={(e) => setLoginIdentifier(e.target.value)}
                   required
@@ -197,17 +234,23 @@ export default function Login() {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    מתחבר...
+                    {isRegistering ? 'נרשם...' : 'מתחבר...'}
                   </>
                 ) : (
-                  'התחברות'
+                  isRegistering ? 'הרשמה' : 'התחברות'
                 )}
               </Button>
             </form>
 
-            <p className="text-center text-xs text-muted-foreground pt-4 border-t">
-              אין לך חשבון? פנה למנהל המערכת
-            </p>
+            <div className="text-center pt-4 border-t">
+              <button 
+                type="button" 
+                onClick={() => setIsRegistering(!isRegistering)}
+                className="text-sm text-cyan-500 hover:text-cyan-400 font-medium"
+              >
+                {isRegistering ? 'יש לך כבר חשבון? התחבר כאן' : 'אין לך חשבון? הירשם עכשיו'}
+              </button>
+            </div>
           </CardContent>
         </Card>
 
