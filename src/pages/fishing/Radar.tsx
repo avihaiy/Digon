@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_CATCHES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
@@ -6,11 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { Target, MapPin } from "lucide-react";
+import { Target, MapPin, Map, Flame } from "lucide-react";
 import { getImageUrl } from "@/hooks/useCatches";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // Fix for leaflet default icon issue in React
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -49,6 +50,7 @@ const DEFAULT_CENTER: [number, number] = [31.9, 34.8]; // Central Israel
 export default function Radar() {
   const { profileData, points, updateProfileField, loading: authLoading } = useAuth();
   const [unlocking, setUnlocking] = useState(false);
+  const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
 
   const isUnlocked = profileData?.radar_unlocked === true;
 
@@ -75,7 +77,7 @@ export default function Radar() {
         const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, [
           Query.equal("status", "approved"),
           Query.orderDesc("$createdAt"),
-          Query.limit(100) // Last 100 catches for the map
+          Query.limit(200) // Last 200 catches for the map to make heatmap fuller
         ]);
         return res.documents;
       } catch (e) {
@@ -85,13 +87,50 @@ export default function Radar() {
     enabled: isUnlocked
   });
 
+  // Calculate heatmap data grouped by general location coordinates
+  const heatmapData = useMemo(() => {
+    if (!catches.length) return [];
+    
+    const locationCounts: Record<string, { count: number, coords: [number, number] }> = {};
+    
+    catches.forEach((c: any) => {
+      if (!c.location) return;
+      let coords = LOCATIONS_MAP[c.location];
+      if (!coords) {
+        const match = Object.keys(LOCATIONS_MAP).find(k => c.location.includes(k));
+        if (match) coords = LOCATIONS_MAP[match];
+      }
+      if (coords) {
+        const key = `${coords[0]},${coords[1]}`;
+        if (!locationCounts[key]) {
+          locationCounts[key] = { count: 0, coords };
+        }
+        locationCounts[key].count += 1;
+      }
+    });
+
+    return Object.values(locationCounts);
+  }, [catches]);
+
   return (
     <div className="space-y-4 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto flex flex-col h-[calc(100vh-80px)]">
       
       <div className="flex flex-col px-4 mt-6 shrink-0">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-          מפת תפיסות חיה <MapPin className="w-6 h-6 text-rose-500" />
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            מפת תפיסות חיה <MapPin className="w-6 h-6 text-rose-500" />
+          </h1>
+          {isUnlocked && (
+            <ToggleGroup type="single" value={viewMode} onValueChange={(val) => val && setViewMode(val as any)} dir="ltr" className="scale-90">
+              <ToggleGroupItem value="markers" aria-label="Markers mode" className="data-[state=on]:bg-rose-500 data-[state=on]:text-white">
+                <Map className="w-4 h-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="heatmap" aria-label="Heatmap mode" className="data-[state=on]:bg-orange-500 data-[state=on]:text-white">
+                <Flame className="w-4 h-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground mt-1">
           איפה הדגים נושכים ברגע זה? מבוסס על דיווחי הקהילה.
         </p>
@@ -106,7 +145,7 @@ export default function Radar() {
               </div>
               <h2 className="text-xl font-bold mb-2">מפת לייב נעולה</h2>
               <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
-                גלה בדיוק איפה תופסים דגים ברגע זה. המפה סורקת נתונים מהקהילה ומציגה סיכות על חופי ישראל בזמן אמת!
+                גלה בדיוק איפה תופסים דגים ברגע זה. המפה סורקת נתונים מהקהילה ומציגה סיכות ומפת חום על חופי ישראל בזמן אמת!
               </p>
               <Button 
                 onClick={handleUnlock} 
@@ -128,42 +167,56 @@ export default function Radar() {
             ) : (
               <MapContainer center={DEFAULT_CENTER} zoom={8} className="w-full h-full z-0">
                 <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                  url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"}
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
                 />
                 
-                {catches.map((c: any) => {
-                  if (!c.location) return null;
-                  
-                  // Try to find exact match
-                  let coords = LOCATIONS_MAP[c.location];
-                  
-                  // If not found, try partial match (e.g. if string is "חוף אשדוד", match "אשדוד")
-                  if (!coords) {
-                    const match = Object.keys(LOCATIONS_MAP).find(k => c.location.includes(k));
-                    if (match) coords = LOCATIONS_MAP[match];
-                  }
+                {viewMode === 'markers' ? (
+                  catches.map((c: any) => {
+                    if (!c.location) return null;
+                    let coords = LOCATIONS_MAP[c.location];
+                    if (!coords) {
+                      const match = Object.keys(LOCATIONS_MAP).find(k => c.location.includes(k));
+                      if (match) coords = LOCATIONS_MAP[match];
+                    }
+                    if (!coords) return null;
 
-                  // Skip if location can't be mapped
-                  if (!coords) return null;
+                    const offsetLat = coords[0] + (Math.random() - 0.5) * 0.02;
+                    const offsetLon = coords[1] + (Math.random() - 0.5) * 0.02;
 
-                  // Add tiny random offset so markers at same location don't completely overlap
-                  const offsetLat = coords[0] + (Math.random() - 0.5) * 0.02;
-                  const offsetLon = coords[1] + (Math.random() - 0.5) * 0.02;
-
-                  return (
-                    <Marker key={c.$id} position={[offsetLat, offsetLon]}>
-                      <Popup className="custom-popup" dir="rtl">
-                        <div className="text-center">
-                          <img src={getImageUrl(c.image_id)} alt="catch" className="w-full h-24 object-cover rounded-md mb-2" />
-                          <p className="font-bold text-sm text-cyan-600">{c.fish_type}</p>
-                          <p className="text-xs text-gray-500">{c.user_name}</p>
-                          <p className="text-[10px] text-gray-400">{new Date(c.$createdAt).toLocaleDateString('he-IL')}</p>
+                    return (
+                      <Marker key={c.$id} position={[offsetLat, offsetLon]}>
+                        <Popup className="custom-popup" dir="rtl">
+                          <div className="text-center">
+                            <img src={getImageUrl(c.image_id)} alt="catch" className="w-full h-24 object-cover rounded-md mb-2" />
+                            <p className="font-bold text-sm text-cyan-600">{c.fish_type}</p>
+                            <p className="text-xs text-gray-500">{c.user_name}</p>
+                            <p className="text-[10px] text-gray-400">{new Date(c.$createdAt).toLocaleDateString('he-IL')}</p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })
+                ) : (
+                  heatmapData.map((data, idx) => (
+                    <CircleMarker
+                      key={`heat-${idx}`}
+                      center={data.coords}
+                      radius={Math.min(40, 15 + data.count * 3)}
+                      pathOptions={{
+                        fillColor: data.count > 5 ? '#ef4444' : data.count > 2 ? '#f97316' : '#eab308',
+                        fillOpacity: 0.6,
+                        color: 'transparent'
+                      }}
+                    >
+                      <Popup dir="rtl">
+                        <div className="font-bold text-center">
+                          {data.count} תפיסות לאחרונה באזור זה!
                         </div>
                       </Popup>
-                    </Marker>
-                  );
-                })}
+                    </CircleMarker>
+                  ))
+                )}
               </MapContainer>
             )}
           </div>

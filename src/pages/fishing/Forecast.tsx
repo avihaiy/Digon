@@ -170,20 +170,22 @@ export default function Forecast() {
         </div>
       </section>
 
-      {/* Tide Chart Section */}
-      {marineData.hourlyTides && marineData.hourlyTides.length > 0 && (
-        <section className="px-4">
+      {/* Forecast Charts Section */}
+      {marineData.hourlyForecast && marineData.hourlyForecast.length > 0 && (
+        <section className="px-4 space-y-4">
+          <h3 className="font-bold text-lg mb-2">תחזית 24 שעות</h3>
+          
           <Card className="border-border/50 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Droplets className="w-5 h-5 text-blue-500" />
-                <h3 className="font-bold text-lg">גאות ושפל (24 שעות)</h3>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Waves className="w-4 h-4 text-blue-500" />
+                <h4 className="font-bold text-sm">גובה גלים (מטר)</h4>
               </div>
-              <div className="h-48 w-full mt-4">
+              <div className="h-32 w-full mt-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={marineData.hourlyTides}>
+                  <AreaChart data={marineData.hourlyForecast}>
                     <defs>
-                      <linearGradient id="colorTide" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="colorWave" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                       </linearGradient>
@@ -201,21 +203,69 @@ export default function Forecast() {
                     <Tooltip 
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                       labelStyle={{ fontWeight: 'bold', color: '#64748b' }}
-                      formatter={(value: number) => [`${value > 0 ? '+' : ''}${value.toFixed(2)}m`, 'מפלס מים']}
+                      formatter={(value: number) => [`${value.toFixed(1)}m`, 'גובה']}
                     />
                     <Area 
                       type="monotone" 
-                      dataKey="height" 
+                      dataKey="waveHeight" 
                       stroke="#3b82f6" 
                       strokeWidth={3}
                       fillOpacity={1} 
-                      fill="url(#colorTide)" 
+                      fill="url(#colorWave)" 
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="border-border/50 shadow-sm">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-1 mb-2">
+                  <ThermometerSun className="w-3.5 h-3.5 text-orange-500" />
+                  <h4 className="font-bold text-xs">טמפרטורה</h4>
+                </div>
+                <div className="h-16 w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={marineData.hourlyForecast}>
+                      <defs>
+                        <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Tooltip formatter={(value: number) => [`${value.toFixed(1)}°`, 'מעלות']} />
+                      <Area type="monotone" dataKey="temperature" stroke="#f97316" strokeWidth={2} fillOpacity={1} fill="url(#colorTemp)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/50 shadow-sm">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-1 mb-2">
+                  <Wind className="w-3.5 h-3.5 text-cyan-500" />
+                  <h4 className="font-bold text-xs">רוח (קמ״ש)</h4>
+                </div>
+                <div className="h-16 w-full mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={marineData.hourlyForecast}>
+                      <defs>
+                        <linearGradient id="colorWind" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Tooltip formatter={(value: number) => [`${value.toFixed(1)}`, 'קמ״ש']} />
+                      <Area type="monotone" dataKey="windSpeed" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorWind)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </section>
       )}
 

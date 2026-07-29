@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
 import { Query, ID } from "appwrite";
 import { useAuth } from "./useAuth";
+import { useEffect, useState } from "react";
 
 export interface Notification {
   $id: string;
@@ -17,6 +18,16 @@ export interface Notification {
 export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [notifiedIds, setNotifiedIds] = useState<Set<string>>(new Set());
+  const [permission, setPermission] = useState<NotificationPermission>(
+    "Notification" in window ? Notification.permission : "default"
+  );
+
+  const requestPermission = async () => {
+    if (!("Notification" in window)) return;
+    const perm = await Notification.requestPermission();
+    setPermission(perm);
+  };
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["notifications", user?.$id],
@@ -39,7 +50,42 @@ export function useNotifications() {
       }
     },
     enabled: !!user,
+    refetchInterval: 15000, // Poll every 15 seconds for new notifications
   });
+
+  // Local Push Notifications Logic
+  useEffect(() => {
+    if (!notifications.length || permission !== "granted") return;
+    
+    const newNotifiedIds = new Set(notifiedIds);
+    let hasNew = false;
+
+    // Check for unread notifications we haven't seen yet in this session
+    notifications.forEach((n) => {
+      if (n.is_read !== "true" && !notifiedIds.has(n.$id)) {
+        // Show push notification
+        try {
+          new Notification(n.title, {
+            body: n.message,
+            icon: '/icon-192x192.png'
+          });
+        } catch (e) {
+          console.error("Failed to show notification", e);
+        }
+        newNotifiedIds.add(n.$id);
+        hasNew = true;
+      } else if (n.is_read === "true" && !notifiedIds.has(n.$id)) {
+        // Add to seen so we don't notify if they unread it?
+        // Wait, just mark it as seen since it's already read
+        newNotifiedIds.add(n.$id);
+        hasNew = true;
+      }
+    });
+
+    if (hasNew) {
+      setNotifiedIds(newNotifiedIds);
+    }
+  }, [notifications, permission, notifiedIds]);
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
@@ -66,5 +112,7 @@ export function useNotifications() {
     isLoading,
     unreadCount,
     markAsRead: (id: string) => markAsReadMutation.mutate(id),
+    requestPermission,
+    permission
   };
 }

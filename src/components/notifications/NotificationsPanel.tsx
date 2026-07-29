@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export function NotificationsPanel() {
-  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, permission, requestPermission } = useNotifications();
 
   const getIcon = (type?: string) => {
     switch (type) {
@@ -33,6 +33,16 @@ export function NotificationsPanel() {
           <h3 className="font-bold text-sm">התראות</h3>
           <span className="text-xs text-slate-400">{unreadCount} חדשות</span>
         </div>
+        
+        {permission === "default" && (
+          <div className="p-3 bg-blue-500/10 border-b border-blue-500/20 text-center">
+            <p className="text-xs text-blue-300 mb-2">רוצה לקבל התראות כשהאפליקציה ברקע?</p>
+            <Button size="sm" onClick={requestPermission} className="h-7 text-xs bg-blue-500 hover:bg-blue-600 text-white w-full">
+              הפעל התראות פוש
+            </Button>
+          </div>
+        )}
+
         <ScrollArea className="h-[300px]">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-8 text-slate-400 opacity-60">

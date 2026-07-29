@@ -2,9 +2,12 @@ import { useTournaments } from "@/hooks/useTournaments";
 import { Card } from "@/components/ui/card";
 import { Trophy, Clock, Target } from "lucide-react";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
+import { EndTournamentDialog } from "@/components/fishing/EndTournamentDialog";
 
 export default function Tournaments() {
   const { tournaments, isLoading } = useTournaments();
+  const { userRole } = useAuth();
 
   if (isLoading) {
     return (
@@ -64,6 +67,10 @@ export default function Tournaments() {
               <div className="mt-4 bg-black/40 text-center p-2 rounded-lg text-xs text-slate-400 border border-white/5">
                 כדי להשתתף, פשוט העלה דיווח תפיסה ושייך אותו לתחרות זו.
               </div>
+
+              {userRole === 'admin' && (
+                <EndTournamentDialog tournament={t} />
+              )}
             </Card>
           ))
         )}

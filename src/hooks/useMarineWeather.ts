@@ -10,7 +10,7 @@ interface MarineWeatherData {
   windDirection: number | null; // in degrees
   temperature: number | null; // in celsius
   locationName: string;
-  hourlyTides?: { time: string; height: number }[];
+  hourlyForecast?: { time: string; waveHeight: number; temperature: number; windSpeed: number }[];
 }
 
 export function useMarineWeather() {
@@ -20,7 +20,7 @@ export function useMarineWeather() {
     windDirection: null,
     temperature: null,
     locationName: 'תל אביב (ברירת מחדל)',
-    hourlyTides: [],
+    hourlyForecast: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,14 +31,13 @@ export function useMarineWeather() {
       setLoading(true);
       setError(null);
 
-      // Fetch Weather (Wind & Temp)
+      // Fetch Weather (Wind & Temp - Current and Hourly)
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,wind_speed_10m&timezone=auto`
       );
       const weatherJson = await weatherRes.json();
       
-      // Fetch Marine (Waves & Tides) - We use fixed coastal coordinates for marine data
-      // because Open-Meteo returns null if the exact GPS location is inland.
+      // Fetch Marine (Waves)
       const marineLat = 32.08;
       const marineLon = 34.75;
       const marineRes = await fetch(
@@ -46,16 +45,18 @@ export function useMarineWeather() {
       );
       const marineJson = await marineRes.json();
 
-      let hourlyTides = [];
-      if (marineJson.hourly?.time && marineJson.hourly?.sea_level) {
+      let hourlyForecast = [];
+      if (marineJson.hourly?.time && weatherJson.hourly?.time) {
         // Get next 24 hours
         const startIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date());
         const endIndex = startIndex + 24;
         
         for (let i = startIndex > -1 ? startIndex : 0; i < endIndex && i < marineJson.hourly.time.length; i++) {
-           hourlyTides.push({
+           hourlyForecast.push({
              time: new Date(marineJson.hourly.time[i]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
-             height: marineJson.hourly.sea_level[i] || 0
+             waveHeight: marineJson.hourly.wave_height[i] || 0,
+             temperature: weatherJson.hourly.temperature_2m[i] || 0,
+             windSpeed: weatherJson.hourly.wind_speed_10m[i] || 0
            });
         }
       }
@@ -66,7 +67,7 @@ export function useMarineWeather() {
         windDirection: weatherJson.current?.wind_direction_10m ?? null,
         temperature: weatherJson.current?.temperature_2m ?? null,
         locationName,
-        hourlyTides,
+        hourlyForecast,
       });
       setLastUpdated(new Date());
     } catch (err) {
