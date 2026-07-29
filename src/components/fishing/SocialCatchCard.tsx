@@ -78,10 +78,23 @@ export function SocialCatchCard({ report }: { report: any }) {
           <p className="text-sm font-bold text-cyan-400 mb-1 drop-shadow-sm">
             {report.fish_type} {report.weight && <span className="text-xs font-normal text-slate-300 ml-1">({report.weight})</span>}
           </p>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-rose-400" />
-            {report.location}
-          </p>
+          <div className="text-xs text-slate-400 flex items-center justify-between gap-1">
+            <span className="flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-rose-400" />
+              {report.location?.split('|||')[0].trim() || report.location}
+            </span>
+            {report.location?.includes('|||') && (
+              <a 
+                href={report.location.split('|||')[1].trim()} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-cyan-400 text-[10px] bg-cyan-900/30 px-2 py-0.5 rounded-full hover:bg-cyan-900/60 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                פתח מפה
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

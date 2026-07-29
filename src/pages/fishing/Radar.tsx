@@ -98,10 +98,11 @@ export default function Radar() {
     
     catches.forEach((c: any) => {
       if (!c.location) return;
-      let coords = LOCATIONS_MAP[c.location];
+      const locText = c.location.split('|||')[0].trim();
+      let coords = LOCATIONS_MAP[locText];
       if (!coords) {
         const sortedKeys = Object.keys(LOCATIONS_MAP).sort((a, b) => b.length - a.length);
-        const match = sortedKeys.find(k => c.location.includes(k));
+        const match = sortedKeys.find(k => locText.includes(k));
         if (match) coords = LOCATIONS_MAP[match];
       }
       if (coords) {
@@ -178,10 +179,11 @@ export default function Radar() {
                 {viewMode === 'markers' ? (
                   catches.map((c: any) => {
                     if (!c.location) return null;
-                    let coords = LOCATIONS_MAP[c.location];
+                    const locText = c.location.split('|||')[0].trim();
+                    let coords = LOCATIONS_MAP[locText];
                     if (!coords) {
                       const sortedKeys = Object.keys(LOCATIONS_MAP).sort((a, b) => b.length - a.length);
-                      const match = sortedKeys.find(k => c.location.includes(k));
+                      const match = sortedKeys.find(k => locText.includes(k));
                       if (match) coords = LOCATIONS_MAP[match];
                     }
                     if (!coords) return null;
@@ -196,7 +198,18 @@ export default function Radar() {
                             <img src={getImageUrl(c.image_id)} alt="catch" className="w-full h-24 object-cover rounded-md mb-2" />
                             <p className="font-bold text-sm text-cyan-600">{c.fish_type}</p>
                             <p className="text-xs text-gray-500">{c.user_name}</p>
-                            <p className="text-[10px] text-gray-400">{new Date(c.$createdAt).toLocaleDateString('he-IL')}</p>
+                            <p className="text-[10px] text-gray-400 mb-2">{new Date(c.$createdAt).toLocaleDateString('he-IL')}</p>
+                            
+                            {c.location.includes('|||') && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="w-full h-7 text-[10px] gap-1 rounded-full border-cyan-500/30 text-cyan-600 hover:bg-cyan-50"
+                                onClick={() => window.open(c.location.split('|||')[1].trim(), '_blank')}
+                              >
+                                נווט לנקודה המדויקת
+                              </Button>
+                            )}
                           </div>
                         </Popup>
                       </Marker>

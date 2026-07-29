@@ -30,6 +30,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
   const [fishType, setFishType] = useState("");
   const [weight, setWeight] = useState("");
   const [location, setLocation] = useState("");
+  const [mapUrl, setMapUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedTournament, setSelectedTournament] = useState<string>("");
@@ -56,6 +57,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
       setImageFile(null);
       setImagePreview(null);
       setSelectedTournament("");
+      setMapUrl("");
     }
   };
 
@@ -95,7 +97,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
       await reportCatch({
         fishType,
         weight,
-        location,
+        location: mapUrl.trim() ? `${location} ||| ${mapUrl.trim()}` : location,
         imageFile,
         tournamentId: selectedTournament || undefined,
         imageBase64: imagePreview || undefined 
@@ -203,6 +205,17 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
                 onChange={(e) => setLocation(e.target.value)}
               />
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="mapUrl">קישור מפה מדויק (אופציונלי)</Label>
+            <Input 
+              id="mapUrl" 
+              placeholder="Google Maps / Waze קישור" 
+              value={mapUrl}
+              onChange={(e) => setMapUrl(e.target.value)}
+              className="text-left dir-ltr"
+            />
           </div>
 
           {activeTournaments.length > 0 && (
