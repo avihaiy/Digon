@@ -184,12 +184,24 @@ html, body {
       color 0.3s ease;
   }
 
+  @keyframes ocean-pan {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+  }
+
   :root body {
-    background: linear-gradient(180deg, hsl(210 40% 98% / 0.85), hsl(210 40% 98% / 0.95)), url('/images/bg-ocean.jpg') center/cover fixed no-repeat;
+    background: linear-gradient(180deg, hsl(210 40% 98% / 0.6), hsl(210 40% 98% / 0.9)), url('/images/bg-ocean.jpg') no-repeat;
+    background-size: 120% 120%;
+    background-attachment: fixed;
+    animation: ocean-pan 45s ease-in-out infinite;
   }
 
   .dark body {
-    background: linear-gradient(180deg, hsl(222 84% 5% / 0.80), hsl(222 84% 5% / 0.95)), url('/images/bg-ocean.jpg') center/cover fixed no-repeat;
+    background: linear-gradient(180deg, hsl(222 84% 5% / 0.6), hsl(222 84% 5% / 0.9)), url('/images/bg-ocean.jpg') no-repeat;
+    background-size: 120% 120%;
+    background-attachment: fixed;
+    animation: ocean-pan 45s ease-in-out infinite;
   }
 
   h1,
