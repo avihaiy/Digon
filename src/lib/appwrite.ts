@@ -20,5 +20,7 @@ export const APPWRITE_LIKES_ID = "likes";
 export const APPWRITE_COMMENTS_ID = "comments";
 export const APPWRITE_NOTIFICATIONS_ID = "notifications";
 export const APPWRITE_TOURNAMENTS_ID = "tournaments";
+export const APPWRITE_MESSAGES_ID = "messages";
+export const APPWRITE_RELATIONSHIPS_ID = "relationships";
 
 export default client;

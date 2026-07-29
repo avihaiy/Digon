@@ -1017,14 +1017,67 @@ export default function Admin() {
                     <TableCell>
                       <div className="flex gap-2 items-center flex-wrap">
                         {t.is_active && (
-                          <div className="flex gap-2 items-center">
-                            <Input id={`winner_${t.$id}`} placeholder="ID המנצח (או שם משתמש)" className="h-8 text-xs w-40" />
-                            <Button size="sm" variant="outline" className="h-8" onClick={() => {
-                              const winnerId = (document.getElementById(`winner_${t.$id}`) as HTMLInputElement).value;
-                              if(!winnerId) return toast({ title: "שגיאה", description: "יש להזין ID מנצח", variant: "destructive" });
-                              endTournament({ tournamentId: t.$id, winnerId, prize: t.prize_points });
-                            }}>הכרז על מנצח וסיים!</Button>
-                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="default" 
+                            className="h-8 bg-amber-500 hover:bg-amber-600 text-black" 
+                            onClick={async () => {
+                              try {
+                                toast.loading("מחשב את המנצח...", { id: "calc-winner" });
+                                
+                                // 1. Fetch all approved catches in timeframe
+                                const res = await databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [
+                                  Query.equal('status', 'approved'),
+                                  Query.greaterThanEqual('$createdAt', t.start_date),
+                                  Query.lessThanEqual('$createdAt', t.end_date || new Date().toISOString()),
+                                  Query.limit(500)
+                                ]);
+                                
+                                if (res.documents.length === 0) {
+                                  toast.error("לא נמצאו תפיסות בטווח התחרות", { id: "calc-winner" });
+                                  return;
+                                }
+
+                                // 2. Parse weights and find max
+                                let maxWeight = -1;
+                                let winnerId = null;
+
+                                res.documents.forEach((catchDoc: any) => {
+                                  let weightInGrams = 0;
+                                  const weightStr = (catchDoc.weight || "").toLowerCase();
+                                  
+                                  const numMatch = weightStr.match(/[\d.]+/);
+                                  if (numMatch) {
+                                    let val = parseFloat(numMatch[0]);
+                                    if (weightStr.includes('kg') || weightStr.includes('ק"ג') || weightStr.includes('קילו')) {
+                                      weightInGrams = val * 1000;
+                                    } else {
+                                      weightInGrams = val;
+                                    }
+                                  }
+
+                                  if (weightInGrams > maxWeight) {
+                                    maxWeight = weightInGrams;
+                                    winnerId = catchDoc.user_id;
+                                  }
+                                });
+
+                                if (!winnerId) {
+                                  toast.error("לא ניתן היה לחשב משקל תפיסות", { id: "calc-winner" });
+                                  return;
+                                }
+
+                                // 3. Declare winner
+                                await endTournament({ tournamentId: t.$id, winnerId, prize: t.prize_points });
+                                toast.success(`נמצא מנצח! התחרות הסתיימה.`, { id: "calc-winner" });
+                                
+                              } catch (e) {
+                                toast.error("שגיאה בחישוב המנצח", { id: "calc-winner" });
+                              }
+                            }}
+                          >
+                            חישוב מנצח וסיום 🏆
+                          </Button>
                         )}
                         {!t.is_active && t.winner_user_id && (
                           <span className="text-xs text-muted-foreground ml-4">מנצח: {t.winner_user_id}</span>

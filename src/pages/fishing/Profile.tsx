@@ -4,7 +4,7 @@ import { databases, APPWRITE_DB_ID, APPWRITE_PROFILES_ID, APPWRITE_CATCHES_ID } 
 import { Query } from "appwrite";
 import { BadgeIcon } from "@/components/fishing/BadgeIcon";
 import { getImageUrl } from "@/hooks/useCatches";
-import { ArrowRight, Trophy, Fish, Star, MapPin, Scale, Activity, UserPlus, Check, Users } from "lucide-react";
+import { ArrowRight, Trophy, Fish, Star, MapPin, Scale, Activity, UserPlus, Check, Users, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollowers } from "@/hooks/useFollowers";
@@ -131,25 +131,35 @@ export default function Profile() {
             </div>
           </div>
           {currentUser && currentUser.$id !== userId && (
-            <Button
-              size="sm"
-              variant={isFollowing ? "outline" : "default"}
-              onClick={() => toggleFollow()}
-              disabled={isToggling}
-              className={`rounded-full h-8 px-4 text-xs font-bold ${isFollowing ? 'border-cyan-500/50 text-cyan-400' : 'bg-cyan-600 hover:bg-cyan-700'}`}
-            >
-              {isFollowing ? (
-                <>
-                  <Check className="w-3 h-3 ml-1" />
-                  נעקב
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-3 h-3 ml-1" />
-                  עקוב
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant={isFollowing ? "outline" : "default"}
+                onClick={() => toggleFollow()}
+                disabled={isToggling}
+                className={`rounded-full h-8 px-4 text-xs font-bold ${isFollowing ? 'border-cyan-500/50 text-cyan-400' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+              >
+                {isFollowing ? (
+                  <>
+                    <Check className="w-3 h-3 ml-1" />
+                    נעקב
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-3 h-3 ml-1" />
+                    עקוב
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-full h-8 px-3 border-cyan-500/50 text-cyan-400 hover:bg-cyan-950/30"
+                onClick={() => navigate('/fishing/messages')}
+              >
+                <MessageCircle className="w-4 h-4" />
+              </Button>
+            </div>
           )}
         </div>
 
