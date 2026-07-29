@@ -316,9 +316,18 @@ export default function Admin() {
     mutationFn: async ({ userId, pointsToAdd, currentPoints }: { userId: string; pointsToAdd: number; currentPoints: number }) => {
       const finalPoints = Math.max(0, currentPoints + pointsToAdd);
       await databases.updateDocument(DB_ID, APPWRITE_PROFILES_ID, userId, { points: finalPoints });
+      return { userId, finalPoints };
     },
-    onSuccess: () => {
+    onSuccess: ({ userId, finalPoints }) => {
       toast.success("הנקודות עודכנו בהצלחה!");
+      // Optimistic cache update
+      queryClient.setQueryData(["admin-users"], (old: any) => {
+        if (!old) return old;
+        return old.map((u: any) => 
+          u.$id === userId ? { ...u, points: finalPoints } : u
+        );
+      });
+      // Invalidate to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       setPointsModalOpen(false);
     },
