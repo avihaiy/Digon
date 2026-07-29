@@ -1,20 +1,23 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_PROFILES_ID, APPWRITE_CATCHES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { BadgeIcon } from "@/components/fishing/BadgeIcon";
 import { getImageUrl } from "@/hooks/useCatches";
-import { ArrowRight, Trophy, Fish, Star, MapPin, Scale, Activity, UserPlus, Check, Users, MessageCircle, Camera } from "lucide-react";
+import { ArrowRight, Trophy, Fish, Star, MapPin, Scale, Activity, UserPlus, Check, Users, MessageCircle, Camera, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollowers } from "@/hooks/useFollowers";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Profile() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const { followersCount, followingCount, isFollowing, toggleFollow, isToggling } = useFollowers(userId || "");
+  const [selectedCatch, setSelectedCatch] = useState<any>(null);
 
   // Fetch Profile
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -238,7 +241,7 @@ export default function Profile() {
                 <div 
                   key={c.$id} 
                   className="aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 relative group shadow-sm cursor-pointer"
-                  onClick={() => navigate(`/fishing/catch/${c.$id}`)}
+                  onClick={() => setSelectedCatch(c)}
                 >
                   {c.image_id ? (
                     <img 
@@ -267,6 +270,68 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      {/* Catch Details Modal */}
+      <Dialog open={!!selectedCatch} onOpenChange={(open) => !open && setSelectedCatch(null)}>
+        <DialogContent className="max-w-md w-[90vw] p-0 overflow-hidden rounded-3xl gap-0 border-0 bg-transparent shadow-2xl">
+          {selectedCatch && (
+            <div className="bg-white dark:bg-slate-900 flex flex-col max-h-[85vh]">
+              {selectedCatch.image_id && (
+                <div className="relative w-full aspect-square bg-black">
+                  <img 
+                    src={getImageUrl(selectedCatch.image_id)} 
+                    alt={selectedCatch.fish_type} 
+                    className="w-full h-full object-contain"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                    <div>
+                      <h3 className="text-2xl font-black text-white shadow-sm drop-shadow-md">{selectedCatch.fish_type || 'דג לא ידוע'}</h3>
+                      <p className="text-white/90 text-sm font-medium flex items-center gap-1 drop-shadow-md">
+                        <MapPin className="w-4 h-4" /> 
+                        {selectedCatch.location?.split('|||')[0].trim() || 'מיקום לא צוין'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="p-5 flex-1 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+                    <Scale className="w-5 h-5 text-emerald-500 mb-1" />
+                    <span className="text-xs text-muted-foreground font-medium">משקל</span>
+                    <span className="font-bold text-slate-900 dark:text-white mt-0.5">{selectedCatch.weight || 'לא הוזן'}</span>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+                    <Calendar className="w-5 h-5 text-blue-500 mb-1" />
+                    <span className="text-xs text-muted-foreground font-medium">תאריך</span>
+                    <span className="font-bold text-slate-900 dark:text-white mt-0.5" dir="ltr">
+                      {new Date(selectedCatch.$createdAt).toLocaleDateString('he-IL')}
+                    </span>
+                  </div>
+                </div>
+                
+                {selectedCatch.text && (
+                  <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 mt-2">
+                    <h4 className="text-xs font-bold text-muted-foreground mb-1 uppercase tracking-wider">תיאור החוויה</h4>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{selectedCatch.text}</p>
+                  </div>
+                )}
+                
+                {selectedCatch.location?.includes('|||') && (
+                  <Button 
+                    className="w-full mt-4 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl h-12 font-bold"
+                    onClick={() => window.open(selectedCatch.location.split('|||')[1].trim(), '_blank')}
+                  >
+                    <MapPin className="w-4 h-4 ml-2" /> פתח מיקום במפה
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
