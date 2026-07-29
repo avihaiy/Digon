@@ -15,5 +15,6 @@ export const APPWRITE_CATCH_IMAGES_BUCKET_ID = "6a684772002def29debb"; // Based 
 export const APPWRITE_LOCATIONS_ID = "locations";
 export const APPWRITE_ADS_ID = "ads";
 export const APPWRITE_STORE_ITEMS_ID = "store_items";
+export const APPWRITE_SETTINGS_ID = "settings";
 
 export default client;

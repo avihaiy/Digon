@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID, APPWRITE_STORE_ITEMS_ID } from "@/lib/appwrite";
-import { ID, Query } from "appwrite";
+import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_SETTINGS_ID } from "@/lib/appwrite";
+import { ID, Query, AppwriteException } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins } from "lucide-react";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -20,9 +20,15 @@ const LOCATIONS_ID = APPWRITE_LOCATIONS_ID;
 export default function Admin() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("users");
+  const [activeTab, setActiveTab] = useState("users"); // users, locations, catches, raffles, store, settings
   const [newLocationName, setNewLocationName] = useState("");
   const [newStoreItem, setNewStoreItem] = useState({ name: "", description: "", cost: "", type: "title", value: "" });
+  
+  // Points Modal State
+  const [pointsModalOpen, setPointsModalOpen] = useState(false);
+  const [selectedUserForPoints, setSelectedUserForPoints] = useState<any>(null);
+  const [pointsAmount, setPointsAmount] = useState<string>("0");
+  const [pointsOperation, setPointsOperation] = useState<"add" | "remove">("add");
 
 
   // Fetch Users (Profiles)
@@ -71,6 +77,21 @@ export default function Admin() {
     queryFn: async () => {
       const res = await databases.listDocuments(DB_ID, APPWRITE_STORE_ITEMS_ID, [Query.limit(100)]);
       return res.documents;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch Settings
+  const { data: settingsData, isLoading: settingsLoading } = useQuery({
+    queryKey: ["admin-settings"],
+    queryFn: async () => {
+      try {
+        const res = await databases.listDocuments(DB_ID, APPWRITE_SETTINGS_ID, [Query.limit(10)]);
+        return res.documents;
+      } catch (e: any) {
+        if (e.code === 404) return []; // Collection might not exist yet
+        throw e;
+      }
     },
     enabled: !!user,
   });
@@ -187,7 +208,18 @@ export default function Admin() {
         status: 'approved'
       });
 
-      // 2. Give 10 points to the user
+      // 2. Fetch catch approved points
+      let catchPoints = 10;
+      try {
+        const pSetting = settingsData?.find((s: any) => s.key === 'catch_approved_points');
+        if (pSetting) {
+          catchPoints = pSetting.value;
+        }
+      } catch (e) {
+        // Fallback
+      }
+
+      // 3. Give points to the user
       const profileResponse = await databases.listDocuments(
         DB_ID,
         APPWRITE_PROFILES_ID,
@@ -199,12 +231,13 @@ export default function Admin() {
           DB_ID,
           APPWRITE_PROFILES_ID,
           profile.$id,
-          { points: (profile.points || 0) + 10 }
+          { points: (profile.points || 0) + catchPoints }
         );
       }
+      return catchPoints;
     },
-    onSuccess: () => {
-      toast.success("התפיסה אושרה בהצלחה והדייג קיבל 10 מטבעות! 🎉");
+    onSuccess: (catchPoints) => {
+      toast.success(`התפיסה אושרה בהצלחה והדייג קיבל ${catchPoints} מטבעות! 🎉`);
       queryClient.invalidateQueries({ queryKey: ["admin-catches"] });
       queryClient.invalidateQueries({ queryKey: ["catches"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
@@ -275,6 +308,42 @@ export default function Admin() {
     onSuccess: () => {
       toast.success("סטטוס הפריט עודכן!");
       queryClient.invalidateQueries({ queryKey: ["admin-store-items"] });
+    }
+  });
+
+  // Send Points Mutation
+  const sendPointsMutation = useMutation({
+    mutationFn: async ({ userId, pointsToAdd, currentPoints }: { userId: string; pointsToAdd: number; currentPoints: number }) => {
+      const finalPoints = Math.max(0, currentPoints + pointsToAdd);
+      await databases.updateDocument(DB_ID, APPWRITE_PROFILES_ID, userId, { points: finalPoints });
+    },
+    onSuccess: () => {
+      toast.success("הנקודות עודכנו בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      setPointsModalOpen(false);
+    },
+    onError: (err: any) => {
+      toast.error("שגיאה בעדכון הנקודות: " + err.message);
+    }
+  });
+
+  // Save Settings Mutation
+  const saveSettingsMutation = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: number }) => {
+      // Find if setting exists
+      const existing = settingsData?.find((s: any) => s.key === key);
+      if (existing) {
+        await databases.updateDocument(DB_ID, APPWRITE_SETTINGS_ID, existing.$id, { value });
+      } else {
+        await databases.createDocument(DB_ID, APPWRITE_SETTINGS_ID, ID.unique(), { key, value });
+      }
+    },
+    onSuccess: () => {
+      toast.success("ההגדרות נשמרו בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+    },
+    onError: (err: any) => {
+      toast.error("שגיאה בשמירת הגדרות: " + err.message);
     }
   });
 
@@ -372,6 +441,13 @@ export default function Admin() {
         >
           <StoreIcon className="w-4 h-4" /> ניהול חנות
         </Button>
+        <Button 
+          variant={activeTab === "settings" ? "default" : "outline"} 
+          onClick={() => setActiveTab("settings")}
+          className="flex gap-2 items-center bg-slate-500/10 text-slate-600 border-slate-200 hover:bg-slate-500 hover:text-white"
+        >
+          <Settings className="w-4 h-4" /> הגדרות אפליקציה
+        </Button>
       </div>
 
       <div className="grid gap-6">
@@ -387,7 +463,8 @@ export default function Admin() {
                     <TableRow>
                       <TableHead>שם / אימייל</TableHead>
                       <TableHead>תפקיד</TableHead>
-                      <TableHead>מספר טלפון</TableHead>
+                      <TableHead>נקודות במערכת</TableHead>
+                      <TableHead>פעולות</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -395,11 +472,26 @@ export default function Admin() {
                       <TableRow key={u.$id}>
                         <TableCell>{u.full_name || 'ללא שם'}</TableCell>
                         <TableCell>{u.role === 'ADMIN' ? 'מנהל' : 'משתמש רגיל'}</TableCell>
-                        <TableCell>{u.phone_number || '-'}</TableCell>
+                        <TableCell className="font-bold text-yellow-600">{u.points || 0} נק׳</TableCell>
+                        <TableCell>
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            className="bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white border-blue-200"
+                            onClick={() => {
+                              setSelectedUserForPoints(u);
+                              setPointsAmount("0");
+                              setPointsOperation("add");
+                              setPointsModalOpen(true);
+                            }}
+                          >
+                            <Coins className="w-4 h-4 ml-1" /> נהל נקודות
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {(!usersData || usersData.length === 0) && (
-                      <TableRow><TableCell colSpan={3} className="text-center">אין משתמשים</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={4} className="text-center">אין משתמשים</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -740,6 +832,138 @@ export default function Admin() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === "settings" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-slate-500"/> הגדרות אפליקציה כלליות</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {settingsLoading ? <p>טוען הגדרות...</p> : (
+              <div className="space-y-6">
+                <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">נקודות הרשמה 🎁</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                      כמות הנקודות שמשתמש מקבל באופן אוטומטי מיד לאחר יצירת החשבון.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Input 
+                      type="number" 
+                      className="w-24 text-center font-bold text-lg"
+                      defaultValue={settingsData?.find((s:any) => s.key === 'registration_points')?.value || 50}
+                      id="input_registration_points"
+                    />
+                    <Button onClick={() => {
+                      const val = parseInt((document.getElementById('input_registration_points') as HTMLInputElement).value) || 0;
+                      saveSettingsMutation.mutate({ key: 'registration_points', value: val });
+                    }} disabled={saveSettingsMutation.isPending}>שמור</Button>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">נקודות אישור תפיסה 🐟</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                      כמות הנקודות שהדייג מקבל כשהמנהל מאשר את התפיסה שלו בעמוד התפיסות.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Input 
+                      type="number" 
+                      className="w-24 text-center font-bold text-lg"
+                      defaultValue={settingsData?.find((s:any) => s.key === 'catch_approved_points')?.value || 10}
+                      id="input_catch_approved_points"
+                    />
+                    <Button onClick={() => {
+                      const val = parseInt((document.getElementById('input_catch_approved_points') as HTMLInputElement).value) || 0;
+                      saveSettingsMutation.mutate({ key: 'catch_approved_points', value: val });
+                    }} disabled={saveSettingsMutation.isPending}>שמור</Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Points Modal */}
+      {pointsModalOpen && selectedUserForPoints && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl w-full max-w-sm shadow-xl relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setPointsModalOpen(false)}
+              className="absolute top-4 end-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-3">
+                <Coins className="w-8 h-8 text-blue-500" />
+              </div>
+              <h2 className="text-xl font-bold text-center">ניהול נקודות</h2>
+              <p className="text-sm text-center text-muted-foreground mt-1">
+                עבור {selectedUserForPoints.full_name || 'אנונימי'}
+              </p>
+              <div className="mt-2 text-sm bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium">
+                יתרה נוכחית: <span className="font-bold text-blue-600 dark:text-blue-400">{selectedUserForPoints.points || 0} נק׳</span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button 
+                  variant={pointsOperation === "add" ? "default" : "outline"} 
+                  className={`flex-1 ${pointsOperation === "add" ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
+                  onClick={() => setPointsOperation("add")}
+                >
+                  הענק נקודות (+)
+                </Button>
+                <Button 
+                  variant={pointsOperation === "remove" ? "default" : "outline"} 
+                  className={`flex-1 ${pointsOperation === "remove" ? "bg-rose-500 hover:bg-rose-600 text-white" : ""}`}
+                  onClick={() => setPointsOperation("remove")}
+                >
+                  הורד נקודות (-)
+                </Button>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                  כמות נקודות {pointsOperation === 'add' ? 'להוספה' : 'להורדה'}
+                </label>
+                <Input 
+                  type="number"
+                  placeholder="למשל: 50"
+                  value={pointsAmount}
+                  onChange={e => setPointsAmount(e.target.value)}
+                  className="h-12 text-center text-xl font-bold"
+                  autoFocus
+                />
+              </div>
+
+              <Button 
+                className="w-full h-12 text-lg font-bold mt-4" 
+                disabled={!pointsAmount || parseInt(pointsAmount) <= 0 || sendPointsMutation.isPending}
+                onClick={() => {
+                  let amount = parseInt(pointsAmount) || 0;
+                  if (pointsOperation === "remove") amount = -amount;
+                  sendPointsMutation.mutate({ 
+                    userId: selectedUserForPoints.$id, 
+                    pointsToAdd: amount,
+                    currentPoints: selectedUserForPoints.points || 0
+                  });
+                }}
+              >
+                בצע עדכון
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { Models, Query } from 'appwrite';
-import { account, databases, APPWRITE_DB_ID, APPWRITE_PROFILES_ID } from '@/lib/appwrite';
+import { account, databases, APPWRITE_DB_ID, APPWRITE_PROFILES_ID, APPWRITE_SETTINGS_ID } from '@/lib/appwrite';
 
 type UserRole = 'ADMIN' | 'gabai' | 'viewer' | 'USER';
 
@@ -103,11 +103,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const u = await account.create('unique()', email, password, fullName);
       // Auto login
       await account.createEmailPasswordSession(email, password);
+      
+      // Fetch dynamic registration points from settings
+      let regPoints = 0;
+      try {
+        const settingsRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_SETTINGS_ID, [Query.limit(10)]);
+        const pSetting = settingsRes.documents.find(s => s.key === 'registration_points');
+        if (pSetting) {
+          regPoints = pSetting.value;
+        }
+      } catch (e) {
+        // Settings table might not exist yet, default to 0
+      }
+
       // Create profile
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, 'unique()', {
         user_id: u.$id,
         full_name: fullName,
-        role: 'USER'
+        role: 'USER',
+        points: regPoints
       });
       await fetchUserAndRole();
       return { error: null };
