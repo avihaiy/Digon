@@ -167,7 +167,7 @@ export default function Radar() {
             ) : (
               <MapContainer center={DEFAULT_CENTER} zoom={8} className="w-full h-full z-0">
                 <TileLayer
-                  url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"}
+                  url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
                 />
                 
