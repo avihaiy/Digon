@@ -57,11 +57,11 @@ const CircularProgress = ({ value, label, subLabel, color, glowColor }: { value:
 const ActionButton = ({ icon: Icon, label, delay, onClick }: { icon: LucideIcon, label: string, delay: number, onClick?: () => void }) => (
   <motion.button 
     onClick={onClick}
-    whileHover={{ scale: 1.05 }}
+    whileHover={{ scale: 1.05, y: -5 }}
     whileTap={{ scale: 0.95 }}
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.4 }}
+    transition={{ delay, duration: 0.5, type: "spring", stiffness: 400, damping: 17 }}
     className="w-full relative overflow-hidden flex flex-col items-center justify-center p-5 rounded-[2rem] bg-white/[0.03] hover:bg-white/[0.08] backdrop-blur-xl border border-white/10 transition-colors group shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
   >
     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -82,7 +82,12 @@ const Home = () => {
         className="sticky top-0 z-40 bg-[#020610]/80 backdrop-blur-2xl border-b border-white/5 px-5 py-4 flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          <img src="/digon-logo.jpg" alt="Digon" className="w-10 h-10 rounded-xl shadow-lg border border-white/10 object-cover" />
+          <motion.img 
+            whileHover={{ rotate: 15, scale: 1.1 }}
+            src="/digon-logo.jpg" 
+            alt="Digon" 
+            className="w-10 h-10 rounded-xl shadow-lg border border-white/10 object-cover" 
+          />
           <div className="flex flex-col">
             <h1 className="font-black text-xl text-white tracking-tight leading-none text-start">דיגון</h1>
             <span className="text-[11px] text-cyan-400 font-medium mt-1">קהילת הדייגים בישראל</span>
@@ -102,7 +107,10 @@ const Home = () => {
           transition={{ duration: 0.6 }}
           className="relative mt-5 rounded-[2.5rem] overflow-hidden h-72 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10"
         >
-          <img 
+          <motion.img 
+            initial={{ scale: 1 }}
+            animate={{ scale: 1.15 }}
+            transition={{ repeat: Infinity, duration: 25, repeatType: "reverse", ease: "linear" }}
             src="/fishing_bg.jpg" 
             alt="Fishing Sunset" 
             className="absolute inset-0 w-full h-full object-cover"
@@ -133,7 +141,13 @@ const Home = () => {
           <div className="absolute bottom-5 start-0 text-start z-10 w-full px-5">
             <h2 className="text-4xl font-black text-white drop-shadow-2xl mb-2 flex items-center justify-start gap-3">
               דיג בישראל 
-              <span className="text-3xl filter drop-shadow-[0_0_10px_rgba(59,130,246,0.8)]">🎣</span>
+              <motion.span 
+                animate={{ y: [0, -8, 0], rotate: [0, 5, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                className="text-3xl filter drop-shadow-[0_0_10px_rgba(59,130,246,0.8)] inline-block origin-bottom"
+              >
+                🎣
+              </motion.span>
             </h2>
             <div className="inline-flex items-center gap-2 bg-yellow-500/20 backdrop-blur-md border border-yellow-500/30 px-3 py-1.5 rounded-full text-yellow-400 font-bold text-sm shadow-[0_0_15px_rgba(234,179,8,0.2)]">
               <span>הכי טוב היום: מרכז — ציון 44</span>
@@ -188,9 +202,13 @@ const Home = () => {
             {/* Animated shine effect */}
             <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]" />
             
-            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] -rotate-3 group-hover:-rotate-12 transition-transform duration-500">
+            <motion.div 
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(245,158,11,0.4)] group-hover:-rotate-12 transition-transform duration-500"
+            >
               <Fish className="w-8 h-8 text-white drop-shadow-md" />
-            </div>
+            </motion.div>
             <div className="text-start flex-1 px-5">
               <div className="flex flex-col items-start">
                 <span className="text-4xl font-black bg-gradient-to-r from-yellow-200 to-amber-500 bg-clip-text text-transparent drop-shadow-sm">חנות דיגון</span>
@@ -237,37 +255,43 @@ const Home = () => {
         </motion.div>
 
         {/* Actions Grid */}
-        <div className="grid grid-cols-2 gap-4 mt-8">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ staggerChildren: 0.1, delayChildren: 0.5 }}
+          className="grid grid-cols-2 gap-4 mt-8"
+        >
           <Link to="/fishing/forecast" className="w-full">
-            <ActionButton icon={Waves} label="תחזיות דייג" delay={0.5} />
+            <ActionButton icon={Waves} label="תחזיות דייג" delay={0.1} />
           </Link>
           <Link to="/fishing/radar" className="w-full">
-            <ActionButton icon={MapPin} label="מפת תפיסות" delay={0.6} />
+            <ActionButton icon={MapPin} label="מפת תפיסות" delay={0.2} />
           </Link>
           <Link to="/fishing/identify" className="w-full">
-            <ActionButton icon={Fish} label="זיהוי דגים ב-AI" delay={0.7} />
+            <ActionButton icon={Fish} label="זיהוי דגים ב-AI" delay={0.3} />
           </Link>
           <CatchReportDialog>
             <div className="w-full">
-              <ActionButton icon={Play} label="דיווח תפיסה" delay={0.8} />
+              <ActionButton icon={Play} label="דיווח תפיסה" delay={0.4} />
             </div>
           </CatchReportDialog>
-        </div>
+        </motion.div>
 
         {/* Add Location Button */}
         <CatchReportDialog>
           <motion.button 
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.02, y: -3, boxShadow: "0 10px 25px -5px rgba(6,182,212,0.3)" }}
             whileTap={{ scale: 0.98 }}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
-            className="w-full mt-6 py-5 rounded-[2rem] bg-cyan-500/10 border border-dashed border-cyan-500/30 text-cyan-400 font-bold text-base flex items-center justify-center gap-3 hover:bg-cyan-500/20 transition-colors"
+            transition={{ delay: 1, type: "spring", stiffness: 300, damping: 20 }}
+            className="w-full mt-6 py-5 rounded-[2rem] bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-dashed border-cyan-500/40 text-cyan-400 font-bold text-base flex items-center justify-center gap-3 hover:bg-cyan-500/20 transition-all overflow-hidden relative group"
           >
-            <div className="bg-cyan-500/20 p-1.5 rounded-full">
+            <div className="absolute inset-0 bg-cyan-400/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+            <div className="bg-cyan-500/20 p-1.5 rounded-full relative z-10 group-hover:scale-110 transition-transform">
               <Play className="w-5 h-5 fill-cyan-400" />
             </div>
-            שתף תפיסה חדשה (+10 נק׳)
+            <span className="relative z-10">שתף תפיסה חדשה (+10 נק׳)</span>
           </motion.button>
         </CatchReportDialog>
       </div>
