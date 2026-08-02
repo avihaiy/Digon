@@ -55,6 +55,7 @@ export function useCatches() {
       imageBase64?: string;
       tournamentId?: string;
       isPrivate?: boolean;
+      isFlared?: boolean;
     }) => {
       if (!user) throw new Error("חובה להתחבר כדי לדווח על תפיסה");
 
@@ -176,8 +177,27 @@ export function useCatches() {
         image_id: imageId,
         status: data.isPrivate ? 'private' : 'pending', // Private skips approval and community feed
         tournament_id: data.tournamentId || "",
-        is_early_bird: isEarlyBird
+        is_early_bird: isEarlyBird,
+        is_flared: data.isFlared || false
       };
+
+      if (data.isFlared) {
+        try {
+          const profileRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
+            Query.equal("user_id", user.$id)
+          ]);
+          if (profileRes.documents.length > 0) {
+            const profile = profileRes.documents[0];
+            if (profile.flare > 0) {
+              await databases.updateDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, profile.$id, {
+                flare: profile.flare - 1
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Failed to decrement flare", e);
+        }
+      }
 
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, ID.unique(), catchData);
       return { offline: false, isPrivate: data.isPrivate, gotHotStreak, isEarlyBird };

@@ -55,7 +55,7 @@ export default function Radar() {
   const [unlocking, setUnlocking] = useState(false);
   const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
 
-  const isUnlocked = profileData?.radar_unlocked === "true";
+  const isUnlocked = (profileData?.radar_unlock || 0) > 0 || profileData?.radar_unlocked === "true";
 
   const handleUnlock = async () => {
     if (points < 50) {

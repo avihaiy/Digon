@@ -18,7 +18,7 @@ import { Link } from "react-router-dom";
 export function SocialCatchCard({ report }: { report: any }) {
   const { user } = useAuth();
   const { likesCount, hasLiked, toggleLike, comments, commentsCount, addComment, isCommentLoading } = useSocial(report.$id);
-  const { badges, title } = useUserBadges(report.user_id);
+  const { badges, title, border } = useUserBadges(report.user_id);
   const [commentText, setCommentText] = useState("");
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
@@ -46,10 +46,25 @@ export function SocialCatchCard({ report }: { report: any }) {
     return userId === user?.$id ? (user?.name || "אתה") : "דייג עמית";
   };
 
+  const getBorderClass = (borderType: string) => {
+    switch (borderType) {
+      case 'gold': return 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-[#0B1426]';
+      case 'platinum': return 'ring-2 ring-slate-300 ring-offset-2 ring-offset-[#0B1426] shadow-[0_0_15px_rgba(203,213,225,0.5)]';
+      case 'ocean': return 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-[#0B1426] shadow-[0_0_15px_rgba(34,211,238,0.5)]';
+      case 'fire': return 'ring-2 ring-orange-500 ring-offset-2 ring-offset-[#0B1426] shadow-[0_0_15px_rgba(249,115,22,0.5)]';
+      default: return 'border border-white/10 shadow-lg';
+    }
+  };
+
+  const isFlared = report.is_flared;
+
   return (
-    <Card className="overflow-hidden border-border/50 shadow-sm bg-[#0B1426]/50 backdrop-blur-sm">
+    <Card className={cn(
+      "overflow-hidden shadow-sm bg-[#0B1426]/50 backdrop-blur-sm transition-all",
+      isFlared ? "border border-yellow-500/50 shadow-[0_0_25px_rgba(234,179,8,0.2)] bg-gradient-to-b from-yellow-500/5 to-[#0B1426]/50" : "border-border/50"
+    )}>
       <div className="flex p-3 gap-4 items-start">
-        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-white/10 shadow-lg">
+        <div className={cn("w-16 h-16 rounded-xl overflow-hidden shrink-0", getBorderClass(border))}>
           <img src={getImageUrl(report.image_id)} alt={report.fish_type} className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0">

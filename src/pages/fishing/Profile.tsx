@@ -114,7 +114,14 @@ export default function Profile() {
         <div className="absolute inset-0 bg-[url('/fishing_sunset_bg.jpg')] opacity-30 bg-cover bg-center mix-blend-overlay"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
         <div className="absolute -bottom-10 right-6 z-20">
-          <div className="w-24 h-24 rounded-3xl border-4 border-background bg-gradient-to-tr from-cyan-500 to-blue-500 shadow-2xl flex items-center justify-center text-3xl font-black text-white transform rotate-3 hover:rotate-0 transition-transform">
+          <div className={cn(
+            "w-24 h-24 rounded-3xl bg-gradient-to-tr from-cyan-500 to-blue-500 shadow-2xl flex items-center justify-center text-3xl font-black text-white transform rotate-3 hover:rotate-0 transition-all",
+            profile.border === 'gold' ? 'ring-4 ring-yellow-400 ring-offset-4 ring-offset-background shadow-[0_0_25px_rgba(250,204,21,0.6)] border-0' :
+            profile.border === 'platinum' ? 'ring-4 ring-slate-300 ring-offset-4 ring-offset-background shadow-[0_0_25px_rgba(203,213,225,0.6)] border-0' :
+            profile.border === 'ocean' ? 'ring-4 ring-cyan-400 ring-offset-4 ring-offset-background shadow-[0_0_25px_rgba(34,211,238,0.6)] border-0' :
+            profile.border === 'fire' ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-background shadow-[0_0_25px_rgba(249,115,22,0.6)] border-0' :
+            'border-4 border-background'
+          )}>
             {profile.full_name?.charAt(0) || profile.user_name?.charAt(0) || "ד"}
           </div>
         </div>

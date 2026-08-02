@@ -23,7 +23,7 @@ interface CatchReportDialogProps {
 }
 
 export function CatchReportDialog({ children }: CatchReportDialogProps) {
-  const { user } = useAuth();
+  const { user, profileData } = useAuth();
   const navigate = useNavigate();
   const { reportCatch, isReporting } = useCatches();
   const [open, setOpen] = useState(false);
@@ -36,6 +36,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedTournament, setSelectedTournament] = useState<string>("");
   const [isPrivate, setIsPrivate] = useState(false);
+  const [useFlare, setUseFlare] = useState(false);
   const { activeTournaments } = useTournaments();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,7 +105,8 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
         imageFile,
         tournamentId: selectedTournament || undefined,
         imageBase64: imagePreview || undefined,
-        isPrivate
+        isPrivate,
+        isFlared: useFlare
       });
       setOpen(false);
     } catch (error) {
@@ -255,6 +257,23 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
               onCheckedChange={setIsPrivate} 
             />
           </div>
+
+          {!isPrivate && (profileData?.flare || 0) > 0 && (
+            <div className="flex items-center justify-between border border-yellow-500/30 bg-yellow-500/5 p-3 rounded-xl mt-4">
+              <div className="space-y-0.5">
+                <Label className="text-base font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
+                  השתמש בהדגשת פוסט ✨
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  יש לך {profileData?.flare} הדגשות. הפוסט יזהר בפיד החברתי!
+                </p>
+              </div>
+              <Switch 
+                checked={useFlare} 
+                onCheckedChange={setUseFlare} 
+              />
+            </div>
+          )}
 
           <DialogFooter className="mt-6 sm:justify-start">
             <Button 

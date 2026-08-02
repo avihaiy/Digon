@@ -28,6 +28,7 @@ export function useUserBadges(userId: string) {
   return { 
     badges: (profileData?.badges as string[]) || [], 
     title: profileData?.title || null,
+    border: profileData?.border || null,
     isLoading 
   };
 }
