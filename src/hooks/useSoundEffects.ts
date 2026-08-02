@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { useAuth } from './useAuth';
 
 let globalAudioCtx: AudioContext | null = null;
 
@@ -38,8 +39,14 @@ if (typeof window !== 'undefined') {
 }
 
 export function useSoundEffects() {
+  const { prefs } = useAuth();
+  
+  const soundEnabled = prefs?.sound_enabled !== false; // Default true
+  const hapticsEnabled = prefs?.haptics_enabled !== false; // Default true
+
   // Play a satisfying "Level Up" / Success Chime
   const playSuccessChime = useCallback(() => {
+    if (!soundEnabled) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -74,10 +81,11 @@ export function useSoundEffects() {
     } catch (e) {
       console.warn("AudioContext not supported or blocked", e);
     }
-  }, []);
+  }, [soundEnabled]);
 
   // Play a short click (like a UI button or small reel click)
   const playPop = useCallback(() => {
+    if (!soundEnabled) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -100,10 +108,11 @@ export function useSoundEffects() {
     } catch (e) {
       console.warn("AudioContext not supported", e);
     }
-  }, []);
+  }, [soundEnabled]);
 
   // Play a soft swoosh (for page transitions/loads)
   const playSwoosh = useCallback(() => {
+    if (!soundEnabled) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -128,11 +137,11 @@ export function useSoundEffects() {
     } catch (e) {
       console.warn("AudioContext not supported", e);
     }
-  }, []);
+  }, [soundEnabled]);
 
   // Trigger Phone Vibration (Haptics)
   const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' | 'success') => {
-    if (!navigator.vibrate) return;
+    if (!navigator.vibrate || !hapticsEnabled) return;
     try {
       switch (type) {
         case 'light': navigator.vibrate(30); break;
@@ -143,7 +152,7 @@ export function useSoundEffects() {
     } catch (e) {
       // Vibrate might fail on some devices if not user-initiated
     }
-  }, []);
+  }, [hapticsEnabled]);
 
   return { playSuccessChime, playPop, playSwoosh, triggerHaptic };
 }

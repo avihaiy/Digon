@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Bell, BellRing, Settings2, Info, Moon, Sun, Waves } from "lucide-react";
+import { Bell, BellRing, Settings2, Info, Moon, Sun, Waves, Volume2, Vibrate, MapPinOff, LogOut, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Settings() {
+  const { user, prefs, updateUserPrefs, logout } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const { theme, setTheme } = useTheme();
@@ -159,7 +161,97 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-3xl flex gap-3 items-start mt-4">
+        {/* Preferences */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card className="border-border/50 shadow-sm overflow-hidden mt-4">
+            <CardContent className="p-0 divide-y divide-border/50">
+              {/* Sound */}
+              <div className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-full ${prefs?.sound_enabled !== false ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                    <Volume2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">צלילי מערכת</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">קולות תפיסה וכפתורים</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={prefs?.sound_enabled !== false} 
+                  onCheckedChange={(checked) => {
+                    updateUserPrefs({ ...prefs, sound_enabled: checked });
+                  }} 
+                />
+              </div>
+
+              {/* Haptics */}
+              <div className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-full ${prefs?.haptics_enabled !== false ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                    <Vibrate className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">רטט (Haptics)</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">תחושה מוחשית בלחיצות</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={prefs?.haptics_enabled !== false} 
+                  onCheckedChange={(checked) => {
+                    updateUserPrefs({ ...prefs, haptics_enabled: checked });
+                  }} 
+                />
+              </div>
+
+              {/* Privacy Location */}
+              <div className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-full ${prefs?.privacy_hide_location ? 'bg-rose-500/10 text-rose-500' : 'bg-muted text-muted-foreground'}`}>
+                    <MapPinOff className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">הסתרת מיקום מדויק</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">יסיר קישורי מפות מדיווחי התפיסות שלך</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={!!prefs?.privacy_hide_location} 
+                  onCheckedChange={(checked) => {
+                    updateUserPrefs({ ...prefs, privacy_hide_location: checked });
+                  }} 
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Account Management */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <h3 className="font-bold text-base mb-3 mt-6">ניהול חשבון</h3>
+          <div className="space-y-3">
+            <Button 
+              variant="outline" 
+              className="w-full h-12 justify-start px-5 font-bold"
+              onClick={() => logout()}
+            >
+              <LogOut className="w-5 h-5 ml-3 text-slate-500" />
+              התנתקות מהחשבון
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="w-full h-12 justify-start px-5 font-bold text-rose-500 border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
+              onClick={() => {
+                toast.error("למחיקת חשבון לצמיתות יש לפנות למנהל בווטסאפ מטעמי אבטחה.");
+              }}
+            >
+              <Trash2 className="w-5 h-5 ml-3" />
+              מחיקת חשבון ונתונים (GDPR)
+            </Button>
+          </div>
+        </motion.div>
+
+        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-3xl flex gap-3 items-start mt-6">
           <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div>
             <h4 className="font-bold text-blue-600 text-sm">איך ההתראות עובדות?</h4>

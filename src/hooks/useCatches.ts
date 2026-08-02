@@ -61,13 +61,18 @@ export function useCatches() {
       if (!navigator.onLine) {
         if (!data.imageBase64) throw new Error("חסרה תמונה בפורמט אופליין");
         
+        let finalLocation = data.location;
+        if (prefs?.privacy_hide_location) {
+          finalLocation = finalLocation.split("|||")[0].trim();
+        }
+
         const offlineCatch = {
           id: Date.now().toString(),
           user_id: user.$id,
           user_name: user.name || user.email?.split("@")[0] || "דייג אנונימי",
           fish_type: data.fishType,
           weight: data.weight || null,
-          location: data.location,
+          location: finalLocation,
           imageBase64: data.imageBase64,
           isPrivate: data.isPrivate || false,
           timestamp: new Date().toISOString()
@@ -157,12 +162,17 @@ export function useCatches() {
       }
 
       // 2. Create Document in Catches Collection
+      let finalLocation = data.location;
+      if (prefs?.privacy_hide_location) {
+        finalLocation = finalLocation.split("|||")[0].trim();
+      }
+
       const catchData = {
         user_id: user.$id,
         user_name: user.name || user.email?.split("@")[0] || "דייג אנונימי",
         fish_type: data.fishType,
         weight: data.weight || null,
-        location: data.location,
+        location: finalLocation,
         image_id: imageId,
         status: data.isPrivate ? 'private' : 'pending', // Private skips approval and community feed
         tournament_id: data.tournamentId || "",
