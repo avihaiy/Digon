@@ -37,9 +37,7 @@ export function LiveBiteTicker({ catches }: LiveBiteTickerProps) {
 
   // Clean the location string (remove map coordinates if they exist)
   const locationName = currentCatch.location ? currentCatch.location.split('|||')[0].trim() : '';
-
-  // E.g., "אביחי תפס לוקוס (2.5 ק״ג) באשדוד לפני 5 דקות"
-  const text = `${currentCatch.user_name || 'דייג'} תפס ${currentCatch.fish_type || 'דג'} ${currentCatch.weight ? `(${currentCatch.weight} ק״ג)` : ''} ${locationName ? `ב${locationName}` : ''} ${timeText}`;
+  const firstName = currentCatch.user_name ? currentCatch.user_name.split(' ')[0] : 'דייג';
 
   return (
     <div className="w-full bg-gradient-to-r from-orange-500/10 via-red-500/5 to-transparent border-y border-red-500/20 py-2 px-4 flex items-center overflow-hidden cursor-pointer hover:bg-orange-500/20 transition-colors" onClick={() => {
@@ -59,9 +57,17 @@ export function LiveBiteTicker({ catches }: LiveBiteTickerProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="absolute left-0 right-0 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 truncate"
+            className="absolute left-0 right-0 text-xs sm:text-sm text-slate-800 dark:text-slate-200 truncate flex items-center gap-1"
           >
-            {text}
+            <span className="font-bold">{firstName}</span>
+            <span className="text-muted-foreground">תפס/ה</span>
+            <span className="font-bold text-primary">{currentCatch.fish_type || 'דג'}</span>
+            {locationName && (
+              <>
+                <span className="text-muted-foreground">ב-</span>
+                <span className="font-semibold truncate">{locationName}</span>
+              </>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
