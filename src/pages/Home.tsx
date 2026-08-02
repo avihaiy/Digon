@@ -32,7 +32,7 @@ export default function Home() {
   const { data: appSettings } = useAppSettings();
   const showBanner = appSettings?.global_announcement_active === 'true' && !!appSettings?.global_announcement;
 
-  const { reward, clearReward } = useDailyLogin();
+  const { reward, canClaimDaily, potentialReward, claimDaily, clearReward } = useDailyLogin();
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
@@ -66,8 +66,21 @@ export default function Home() {
         </div>
       )}
 
-
-
+      {/* Daily Bonus Button */}
+      {canClaimDaily && potentialReward && (
+        <div className="px-4">
+          <div className="relative overflow-hidden rounded-3xl animate-in slide-in-from-top-4">
+            <button 
+              onClick={claimDaily}
+              className="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-black py-4 shadow-[0_10px_30px_rgba(245,158,11,0.4)] border border-yellow-300/50 flex items-center justify-center gap-3 transition-all active:scale-95 group"
+            >
+              <span className="text-2xl group-hover:rotate-12 transition-transform">🎁</span>
+              <span>אסוף בונוס יומי! (+{potentialReward.earnedPoints} נק')</span>
+              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
+            </button>
+          </div>
+        </div>
+      )}
       {/* Active Tournament Banner */}
       {activeTournaments && activeTournaments.length > 0 && (
         <div className="px-4">
