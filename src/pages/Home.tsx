@@ -15,6 +15,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { LiveBiteTicker } from '@/components/home/LiveBiteTicker';
 import { CatchStories } from '@/components/home/CatchStories';
+import { BiteTimeWidget } from '@/components/home/BiteTimeWidget';
 
 export default function Home() {
   const { user } = useAuth();
@@ -93,6 +94,11 @@ export default function Home() {
           </Link>
         </div>
       )}
+
+      {/* Bite Time Widget */}
+      <section className="px-4">
+        <BiteTimeWidget />
+      </section>
 
       {/* Sea Conditions Widget */}
       <section className="px-4">
