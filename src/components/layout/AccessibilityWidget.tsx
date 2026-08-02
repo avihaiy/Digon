@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Accessibility, Type, Eye, Link as LinkIcon, MinusCircle, Contrast, FileText, X } from 'lucide-react';
+import { Accessibility, Type, Eye, Link as LinkIcon, MinusCircle, Sun, FileText, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function AccessibilityWidget() {
@@ -104,7 +104,7 @@ export function AccessibilityWidget() {
                     className="w-full justify-start gap-3 h-12"
                     onClick={() => toggleSetting('highContrast')}
                   >
-                    <Contrast className="w-5 h-5" />
+                    <Sun className="w-5 h-5" />
                     ניגודיות גבוהה
                   </Button>
                   
