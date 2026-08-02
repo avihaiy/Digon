@@ -44,11 +44,25 @@ const navItems = [
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { user, userRole, points, signOut, isAdmin } = useAuth();
+  const { user, userRole, points, signOut, isAdmin, prefs } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
+
+  useEffect(() => {
+    if (prefs?.a11y_large_text) {
+      document.documentElement.classList.add('a11y-large-text');
+    } else {
+      document.documentElement.classList.remove('a11y-large-text');
+    }
+    
+    if (prefs?.a11y_reduce_motion) {
+      document.documentElement.classList.add('a11y-reduce-motion');
+    } else {
+      document.documentElement.classList.remove('a11y-reduce-motion');
+    }
+  }, [prefs?.a11y_large_text, prefs?.a11y_reduce_motion]);
 
   // downloadAnyDeskBat is now in ScreensManagementPanel
   const triggerHaptic = () => {

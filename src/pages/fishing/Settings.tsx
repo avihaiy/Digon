@@ -162,6 +162,51 @@ export default function Settings() {
           </Card>
         </motion.div>
 
+        {/* Accessibility Settings */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Card className="border-border/50 shadow-sm overflow-hidden mt-4">
+            <CardContent className="p-0 divide-y divide-border/50">
+              {/* Large Text */}
+              <div className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-full ${prefs?.a11y_large_text ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                    <span className="text-xl font-black leading-none">A</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">טקסט גדול</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">הגדל את הטקסט בכל האפליקציה</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={!!prefs?.a11y_large_text} 
+                  onCheckedChange={(checked) => {
+                    updateUserPrefs({ ...prefs, a11y_large_text: checked });
+                  }} 
+                />
+              </div>
+
+              {/* Reduce Motion */}
+              <div className="p-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-full ${prefs?.a11y_reduce_motion ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="m9 10 2 2 4-4"/></svg>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">צמצום אנימציות</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">ביטול תזוזות ומעברים</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={!!prefs?.a11y_reduce_motion} 
+                  onCheckedChange={(checked) => {
+                    updateUserPrefs({ ...prefs, a11y_reduce_motion: checked });
+                  }} 
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Preferences */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card className="border-border/50 shadow-sm overflow-hidden mt-4">

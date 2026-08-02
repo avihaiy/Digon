@@ -886,3 +886,13 @@ div[style*="lovable-editor"] {
   position: sticky;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
+/ *   A c c e s s i b i l i t y   * / 
+ . a 1 1 y - l a r g e - t e x t   { 
+     f o n t - s i z e :   1 1 0 %   ! i m p o r t a n t ; 
+ } 
+ . a 1 1 y - r e d u c e - m o t i o n   *   { 
+     a n i m a t i o n :   n o n e   ! i m p o r t a n t ; 
+     t r a n s i t i o n :   n o n e   ! i m p o r t a n t ; 
+     s c r o l l - b e h a v i o r :   a u t o   ! i m p o r t a n t ; 
+ }  
+ 
