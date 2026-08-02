@@ -16,11 +16,9 @@ export function useDailyLogin() {
   const [potentialReward, setPotentialReward] = useState<DailyReward | null>(null);
 
   useEffect(() => {
-    // Only run when auth is loaded, user exists, and we haven't checked yet
-    if (loading || !user || hasChecked) return;
-    
+    if (loading || !user) return;
     checkDailyLogin();
-  }, [loading, user, hasChecked]);
+  }, [loading, user, prefs?.last_login_date]);
 
   const checkDailyLogin = async () => {
     setHasChecked(true);
