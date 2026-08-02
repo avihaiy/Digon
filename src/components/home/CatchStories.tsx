@@ -17,7 +17,7 @@ export function CatchStories({ catches }: CatchStoriesProps) {
 
   // Filter catches that have images, are public, and limit to 8
   const storyCatches = catches
-    ?.filter((c: any) => c.status === 'approved' && c.visibility !== 'private' && c.image_url)
+    ?.filter((c: any) => c.status === 'approved' && c.visibility !== 'private' && c.image_id)
     .slice(0, 8) || [];
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export function CatchStories({ catches }: CatchStoriesProps) {
       {/* Stories Row */}
       <div className="flex overflow-x-auto gap-4 px-4 pb-2 hide-scrollbar snap-x">
         {storyCatches.map((story, index) => {
-          const imgUrl = getImageUrl(story.image_url);
+          const imgUrl = getImageUrl(story.image_id);
           return (
             <motion.button
               key={story.$id}
@@ -155,9 +155,9 @@ export function CatchStories({ catches }: CatchStoriesProps) {
 
             {/* The Image */}
             <div className="relative w-full h-full max-w-lg mx-auto flex items-center justify-center">
-              {getImageUrl(storyCatches[activeStoryIndex].image_url) && (
+              {getImageUrl(storyCatches[activeStoryIndex].image_id) && (
                 <img 
-                  src={getImageUrl(storyCatches[activeStoryIndex].image_url)} 
+                  src={getImageUrl(storyCatches[activeStoryIndex].image_id)} 
                   alt={storyCatches[activeStoryIndex].fish_type} 
                   className="w-full h-full object-cover sm:object-contain"
                 />
@@ -189,7 +189,7 @@ export function CatchStories({ catches }: CatchStoriesProps) {
                       <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-lg">
                         <MapPin className="w-4 h-4 text-yellow-400" />
                         <span className="font-bold text-sm text-yellow-50">
-                          {storyCatches[activeStoryIndex].location}
+                          {storyCatches[activeStoryIndex].location.split('|||')[0].trim()}
                         </span>
                       </div>
                     )}

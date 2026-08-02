@@ -35,8 +35,11 @@ export function LiveBiteTicker({ catches }: LiveBiteTickerProps) {
     ? formatDistanceToNow(new Date(currentCatch.$createdAt), { locale: he, addSuffix: true })
     : '';
 
+  // Clean the location string (remove map coordinates if they exist)
+  const locationName = currentCatch.location ? currentCatch.location.split('|||')[0].trim() : '';
+
   // E.g., "אביחי תפס לוקוס (2.5 ק״ג) באשדוד לפני 5 דקות"
-  const text = `${currentCatch.user_name || 'דייג'} תפס ${currentCatch.fish_type || 'דג'} ${currentCatch.weight ? `(${currentCatch.weight} ק״ג)` : ''} ${currentCatch.location || ''} ${timeText}`;
+  const text = `${currentCatch.user_name || 'דייג'} תפס ${currentCatch.fish_type || 'דג'} ${currentCatch.weight ? `(${currentCatch.weight} ק״ג)` : ''} ${locationName ? `ב${locationName}` : ''} ${timeText}`;
 
   return (
     <div className="w-full bg-gradient-to-r from-orange-500/10 via-red-500/5 to-transparent border-y border-red-500/20 py-2 px-4 flex items-center overflow-hidden cursor-pointer hover:bg-orange-500/20 transition-colors" onClick={() => {
