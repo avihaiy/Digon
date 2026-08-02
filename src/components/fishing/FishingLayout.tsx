@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import BottomNav from "./BottomNav";
+import { PWAUpdatePrompt } from "../PWAUpdatePrompt";
 
 interface FishingLayoutProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ const FishingLayout = ({ children }: FishingLayoutProps) => {
         {children}
       </div>
       <BottomNav />
+      <PWAUpdatePrompt />
     </div>
   );
 };
