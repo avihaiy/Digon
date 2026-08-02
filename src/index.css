@@ -7,7 +7,6 @@
 /* Mobile App Feel Improvements */
 html, body {
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
   /* Prevent text size adjustment on orientation change */
   -webkit-text-size-adjust: 100%;
 }
@@ -165,7 +164,6 @@ html, body {
   html {
     direction: rtl;
     font-family: "Heebo", sans-serif;
-    overscroll-behavior-y: contain;
   }
 
   body {
