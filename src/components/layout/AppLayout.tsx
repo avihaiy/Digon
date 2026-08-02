@@ -195,7 +195,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen w-full max-w-[100vw] overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-h-screen w-full max-w-[100vw]">
         {/* Top header */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(3.5rem + env(safe-area-inset-top))' }}>
           <button
@@ -293,7 +293,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6 overflow-x-hidden">
+        <main className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
           {children}
         </main>
 
