@@ -108,6 +108,7 @@ const AnimatedRoutes = () => {
         {/* Fishing Specific Routes */}
         <Route path="/fishing" element={<ProtectedRoute><PageTransition><FishingHome /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/community" element={<ProtectedRoute><PageTransition><Community /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/settings" element={<ProtectedRoute><PageTransition><Settings /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/forecast" element={<ProtectedRoute><PageTransition><Forecast /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/locations" element={<ProtectedRoute><PageTransition><Locations /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/identify" element={<ProtectedRoute><PageTransition><Identify /></PageTransition></ProtectedRoute>} />
