@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
+import { useAppSettings } from './useAppSettings';
 
 export interface DailyReward {
   earnedPoints: number;
@@ -8,6 +9,7 @@ export interface DailyReward {
 
 export function useDailyLogin() {
   const { user, prefs, updateUserPrefs, updateProfileField, points, loading } = useAuth();
+  const { data: appSettings } = useAppSettings();
   const [reward, setReward] = useState<DailyReward | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
 
@@ -56,17 +58,15 @@ export function useDailyLogin() {
     }
 
     // Calculate points based on streak day
-    const pointsMap: Record<number, number> = {
-      1: 10,
-      2: 20,
-      3: 30,
-      4: 40,
-      5: 50,
-      6: 60,
-      7: 150 // Weekly grand prize
+    // Get from settings if exists, otherwise fallback to defaults
+    const getPointsForDay = (day: number) => {
+      const setting = appSettings?.find(s => s.key === `daily_bonus_day_${day}`);
+      if (setting && setting.value) return setting.value;
+      const defaults: Record<number, number> = { 1:10, 2:20, 3:30, 4:40, 5:50, 6:60, 7:150 };
+      return defaults[day] || 10;
     };
     
-    const earnedPoints = pointsMap[newStreak] || 10;
+    const earnedPoints = getPointsForDay(newStreak);
 
     // Update preferences in Appwrite
     const updatedPrefs = {

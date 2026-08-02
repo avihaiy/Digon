@@ -1031,6 +1031,48 @@ export default function Admin() {
                   </div>
                 </div>
 
+                <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">בונוס התחברות יומית (Streak) 🎁</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                      כמות הנקודות שמקבלים בכל יום רצוף של התחברות לאפליקציה (ימים 1-7).
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 w-full">
+                    {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                      const defaultVals: any = { 1:10, 2:20, 3:30, 4:40, 5:50, 6:60, 7:150 };
+                      return (
+                        <div key={day} className="flex flex-col gap-1">
+                          <label className="text-xs font-bold text-slate-500 text-center">יום {day}</label>
+                          <Input 
+                            type="number" 
+                            className="text-center font-bold"
+                            defaultValue={settingsData?.find((s:any) => s.key === `daily_bonus_day_${day}`)?.value || defaultVals[day]}
+                            id={`input_daily_bonus_day_${day}`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={async () => {
+                      const promises = [1, 2, 3, 4, 5, 6, 7].map((day) => {
+                        const val = parseInt((document.getElementById(`input_daily_bonus_day_${day}`) as HTMLInputElement).value) || 0;
+                        // Use mutation asynchronously
+                        return saveSettingsMutation.mutateAsync({ key: `daily_bonus_day_${day}`, value: val });
+                      });
+                      try {
+                        await Promise.all(promises);
+                        // The mutation handles success toast and invalidation
+                      } catch(e) {
+                        toast.error("שגיאה בשמירת חלק מהימים");
+                      }
+                    }} disabled={saveSettingsMutation.isPending}>
+                      שמור את כל הימים
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-start gap-4">
                   <div className="flex items-center justify-between w-full">
                     <div>
