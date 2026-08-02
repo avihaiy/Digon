@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { usePWAUpdate } from '@/hooks/usePWAUpdate';
 import BottomNavigation from './BottomNavigation';
+import { AccessibilityWidget } from './AccessibilityWidget';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -321,8 +322,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <span className="text-muted-foreground/70">v{APP_CONFIG.version}</span>
           </p>
         </footer>
+
+        <AccessibilityWidget />
+
+        {/* Mobile Navigation */}
+        <BottomNavigation />
       </div>
-      <BottomNavigation />
-    </div>
-  );
+    </div>);
 }
