@@ -11,6 +11,14 @@ interface MarineWeatherData {
   temperature: number | null; // in celsius
   locationName: string;
   hourlyForecast?: { time: string; waveHeight: number; temperature: number; windSpeed: number }[];
+  dailyForecast?: { 
+    date: Date; 
+    dayName: string;
+    waveHeightMax: number; 
+    tempMax: number; 
+    tempMin: number;
+    windSpeedMax: number; 
+  }[];
 }
 
 export function useMarineWeather() {
@@ -21,6 +29,7 @@ export function useMarineWeather() {
     temperature: null,
     locationName: 'תל אביב (ברירת מחדל)',
     hourlyForecast: [],
+    dailyForecast: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,12 +55,15 @@ export function useMarineWeather() {
       const marineJson = await marineRes.json();
 
       let hourlyForecast = [];
+      let dailyForecastMap = new Map();
+
       if (marineJson.hourly?.time && weatherJson.hourly?.time) {
-        // Get next 24 hours
-        const startIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date());
-        const endIndex = startIndex + 24;
+        // Get next 24 hours for hourly forecast
+        const startIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date(new Date().setHours(0,0,0,0)));
+        const currentIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date());
+        const endIndex = currentIndex > -1 ? currentIndex + 24 : 24;
         
-        for (let i = startIndex > -1 ? startIndex : 0; i < endIndex && i < marineJson.hourly.time.length; i++) {
+        for (let i = currentIndex > -1 ? currentIndex : 0; i < endIndex && i < marineJson.hourly.time.length; i++) {
            hourlyForecast.push({
              time: new Date(marineJson.hourly.time[i]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
              waveHeight: marineJson.hourly.wave_height[i] || 0,
@@ -59,7 +71,38 @@ export function useMarineWeather() {
              windSpeed: weatherJson.hourly.wind_speed_10m[i] || 0
            });
         }
+
+        // Compute Daily Forecast for 7 days
+        const daysToProcess = Math.min(marineJson.hourly.time.length, startIndex + 7 * 24);
+        for (let i = startIndex > -1 ? startIndex : 0; i < daysToProcess; i++) {
+          const dateStr = marineJson.hourly.time[i];
+          const dateObj = new Date(dateStr);
+          const dayKey = dateObj.toLocaleDateString('he-IL');
+          
+          const wave = marineJson.hourly.wave_height[i] || 0;
+          const temp = weatherJson.hourly.temperature_2m[i] || 0;
+          const wind = weatherJson.hourly.wind_speed_10m[i] || 0;
+
+          if (!dailyForecastMap.has(dayKey)) {
+            dailyForecastMap.set(dayKey, {
+              date: dateObj,
+              dayName: dateObj.toLocaleDateString('he-IL', { weekday: 'long' }),
+              waveHeightMax: wave,
+              tempMax: temp,
+              tempMin: temp,
+              windSpeedMax: wind
+            });
+          } else {
+            const current = dailyForecastMap.get(dayKey);
+            current.waveHeightMax = Math.max(current.waveHeightMax, wave);
+            current.tempMax = Math.max(current.tempMax, temp);
+            current.tempMin = Math.min(current.tempMin, temp);
+            current.windSpeedMax = Math.max(current.windSpeedMax, wind);
+          }
+        }
       }
+
+      const dailyForecast = Array.from(dailyForecastMap.values()).slice(0, 7);
 
       setData({
         waveHeight: marineJson.current?.wave_height ?? null,
@@ -68,6 +111,7 @@ export function useMarineWeather() {
         temperature: weatherJson.current?.temperature_2m ?? null,
         locationName,
         hourlyForecast,
+        dailyForecast,
       });
       setLastUpdated(new Date());
     } catch (err) {

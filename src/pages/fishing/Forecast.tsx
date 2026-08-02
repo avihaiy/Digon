@@ -5,6 +5,8 @@ import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, 
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
+import { CalendarDays } from "lucide-react";
+
 // Simulated Solunar logic based on current hour
 const getSolunarRating = () => {
   const hour = new Date().getHours();
@@ -294,6 +296,68 @@ export default function Forecast() {
           </div>
         )}
       </section>
+
+      {/* 7-Day Forecast */}
+      {marineData.dailyForecast && marineData.dailyForecast.length > 0 && (
+        <section className="px-4 space-y-4 pt-4 border-t border-border/50">
+          <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-primary" />
+            תחזית ל-7 הימים הקרובים
+          </h3>
+          
+          <div className="space-y-3">
+            {marineData.dailyForecast.map((day, idx) => {
+              // Determine wave condition color
+              let waveColor = 'text-emerald-500';
+              let waveBg = 'bg-emerald-500/10 border-emerald-500/20';
+              if (day.waveHeightMax > 1.5) {
+                waveColor = 'text-rose-500';
+                waveBg = 'bg-rose-500/10 border-rose-500/20';
+              } else if (day.waveHeightMax > 0.8) {
+                waveColor = 'text-yellow-500';
+                waveBg = 'bg-yellow-500/10 border-yellow-500/20';
+              }
+
+              return (
+                <Card key={idx} className={`border ${waveBg} shadow-sm overflow-hidden`}>
+                  <CardContent className="p-3 flex items-center justify-between">
+                    <div className="flex flex-col w-1/4">
+                      <span className="font-bold text-sm">
+                        {idx === 0 ? 'היום' : idx === 1 ? 'מחר' : day.dayName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{day.date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })}</span>
+                    </div>
+                    
+                    <div className="flex flex-col items-center justify-center w-1/4">
+                      <div className="flex items-center gap-1">
+                        <Waves className={`w-4 h-4 ${waveColor}`} />
+                        <span className={`font-black ${waveColor}`}>{day.waveHeightMax.toFixed(1)}m</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground mt-0.5">גובה מקסימלי</span>
+                    </div>
+                    
+                    <div className="flex flex-col items-center justify-center w-1/4 border-r border-l border-border/50 px-2">
+                      <div className="flex items-center gap-1">
+                        <Wind className="w-4 h-4 text-cyan-500" />
+                        <span className="font-bold">{Math.round(day.windSpeedMax)}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground mt-0.5">קמ״ש</span>
+                    </div>
+
+                    <div className="flex flex-col items-end justify-center w-1/4">
+                      <div className="flex items-center gap-1">
+                        <ThermometerSun className="w-4 h-4 text-orange-500" />
+                        <span className="font-bold">{Math.round(day.tempMax)}°</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground mt-0.5">{Math.round(day.tempMin)}° min</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
     </div>
   );
