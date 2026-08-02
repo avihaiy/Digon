@@ -33,7 +33,7 @@ export default function Home() {
   const showBanner = appSettings?.global_announcement_active === 'true' && !!appSettings?.global_announcement;
 
   return (
-    <div className="space-y-4 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
+    <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
       
       {/* Header / Welcome */}
       <div className="flex items-center justify-between px-4 mt-2">
@@ -65,28 +65,6 @@ export default function Home() {
 
       {/* Live Bite Ticker */}
       {catches && !catchesLoading && <LiveBiteTicker catches={catches} />}
-
-      {/* Global Search Bar */}
-      {user && (
-        <div className="relative mt-2 px-4">
-          <form onSubmit={(e) => { e.preventDefault(); if (searchQuery) navigate(`/fishing/search?q=${encodeURIComponent(searchQuery)}`); }}>
-            <div className="relative flex items-center w-full">
-              <Search className="absolute right-4 w-5 h-5 text-muted-foreground" />
-              <input 
-                type="text" 
-                placeholder="חפש דייגים אחרים..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-12 pr-12 pl-4 rounded-2xl bg-white dark:bg-white/5 border border-border/50 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                dir="rtl"
-              />
-              <Button type="submit" size="sm" className="absolute left-2 h-8 rounded-xl bg-cyan-600 hover:bg-cyan-700">
-                חפש
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* Stories Row */}
       {catches && !catchesLoading && <CatchStories catches={catches} />}
@@ -205,55 +183,57 @@ export default function Home() {
       </section>
 
       {/* Useful Tools */}
-      <section className="pt-1 px-4">
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-          <Link to="/fishing/tackle-box" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-orange-500/10 p-2 rounded-full mb-1 animate-float">
-              <Package className="w-4 h-4 text-orange-500" />
+      <section className="pt-2 pl-0 pr-4">
+        <h2 className="text-sm font-bold tracking-tight mb-3 text-muted-foreground">כלים שימושיים</h2>
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 pr-0 pl-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <style>{`.hide-scroll::-webkit-scrollbar { display: none; }`}</style>
+          <Link to="/fishing/tackle-box" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-orange-500/10 p-2.5 rounded-full mb-2 animate-float">
+              <Package className="w-5 h-5 text-orange-500" />
             </div>
-            <span className="font-bold text-[11px]">קופסת ציוד</span>
+            <span className="font-bold text-[11px] leading-tight">קופסת ציוד</span>
           </Link>
-          <Link to="/fishing/wiki" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-primary/10 p-2 rounded-full mb-1 animate-swim">
-              <Fish className="w-4 h-4 text-primary" />
+          <Link to="/fishing/wiki" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-primary/10 p-2.5 rounded-full mb-2 animate-swim">
+              <Fish className="w-5 h-5 text-primary" />
             </div>
-            <span className="font-bold text-[11px]">ויקי-דג</span>
+            <span className="font-bold text-[11px] leading-tight">ויקי-דג</span>
           </Link>
-          <Link to="/fishing/identify" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-blue-500/10 p-2 rounded-full mb-1 animate-pulse-glow">
-              <Camera className="w-4 h-4 text-blue-500" />
+          <Link to="/fishing/identify" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-blue-500/10 p-2.5 rounded-full mb-2 animate-pulse-glow">
+              <Camera className="w-5 h-5 text-blue-500" />
             </div>
-            <span className="font-bold text-[11px]">זיהוי AI</span>
+            <span className="font-bold text-[11px] leading-tight">זיהוי AI</span>
           </Link>
-          <Link to="/fishing/store" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-yellow-500/10 p-2 rounded-full mb-1 animate-float" style={{ animationDelay: "0.5s" }}>
-              <StoreIcon className="w-4 h-4 text-yellow-600" />
+          <Link to="/fishing/store" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-yellow-500/10 p-2.5 rounded-full mb-2 animate-float" style={{ animationDelay: "0.5s" }}>
+              <StoreIcon className="w-5 h-5 text-yellow-600" />
             </div>
-            <span className="font-bold text-[11px]">חנות</span>
+            <span className="font-bold text-[11px] leading-tight">חנות</span>
           </Link>
-          <Link to="/fishing/knots" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-emerald-500/10 p-2 rounded-full mb-1">
-              <Link2 className="w-4 h-4 text-emerald-500" />
+          <Link to="/fishing/knots" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-emerald-500/10 p-2.5 rounded-full mb-2">
+              <Link2 className="w-5 h-5 text-emerald-500" />
             </div>
-            <span className="font-bold text-[11px]">קשרים</span>
+            <span className="font-bold text-[11px] leading-tight">קשרים</span>
           </Link>
-          <Link to="/fishing/analytics" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-purple-500/10 p-2 rounded-full mb-1">
-              <Activity className="w-4 h-4 text-purple-500" />
+          <Link to="/fishing/analytics" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-purple-500/10 p-2.5 rounded-full mb-2">
+              <Activity className="w-5 h-5 text-purple-500" />
             </div>
-            <span className="font-bold text-[11px]">סטטיסטיקה</span>
+            <span className="font-bold text-[11px] leading-tight">סטטיסטיקה</span>
           </Link>
-          <Link to="/fishing/radar" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-rose-500/10 p-2 rounded-full mb-1 animate-pulse-glow" style={{ animationDelay: "1s" }}>
-              <RadarIcon className="w-4 h-4 text-rose-500" />
+          <Link to="/fishing/radar" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-rose-500/10 p-2.5 rounded-full mb-2 animate-pulse-glow" style={{ animationDelay: "1s" }}>
+              <RadarIcon className="w-5 h-5 text-rose-500" />
             </div>
-            <span className="font-bold text-[11px]">ראדאר חם</span>
+            <span className="font-bold text-[11px] leading-tight">ראדאר חם</span>
           </Link>
-          <Link to="/fishing/weight-calculator" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
-            <div className="bg-amber-500/10 p-2 rounded-full mb-1">
-              <Scale className="w-4 h-4 text-amber-500" />
+          <Link to="/fishing/weight-calculator" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-amber-500/10 p-2.5 rounded-full mb-2">
+              <Scale className="w-5 h-5 text-amber-500" />
             </div>
-            <span className="font-bold text-[11px]">משקל דג</span>
+            <span className="font-bold text-[11px] leading-tight">מחשבון</span>
           </Link>
         </div>
       </section>
