@@ -793,7 +793,29 @@ export default function Admin() {
                     {catchesData?.map((catchItem: any) => (
                       <TableRow key={catchItem.$id}>
                         <TableCell>{catchItem.user_name}</TableCell>
-                        <TableCell>{catchItem.fish_type} {catchItem.weight ? `(${catchItem.weight})` : ""}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <span>{catchItem.fish_type} {catchItem.weight ? `(${catchItem.weight})` : ""}</span>
+                            <div className="flex gap-1 flex-wrap">
+                              {catchItem.is_early_bird && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-full font-bold">🌞 המשכים קום</span>}
+                              {(() => {
+                                let isMonster = false;
+                                if (catchItem.weight) {
+                                  let w = 0;
+                                  const str = catchItem.weight.toLowerCase();
+                                  const m = str.match(/[\d.]+/);
+                                  if (m) {
+                                    let v = parseFloat(m[0]);
+                                    if (str.includes('kg') || str.includes('ק"ג') || str.includes('קילו')) w = v * 1000;
+                                    else w = v;
+                                  }
+                                  if (w >= 3000) isMonster = true;
+                                }
+                                return isMonster ? <span className="text-[10px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full font-bold">🦈 מפלצת</span> : null;
+                              })()}
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell>{new Date(catchItem.$createdAt).toLocaleDateString("he-IL")}</TableCell>
                         <TableCell>
                           <span className={catchItem.status === 'approved' ? 'text-green-600' : 'text-orange-500 font-bold'}>
