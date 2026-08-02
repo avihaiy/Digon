@@ -4,6 +4,7 @@ import { ID, Query } from "appwrite";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
+import { APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
 
 export interface CatchReport {
   $id: string;
@@ -23,7 +24,7 @@ export function getImageUrl(imageId: string) {
 
 export function useCatches() {
   const queryClient = useQueryClient();
-  const { user, refreshProfile, updateLocalPoints } = useAuth();
+  const { user, refreshProfile, updateLocalPoints, prefs, updateUserPrefs } = useAuth();
   const { playSuccessChime, triggerHaptic } = useSoundEffects();
 
   // Fetch Catches
@@ -83,6 +84,78 @@ export function useCatches() {
       const file = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), data.imageFile);
       const imageId = file.$id;
 
+      // 1.5 Early Bird Check
+      let isEarlyBird = false;
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, [
+          Query.greaterThanEqual("$createdAt", `${todayStr}T00:00:00.000Z`),
+          Query.limit(1)
+        ]);
+        if (res.documents.length === 0) {
+          isEarlyBird = true;
+        }
+      } catch (e) {
+        console.error("Early bird check failed", e);
+      }
+
+      // 1.6 Hot Streak Logic
+      let gotHotStreak = false;
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const lastCatch = prefs.last_catch_date as string | undefined;
+        let currentStreak = (prefs.catch_streak as number) || 0;
+        
+        if (lastCatch !== todayStr) {
+          if (lastCatch) {
+            const lastDate = new Date(lastCatch);
+            const todayDate = new Date(todayStr);
+            const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            
+            if (diffDays === 1) {
+              currentStreak += 1;
+            } else {
+              currentStreak = 1;
+            }
+          } else {
+            currentStreak = 1;
+          }
+
+          if (currentStreak >= 3) {
+            gotHotStreak = true;
+            currentStreak = 0; // Reset after getting the bonus
+            
+            // Give 100 points
+            const profileRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
+              Query.equal("user_id", user.$id)
+            ]);
+            if (profileRes.documents.length > 0) {
+              const profile = profileRes.documents[0];
+              await databases.updateDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, profile.$id, {
+                points: (profile.points || 0) + 100
+              });
+              
+              await databases.createDocument(APPWRITE_DB_ID, APPWRITE_NOTIFICATIONS_ID, ID.unique(), {
+                user_id: user.$id,
+                title: "רצף תפיסות! 🔥",
+                message: "דיווחת תפיסות 3 ימים ברצף! זכית ב-100 נקודות בונוס!",
+                is_read: "false",
+                type: "hot_streak"
+              });
+            }
+          }
+
+          await updateUserPrefs({
+            ...prefs,
+            last_catch_date: todayStr,
+            catch_streak: currentStreak
+          });
+        }
+      } catch (e) {
+        console.error("Hot streak logic failed", e);
+      }
+
       // 2. Create Document in Catches Collection
       const catchData = {
         user_id: user.$id,
@@ -92,11 +165,12 @@ export function useCatches() {
         location: data.location,
         image_id: imageId,
         status: data.isPrivate ? 'private' : 'pending', // Private skips approval and community feed
-        tournament_id: data.tournamentId || ""
+        tournament_id: data.tournamentId || "",
+        is_early_bird: isEarlyBird
       };
 
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, ID.unique(), catchData);
-      return { offline: false, isPrivate: data.isPrivate };
+      return { offline: false, isPrivate: data.isPrivate, gotHotStreak, isEarlyBird };
     },
     onSuccess: (data) => {
       if (data?.offline) {
@@ -115,10 +189,17 @@ export function useCatches() {
       } else {
         triggerHaptic('success');
         playSuccessChime();
-        toast({
-          title: "הדיווח נשלח לאישור! 🎉",
-          description: "התפיסה תפורסם בקהילה ותזכה אותך ב-10 מטבעות מיד לאחר אישור מנהל.",
-        });
+        if (data?.gotHotStreak) {
+          toast({
+            title: "רצף תפיסות! 🔥",
+            description: "דיווחת תפיסות 3 ימים ברצף! 100 נקודות נוספו לחשבון שלך.",
+          });
+        } else {
+          toast({
+            title: "הדיווח נשלח לאישור! 🎉",
+            description: "התפיסה תפורסם בקהילה ותזכה אותך בנקודות מיד לאחר אישור מנהל.",
+          });
+        }
       }
       queryClient.invalidateQueries({ queryKey: ["catches"] });
     },

@@ -228,7 +228,7 @@ export default function Admin() {
 
   // Approve Catch Mutation
   const approveCatchMutation = useMutation({
-    mutationFn: async ({ catchId, userId }: { catchId: string, userId: string }) => {
+    mutationFn: async ({ catchId, userId, weight, isEarlyBird }: { catchId: string, userId: string, weight?: string, isEarlyBird?: boolean }) => {
       // 1. Update status to approved
       await databases.updateDocument(DB_ID, APPWRITE_CATCHES_ID, catchId, {
         status: 'approved'
@@ -245,6 +245,34 @@ export default function Admin() {
         // Fallback
       }
 
+      // Early Bird Bonus
+      let earnedEarlyBird = false;
+      if (isEarlyBird) {
+        catchPoints += 50;
+        earnedEarlyBird = true;
+      }
+
+      // Monster Hunter Bonus
+      let earnedMonsterHunter = false;
+      if (weight) {
+        let weightInGrams = 0;
+        const weightStr = weight.toLowerCase();
+        const numMatch = weightStr.match(/[\d.]+/);
+        if (numMatch) {
+          let val = parseFloat(numMatch[0]);
+          if (weightStr.includes('kg') || weightStr.includes('ק"ג') || weightStr.includes('קילו')) {
+            weightInGrams = val * 1000;
+          } else {
+            weightInGrams = val;
+          }
+        }
+        
+        if (weightInGrams >= 3000) {
+          catchPoints += 100;
+          earnedMonsterHunter = true;
+        }
+      }
+
       // 3. Give points and badges to the user
       const profileResponse = await databases.listDocuments(
         DB_ID,
@@ -257,11 +285,18 @@ export default function Admin() {
         
         let newBadges = [...currentBadges];
         let gotFirstCatchBadge = false;
+        let gotMonsterBadge = false;
 
         // Auto award First Catch badge
         if (!currentBadges.includes("first_catch")) {
           newBadges.push("first_catch");
           gotFirstCatchBadge = true;
+        }
+
+        // Auto award Monster Hunter badge
+        if (earnedMonsterHunter && !currentBadges.includes("monster_hunter")) {
+          newBadges.push("monster_hunter");
+          gotMonsterBadge = true;
         }
 
         await databases.updateDocument(
@@ -285,10 +320,26 @@ export default function Admin() {
             });
           } catch (e) { console.error("Badge notif error", e); }
         }
+
+        if (gotMonsterBadge) {
+          try {
+            await databases.createDocument(DB_ID, APPWRITE_NOTIFICATIONS_ID, ID.unique(), {
+              user_id: userId,
+              title: "תג חדש! 🦈",
+              message: "קיבלת את תג 'מפלצת הים' על תפיסה של דג מעל 3 קילו!",
+              is_read: "false",
+              type: "new_badge"
+            });
+          } catch (e) { console.error("Badge notif error", e); }
+        }
       }
 
       // 4. Send notification
       try {
+        let msg = `המנהל אישר את התפיסה שלך וזכית ב-${catchPoints} מטבעות דיגון!`;
+        if (earnedEarlyBird) msg += " (כולל 50 נק' בונוס על התפיסה הראשונה של היום!)";
+        if (earnedMonsterHunter) msg += " (כולל 100 נק' בונוס מפלצת הים!)";
+
         await databases.createDocument(
           DB_ID,
           APPWRITE_NOTIFICATIONS_ID,
@@ -296,7 +347,7 @@ export default function Admin() {
           {
             user_id: userId,
             title: "תפיסה אושרה! 🎉",
-            message: `המנהל אישר את התפיסה שלך וזכית ב-${catchPoints} מטבעות דיגון!`,
+            message: msg,
             is_read: "false",
             type: "catch_approved"
           }
@@ -756,7 +807,12 @@ export default function Admin() {
                               variant="outline" 
                               className="text-green-600 border-green-200 hover:bg-green-50"
                               onClick={() => {
-                                approveCatchMutation.mutate({ catchId: catchItem.$id, userId: catchItem.user_id });
+                                approveCatchMutation.mutate({ 
+                                  catchId: catchItem.$id, 
+                                  userId: catchItem.user_id,
+                                  weight: catchItem.weight,
+                                  isEarlyBird: catchItem.is_early_bird
+                                });
                               }}
                               disabled={approveCatchMutation.isPending}
                             >

@@ -27,7 +27,7 @@ export function SocialCatchCard({ report }: { report: any }) {
       toast.error("יש להתחבר כדי לעשות לייק!");
       return;
     }
-    toggleLike();
+    toggleLike(report.user_id);
   };
 
   const handleCommentSubmit = (e: React.FormEvent) => {
