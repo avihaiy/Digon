@@ -13,8 +13,6 @@ import { SocialCatchCard } from '@/components/fishing/SocialCatchCard';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
-import { LiveBiteTicker } from '@/components/home/LiveBiteTicker';
-import { CatchStories } from '@/components/home/CatchStories';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { AlertCircle } from 'lucide-react';
 
@@ -63,11 +61,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Live Bite Ticker */}
-      {catches && !catchesLoading && <LiveBiteTicker catches={catches} />}
 
-      {/* Stories Row */}
-      {catches && !catchesLoading && <CatchStories catches={catches} />}
 
       {/* Active Tournament Banner */}
       {activeTournaments && activeTournaments.length > 0 && (
@@ -95,72 +89,75 @@ export default function Home() {
 
       {/* Sea Conditions Widget */}
       <section className="px-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-200">מצב הים כעת</h2>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold tracking-tight">מצב הים כעת</h2>
+            <button 
+              onClick={refreshData}
+              disabled={marineLoading}
+              className="text-[10px] text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={cn("w-3 h-3", marineLoading && "animate-spin")} />
+              {marineLoading ? 'מעדכן...' : `עודכן ב-${lastUpdated.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`}
+            </button>
             <Link to="/fishing/forecast" className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full hover:bg-primary/20 transition-colors">
               תחזית מלאה &larr;
             </Link>
           </div>
-          <button 
-            onClick={refreshData}
-            disabled={marineLoading}
-            className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={cn("w-3 h-3", marineLoading && "animate-spin")} />
-            {marineLoading ? 'מעדכן...' : `עודכן ב-${lastUpdated.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`}
-          </button>
         </div>
-        <Card className="border-border/50 shadow-sm bg-gradient-to-br from-blue-500/5 to-cyan-500/5 relative overflow-hidden">
+        
+        <div className="bg-background/40 dark:bg-background/20 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] rounded-3xl relative overflow-hidden">
           {marineLoading && (
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-[2px] z-10 flex items-center justify-center">
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-md z-10 flex items-center justify-center">
               <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
             </div>
           )}
-          <CardContent className="p-3 py-2 flex items-center justify-between">
-            <div className="flex flex-col items-center justify-center gap-1">
-              <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-full text-blue-600 dark:text-blue-400 animate-float">
-                <Waves className="w-5 h-5" />
+          <div className="p-4 flex items-center justify-between relative z-10">
+            <div className="flex flex-col items-center justify-center gap-2 flex-1">
+              <div className="text-blue-500 dark:text-blue-400">
+                <Waves className="w-6 h-6 animate-float opacity-80" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-semibold">גובה גלים</p>
-                <p className="text-xs text-muted-foreground" dir="ltr">
+                <p className="text-xs font-semibold opacity-70 mb-0.5">גלים</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100" dir="ltr">
                   {marineData.waveHeight !== null ? `${marineData.waveHeight.toFixed(1)}m` : '---'}
                 </p>
               </div>
             </div>
             
-            <div className="w-px h-10 bg-border/50"></div>
+            <div className="w-px h-12 bg-slate-400/20 dark:bg-slate-500/20"></div>
             
-            <div className="flex flex-col items-center justify-center gap-1">
-              <div className="p-1.5 bg-cyan-100 dark:bg-cyan-900/50 rounded-full text-cyan-600 dark:text-cyan-400 animate-swim">
-                <Wind className="w-5 h-5" />
+            <div className="flex flex-col items-center justify-center gap-2 flex-1">
+              <div className="text-cyan-500 dark:text-cyan-400">
+                <Wind className="w-6 h-6 animate-swim opacity-80" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-semibold">רוח</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs font-semibold opacity-70 mb-0.5">רוח</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
                   {marineData.windSpeed !== null ? `${Math.round(marineData.windSpeed)} קמ״ש` : '---'}
                   <br/>
-                  <span className="text-[10px]">{getWindDirectionHebrew(marineData.windDirection)}</span>
+                  <span className="text-[9px] font-normal opacity-70">{getWindDirectionHebrew(marineData.windDirection)}</span>
                 </p>
               </div>
             </div>
             
-            <div className="w-px h-10 bg-border/50"></div>
+            <div className="w-px h-12 bg-slate-400/20 dark:bg-slate-500/20"></div>
             
-            <div className="flex flex-col items-center justify-center gap-1">
-              <div className="p-1.5 bg-orange-100 dark:bg-orange-900/50 rounded-full text-orange-600 dark:text-orange-400 animate-pulse-glow">
-                <span className="text-lg font-bold leading-none">
+            <div className="flex flex-col items-center justify-center gap-2 flex-1">
+              <div className="text-orange-500 dark:text-orange-400">
+                <span className="text-xl font-black opacity-90 tracking-tighter">
                   {marineData.temperature !== null ? `${Math.round(marineData.temperature)}°` : '--°'}
                 </span>
               </div>
               <div className="text-center">
-                <p className="text-sm font-semibold">טמפ׳ אוויר</p>
-                <p className="text-xs text-muted-foreground">מעלות</p>
+                <p className="text-xs font-semibold opacity-70 mb-0.5">אוויר</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                  מעלות
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
 
       {/* Main CTA */}
