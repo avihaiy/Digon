@@ -77,16 +77,19 @@ export default function Identify() {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      // Remove the "data:image/jpeg;base64," part
+      // Extract mime type and base64 data dynamically
+      const mimeMatch = base64Str.match(/^data:(image\/[a-zA-Z0-9]+);base64,/);
+      const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
       const base64Data = base64Str.split(",")[1];
       
       const prompt = `
         You are an expert marine biologist and fisherman in Israel (Mediterranean Sea, Red Sea, Sea of Galilee).
         Identify the fish in this image.
+        If the image DOES NOT contain a fish or marine creature, return "לא זוהה דג בתמונה" for the name, 0 for confidence, and explain what you see in the description.
         Respond in pure JSON format (without markdown blocks) with the following structure:
         {
           "name": "Hebrew name of the fish (and common nickname)",
-          "confidence": number between 1-100,
+          "confidence": number between 0-100,
           "kosher": boolean,
           "danger": "string warning if it's venomous/poisonous (like Aras or Abu Nafha), otherwise null",
           "description": "Short description in Hebrew",
@@ -99,7 +102,7 @@ export default function Identify() {
         {
           inlineData: {
             data: base64Data,
-            mimeType: "image/jpeg"
+            mimeType: mimeType
           }
         }
       ]);
