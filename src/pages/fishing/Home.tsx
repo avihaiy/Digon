@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { CatchReportDialog } from "@/components/catches/CatchReportDialog";
+import { useDailyLogin } from "@/hooks/useDailyLogin";
+import { DailyLoginModal } from "@/components/home/DailyLoginModal";
 
 // Helper for circular progress with Framer Motion and Glow
 const CircularProgress = ({ value, label, subLabel, color, glowColor }: { value: number, label: string, subLabel: string, color: string, glowColor: string }) => {
@@ -74,6 +76,7 @@ const ActionButton = ({ icon: Icon, label, delay, onClick }: { icon: LucideIcon,
 
 const Home = () => {
   const { user } = useAuth();
+  const { reward, canClaimDaily, potentialReward, claimDaily, clearReward } = useDailyLogin();
   
   return (
     <FishingLayout>
@@ -102,6 +105,24 @@ const Home = () => {
       </motion.div>
 
       <div className="px-4 pb-10">
+        {/* Daily Bonus Button */}
+        {canClaimDaily && potentialReward && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="mt-5 relative overflow-hidden"
+          >
+            <button 
+              onClick={claimDaily}
+              className="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white font-black py-4 rounded-3xl shadow-[0_10px_30px_rgba(245,158,11,0.4)] border border-yellow-300/50 flex items-center justify-center gap-3 transition-all active:scale-95 group"
+            >
+              <span className="text-2xl group-hover:rotate-12 transition-transform">🎁</span>
+              <span>אסוף בונוס יומי! (+{potentialReward.earnedPoints} נק')</span>
+              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
+            </button>
+          </motion.div>
+        )}
+
         {/* Hero Section */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
@@ -292,6 +313,9 @@ const Home = () => {
             <span className="relative z-10">שתף תפיסה חדשה (+10 נק׳)</span>
           </motion.button>
         </CatchReportDialog>
+        
+        {/* Daily Login Modal */}
+        <DailyLoginModal reward={reward} onClose={clearReward} />
       </div>
     </FishingLayout>
   );
