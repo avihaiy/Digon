@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil } from "lucide-react";
 
@@ -986,6 +987,80 @@ export default function Admin() {
                       const val = parseInt((document.getElementById('input_catch_approved_points') as HTMLInputElement).value) || 0;
                       saveSettingsMutation.mutate({ key: 'catch_approved_points', value: val });
                     }} disabled={saveSettingsMutation.isPending}>שמור</Button>
+                  </div>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">נקודות דיווח מיקום 📍</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                      כמות הנקודות שמקבל משתמש שמוסיף מיקום דייג חדש במפה.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Input 
+                      type="number" 
+                      className="w-24 text-center font-bold text-lg"
+                      defaultValue={settingsData?.find((s:any) => s.key === 'location_report_points')?.value || 15}
+                      id="input_location_report_points"
+                    />
+                    <Button onClick={() => {
+                      const val = parseInt((document.getElementById('input_location_report_points') as HTMLInputElement).value) || 0;
+                      saveSettingsMutation.mutate({ key: 'location_report_points', value: val });
+                    }} disabled={saveSettingsMutation.isPending}>שמור</Button>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">סף דיווחי ספאם לחסימה 🛡️</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                      כמות הפעמים שמשתמשים צריכים לדווח על תפיסה כ"ספאם" כדי שהיא תוסתר אוטומטית.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Input 
+                      type="number" 
+                      className="w-24 text-center font-bold text-lg"
+                      defaultValue={settingsData?.find((s:any) => s.key === 'auto_hide_threshold')?.value || 3}
+                      id="input_auto_hide_threshold"
+                    />
+                    <Button onClick={() => {
+                      const val = parseInt((document.getElementById('input_auto_hide_threshold') as HTMLInputElement).value) || 0;
+                      saveSettingsMutation.mutate({ key: 'auto_hide_threshold', value: val });
+                    }} disabled={saveSettingsMutation.isPending}>שמור</Button>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-start gap-4">
+                  <div className="flex items-center justify-between w-full">
+                    <div>
+                      <h3 className="font-bold text-lg text-slate-900 dark:text-white">הודעת מערכת גלובלית 📢</h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                        טקסט שיוצג כבאנר בולט בראש מסך הבית לכלל המשתמשים.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold">הפעל באנר:</span>
+                      <Switch 
+                        checked={settingsData?.find((s:any) => s.key === 'global_announcement_active')?.value === 'true'}
+                        onCheckedChange={(checked) => {
+                          saveSettingsMutation.mutate({ key: 'global_announcement_active', value: checked ? 'true' : 'false' });
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row w-full gap-3">
+                    <Input 
+                      type="text" 
+                      placeholder="הכנס את תוכן ההודעה כאן..."
+                      className="flex-1 font-medium"
+                      defaultValue={settingsData?.find((s:any) => s.key === 'global_announcement')?.value || ''}
+                      id="input_global_announcement"
+                    />
+                    <Button onClick={() => {
+                      const val = (document.getElementById('input_global_announcement') as HTMLInputElement).value || '';
+                      saveSettingsMutation.mutate({ key: 'global_announcement', value: val });
+                    }} disabled={saveSettingsMutation.isPending}>שמור הודעה</Button>
                   </div>
                 </div>
               </div>

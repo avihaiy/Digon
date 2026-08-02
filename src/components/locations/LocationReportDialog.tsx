@@ -4,6 +4,7 @@ import { databases, storage, APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, APPWRITE_CAT
 import { ID } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { MapPin, Camera, Image as ImageIcon, X } from "lucide-react";
 import {
   Dialog,
@@ -21,6 +22,7 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: appSettings } = useAppSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
   const [mapUrl, setMapUrl] = useState("");
@@ -89,9 +91,10 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
       });
     },
     onSuccess: () => {
+      const rewardPoints = appSettings?.location_report_points ? parseInt(appSettings.location_report_points) : 15;
       toast({
         title: "המיקום נשלח לאישור! 🎉",
-        description: "ברגע שיאושר על ידי מנהל, תזכה ב-10 מטבעות והמיקום יתווסף למפה.",
+        description: `ברגע שיאושר על ידי מנהל, תזכה ב-${rewardPoints} נקודות והמיקום יתווסף למפה.`,
       });
       handleOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["fishing-locations"] });
@@ -118,7 +121,7 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
             דיווח על ספוט חדש
           </DialogTitle>
           <DialogDescription>
-            שתף מיקום דייג חדש עם הקהילה. לאחר אישור מנהל, תזכה ב-10 מטבעות!
+            שתף מיקום דייג חדש עם הקהילה. לאחר אישור מנהל, תזכה ב-{appSettings?.location_report_points ? parseInt(appSettings.location_report_points) : 15} נקודות!
           </DialogDescription>
         </DialogHeader>
         

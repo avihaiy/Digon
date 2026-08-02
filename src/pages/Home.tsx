@@ -15,6 +15,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { LiveBiteTicker } from '@/components/home/LiveBiteTicker';
 import { CatchStories } from '@/components/home/CatchStories';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import { AlertCircle } from 'lucide-react';
 
 export default function Home() {
   const { user } = useAuth();
@@ -26,6 +28,9 @@ export default function Home() {
   
   // Get first name or use default
   const firstName = user?.name?.split(' ')[0] || 'דייג';
+  
+  const { data: appSettings } = useAppSettings();
+  const showBanner = appSettings?.global_announcement_active === 'true' && !!appSettings?.global_announcement;
 
   return (
     <div className="space-y-4 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
@@ -41,6 +46,22 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      {/* Global Announcement Banner */}
+      {showBanner && (
+        <div className="px-4">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 rounded-xl shadow-lg flex items-start gap-3 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div className="bg-white/20 p-2 rounded-full shrink-0 relative z-10">
+              <AlertCircle className="w-5 h-5 text-white animate-pulse" />
+            </div>
+            <div className="relative z-10">
+              <h4 className="font-bold text-sm mb-0.5">הודעת מערכת</h4>
+              <p className="text-xs opacity-90 leading-snug">{appSettings.global_announcement}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live Bite Ticker */}
       {catches && !catchesLoading && <LiveBiteTicker catches={catches} />}
