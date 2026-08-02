@@ -13,6 +13,8 @@ import { SocialCatchCard } from '@/components/fishing/SocialCatchCard';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { LiveBiteTicker } from '@/components/home/LiveBiteTicker';
+import { CatchStories } from '@/components/home/CatchStories';
 
 export default function Home() {
   const { user } = useAuth();
@@ -29,7 +31,7 @@ export default function Home() {
     <div className="space-y-4 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
       
       {/* Header / Welcome */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-4 mt-2">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             שלום, {firstName} <span className="animate-wave inline-block origin-bottom-right">👋</span>
@@ -40,9 +42,12 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Live Bite Ticker */}
+      {catches && !catchesLoading && <LiveBiteTicker catches={catches} />}
+
       {/* Global Search Bar */}
       {user && (
-        <div className="relative mt-2">
+        <div className="relative mt-2 px-4">
           <form onSubmit={(e) => { e.preventDefault(); if (searchQuery) navigate(`/fishing/search?q=${encodeURIComponent(searchQuery)}`); }}>
             <div className="relative flex items-center w-full">
               <Search className="absolute right-4 w-5 h-5 text-muted-foreground" />
@@ -62,30 +67,35 @@ export default function Home() {
         </div>
       )}
 
+      {/* Stories Row */}
+      {catches && !catchesLoading && <CatchStories catches={catches} />}
+
       {/* Active Tournament Banner */}
       {activeTournaments && activeTournaments.length > 0 && (
-        <Link to="/fishing/tournaments" className="block">
-          <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-2xl p-3 shadow-lg shadow-yellow-500/20 text-white relative overflow-hidden group">
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-            <div className="absolute -right-4 -top-4 bg-white/20 w-12 h-12 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
-            <div className="flex items-center justify-between relative z-10">
-              <div>
-                <div className="flex items-center gap-1 text-yellow-100 text-xs font-bold mb-1 animate-pulse">
-                  <span className="w-2 h-2 rounded-full bg-red-500"></span> פעיל עכשיו
+        <div className="px-4">
+          <Link to="/fishing/tournaments" className="block">
+            <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-2xl p-3 shadow-lg shadow-yellow-500/20 text-white relative overflow-hidden group">
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+              <div className="absolute -right-4 -top-4 bg-white/20 w-12 h-12 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <div className="flex items-center gap-1 text-yellow-100 text-xs font-bold mb-1 animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-red-500"></span> פעיל עכשיו
+                  </div>
+                  <h3 className="font-black text-lg">{activeTournaments[0].title}</h3>
+                  <p className="text-sm text-yellow-100 font-medium mt-0.5 opacity-90">{activeTournaments[0].prize_points} נקודות למנצח!</p>
                 </div>
-                <h3 className="font-black text-lg">{activeTournaments[0].title}</h3>
-                <p className="text-sm text-yellow-100 font-medium mt-0.5 opacity-90">{activeTournaments[0].prize_points} נקודות למנצח!</p>
-              </div>
-              <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm">
-                <span className="text-2xl">🏆</span>
+                <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm">
+                  <span className="text-2xl">🏆</span>
+                </div>
               </div>
             </div>
-          </div>
-        </Link>
+          </Link>
+        </div>
       )}
 
       {/* Sea Conditions Widget */}
-      <section>
+      <section className="px-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold tracking-tight">מצב הים כעת</h2>
@@ -155,7 +165,7 @@ export default function Home() {
       </section>
 
       {/* Main CTA */}
-      <section className="pt-1">
+      <section className="pt-1 px-4">
         <div className="flex gap-2">
           <CatchReportDialog>
             <Button size="default" className="flex-1 h-12 text-base font-bold rounded-xl shadow-lg shadow-primary/20 gap-2 group">
@@ -174,7 +184,7 @@ export default function Home() {
       </section>
 
       {/* Useful Tools */}
-      <section className="pt-1">
+      <section className="pt-1 px-4">
         <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
           <Link to="/fishing/tackle-box" className="bg-card border border-border shadow-sm rounded-xl p-2.5 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors">
             <div className="bg-orange-500/10 p-2 rounded-full mb-1 animate-float">
@@ -228,7 +238,7 @@ export default function Home() {
       </section>
 
       {/* Recent Catches Feed */}
-      <section className="pt-2">
+      <section className="pt-2 px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold tracking-tight">תפיסות אחרונות בשטח</h2>
           <Button variant="link" className="text-xs h-auto p-0 text-primary">צפה בהכל</Button>
