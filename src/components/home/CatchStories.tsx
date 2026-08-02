@@ -13,6 +13,14 @@ interface CatchStoriesProps {
 
 export function CatchStories({ catches }: CatchStoriesProps) {
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
+  const [viewedStories, setViewedStories] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('digon_viewed_stories');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   const { playSwoosh } = useSoundEffects();
 
   // Filter catches that have images, are public, and limit to 8
@@ -39,6 +47,15 @@ export function CatchStories({ catches }: CatchStoriesProps) {
   const handleOpenStory = (index: number) => {
     setActiveStoryIndex(index);
     playSwoosh();
+    
+    // Mark as viewed
+    const storyId = storyCatches[index].$id;
+    if (!viewedStories.has(storyId)) {
+      const newViewed = new Set(viewedStories);
+      newViewed.add(storyId);
+      setViewedStories(newViewed);
+      localStorage.setItem('digon_viewed_stories', JSON.stringify(Array.from(newViewed)));
+    }
   };
 
   const handleCloseStory = () => {
@@ -48,7 +65,17 @@ export function CatchStories({ catches }: CatchStoriesProps) {
   const handleNextStory = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeStoryIndex !== null && activeStoryIndex < storyCatches.length - 1) {
-      setActiveStoryIndex(activeStoryIndex + 1);
+      const nextIndex = activeStoryIndex + 1;
+      setActiveStoryIndex(nextIndex);
+      
+      // Mark next story as viewed
+      const storyId = storyCatches[nextIndex].$id;
+      if (!viewedStories.has(storyId)) {
+        const newViewed = new Set(viewedStories);
+        newViewed.add(storyId);
+        setViewedStories(newViewed);
+        localStorage.setItem('digon_viewed_stories', JSON.stringify(Array.from(newViewed)));
+      }
     } else {
       handleCloseStory();
     }
@@ -57,7 +84,17 @@ export function CatchStories({ catches }: CatchStoriesProps) {
   const handlePrevStory = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeStoryIndex !== null && activeStoryIndex > 0) {
-      setActiveStoryIndex(activeStoryIndex - 1);
+      const prevIndex = activeStoryIndex - 1;
+      setActiveStoryIndex(prevIndex);
+      
+      // Mark prev story as viewed
+      const storyId = storyCatches[prevIndex].$id;
+      if (!viewedStories.has(storyId)) {
+        const newViewed = new Set(viewedStories);
+        newViewed.add(storyId);
+        setViewedStories(newViewed);
+        localStorage.setItem('digon_viewed_stories', JSON.stringify(Array.from(newViewed)));
+      }
     }
   };
 
@@ -79,7 +116,11 @@ export function CatchStories({ catches }: CatchStoriesProps) {
               whileTap={{ scale: 0.95 }}
               className="flex flex-col items-center gap-1.5 snap-start shrink-0"
             >
-              <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-orange-500 to-pink-500 shadow-md">
+              <div className={`w-16 h-16 rounded-full p-[2px] shadow-md ${
+                viewedStories.has(story.$id) 
+                  ? 'bg-slate-300 dark:bg-slate-700' 
+                  : 'bg-gradient-to-tr from-yellow-400 via-orange-500 to-pink-500'
+              }`}>
                 <div className="w-full h-full rounded-full border-2 border-background overflow-hidden bg-muted">
                   {imgUrl ? (
                     <img src={imgUrl} alt={story.fish_type} className="w-full h-full object-cover" />
