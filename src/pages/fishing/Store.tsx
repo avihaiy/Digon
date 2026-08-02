@@ -209,7 +209,7 @@ export default function Store() {
                   </div>
                   <Button 
                     disabled={loading || points < item.cost} 
-                    onClick={() => buyItem(item.cost, item.type, item.value, item.name)}
+                    onClick={() => buyItem(item.cost, item.type, isNaN(Number(item.value)) ? item.value : Number(item.value), item.name, !isNaN(Number(item.value)))}
                     className="h-12 rounded-2xl font-bold px-6 shrink-0"
                   >
                     {item.cost} נק׳
