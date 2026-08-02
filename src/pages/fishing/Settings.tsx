@@ -84,22 +84,6 @@ export default function Settings() {
       </div>
 
       <div className="px-4 space-y-4">
-        {/* Debug Zone */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="border-border/50 shadow-sm overflow-hidden p-5 space-y-4">
-            <h3 className="font-bold text-lg">אזור ניהול (זמני לבדיקות)</h3>
-            <Button 
-              variant="outline"
-              className="w-full h-14 rounded-2xl gap-2 font-bold bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 transition-all"
-              onClick={async () => {
-                await updateUserPrefs({ ...prefs, last_login_date: "2020-01-01" });
-                toast.success("תאריך הכניסה אופס, רענן את האפליקציה!");
-              }}
-            >
-              איפוס בונוס יומי
-            </Button>
-          </Card>
-        </motion.div>
 
         {/* Theme Settings */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
