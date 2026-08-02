@@ -15,6 +15,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { AlertCircle } from 'lucide-react';
+import { useDailyLogin } from '@/hooks/useDailyLogin';
+import { DailyLoginModal } from '@/components/home/DailyLoginModal';
 
 export default function Home() {
   const { user } = useAuth();
@@ -30,8 +32,11 @@ export default function Home() {
   const { data: appSettings } = useAppSettings();
   const showBanner = appSettings?.global_announcement_active === 'true' && !!appSettings?.global_announcement;
 
+  const { reward, clearReward } = useDailyLogin();
+
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
+      <DailyLoginModal reward={reward} onClose={clearReward} />
       
       {/* Header / Welcome */}
       <div className="flex items-center justify-between px-4 mt-2">

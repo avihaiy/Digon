@@ -19,6 +19,8 @@ interface AuthContextType {
   updateLocalPoints: (points: number) => void;
   profileData: any;
   updateProfileField: (field: string, value: any) => Promise<boolean>;
+  prefs: Models.Preferences;
+  updateUserPrefs: (newPrefs: Models.Preferences) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,12 +31,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [points, setPoints] = useState<number>(0);
   const [profileData, setProfileData] = useState<any>(null);
+  const [prefs, setPrefs] = useState<Models.Preferences>({});
   const [loading, setLoading] = useState(true);
 
   const fetchUserAndRole = async () => {
     try {
       const currentUser = await account.get();
       setUser(currentUser);
+      setPrefs(currentUser.prefs || {});
       
       const currentSession = await account.getSession('current');
       setSession(currentSession);
@@ -74,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       setUserRole(null);
       setProfileData(null);
+      setPrefs({});
     } finally {
       setLoading(false);
     }
@@ -138,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setUserRole(null);
     setProfileData(null);
+    setPrefs({});
   };
 
   const updateProfileField = async (field: string, value: any) => {
@@ -151,6 +157,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return true;
     } catch (e) {
       console.error(`Failed to update ${field}:`, e);
+      return false;
+    }
+  };
+
+  const updateUserPrefs = async (newPrefs: Models.Preferences) => {
+    try {
+      const updated = await account.updatePrefs(newPrefs);
+      setPrefs(updated.prefs || newPrefs);
+      return true;
+    } catch (e) {
+      console.error("Failed to update user prefs:", e);
       return false;
     }
   };
@@ -173,7 +190,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshProfile: fetchUserAndRole,
       updateLocalPoints: setPoints,
       profileData,
-      updateProfileField
+      updateProfileField,
+      prefs,
+      updateUserPrefs
     }}>
       {children}
     </AuthContext.Provider>
