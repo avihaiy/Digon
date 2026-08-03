@@ -49,7 +49,7 @@ export default function Store() {
         // Record the purchase
         try {
           await databases.createDocument(APPWRITE_DB_ID, APPWRITE_PURCHASES_ID, ID.unique(), {
-            user_name: profileData?.name || "משתמש דיגון",
+            user_name: profileData?.full_name || profileData?.name || "משתמש דיגון",
             item_name: itemName,
             price: cost
           });
