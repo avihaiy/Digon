@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import FishingLayout from "@/components/fishing/FishingLayout";
-import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, ChevronRight, MoreHorizontal, Bell, LucideIcon, BookOpen } from "lucide-react";
+import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, ChevronRight, MoreHorizontal, Bell, LucideIcon, BookOpen, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -270,6 +270,9 @@ const Home = () => {
           </Link>
           <Link to="/fishing/logbook" className="w-full">
             <ActionButton icon={BookOpen} label="יומן אישי" delay={0.4} />
+          </Link>
+          <Link to="/fishing/cams" className="w-full col-span-2">
+            <ActionButton icon={Video} label="מצלמות חוף (LIVE)" delay={0.45} />
           </Link>
           <CatchReportDialog>
             <div className="w-full col-span-2">
