@@ -102,6 +102,11 @@ export default function Dashboard() {
           }
         });
 
+        const chartData = Object.keys(chartDataMap).map(key => ({
+          name: key,
+          catches: chartDataMap[key]
+        }));
+
         // Generate mock points for map based on recent catches (Israel coast approx coords)
         const mockCoords = [
           [32.0853, 34.7818], // Tel Aviv
