@@ -18,6 +18,7 @@ import Install from "@/pages/Install";
 import FishingHome from "@/pages/fishing/Home";
 import Community from "@/pages/fishing/Community";
 import Forecast from "@/pages/fishing/Forecast";
+import LiveCamsPage from "@/pages/fishing/LiveCamsPage";
 import Locations from "@/pages/fishing/Locations";
 import Identify from "@/pages/fishing/Identify";
 import Wiki from "@/pages/fishing/Wiki";
@@ -111,6 +112,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/community" element={<ProtectedRoute><PageTransition><Community /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/settings" element={<ProtectedRoute><PageTransition><Settings /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/forecast" element={<ProtectedRoute><PageTransition><Forecast /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/cams" element={<ProtectedRoute><PageTransition><LiveCamsPage /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/locations" element={<ProtectedRoute><PageTransition><Locations /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/identify" element={<ProtectedRoute><PageTransition><Identify /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/wiki" element={<ProtectedRoute><PageTransition><Wiki /></PageTransition></ProtectedRoute>} />

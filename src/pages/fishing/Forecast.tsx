@@ -5,8 +5,9 @@ import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, 
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-import { CalendarDays } from "lucide-react";
-import { LiveCams } from "@/components/fishing/LiveCams";
+import { CalendarDays, Video } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 // Simulated Solunar logic based on current hour
 const getSolunarRating = () => {
@@ -22,6 +23,7 @@ const getSolunarRating = () => {
 };
 
 export default function Forecast() {
+  const navigate = useNavigate();
   const { data: marineData, loading: marineLoading, lastUpdated } = useMarineWeather();
   const solunar = getSolunarRating();
 
@@ -40,8 +42,16 @@ export default function Forecast() {
         </div>
       </div>
 
-      {/* Live Cams */}
-      <LiveCams />
+      {/* Live Cams Button */}
+      <div className="px-4 mb-2">
+        <Button 
+          onClick={() => navigate('/fishing/cams')}
+          className="w-full bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-2xl h-14 font-bold shadow-lg shadow-red-500/20"
+        >
+          <Video className="w-5 h-5 ml-2 animate-pulse" />
+          צפה במצלמות חוף בלייב
+        </Button>
+      </div>
 
       {/* Solunar Fishing Score */}
       <section className="px-4">
