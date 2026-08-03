@@ -16,6 +16,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { storage, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
+import { ID } from "appwrite";
+import { toast } from "sonner";
 
 type Tab = 'gallery' | 'stats' | 'badges';
 
@@ -26,6 +29,9 @@ export default function Profile() {
   const { followersCount, followingCount, isFollowing, toggleFollow, isToggling } = useFollowers(userId || "");
   const [selectedCatch, setSelectedCatch] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>('gallery');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch Profile
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -110,6 +116,52 @@ export default function Profile() {
 
   const isOwnProfile = currentUser?.$id === userId;
 
+  const handleAvatarClick = () => {
+    if (isOwnProfile) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('נא לבחור קובץ תמונה בלבד');
+      return;
+    }
+
+    try {
+      setIsUploadingAvatar(true);
+      toast.loading('מעלה תמונה...', { id: 'avatar-upload' });
+      
+      // Upload to storage
+      const uploadedFile = await storage.createFile(
+        APPWRITE_CATCH_IMAGES_BUCKET_ID,
+        ID.unique(),
+        file
+      );
+
+      // Update profile
+      const success = await updateProfileField('avatar_id', uploadedFile.$id);
+      
+      if (success) {
+        toast.success('תמונת הפרופיל עודכנה!', { id: 'avatar-upload' });
+        // Auto reload profile query could be done here, but updateProfileField sets local state in useAuth
+        // However, this profile page uses its own query for `profile`. We should invalidate or update it.
+        // For simplicity, we can just reload the page or rely on the query to refetch on focus.
+        window.location.reload();
+      } else {
+        toast.error('העדכון נכשל. האם יצרת את השדה avatar_id במסד הנתונים?', { id: 'avatar-upload' });
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error('שגיאה בהעלאת התמונה', { id: 'avatar-upload' });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black pb-24 max-w-lg mx-auto animate-in fade-in duration-500 shadow-2xl relative overflow-x-hidden">
       
@@ -134,15 +186,43 @@ export default function Profile() {
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-xl ring-1 ring-black/5 dark:ring-white/10 flex flex-col items-center text-center">
             
             {/* Avatar */}
-            <div className={cn(
-              "w-28 h-28 -mt-16 mb-3 rounded-[2rem] bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-xl flex items-center justify-center text-4xl font-black text-white transform rotate-3 transition-transform hover:rotate-0",
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleAvatarUpload} 
+            />
+            <div 
+              onClick={handleAvatarClick}
+              className={cn(
+              "w-28 h-28 -mt-16 mb-3 rounded-[2rem] bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-xl flex items-center justify-center text-4xl font-black text-white transform rotate-3 transition-transform hover:rotate-0 relative",
+              isOwnProfile ? "cursor-pointer hover:scale-105" : "",
               profile.border === 'gold' ? 'ring-4 ring-yellow-400 ring-offset-4 ring-offset-white dark:ring-offset-slate-900 shadow-[0_0_30px_rgba(250,204,21,0.6)]' :
               profile.border === 'platinum' ? 'ring-4 ring-slate-300 ring-offset-4 ring-offset-white dark:ring-offset-slate-900 shadow-[0_0_30px_rgba(203,213,225,0.6)]' :
               profile.border === 'ocean' ? 'ring-4 ring-cyan-400 ring-offset-4 ring-offset-white dark:ring-offset-slate-900 shadow-[0_0_30px_rgba(34,211,238,0.6)]' :
               profile.border === 'fire' ? 'ring-4 ring-orange-500 ring-offset-4 ring-offset-white dark:ring-offset-slate-900 shadow-[0_0_30px_rgba(249,115,22,0.6)]' :
               'border-4 border-white dark:border-slate-900'
             )}>
-              {profile.full_name?.charAt(0) || profile.user_name?.charAt(0) || "ד"}
+              {profile.avatar_id ? (
+                <img 
+                  src={getImageUrl(profile.avatar_id)} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover rounded-[1.75rem]"
+                />
+              ) : (
+                profile.full_name?.charAt(0) || profile.user_name?.charAt(0) || "ד"
+              )}
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 bg-black/50 rounded-[1.75rem] flex items-center justify-center">
+                  <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full" />
+                </div>
+              )}
+              {isOwnProfile && !isUploadingAvatar && (
+                <div className="absolute -bottom-2 -right-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full p-2 shadow-lg hover:scale-110 transition-transform">
+                  <Camera className="w-4 h-4" />
+                </div>
+              )}
             </div>
 
             {/* Name & Title */}
