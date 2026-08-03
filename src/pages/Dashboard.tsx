@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
-import { databases, APPWRITE_CATCHES_ID, APPWRITE_TOURNAMENTS_ID, APPWRITE_STORE_ITEMS_ID } from '@/lib/appwrite';
+import { databases, APPWRITE_CATCHES_ID, APPWRITE_TOURNAMENTS_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_PURCHASES_ID } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -48,7 +48,7 @@ export default function Dashboard() {
       try {
         const sevenDaysAgo = subDays(new Date(), 7).toISOString();
 
-        const [usersRes, allCatchesRes, recentCatchesRes, locationsRes, tournamentsRes, storeItemsRes] = await Promise.all([
+        const [usersRes, allCatchesRes, recentCatchesRes, locationsRes, tournamentsRes, purchasesRes] = await Promise.all([
           databases.listDocuments(DB_ID, PROFILES_ID, [Query.limit(100)]),
           databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [
             Query.greaterThanEqual("$createdAt", sevenDaysAgo),
@@ -57,7 +57,7 @@ export default function Dashboard() {
           databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [Query.orderDesc("$createdAt"), Query.limit(20)]),
           databases.listDocuments(DB_ID, LOCATIONS_ID, [Query.limit(100)]),
           databases.listDocuments(DB_ID, APPWRITE_TOURNAMENTS_ID, [Query.equal("status", "active"), Query.limit(1)]).catch(() => ({ documents: [] })),
-          databases.listDocuments(DB_ID, APPWRITE_STORE_ITEMS_ID, [Query.limit(10)]).catch(() => ({ documents: [] }))
+          databases.listDocuments(DB_ID, APPWRITE_PURCHASES_ID, [Query.orderDesc("$createdAt"), Query.limit(4)]).catch(() => ({ documents: [] }))
         ]);
 
         const totalCoins = usersRes.documents.reduce((acc, doc) => acc + (doc.points || 0), 0);
@@ -117,18 +117,23 @@ export default function Dashboard() {
           weight: locDoc.is_premium ? '🏆 פרימיום' : ''
         }));
 
-        // Mock recent store purchases
-        const storeItems = storeItemsRes.documents.length > 0 ? storeItemsRes.documents : [
-          { name: "בוסט חשיפה ל-24 שעות", price: 50 },
-          { name: "תג 'מקצוען'", price: 150 },
-          { name: "השתתפות בהגרלת ציוד", price: 300 }
-        ];
-        
-        const recentPurchases = [
-          { user: "דניאל ק.", item: storeItems[0]?.name || "בוסט חשיפה", time: "לפני שעתיים", price: storeItems[0]?.price || 50 },
-          { user: "רון א.", item: storeItems[1]?.name || "כרטיס הגרלה", time: "לפני 5 שעות", price: storeItems[1]?.price || 150 },
-          { user: "אבי מ.", item: storeItems[2]?.name || "מסגרת פרופיל", time: "אתמול", price: storeItems[2]?.price || 300 },
-        ];
+        // Real recent store purchases
+        const recentPurchases = purchasesRes.documents.map((doc: any) => {
+          let timeAgo = "לאחרונה";
+          if (doc.$createdAt) {
+            const date = new Date(doc.$createdAt);
+            const diffMin = Math.floor((new Date().getTime() - date.getTime()) / 60000);
+            if (diffMin < 60) timeAgo = `לפני ${diffMin} דקות`;
+            else if (diffMin < 1440) timeAgo = `לפני ${Math.floor(diffMin / 60)} שעות`;
+            else timeAgo = `לפני ${Math.floor(diffMin / 1440)} ימים`;
+          }
+          return {
+            user: doc.user_name || "משתמש",
+            item: doc.item_name || "מוצר",
+            time: timeAgo,
+            price: doc.price || 0
+          };
+        });
 
         return {
           totalUsers: usersRes.total || usersRes.documents.length,
@@ -392,6 +397,8 @@ export default function Dashboard() {
             <CardContent className="flex-1 overflow-y-auto pr-1 space-y-3">
               {isLoading ? (
                 <div className="text-center py-4 text-slate-500 font-bold">טוען...</div>
+              ) : dashboardData?.recentPurchases?.length === 0 ? (
+                <div className="text-center py-4 text-slate-500 text-sm font-bold">אין רכישות אחרונות</div>
               ) : (
                 dashboardData?.recentPurchases?.map((purchase: any, i: number) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/40 dark:bg-slate-900/40 border border-white/40 dark:border-slate-700/40">

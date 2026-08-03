@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { databases, APPWRITE_DB_ID, APPWRITE_STORE_ITEMS_ID } from "@/lib/appwrite";
-import { Query } from "appwrite";
+import { databases, APPWRITE_DB_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_PURCHASES_ID } from "@/lib/appwrite";
+import { Query, ID } from "appwrite";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Store as StoreIcon, ShieldCheck, Ticket, User, Gem, Sparkles, AlertTriangle } from "lucide-react";
@@ -46,6 +46,17 @@ export default function Store() {
       
       const success = await updateProfileField(field, finalValue);
       if (success) {
+        // Record the purchase
+        try {
+          await databases.createDocument(APPWRITE_DB_ID, APPWRITE_PURCHASES_ID, ID.unique(), {
+            user_name: profileData?.name || "משתמש דיגון",
+            item_name: itemName,
+            price: cost
+          });
+        } catch (e) {
+          console.error("Failed to record purchase", e);
+        }
+        
         toast.success(`התחדשת ב-${itemName}!`);
       } else {
         toast.error("אירעה שגיאה בביצוע הרכישה.");
