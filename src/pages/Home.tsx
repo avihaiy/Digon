@@ -202,6 +202,12 @@ export default function Home() {
         <h2 className="text-sm font-bold tracking-tight mb-3 text-muted-foreground">כלים שימושיים</h2>
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 pr-0 pl-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`.hide-scroll::-webkit-scrollbar { display: none; }`}</style>
+          <Link to="/fishing/cams" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-red-500/10 p-2.5 rounded-full mb-2">
+              <Video className="w-5 h-5 text-red-500 animate-pulse" />
+            </div>
+            <span className="font-bold text-[11px] leading-tight">מצלמות חוף</span>
+          </Link>
           <Link to="/fishing/tackle-box" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
             <div className="bg-orange-500/10 p-2.5 rounded-full mb-2 animate-float">
               <Package className="w-5 h-5 text-orange-500" />
@@ -237,12 +243,6 @@ export default function Home() {
               <Activity className="w-5 h-5 text-purple-500" />
             </div>
             <span className="font-bold text-[11px] leading-tight">סטטיסטיקה</span>
-          </Link>
-          <Link to="/fishing/cams" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
-            <div className="bg-red-500/10 p-2.5 rounded-full mb-2">
-              <Video className="w-5 h-5 text-red-500 animate-pulse" />
-            </div>
-            <span className="font-bold text-[11px] leading-tight">מצלמות חוף</span>
           </Link>
           <Link to="/fishing/radar" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
             <div className="bg-rose-500/10 p-2.5 rounded-full mb-2 animate-pulse-glow" style={{ animationDelay: "1s" }}>
