@@ -41,14 +41,14 @@ export function AccessibilityWidget() {
   };
 
   return (
-    <div className="fixed bottom-24 right-4 z-[100]">
+    <div className="fixed bottom-24 left-4 z-[100]">
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="absolute bottom-16 right-0 w-[280px] max-w-[90vw]"
+            className="absolute bottom-16 left-0 w-[280px] max-w-[90vw]"
           >
             <Card className="border-2 border-primary/20 shadow-2xl overflow-hidden rounded-2xl">
               <CardContent className="p-4 bg-background">
