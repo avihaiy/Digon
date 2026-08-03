@@ -107,22 +107,14 @@ export default function Dashboard() {
           catches: chartDataMap[key]
         }));
 
-        // Generate mock points for map based on recent catches (Israel coast approx coords)
-        const mockCoords = [
-          [32.0853, 34.7818], // Tel Aviv
-          [32.8191, 34.9983], // Haifa
-          [31.8014, 34.6435], // Ashdod
-          [29.5577, 34.9519], // Eilat
-          [32.8021, 35.5312], // Kinneret
-        ];
-        
-        const mapPoints = approvedRecentCatches.slice(0, 5).map((catchDoc: any, i: number) => ({
-          id: catchDoc.$id,
-          lat: mockCoords[i % mockCoords.length][0] + (Math.random() * 0.05 - 0.025),
-          lng: mockCoords[i % mockCoords.length][1] + (Math.random() * 0.05 - 0.025),
-          user: catchDoc.user_name || 'אנונימי',
-          fish: catchDoc.fish_type,
-          weight: catchDoc.weight
+        // Map points based on real locations
+        const mapPoints = locationsRes.documents.slice(0, 10).map((locDoc: any) => ({
+          id: locDoc.$id,
+          lat: locDoc.latitude || 31.0,
+          lng: locDoc.longitude || 35.0,
+          user: locDoc.title || 'מיקום לא ידוע',
+          fish: locDoc.city || 'מיקום בארץ',
+          weight: locDoc.is_premium ? '🏆 פרימיום' : ''
         }));
 
         // Mock recent store purchases
@@ -325,9 +317,9 @@ export default function Dashboard() {
         <Card className="col-span-1 lg:col-span-4 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl flex flex-col h-[400px]">
           <CardHeader>
             <CardTitle className="text-xl font-black flex items-center gap-2">
-              <MapIcon className="w-5 h-5 text-cyan-600" /> מפת תפיסות חיה
+              <MapIcon className="w-5 h-5 text-cyan-600" /> מפת מיקומי דיג
             </CardTitle>
-            <CardDescription className="font-medium">מיקומי תפיסות מהיממה האחרונה</CardDescription>
+            <CardDescription className="font-medium">מיקומי דיג מהקהילה</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 p-0 overflow-hidden rounded-b-xl">
             {isLoading ? (
