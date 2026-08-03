@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon } from 'lucide-react';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon, Video } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { useTournaments } from '@/hooks/useTournaments';
@@ -237,6 +237,12 @@ export default function Home() {
               <Activity className="w-5 h-5 text-purple-500" />
             </div>
             <span className="font-bold text-[11px] leading-tight">סטטיסטיקה</span>
+          </Link>
+          <Link to="/fishing/cams" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-red-500/10 p-2.5 rounded-full mb-2">
+              <Video className="w-5 h-5 text-red-500 animate-pulse" />
+            </div>
+            <span className="font-bold text-[11px] leading-tight">מצלמות חוף</span>
           </Link>
           <Link to="/fishing/radar" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
             <div className="bg-rose-500/10 p-2.5 rounded-full mb-2 animate-pulse-glow" style={{ animationDelay: "1s" }}>

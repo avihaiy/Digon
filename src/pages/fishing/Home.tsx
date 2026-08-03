@@ -271,9 +271,6 @@ const Home = () => {
           <Link to="/fishing/logbook" className="w-full">
             <ActionButton icon={BookOpen} label="יומן אישי" delay={0.4} />
           </Link>
-          <Link to="/fishing/cams" className="w-full col-span-2">
-            <ActionButton icon={Video} label="מצלמות חוף (LIVE)" delay={0.45} />
-          </Link>
           <CatchReportDialog>
             <div className="w-full col-span-2">
               <ActionButton icon={Play} label="דיווח תפיסה" delay={0.5} />
