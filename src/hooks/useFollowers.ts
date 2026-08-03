@@ -4,6 +4,7 @@ import { Query, ID } from "appwrite";
 import { useAuth } from "./useAuth";
 
 export const APPWRITE_RELATIONSHIPS_ID = "relationships"; // Expected to be created by admin
+export const APPWRITE_PROFILES_ID = import.meta.env.VITE_APPWRITE_PROFILES_COLLECTION_ID || "6a674a390030977cf6ae";
 
 export function useFollowers(profileUserId: string) {
   const { user } = useAuth();
@@ -16,9 +17,18 @@ export function useFollowers(profileUserId: string) {
       if (!profileUserId) return [];
       try {
         const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_RELATIONSHIPS_ID, [
-          Query.equal("following_id", profileUserId)
+          Query.equal("following_id", profileUserId),
+          Query.limit(100)
         ]);
-        return res.documents;
+        
+        if (res.documents.length === 0) return [];
+        
+        const followerIds = res.documents.map(d => d.follower_id);
+        const profilesRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
+          Query.equal("user_id", followerIds)
+        ]);
+        
+        return profilesRes.documents;
       } catch (e) {
         console.error("Failed to fetch followers", e);
         return [];
@@ -34,9 +44,18 @@ export function useFollowers(profileUserId: string) {
       if (!profileUserId) return [];
       try {
         const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_RELATIONSHIPS_ID, [
-          Query.equal("follower_id", profileUserId)
+          Query.equal("follower_id", profileUserId),
+          Query.limit(100)
         ]);
-        return res.documents;
+
+        if (res.documents.length === 0) return [];
+
+        const followingIds = res.documents.map(d => d.following_id);
+        const profilesRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
+          Query.equal("user_id", followingIds)
+        ]);
+        
+        return profilesRes.documents;
       } catch (e) {
         console.error("Failed to fetch following", e);
         return [];
@@ -45,12 +64,19 @@ export function useFollowers(profileUserId: string) {
     enabled: !!profileUserId
   });
 
-  const isFollowing = user ? followers.some((f: any) => f.follower_id === user.$id) : false;
+  const isFollowing = user ? followers.some((f: any) => f.user_id === user.$id) : false;
 
   const toggleFollowMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not logged in");
-      const existingRelationship = followers.find((f: any) => f.follower_id === user.$id);
+      
+      // We need the relationship doc id to unfollow. Since `followers` is now profiles, we must query the relationship again to get its ID, or check if we are following.
+      const relRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_RELATIONSHIPS_ID, [
+        Query.equal("follower_id", user.$id),
+        Query.equal("following_id", profileUserId)
+      ]);
+      
+      const existingRelationship = relRes.documents[0];
       
       if (existingRelationship) {
         // Unfollow
@@ -87,6 +113,8 @@ export function useFollowers(profileUserId: string) {
   });
 
   return {
+    followers,
+    following,
     followersCount: followers.length,
     followingCount: following.length,
     isFollowing,

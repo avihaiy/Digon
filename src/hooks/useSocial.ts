@@ -1,127 +1,109 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, APPWRITE_DB_ID, APPWRITE_LIKES_ID, APPWRITE_COMMENTS_ID, APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
-import { Query, ID } from "appwrite";
-import { useAuth } from "./useAuth";
-import { useSoundEffects } from "@/hooks/useSoundEffects";
-import { APPWRITE_PROFILES_ID } from "@/lib/appwrite";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { databases, APPWRITE_DB_ID, APPWRITE_LIKES_ID, APPWRITE_COMMENTS_ID, APPWRITE_PROFILES_ID } from '@/lib/appwrite';
+import { Query, ID } from 'appwrite';
+import { useAuth } from './useAuth';
+
 export function useSocial(catchId: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { playPop, triggerHaptic } = useSoundEffects();
 
-  // Fetch Likes
-  const { data: likes = [] } = useQuery({
-    queryKey: ["likes", catchId],
+  const { data: likes = [], isLoading: isLikesLoading } = useQuery({
+    queryKey: ['likes', catchId],
     queryFn: async () => {
-      const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_LIKES_ID, [
-        Query.equal("catch_id", catchId),
-      ]);
-      return res.documents;
+      if (!catchId) return [];
+      try {
+        const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_LIKES_ID, [
+          Query.equal('catch_id', catchId)
+        ]);
+        return res.documents;
+      } catch (e) {
+        console.error('Failed to fetch likes', e);
+        return [];
+      }
     },
+    enabled: !!catchId
   });
 
-  // Fetch Comments
-  const { data: comments = [] } = useQuery({
-    queryKey: ["comments", catchId],
+  const { data: comments = [], isLoading: isCommentsLoading } = useQuery({
+    queryKey: ['comments', catchId],
     queryFn: async () => {
-      const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_COMMENTS_ID, [
-        Query.equal("catch_id", catchId),
-        Query.orderAsc("$createdAt"),
-      ]);
-      return res.documents;
+      if (!catchId) return [];
+      try {
+        const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_COMMENTS_ID, [
+          Query.equal('catch_id', catchId),
+          Query.orderAsc('$createdAt')
+        ]);
+        
+        if (res.documents.length === 0) return [];
+        
+        const userIds = [...new Set(res.documents.map(c => c.user_id))];
+        const profilesRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
+          Query.equal('user_id', userIds)
+        ]);
+        
+        const profilesMap = profilesRes.documents.reduce((acc: any, p: any) => {
+          acc[p.user_id] = p;
+          return acc;
+        }, {});
+        
+        return res.documents.map(c => ({
+          ...c,
+          profile: profilesMap[c.user_id] || null
+        }));
+      } catch (e) {
+        console.error('Failed to fetch comments', e);
+        return [];
+      }
     },
+    enabled: !!catchId
   });
 
-  const hasLiked = user ? likes.some((like: any) => like.user_id === user.$id) : false;
+  const isLiked = user ? likes.some((l: any) => l.user_id === user.$id) : false;
 
   const toggleLikeMutation = useMutation({
-    mutationFn: async ({ ownerId }: { ownerId?: string } = {}) => {
-      if (!user) throw new Error("Not logged in");
-      const existingLike = likes.find((like: any) => like.user_id === user.$id);
+    mutationFn: async () => {
+      if (!user) throw new Error('Not logged in');
+      
+      const existingLike = likes.find((l: any) => l.user_id === user.$id);
       
       if (existingLike) {
         await databases.deleteDocument(APPWRITE_DB_ID, APPWRITE_LIKES_ID, existingLike.$id);
       } else {
         await databases.createDocument(APPWRITE_DB_ID, APPWRITE_LIKES_ID, ID.unique(), {
-          catch_id: catchId,
-          user_id: user.$id
+          user_id: user.$id,
+          catch_id: catchId
         });
-
-        // Check for Social Star Bonus (Exactly 5 likes)
-        // Note: likes.length is the count BEFORE this like was added.
-        if (ownerId && likes.length === 4) {
-          try {
-            const profileRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
-              Query.equal("user_id", ownerId)
-            ]);
-            if (profileRes.documents.length > 0) {
-              const profile = profileRes.documents[0];
-              await databases.updateDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, profile.$id, {
-                points: (profile.points || 0) + 100
-              });
-              
-              await databases.createDocument(APPWRITE_DB_ID, APPWRITE_NOTIFICATIONS_ID, ID.unique(), {
-                user_id: ownerId,
-                title: "כוכב הקהילה! ⭐",
-                message: "התפיסה שלך פופולרית! הגעת ל-5 לייקים וזכית ב-100 נקודות בונוס!",
-                is_read: "false",
-                type: "social_star"
-              });
-            }
-          } catch (e) {
-            console.error("Social star logic failed", e);
-          }
-        }
-
-        triggerHaptic('light');
-        playPop();
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["likes", catchId] });
+      queryClient.invalidateQueries({ queryKey: ['likes', catchId] });
     }
   });
 
   const addCommentMutation = useMutation({
-    mutationFn: async ({ text, ownerId }: { text: string, ownerId: string }) => {
-      if (!user) throw new Error("Not logged in");
-      await databases.createDocument(APPWRITE_DB_ID, APPWRITE_COMMENTS_ID, ID.unique(), {
-        catch_id: catchId,
-        user_id: user.$id,
-        text
-      });
-
-      // Notify the owner of the catch if it's not the same user
-      if (ownerId && ownerId !== user.$id) {
-        try {
-          await databases.createDocument(APPWRITE_DB_ID, APPWRITE_NOTIFICATIONS_ID, ID.unique(), {
-            user_id: ownerId,
-            title: "תגובה חדשה! 💬",
-            message: `${user.name || 'דייג'} הגיב על התפיסה שלך: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
-            is_read: "false",
-            type: "new_comment"
-          });
-        } catch (e) {
-          console.error("Failed to notify owner", e);
-        }
-      }
+    mutationFn: async (text: string) => {
+      if (!user) throw new Error('Not logged in');
+      if (!text.trim()) throw new Error('Empty comment');
       
-      triggerHaptic('medium');
+      await databases.createDocument(APPWRITE_DB_ID, APPWRITE_COMMENTS_ID, ID.unique(), {
+        user_id: user.$id,
+        catch_id: catchId,
+        text: text.trim()
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", catchId] });
+      queryClient.invalidateQueries({ queryKey: ['comments', catchId] });
     }
   });
 
   return {
-    likes,
     likesCount: likes.length,
-    hasLiked,
+    isLiked,
     comments,
-    commentsCount: comments.length,
-    toggleLike: (ownerId?: string) => toggleLikeMutation.mutate({ ownerId }),
-    addComment: (text: string, ownerId: string) => addCommentMutation.mutate({ text, ownerId }),
-    isLikeLoading: toggleLikeMutation.isPending,
-    isCommentLoading: addCommentMutation.isPending
+    isLoading: isLikesLoading || isCommentsLoading,
+    toggleLike: () => toggleLikeMutation.mutate(),
+    addComment: (text: string) => addCommentMutation.mutateAsync(text),
+    isTogglingLike: toggleLikeMutation.isPending,
+    isAddingComment: addCommentMutation.isPending
   };
 }

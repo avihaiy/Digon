@@ -7,7 +7,7 @@ import { BadgeIcon } from "@/components/fishing/BadgeIcon";
 import { getImageUrl } from "@/hooks/useCatches";
 import { 
   ArrowRight, Trophy, Fish, Star, MapPin, Scale, 
-  UserPlus, Check, Users, MessageCircle, Camera, Calendar, Grid, BarChart3, Medal, ExternalLink, Activity
+  UserPlus, Check, Users, MessageCircle, Camera, Calendar, Grid, BarChart3, Medal, ExternalLink, Activity, Info, Anchor, Edit3
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollowers } from "@/hooks/useFollowers";
@@ -19,22 +19,32 @@ import { format } from "date-fns";
 import { storage, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
 import { ID } from "appwrite";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { CatchSocial } from "@/components/fishing/CatchSocial";
 
 type Tab = 'gallery' | 'stats' | 'badges';
 
 export default function Profile() {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
-  const { followersCount, followingCount, isFollowing, toggleFollow, isToggling } = useFollowers(userId || "");
+  const { user: currentUser, updateProfileField } = useAuth();
+  const { followers, following, followersCount, followingCount, isFollowing, toggleFollow, isToggling } = useFollowers(userId || "");
   const [selectedCatch, setSelectedCatch] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>('gallery');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showFollowersList, setShowFollowersList] = useState<'followers' | 'following' | null>(null);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [bioState, setBioState] = useState({
+    bio: "",
+    fishing_style: "",
+    favorite_rod: ""
+  });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch Profile
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
+  const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
       if (!userId) return null;
@@ -42,7 +52,15 @@ export default function Profile() {
         Query.equal("user_id", userId),
         Query.limit(1)
       ]);
-      return res.documents[0] || null;
+      const data = res.documents[0] || null;
+      if (data) {
+        setBioState({
+          bio: data.bio || "",
+          fishing_style: data.fishing_style || "",
+          favorite_rod: data.favorite_rod || ""
+        });
+      }
+      return data;
     },
     enabled: !!userId
   });
@@ -119,6 +137,20 @@ export default function Profile() {
   const handleAvatarClick = () => {
     if (isOwnProfile) {
       fileInputRef.current?.click();
+    }
+  };
+
+  const handleSaveBio = async () => {
+    toast.loading('שומר פרטים...', { id: 'save-bio' });
+    try {
+      await updateProfileField('bio', bioState.bio);
+      await updateProfileField('fishing_style', bioState.fishing_style);
+      await updateProfileField('favorite_rod', bioState.favorite_rod);
+      await refetchProfile();
+      setIsEditingBio(false);
+      toast.success('הפרטים נשמרו בהצלחה!', { id: 'save-bio' });
+    } catch (error) {
+      toast.error('שגיאה בשמירת הפרטים. בדוק שהוספת את השדות ב-Appwrite.', { id: 'save-bio' });
     }
   };
 
@@ -242,9 +274,20 @@ export default function Profile() {
                 <span className="text-[10px] font-bold text-slate-500 uppercase">תפיסות</span>
               </div>
               <div className="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
-              <div className="flex flex-col items-center flex-1">
+              <div 
+                className="flex flex-col items-center flex-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 p-2 rounded-xl transition-colors"
+                onClick={() => setShowFollowersList('followers')}
+              >
                 <span className="font-black text-lg text-slate-900 dark:text-white">{followersCount}</span>
                 <span className="text-[10px] font-bold text-slate-500 uppercase">עוקבים</span>
+              </div>
+              <div className="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+              <div 
+                className="flex flex-col items-center flex-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 p-2 rounded-xl transition-colors"
+                onClick={() => setShowFollowersList('following')}
+              >
+                <span className="font-black text-lg text-slate-900 dark:text-white">{followingCount}</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase">נעקבים</span>
               </div>
               <div className="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
               <div className="flex flex-col items-center flex-1">
@@ -374,6 +417,85 @@ export default function Profile() {
               transition={{ duration: 0.2 }}
               className="p-4 space-y-3"
             >
+              {/* Bio Section */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm relative">
+                {isOwnProfile && !isEditingBio && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute left-3 top-3 rounded-full text-slate-400 hover:text-cyan-500"
+                    onClick={() => setIsEditingBio(true)}
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </Button>
+                )}
+                
+                <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Info className="w-4 h-4 text-cyan-500" />
+                  קצת עליי
+                </h3>
+
+                {isEditingBio ? (
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500">סגנון דיג אהוב</label>
+                      <Input 
+                        value={bioState.fishing_style} 
+                        onChange={(e) => setBioState(s => ({...s, fishing_style: e.target.value}))}
+                        placeholder="למשל: ז'רז'ור לייט, פיתיונות..."
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500">ציוד מועדף</label>
+                      <Input 
+                        value={bioState.favorite_rod} 
+                        onChange={(e) => setBioState(s => ({...s, favorite_rod: e.target.value}))}
+                        placeholder="למשל: Shimano Stella 4000"
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500">מילים עליי</label>
+                      <Textarea 
+                        value={bioState.bio} 
+                        onChange={(e) => setBioState(s => ({...s, bio: e.target.value}))}
+                        placeholder="אוהב לדוג בזריחה..."
+                        className="rounded-xl resize-none h-20"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end pt-2">
+                      <Button variant="ghost" className="rounded-xl" onClick={() => setIsEditingBio(false)}>ביטול</Button>
+                      <Button className="rounded-xl bg-cyan-500 text-white hover:bg-cyan-600" onClick={handleSaveBio}>שמור</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Anchor className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">סגנון דיג אהוב</p>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{profile.fishing_style || "לא צוין"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Star className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">ציוד מועדף</p>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{profile.favorite_rod || "לא צוין"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <MessageCircle className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">מי אני</p>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{profile.bio || "לא נכתב תיאור"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-cyan-50 dark:bg-cyan-500/10 flex items-center justify-center shrink-0">
                   <Fish className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
@@ -440,63 +562,116 @@ export default function Profile() {
 
       {/* FULL SCREEN CATCH MODAL (Mobile Optimized) */}
       <Dialog open={!!selectedCatch} onOpenChange={(open) => !open && setSelectedCatch(null)}>
-        <DialogContent className="max-w-md w-full h-[100dvh] md:h-[90vh] p-0 md:rounded-3xl border-0 bg-black shadow-2xl flex flex-col m-0">
+        <DialogContent className="max-w-md w-full h-[100dvh] md:h-[90vh] p-0 md:rounded-3xl border-0 bg-black shadow-2xl flex flex-col m-0 overflow-hidden">
           {selectedCatch && (
             <>
-              {/* Image Section */}
-              <div className="relative w-full flex-1 bg-black overflow-hidden flex items-center justify-center">
+              {/* Image Section (Half Screen) */}
+              <div className="relative w-full h-[55dvh] bg-black overflow-hidden flex items-center justify-center shrink-0">
                 {selectedCatch.image_id ? (
                   <img 
                     src={getImageUrl(selectedCatch.image_id)} 
                     alt={selectedCatch.fish_type} 
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <Fish className="w-20 h-20 text-white/20" />
                 )}
                 
                 {/* Gradient Overlay for Text */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/10 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/40 pointer-events-none" />
                 
                 {/* Close Button Native Style */}
                 <button 
                   onClick={() => setSelectedCatch(null)}
-                  className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center z-50 text-white"
+                  className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center z-50 text-white shadow-lg"
                 >
                   <ArrowRight className="w-5 h-5" />
                 </button>
 
                 {/* Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                  <h3 className="text-3xl font-black text-white shadow-sm drop-shadow-md mb-2">{selectedCatch.fish_type || 'דג לא ידוע'}</h3>
+                <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+                  <h3 className="text-2xl font-black text-white shadow-sm drop-shadow-md mb-2">{selectedCatch.fish_type || 'דג לא מזוהה'}</h3>
                   
-                  <div className="flex flex-wrap items-center gap-3 mb-4">
-                    <span className="flex items-center gap-1.5 text-white/90 text-sm font-bold bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl">
-                      <Scale className="w-4 h-4" /> {selectedCatch.weight || 'משקל לא צוין'}
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className="flex items-center gap-1.5 text-white/90 text-xs font-bold bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-xl">
+                      <Scale className="w-3.5 h-3.5" /> {selectedCatch.weight || 'לא צוין משקל'}
                     </span>
-                    <span className="flex items-center gap-1.5 text-white/90 text-sm font-bold bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl" dir="ltr">
-                      <Calendar className="w-4 h-4" /> {format(new Date(selectedCatch.$createdAt), 'dd/MM/yyyy')}
+                    <span className="flex items-center gap-1.5 text-white/90 text-xs font-bold bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-xl" dir="ltr">
+                      <Calendar className="w-3.5 h-3.5" /> {format(new Date(selectedCatch.$createdAt), 'dd/MM/yyyy')}
                     </span>
                   </div>
 
                   {selectedCatch.text && (
-                    <p className="text-sm text-white/80 font-medium leading-relaxed bg-black/40 backdrop-blur-md p-4 rounded-2xl mb-4 border border-white/10">
+                    <p className="text-xs text-white/80 font-medium leading-relaxed line-clamp-2 drop-shadow-md">
                       {selectedCatch.text}
                     </p>
                   )}
 
                   {selectedCatch.location?.includes('|||') && (
                     <Button 
-                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-white rounded-2xl h-14 font-black shadow-xl"
+                      variant="link"
+                      className="p-0 h-auto text-cyan-300 hover:text-cyan-200 mt-1 text-xs font-bold drop-shadow-md"
                       onClick={() => window.open(selectedCatch.location.split('|||')[1].trim(), '_blank')}
                     >
-                      <MapPin className="w-5 h-5 ml-2" /> פתח מיקום הדיג במפה
+                      <MapPin className="w-3.5 h-3.5 ml-1" /> ניווט לנקודה
                     </Button>
                   )}
                 </div>
               </div>
+              
+              {/* Social Section (Bottom Half) */}
+              <div className="flex-1 bg-slate-950 flex flex-col min-h-0 relative z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                <CatchSocial catchId={selectedCatch.$id} />
+              </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Followers / Following List Modal */}
+      <Dialog open={showFollowersList !== null} onOpenChange={(open) => !open && setShowFollowersList(null)}>
+        <DialogContent className="sm:max-w-[425px] p-0 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+            <h2 className="text-xl font-black text-center text-slate-900 dark:text-white">
+              {showFollowersList === 'followers' ? 'עוקבים' : 'נעקבים'}
+            </h2>
+          </div>
+          <div className="p-4 max-h-[60vh] overflow-y-auto space-y-4">
+            {(showFollowersList === 'followers' ? followers : following).length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                אין עדיין רשימה להציג.
+              </div>
+            ) : (
+              (showFollowersList === 'followers' ? followers : following).map((u: any) => (
+                <div key={u.$id} className="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-100 dark:border-cyan-900 flex items-center justify-center shrink-0 overflow-hidden text-lg font-bold text-cyan-600">
+                      {u.avatar_id ? (
+                        <img src={getImageUrl(u.avatar_id)} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        u.full_name?.charAt(0) || u.user_name?.charAt(0) || "ד"
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white">{u.full_name || u.user_name || "דייג"}</h4>
+                      <p className="text-xs text-slate-500">{u.points || 0} נקודות</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="rounded-full"
+                    onClick={() => {
+                      setShowFollowersList(null);
+                      navigate(`/fishing/profile/${u.user_id}`);
+                    }}
+                  >
+                    פרופיל
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
