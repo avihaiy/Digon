@@ -187,7 +187,12 @@ export default function Profile() {
                 <Button
                   variant="outline"
                   className="rounded-2xl h-12 w-12 shrink-0 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-                  onClick={() => navigate('/fishing/messages')}
+                  onClick={() => navigate('/fishing/messages', { 
+                    state: { 
+                      recipientId: profile.user_id, 
+                      recipientName: profile.full_name || profile.user_name || "דייג"
+                    } 
+                  })}
                 >
                   <MessageCircle className="w-5 h-5" />
                 </Button>

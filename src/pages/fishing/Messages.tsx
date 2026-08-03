@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useMessages } from "@/hooks/useMessages";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,11 @@ export default function Messages({
   onClose?: () => void;
 }) {
   const { user } = useAuth();
-  const [activeChatId, setActiveChatId] = useState<string | null>(recipientId || null);
-  const [activeChatName, setActiveChatName] = useState<string | null>(recipientName || null);
+  const location = useLocation();
+  const state = location.state as { recipientId?: string; recipientName?: string } | null;
+  
+  const [activeChatId, setActiveChatId] = useState<string | null>(recipientId || state?.recipientId || null);
+  const [activeChatName, setActiveChatName] = useState<string | null>(recipientName || state?.recipientName || null);
   const [messageText, setMessageText] = useState("");
   
   const { inboxUsers, isLoadingInbox } = useMessages();
