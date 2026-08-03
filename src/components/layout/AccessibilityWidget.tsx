@@ -47,14 +47,14 @@ export function AccessibilityWidget() {
   };
 
   return (
-    <div className="fixed top-1/2 -translate-y-1/2 left-2 z-[100]">
+    <div className="fixed bottom-24 left-4 z-[100]">
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, x: -20 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.9, x: -20 }}
-            className="absolute top-1/2 -translate-y-1/2 left-16 w-[280px] max-w-[90vw]"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="absolute bottom-16 left-0 w-[280px] max-w-[90vw]"
           >
             <Card className="border-2 border-primary/20 shadow-2xl overflow-hidden rounded-2xl">
               <CardContent className="p-4 bg-background">
