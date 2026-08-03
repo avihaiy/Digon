@@ -205,17 +205,17 @@ html, body {
   }
 
   :root body {
-    background: linear-gradient(180deg, hsl(210 40% 98% / 0.6), hsl(210 40% 98% / 0.9)), url('/images/bg-ocean.jpg') no-repeat;
-    background-size: 120% 120%;
+    background: linear-gradient(180deg, hsl(210 40% 98% / 0.4), hsl(210 40% 98% / 0.8)), url('/images/bg-ocean.jpg') no-repeat;
+    background-size: cover;
     background-attachment: fixed;
-    animation: ocean-pan 45s ease-in-out infinite;
+    background-position: center;
   }
 
   .dark body {
-    background: linear-gradient(180deg, hsl(222 84% 5% / 0.6), hsl(222 84% 5% / 0.9)), url('/images/bg-ocean.jpg') no-repeat;
-    background-size: 120% 120%;
+    background: linear-gradient(180deg, hsl(222 84% 5% / 0.5), hsl(222 84% 5% / 0.9)), url('/images/bg-ocean.jpg') no-repeat;
+    background-size: cover;
     background-attachment: fixed;
-    animation: ocean-pan 45s ease-in-out infinite;
+    background-position: center;
   }
 
   h1,

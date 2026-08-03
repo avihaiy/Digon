@@ -128,18 +128,18 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-10">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 dark:bg-slate-950/40 backdrop-blur-md p-6 rounded-2xl border border-white/50 dark:border-slate-800/50 shadow-lg">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-sm">
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-md">
             לוח בקרה - דיגון 🎣
           </h1>
-          <p className="text-slate-700 dark:text-slate-300 mt-1 font-medium">
-            ברוך הבא למערכת הניהול הראשי של אפליקציית דיג בישראל.
+          <p className="text-slate-700/80 dark:text-slate-300 mt-2 font-medium bg-white/30 dark:bg-black/30 backdrop-blur-md px-3 py-1 rounded-full w-fit">
+            מערכת הניהול הראשי של אפליקציית דיג בישראל
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/admin/settings">
-            <Button className="gap-2 cursor-pointer bg-slate-900/90 text-white hover:bg-slate-800 dark:bg-white/90 dark:text-slate-900 shadow-xl backdrop-blur-md border border-white/20 transition-all hover:scale-105">
+            <Button className="gap-2 cursor-pointer bg-slate-900/90 text-white hover:bg-slate-800 dark:bg-white/90 dark:text-slate-900 shadow-xl backdrop-blur-md border border-white/20 transition-all hover:scale-105 rounded-xl h-11 px-6">
               <Users className="w-4 h-4" />
               הגדרות פאנל ניהול (מחיקות ואישורים)
             </Button>
@@ -150,7 +150,7 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, i) => (
-          <Card key={i} className="overflow-hidden border-white/40 dark:border-slate-800/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 bg-white/70 dark:bg-slate-950/70 backdrop-blur-lg">
+          <Card key={i} className="overflow-hidden border-white/40 dark:border-slate-700/40 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 {stat.title}
@@ -174,7 +174,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 border-white/40 dark:border-slate-800/40 shadow-xl bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl">
+        <Card className="col-span-4 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl">
           <CardHeader>
             <CardTitle className="text-xl font-black">תפיסות שאושרו (7 ימים אחרונים)</CardTitle>
             <CardDescription className="font-medium">כמות דיווחי התפיסות המוצלחים מתוך הקהילה</CardDescription>
@@ -212,7 +212,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
         
-        <Card className="col-span-3 border-white/40 dark:border-slate-800/40 shadow-xl bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl flex flex-col">
+        <Card className="col-span-3 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl flex flex-col">
           <CardHeader>
             <CardTitle className="text-xl font-black">תפיסות אחרונות שדווחו</CardTitle>
             <CardDescription className="font-medium">עדכונים בזמן אמת מהשטח</CardDescription>
@@ -227,7 +227,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 dashboardData?.recentCatches?.map((report: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/50 hover:shadow-md transition-all group hover:bg-white dark:hover:bg-slate-800">
+                  <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-white/40 dark:border-slate-700/40 hover:shadow-lg transition-all group hover:bg-white/60 dark:hover:bg-slate-800/60">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/50 dark:to-blue-900/50 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform border border-cyan-200/50">
                         <Fish className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
