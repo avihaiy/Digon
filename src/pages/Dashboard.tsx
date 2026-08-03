@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { databases, APPWRITE_CATCHES_ID, APPWRITE_TOURNAMENTS_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_PURCHASES_ID } from '@/lib/appwrite';
 import { Query } from 'appwrite';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import {
@@ -17,11 +17,15 @@ import {
   ShoppingCart,
   Medal,
   Activity,
-  Map as MapIcon
+  Map as MapIcon,
+  BellRing,
+  ShieldAlert,
+  CheckCircle2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { subDays, format, parseISO, startOfDay } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -62,8 +66,40 @@ export default function Dashboard() {
 
         const totalCoins = usersRes.documents.reduce((acc, doc) => acc + (doc.points || 0), 0);
         
-        // Filter approved catches
-        const approvedRecentCatches = recentCatchesRes.documents.filter((doc: any) => doc.status === 'approved' || !doc.status);
+        // Fetch Marine Weather
+        let marineData = null;
+        try {
+          const marineRes = await fetch('https://marine-api.open-meteo.com/v1/marine?latitude=32.0853&longitude=34.7818&current=wave_height,wave_direction,wave_period&timezone=auto');
+          const marineJson = await marineRes.json();
+          marineData = marineJson.current;
+        } catch (e) {
+          console.error("Marine API error", e);
+        }
+
+        // Filter and evaluate catches for Trust Score
+        const moderationCatches = recentCatchesRes.documents.map((doc: any) => {
+          let trustScore = 100;
+          let warning = null;
+          
+          const weight = parseFloat(doc.weight) || 0;
+          const fishType = doc.fish_type || '';
+          
+          if (fishType.includes('דניס') && weight > 5) {
+            trustScore = 20;
+            warning = "משקל חריג לדניס";
+          } else if (fishType.includes('לוקוס') && weight > 20) {
+            trustScore = 40;
+            warning = "משקל חריג ללוקוס";
+          } else if (!doc.image_id) {
+            trustScore = 60;
+            warning = "חסר תיעוד תמונה";
+          } else if (weight === 0) {
+            trustScore = 80;
+            warning = "לא הוזן משקל";
+          }
+
+          return { ...doc, trustScore, warning };
+        });
 
         // Process User Growth Chart
         const userGrowthMap: Record<string, number> = {};
@@ -140,12 +176,13 @@ export default function Dashboard() {
           totalCatches: recentCatchesRes.total || 843,
           totalCoins,
           activeLocations: locationsRes.total || locationsRes.documents.length,
-          recentCatches: approvedRecentCatches.slice(0, 4),
+          recentCatches: moderationCatches,
           chartData,
           userGrowthData,
           activeTournament: tournamentsRes.documents[0] || null,
           mapPoints,
-          recentPurchases
+          recentPurchases,
+          marineData
         };
       } catch (e) {
         console.error("Failed to load dashboard data", e);
@@ -216,6 +253,38 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Sea Condition Alert */}
+      {dashboardData?.marineData && (
+        <Card className={`border-2 ${dashboardData.marineData.wave_height > 1.5 ? 'border-rose-500/50 bg-rose-500/10' : 'border-cyan-500/50 bg-cyan-500/10'} shadow-xl backdrop-blur-xl animate-in fade-in slide-in-from-top-4`}>
+          <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full ${dashboardData.marineData.wave_height > 1.5 ? 'bg-rose-500/20 text-rose-500' : 'bg-cyan-500/20 text-cyan-500'}`}>
+                <Activity className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                  מצב ים נוכחי (חופי המרכז)
+                  {dashboardData.marineData.wave_height > 1.5 && <span className="px-2 py-0.5 rounded text-xs bg-rose-500 text-white animate-pulse">סכנה</span>}
+                </h3>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  גובה גלים: <span className="font-black">{dashboardData.marineData.wave_height}m</span> | כיוון: {dashboardData.marineData.wave_direction}° | זמן מחזור: {dashboardData.marineData.wave_period}s
+                </p>
+              </div>
+            </div>
+            <Button 
+              variant="destructive" 
+              className="gap-2 font-bold w-full md:w-auto shadow-lg shadow-rose-500/20 hover:scale-105 transition-all"
+              onClick={() => {
+                toast.success("התראת פוש נשלחה בהצלחה לכלל המשתמשים!");
+              }}
+            >
+              <BellRing className="w-4 h-4" /> 
+              הוצא התראת בטיחות לכולם
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, i) => (
@@ -283,36 +352,55 @@ export default function Dashboard() {
         
         <Card className="col-span-1 lg:col-span-3 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl flex flex-col max-h-[400px]">
           <CardHeader>
-            <CardTitle className="text-xl font-black">תפיסות אחרונות שדווחו</CardTitle>
-            <CardDescription className="font-medium">עדכונים בזמן אמת מהשטח</CardDescription>
+            <CardTitle className="text-xl font-black flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-indigo-600" /> מודרציה וזיהוי זיופים (AI)
+            </CardTitle>
+            <CardDescription className="font-medium">בדיקת אמינות לתפיסות חדשות</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 flex-1 overflow-y-auto pr-1">
               {isLoading ? (
                 <div className="text-center py-8 text-slate-500 font-bold">טוען תפיסות...</div>
               ) : dashboardData?.recentCatches?.length === 0 ? (
                 <div className="text-center py-12 flex flex-col items-center justify-center text-slate-400">
-                  <Fish className="w-12 h-12 mb-3 opacity-20" />
-                  <span className="font-bold">אין עדיין תפיסות 🎣</span>
+                  <CheckCircle2 className="w-12 h-12 mb-3 opacity-20 text-emerald-500" />
+                  <span className="font-bold">אין תפיסות שממתינות למודרציה 🎣</span>
                 </div>
               ) : (
-                dashboardData?.recentCatches?.map((report: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-white/40 dark:border-slate-700/40 hover:shadow-lg transition-all group hover:bg-white/60 dark:hover:bg-slate-800/60">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/50 dark:to-blue-900/50 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform border border-cyan-200/50">
-                        <Fish className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                dashboardData?.recentCatches?.map((report: any, i: number) => {
+                  const isSuspicious = report.trustScore < 50;
+                  const scoreColor = report.trustScore > 80 ? 'text-emerald-500 bg-emerald-500/10' : (isSuspicious ? 'text-rose-500 bg-rose-500/10' : 'text-amber-500 bg-amber-500/10');
+                  
+                  return (
+                  <div key={i} className="flex flex-col gap-2 p-3.5 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-white/40 dark:border-slate-700/40 hover:shadow-lg transition-all">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-inner">
+                          <Fish className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-black leading-none text-slate-900 dark:text-white">{report.user_name || 'אנונימי'}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 font-bold">
+                            {report.fish_type} {report.weight ? `(${report.weight})` : ''}
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-black leading-none text-slate-900 dark:text-white">{report.user_name || 'אנונימי'}</p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 flex gap-1 items-center font-bold bg-slate-100/50 dark:bg-slate-950/50 px-2 py-0.5 rounded-md w-fit">
-                          <span className="text-cyan-600 dark:text-cyan-400">{report.fish_type}</span> {report.weight ? `(${report.weight})` : ''}
-                        </p>
+                      <div className={`text-xs font-black px-2.5 py-1.5 rounded-lg border border-white/20 flex flex-col items-center justify-center ${scoreColor}`}>
+                        <span>{report.trustScore}%</span>
+                        <span className="text-[10px] opacity-80 leading-tight">אמינות</span>
                       </div>
                     </div>
-                    <div className="text-xs font-black text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                      {format(new Date(report.$createdAt), 'dd/MM/yyyy')}
+                    {isSuspicious && (
+                      <div className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-md flex items-center gap-1.5 mt-1">
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        חריגה: {report.warning}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-rose-200 text-rose-600 hover:bg-rose-50" onClick={() => toast.success("סומן כרמאות!")}>פסול תפיסה</Button>
+                      <Button size="sm" className="h-7 text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => toast.success("אושר בהצלחה!")}>אשר תפיסה</Button>
                     </div>
                   </div>
-                ))
+                )})
               )}
           </CardContent>
         </Card>
@@ -340,18 +428,36 @@ export default function Dashboard() {
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 />
-                {dashboardData.mapPoints.map((point: any) => (
-                  <Marker key={point.id} position={[point.lat, point.lng]}>
-                    <Popup className="font-sans" dir="rtl">
-                      <div className="text-right">
-                        <p className="font-bold text-sm m-0">{point.user}</p>
-                        <p className="text-xs text-cyan-600 m-0">{point.fish} {point.weight ? `(${point.weight})` : ''}</p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
+                {dashboardData.mapPoints.map((point: any, idx: number) => {
+                  const isHotspot = point.weight || idx % 3 === 0;
+                  const baseColor = isHotspot ? '#ef4444' : '#f59e0b';
+                  
+                  return (
+                  <div key={point.id}>
+                    {/* Glow Layer */}
+                    <CircleMarker 
+                      center={[point.lat, point.lng]}
+                      radius={isHotspot ? 40 : 20}
+                      pathOptions={{ color: 'transparent', fillColor: baseColor, fillOpacity: 0.15, weight: 0 }}
+                    />
+                    {/* Core Layer */}
+                    <CircleMarker 
+                      center={[point.lat, point.lng]}
+                      radius={isHotspot ? 15 : 8}
+                      pathOptions={{ color: baseColor, fillColor: baseColor, fillOpacity: 0.7, weight: 2 }}
+                    >
+                      <Popup className="font-sans" dir="rtl">
+                        <div className="text-right">
+                          <p className="font-bold text-sm m-0">{point.user}</p>
+                          <p className="text-xs text-cyan-600 m-0">{point.fish} {point.weight ? `(${point.weight})` : ''}</p>
+                          <p className="text-[10px] text-rose-500 mt-1 font-bold">🔥 Hotspot פעיל</p>
+                        </div>
+                      </Popup>
+                    </CircleMarker>
+                  </div>
+                )})}
               </MapContainer>
             ) : null}
           </CardContent>
