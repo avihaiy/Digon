@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 import { CalendarDays } from "lucide-react";
+import { LiveCams } from "@/components/fishing/LiveCams";
 
 // Simulated Solunar logic based on current hour
 const getSolunarRating = () => {
@@ -38,6 +39,9 @@ export default function Forecast() {
           </p>
         </div>
       </div>
+
+      {/* Live Cams */}
+      <LiveCams />
 
       {/* Solunar Fishing Score */}
       <section className="px-4">
