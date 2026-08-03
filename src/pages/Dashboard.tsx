@@ -126,20 +126,20 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-10">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 dark:bg-slate-950/40 backdrop-blur-md p-6 rounded-2xl border border-white/50 dark:border-slate-800/50 shadow-lg">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-sm">
             לוח בקרה - דיגון 🎣
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-slate-700 dark:text-slate-300 mt-1 font-medium">
             ברוך הבא למערכת הניהול הראשי של אפליקציית דיג בישראל.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/admin/settings">
-            <Button className="gap-2 cursor-pointer bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 shadow-lg">
+            <Button className="gap-2 cursor-pointer bg-slate-900/90 text-white hover:bg-slate-800 dark:bg-white/90 dark:text-slate-900 shadow-xl backdrop-blur-md border border-white/20 transition-all hover:scale-105">
               <Users className="w-4 h-4" />
               הגדרות פאנל ניהול (מחיקות ואישורים)
             </Button>
@@ -150,20 +150,20 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, i) => (
-          <Card key={i} className="overflow-hidden border-border/50 shadow-sm transition-all hover:shadow-md bg-white dark:bg-slate-950">
+          <Card key={i} className="overflow-hidden border-white/40 dark:border-slate-800/40 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 bg-white/70 dark:bg-slate-950/70 backdrop-blur-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              <CardTitle className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 {stat.title}
               </CardTitle>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stat.bgColor}`}>
-                <stat.icon className={`w-4 h-4 ${stat.color}`} />
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-inner ${stat.bgColor}`}>
+                <stat.icon className={`w-5 h-5 ${stat.color}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-black text-slate-900 dark:text-white">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                <span className={stat.trend === 'up' ? 'text-emerald-500 flex items-center font-bold' : 'text-rose-500 flex items-center font-bold'}>
-                  {stat.trend === 'up' ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
+              <div className="text-3xl font-black text-slate-900 dark:text-white drop-shadow-sm">{stat.value}</div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 flex items-center gap-1 font-medium bg-white/50 dark:bg-black/20 w-fit px-2 py-1 rounded-md">
+                <span className={stat.trend === 'up' ? 'text-emerald-600 dark:text-emerald-400 flex items-center font-black' : 'text-rose-600 dark:text-rose-400 flex items-center font-black'}>
+                  {stat.trend === 'up' ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownRight className="w-3 h-3 mr-0.5" />}
                   {stat.change}
                 </span>
                 לעומת חודש שעבר
@@ -173,13 +173,13 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 border-border/50 shadow-sm bg-white dark:bg-slate-950">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4 border-white/40 dark:border-slate-800/40 shadow-xl bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle>תפיסות שאושרו (7 ימים אחרונים)</CardTitle>
-            <CardDescription>כמות דיווחי התפיסות המוצלחים מתוך הקהילה</CardDescription>
+            <CardTitle className="text-xl font-black">תפיסות שאושרו (7 ימים אחרונים)</CardTitle>
+            <CardDescription className="font-medium">כמות דיווחי התפיסות המוצלחים מתוך הקהילה</CardDescription>
           </CardHeader>
-          <CardContent className="h-72 w-full pt-4">
+          <CardContent className="h-80 w-full pt-4">
             {isLoading ? (
               <div className="w-full h-full flex items-center justify-center">
                 <div className="animate-spin w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full" />
@@ -189,52 +189,57 @@ export default function Dashboard() {
                 <AreaChart data={dashboardData.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorCatches" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" strokeOpacity={0.5} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#475569', fontWeight: 600 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#475569', fontWeight: 600 }} dx={-10} />
                   <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    itemStyle={{ color: '#06b6d4', fontWeight: 'bold' }}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)' }}
+                    itemStyle={{ color: '#0ea5e9', fontWeight: '900' }}
                   />
-                  <Area type="monotone" dataKey="catches" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorCatches)" />
+                  <Area type="monotone" dataKey="catches" stroke="#0ea5e9" strokeWidth={4} fillOpacity={1} fill="url(#colorCatches)" />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 border border-dashed rounded-lg">
-                <TrendingUp className="w-8 h-8 mb-2" />
-                <p>אין מספיק נתונים לגרף</p>
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50">
+                <TrendingUp className="w-10 h-10 mb-3 text-slate-300" />
+                <p className="font-bold">אין מספיק נתונים לגרף</p>
               </div>
             )}
           </CardContent>
         </Card>
         
-        <Card className="col-span-3 border-border/50 shadow-sm bg-white dark:bg-slate-950">
+        <Card className="col-span-3 border-white/40 dark:border-slate-800/40 shadow-xl bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl flex flex-col">
           <CardHeader>
-            <CardTitle>תפיסות אחרונות שדווחו</CardTitle>
-            <CardDescription>עדכונים בזמן אמת מהשטח</CardDescription>
+            <CardTitle className="text-xl font-black">תפיסות אחרונות שדווחו</CardTitle>
+            <CardDescription className="font-medium">עדכונים בזמן אמת מהשטח</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 overflow-y-auto pr-1">
               {isLoading ? (
-                <div className="text-center py-4 text-muted-foreground">טוען תפיסות...</div>
+                <div className="text-center py-8 text-slate-500 font-bold">טוען תפיסות...</div>
               ) : dashboardData?.recentCatches?.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground">אין עדיין תפיסות 🎣</div>
+                <div className="text-center py-12 flex flex-col items-center justify-center text-slate-400">
+                  <Fish className="w-12 h-12 mb-3 opacity-20" />
+                  <span className="font-bold">אין עדיין תפיסות 🎣</span>
+                </div>
               ) : (
                 dashboardData?.recentCatches?.map((report: any, i: number) => (
-                  <div key={i} className="flex items-center p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center mr-3 shrink-0">
-                      <Fish className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                  <div key={i} className="flex items-center justify-between p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/50 hover:shadow-md transition-all group hover:bg-white dark:hover:bg-slate-800">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-900/50 dark:to-blue-900/50 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform border border-cyan-200/50">
+                        <Fish className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black leading-none text-slate-900 dark:text-white">{report.user_name || 'אנונימי'}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 flex gap-1 items-center font-bold bg-slate-100/50 dark:bg-slate-950/50 px-2 py-0.5 rounded-md w-fit">
+                          <span className="text-cyan-600 dark:text-cyan-400">{report.fish_type}</span> {report.weight ? `(${report.weight})` : ''}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4 space-y-1">
-                      <p className="text-sm font-bold leading-none text-slate-900 dark:text-white">{report.user_name || 'אנונימי'}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 flex gap-1 items-center font-medium">
-                        <span className="text-cyan-600 dark:text-cyan-400">{report.fish_type}</span> {report.weight ? `(${report.weight})` : ''}
-                      </p>
-                    </div>
-                    <div className="mr-auto text-xs font-medium text-slate-400">
+                    <div className="text-xs font-black text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                       {format(new Date(report.$createdAt), 'dd/MM/yyyy')}
                     </div>
                   </div>
