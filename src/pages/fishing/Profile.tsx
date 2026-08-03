@@ -26,9 +26,12 @@ import { CatchSocial } from "@/components/fishing/CatchSocial";
 type Tab = 'gallery' | 'stats' | 'badges';
 
 export default function Profile() {
-  const { userId } = useParams();
+  const { userId: urlUserId } = useParams();
   const navigate = useNavigate();
   const { user: currentUser, updateProfileField } = useAuth();
+  
+  const userId = urlUserId || currentUser?.$id;
+  
   const { followers, following, followersCount, followingCount, isFollowing, toggleFollow, isToggling } = useFollowers(userId || "");
   const [selectedCatch, setSelectedCatch] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>('gallery');
@@ -132,7 +135,7 @@ export default function Profile() {
     }
   }
 
-  const isOwnProfile = currentUser?.$id === userId;
+  const isOwnProfile = !!currentUser && currentUser.$id === userId;
 
   const handleAvatarClick = () => {
     if (isOwnProfile) {
