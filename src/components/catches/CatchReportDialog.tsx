@@ -224,7 +224,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
             />
           </div>
 
-          {activeTournaments.length > 0 && (
+          {activeTournaments.filter(t => user && t.participants?.includes(user.$id)).length > 0 && (
             <div className="space-y-2 border border-yellow-500/30 bg-yellow-500/10 p-3 rounded-xl mt-4">
               <Label htmlFor="tournament" className="text-yellow-400 font-bold flex items-center gap-1">
                 <span>🏆</span> שיוך לתחרות (אופציונלי)
@@ -236,7 +236,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
                 className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm"
               >
                 <option value="">-- ללא תחרות --</option>
-                {activeTournaments.map(t => (
+                {activeTournaments.filter(t => user && t.participants?.includes(user.$id)).map(t => (
                   <option key={t.$id} value={t.$id}>{t.title}</option>
                 ))}
               </select>

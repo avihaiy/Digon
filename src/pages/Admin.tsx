@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_SETTINGS_ID, APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
+import { databases, storage, APPWRITE_CATCHES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID, APPWRITE_PROFILES_ID, APPWRITE_LOCATIONS_ID, APPWRITE_STORE_ITEMS_ID, APPWRITE_SETTINGS_ID, APPWRITE_NOTIFICATIONS_ID, APPWRITE_COMMENTS_ID } from "@/lib/appwrite";
 import { ID, Query, AppwriteException } from "appwrite";
 import { useAuth } from "@/hooks/useAuth";
 import { useTournaments } from "@/hooks/useTournaments";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil, BellRing, MessageSquareWarning } from "lucide-react";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -22,7 +22,7 @@ const LOCATIONS_ID = APPWRITE_LOCATIONS_ID;
 export default function Admin() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("users"); // users, locations, catches, raffles, store, settings, tournaments
+  const [activeTab, setActiveTab] = useState("home"); // home, users, locations, catches, ads, raffles, store, settings, tournaments, notifications, comments
   const { tournaments, createTournament, endTournament, deleteTournament } = useTournaments();
   const [newLocationName, setNewLocationName] = useState("");
   const [newStoreItem, setNewStoreItem] = useState({ name: "", description: "", cost: "", type: "title", value: "" });
@@ -102,6 +102,20 @@ export default function Admin() {
       } catch (e: any) {
         if (e.code === 404) return []; // Collection might not exist yet
         throw e;
+      }
+    },
+    enabled: !!user,
+  });
+
+  // Fetch Comments
+  const { data: commentsData, isLoading: commentsLoading } = useQuery({
+    queryKey: ["admin-comments"],
+    queryFn: async () => {
+      try {
+        const res = await databases.listDocuments(DB_ID, APPWRITE_COMMENTS_ID, [Query.orderDesc("$createdAt"), Query.limit(100)]);
+        return res.documents;
+      } catch (e) {
+        return [];
       }
     },
     enabled: !!user,
@@ -529,64 +543,70 @@ export default function Admin() {
     <div className="container mx-auto p-4 md:p-8 animate-fade-in" dir="rtl">
       <h1 className="text-3xl font-bold mb-8 text-foreground">פאנל ניהול - דיגון</h1>
 
-      <div className="flex space-x-4 space-x-reverse mb-8 overflow-x-auto pb-2">
-        <Button 
-          variant={activeTab === "users" ? "default" : "outline"} 
-          onClick={() => setActiveTab("users")}
-          className="flex gap-2 items-center"
-        >
-          <Users className="w-4 h-4" /> דייגים
-        </Button>
-        <Button 
-          variant={activeTab === "ads" ? "default" : "outline"} 
-          onClick={() => setActiveTab("ads")}
-          className="flex gap-2 items-center"
-        >
-          <LayoutList className="w-4 h-4" /> מודעות
-        </Button>
-        <Button 
-          variant={activeTab === "locations" ? "default" : "outline"} 
-          onClick={() => setActiveTab("locations")}
-          className="flex gap-2 items-center"
-        >
-          <MapPin className="w-4 h-4" /> מיקומי דייג
-        </Button>
-        <Button 
-          variant={activeTab === "catches" ? "default" : "outline"} 
-          onClick={() => setActiveTab("catches")}
-          className="flex gap-2 items-center"
-        >
-          <Camera className="w-4 h-4" /> תפיסות
-        </Button>
-        <Button 
-          variant={activeTab === "raffles" ? "default" : "outline"} 
-          onClick={() => setActiveTab("raffles")}
-          className="flex gap-2 items-center bg-rose-500/10 text-rose-600 border-rose-200 hover:bg-rose-500 hover:text-white"
-        >
-          <Ticket className="w-4 h-4" /> ניהול הגרלות
-        </Button>
-        <Button 
-          variant={activeTab === "store" ? "default" : "outline"} 
-          onClick={() => setActiveTab("store")}
-          className="flex gap-2 items-center bg-yellow-500/10 text-yellow-600 border-yellow-200 hover:bg-yellow-500 hover:text-white"
-        >
-          <StoreIcon className="w-4 h-4" /> ניהול חנות
-        </Button>
-        <Button 
-          variant={activeTab === "tournaments" ? "default" : "outline"} 
-          onClick={() => setActiveTab("tournaments")}
-          className="flex gap-2 items-center bg-orange-500/10 text-orange-600 border-orange-200 hover:bg-orange-500 hover:text-white"
-        >
-          <Trophy className="w-4 h-4" /> ניהול תחרויות
-        </Button>
-        <Button 
-          variant={activeTab === "settings" ? "default" : "outline"} 
-          onClick={() => setActiveTab("settings")}
-          className="flex gap-2 items-center bg-slate-500/10 text-slate-600 border-slate-200 hover:bg-slate-500 hover:text-white"
-        >
-          <Settings className="w-4 h-4" /> הגדרות אפליקציה
-        </Button>
-      </div>
+      {activeTab === "home" ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("users")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-blue-500/10 rounded-2xl"><Users className="w-8 h-8 text-blue-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">ניהול דייגים</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("ads")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-emerald-500/10 rounded-2xl"><LayoutList className="w-8 h-8 text-emerald-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">שוק וציוד</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("locations")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-red-500/10 rounded-2xl"><MapPin className="w-8 h-8 text-red-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">נקודות דייג</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("catches")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-cyan-500/10 rounded-2xl"><Camera className="w-8 h-8 text-cyan-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">תפיסות ואישורים</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("store")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-yellow-500/10 rounded-2xl"><StoreIcon className="w-8 h-8 text-yellow-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">חנות פרסים</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("tournaments")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-orange-500/10 rounded-2xl"><Trophy className="w-8 h-8 text-orange-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">ליגת דיגון</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("notifications")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-purple-500/10 rounded-2xl"><BellRing className="w-8 h-8 text-purple-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">התראות פוש</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("comments")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-rose-500/10 rounded-2xl"><MessageSquareWarning className="w-8 h-8 text-rose-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">פיקוח תגובות</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("settings")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-slate-500/10 rounded-2xl"><Settings className="w-8 h-8 text-slate-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">הגדרות מערכת</h3>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="mb-6">
+          <Button variant="ghost" onClick={() => setActiveTab("home")} className="mb-4 text-muted-foreground hover:text-foreground">
+            &larr; חזור לתפריט
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-6">
         {activeTab === "users" && (
@@ -996,14 +1016,27 @@ export default function Admin() {
                       <TableCell className="font-bold text-yellow-600">{item.cost} נק'</TableCell>
                       <TableCell>{item.type}</TableCell>
                       <TableCell>
-                        <Button 
-                          variant={item.is_active ? "default" : "outline"}
-                          size="sm"
-                          className={item.is_active ? "bg-green-500 hover:bg-green-600" : ""}
-                          onClick={() => toggleStoreItemMutation.mutate({ id: item.$id, isActive: !item.is_active })}
-                        >
-                          {item.is_active ? "פעיל - מוצג" : "כבוי - מוסתר"}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant={item.is_active ? "default" : "outline"}
+                            size="sm"
+                            className={item.is_active ? "bg-green-500 hover:bg-green-600" : ""}
+                            onClick={() => toggleStoreItemMutation.mutate({ id: item.$id, isActive: !item.is_active })}
+                          >
+                            {item.is_active ? "פעיל - מוצג" : "כבוי - מוסתר"}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if(window.confirm("האם אתה בטוח שברצונך למחוק מוצר זה?")) {
+                                deleteStoreItemMutation.mutate(item.$id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1198,16 +1231,20 @@ export default function Admin() {
           <CardContent className="space-y-6">
             <div className="bg-orange-500/5 border border-orange-500/20 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 space-y-2 w-full">
-                <label className="text-xs font-bold text-slate-500">כותרת התחרות (למשל: תחרות לוקוסים חורף 2026)</label>
+                <label className="text-xs font-bold text-slate-500">כותרת התחרות (למשל: תחרות לוקוסים)</label>
                 <Input id="new_tournament_title" placeholder="כותרת" />
               </div>
               <div className="flex-1 space-y-2 w-full">
-                <label className="text-xs font-bold text-slate-500">תיאור (למשל: תפסו את הלוקוס הכי גדול)</label>
+                <label className="text-xs font-bold text-slate-500">תיאור וכללים</label>
                 <Input id="new_tournament_desc" placeholder="תיאור התחרות" />
               </div>
               <div className="w-full md:w-32 space-y-2">
-                <label className="text-xs font-bold text-slate-500">פרס (נקודות)</label>
-                <Input id="new_tournament_prize" type="number" defaultValue="5000" />
+                <label className="text-xs font-bold text-slate-500">דמי הרשמה</label>
+                <Input id="new_tournament_entry" type="number" defaultValue="50" />
+              </div>
+              <div className="w-full md:w-32 space-y-2">
+                <label className="text-xs font-bold text-slate-500">קופה התחלתית</label>
+                <Input id="new_tournament_prize" type="number" defaultValue="1000" />
               </div>
               <div className="w-full md:w-40 space-y-2">
                 <label className="text-xs font-bold text-slate-500">תאריך סיום</label>
@@ -1216,14 +1253,22 @@ export default function Admin() {
               <Button onClick={() => {
                 const title = (document.getElementById('new_tournament_title') as HTMLInputElement).value;
                 const desc = (document.getElementById('new_tournament_desc') as HTMLInputElement).value;
+                const entry = parseInt((document.getElementById('new_tournament_entry') as HTMLInputElement).value) || 0;
                 const prize = parseInt((document.getElementById('new_tournament_prize') as HTMLInputElement).value) || 0;
                 const end = (document.getElementById('new_tournament_end') as HTMLInputElement).value;
-                if (!title || !end) {
-                  toast.error("חובה למלא כותרת ותאריך סיום");
+                if (!title || !end || !desc) {
+                  toast.error("חובה למלא כותרת, תיאור ותאריך סיום");
                   return;
                 }
                 createTournament({
-                  title, description: desc, prize_points: prize, start_date: new Date().toISOString(), end_date: new Date(end).toISOString(), is_active: true
+                  title, 
+                  description: desc, 
+                  entry_fee: entry,
+                  prize_pool: prize, 
+                  start_date: new Date().toISOString(), 
+                  end_date: new Date(end).toISOString(), 
+                  status: 'active',
+                  participants: []
                 });
                 (document.getElementById('new_tournament_title') as HTMLInputElement).value = "";
               }}>יצירת תחרות חדשה</Button>
@@ -1233,7 +1278,9 @@ export default function Admin() {
               <TableHeader>
                 <TableRow>
                   <TableHead>שם התחרות</TableHead>
-                  <TableHead>פרס</TableHead>
+                  <TableHead>הרשמה</TableHead>
+                  <TableHead>קופה</TableHead>
+                  <TableHead>משתתפים</TableHead>
                   <TableHead>סטטוס</TableHead>
                   <TableHead>פעולות</TableHead>
                 </TableRow>
@@ -1242,24 +1289,28 @@ export default function Admin() {
                 {tournaments.map((t) => (
                   <TableRow key={t.$id}>
                     <TableCell className="font-bold">{t.title}</TableCell>
-                    <TableCell>{t.prize_points} 🪙</TableCell>
+                    <TableCell>{t.entry_fee} 🪙</TableCell>
+                    <TableCell className="font-bold text-amber-600">{t.prize_pool} 🪙</TableCell>
+                    <TableCell>{t.participants?.length || 0}</TableCell>
                     <TableCell>
-                      {t.is_active ? (
+                      {t.status === 'active' ? (
                         <span className="bg-green-500/20 text-green-600 px-2 py-1 rounded-full text-xs font-bold">פעילה</span>
                       ) : (
-                        <span className="bg-slate-500/20 text-slate-600 px-2 py-1 rounded-full text-xs font-bold">הסתיימה</span>
+                        <span className="bg-slate-500/20 text-slate-600 px-2 py-1 rounded-full text-xs font-bold">
+                          {t.status === 'upcoming' ? 'בקרוב' : 'הסתיימה'}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2 items-center flex-wrap">
-                        {t.is_active && (
+                        {t.status === 'active' && (
                           <Button 
                             size="sm" 
                             variant="default" 
                             className="h-8 bg-amber-500 hover:bg-amber-600 text-black" 
                             onClick={async () => {
                               try {
-                                toast.loading("מחשב את המנצח...", { id: "calc-winner" });
+                                toast.loading("מחשב את המנצח (סך משקל)...", { id: "calc-winner" });
                                 
                                 // 1. Fetch all approved catches in timeframe
                                 const res = await databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [
@@ -1274,11 +1325,12 @@ export default function Admin() {
                                   return;
                                 }
 
-                                // 2. Parse weights and find max
-                                let maxWeight = -1;
-                                let winnerId = null;
-
+                                // 2. Parse weights and sum by user
+                                const userWeights: Record<string, number> = {};
                                 res.documents.forEach((catchDoc: any) => {
+                                  // Only count catches from users who actually participated
+                                  if (!t.participants?.includes(catchDoc.user_id)) return;
+
                                   let weightInGrams = 0;
                                   const weightStr = (catchDoc.weight || "").toLowerCase();
                                   
@@ -1291,20 +1343,27 @@ export default function Admin() {
                                       weightInGrams = val;
                                     }
                                   }
+                                  
+                                  userWeights[catchDoc.user_id] = (userWeights[catchDoc.user_id] || 0) + weightInGrams;
+                                });
 
-                                  if (weightInGrams > maxWeight) {
-                                    maxWeight = weightInGrams;
-                                    winnerId = catchDoc.user_id;
+                                let maxWeight = -1;
+                                let winnerId = null;
+                                
+                                Object.keys(userWeights).forEach(uid => {
+                                  if (userWeights[uid] > maxWeight) {
+                                    maxWeight = userWeights[uid];
+                                    winnerId = uid;
                                   }
                                 });
 
                                 if (!winnerId) {
-                                  toast.error("לא ניתן היה לחשב משקל תפיסות", { id: "calc-winner" });
+                                  toast.error("לא נמצאו תפיסות למשתתפים רשומים", { id: "calc-winner" });
                                   return;
                                 }
 
                                 // 3. Declare winner
-                                await endTournament({ tournamentId: t.$id, winnerId, prize: t.prize_points });
+                                await endTournament({ tournamentId: t.$id, winnerId, prize: t.prize_pool });
                                 toast.success(`נמצא מנצח! התחרות הסתיימה.`, { id: "calc-winner" });
                                 
                               } catch (e) {
@@ -1315,7 +1374,7 @@ export default function Admin() {
                             חישוב מנצח וסיום 🏆
                           </Button>
                         )}
-                        {!t.is_active && t.winner_user_id && (
+                        {t.status !== 'active' && t.winner_user_id && (
                           <span className="text-xs text-muted-foreground ml-4">מנצח: {t.winner_user_id}</span>
                         )}
                         <Button 
@@ -1336,6 +1395,82 @@ export default function Admin() {
                 ))}
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Notifications Tab */}
+      {activeTab === "notifications" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><BellRing className="w-5 h-5 text-purple-500"/> הודעות פוש למשתמשים</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-purple-500/5 border border-purple-500/20 p-6 rounded-xl space-y-4">
+              <div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white">שליחת התראה לקהילה</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                  ההתראה תופיע במרכז ההתראות באפליקציה (כפעמון אדום), 
+                  ותוכל לשמש למידע על תחרויות, אזהרות, או פניות אישיות.
+                </p>
+              </div>
+              
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">בחר נמען</label>
+                  <select id="global_push_recipient" className="w-full max-w-md bg-background border border-border rounded-md px-3 py-2 text-sm">
+                    <option value="all">לכל המשתמשים (גלובלי)</option>
+                    {usersData?.map(u => (
+                      <option key={u.$id} value={u.user_id}>
+                        {u.full_name || "אנונימי"} (מזהה: {u.user_id?.substring(0, 8)}...)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">כותרת ההתראה</label>
+                  <Input id="global_push_title" placeholder="למשל: תחרות חדשה באוויר! 🎉" className="max-w-md" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300">תוכן ההתראה</label>
+                  <Input id="global_push_message" placeholder="פירוט ההודעה שיופיע למשתמשים" className="max-w-md" />
+                </div>
+                <Button 
+                  className="bg-purple-600 hover:bg-purple-700 text-white mt-4"
+                  onClick={async () => {
+                    const recipient = (document.getElementById('global_push_recipient') as HTMLSelectElement).value;
+                    const title = (document.getElementById('global_push_title') as HTMLInputElement).value;
+                    const message = (document.getElementById('global_push_message') as HTMLInputElement).value;
+                    if (!title || !message) {
+                      toast.error("חובה להזין כותרת ותוכן");
+                      return;
+                    }
+                    
+                    toast.promise(
+                      databases.createDocument(DB_ID, APPWRITE_NOTIFICATIONS_ID, ID.unique(), {
+                        user_id: recipient,
+                        title,
+                        message,
+                        is_read: "false",
+                        type: recipient === "all" ? "global_push" : "personal_push"
+                      }),
+                      {
+                        loading: "שולח התראות...",
+                        success: () => {
+                          (document.getElementById('global_push_title') as HTMLInputElement).value = "";
+                          (document.getElementById('global_push_message') as HTMLInputElement).value = "";
+                          return recipient === "all" ? "ההתראה נשלחה לכולם בהצלחה!" : "התראה נשלחה למשתמש!";
+                        },
+                        error: "שגיאה בשליחת התראה"
+                      }
+                    );
+                  }}
+                >
+                  <BellRing className="w-4 h-4 mr-2 ml-1" />
+                  שלח התראה
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
