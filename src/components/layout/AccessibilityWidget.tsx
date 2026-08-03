@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Accessibility, Type, Eye, Link as LinkIcon, MinusCircle, Sun, FileText, X } from 'lucide-react';
+import { Accessibility, Type, Eye, Link as LinkIcon, MinusCircle, Sun, FileText, X, MousePointer2, Heading } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function AccessibilityWidget() {
@@ -12,6 +12,8 @@ export function AccessibilityWidget() {
     highlightLinks: false,
     monochrome: false,
     highContrast: false,
+    bigCursor: false,
+    highlightHeadings: false,
   });
 
   // Apply classes to document element based on settings
@@ -23,6 +25,8 @@ export function AccessibilityWidget() {
     settings.highlightLinks ? html.classList.add('a11y-highlight-links') : html.classList.remove('a11y-highlight-links');
     settings.monochrome ? html.classList.add('a11y-monochrome') : html.classList.remove('a11y-monochrome');
     settings.highContrast ? html.classList.add('a11y-high-contrast') : html.classList.remove('a11y-high-contrast');
+    settings.bigCursor ? html.classList.add('a11y-big-cursor') : html.classList.remove('a11y-big-cursor');
+    settings.highlightHeadings ? html.classList.add('a11y-highlight-headings') : html.classList.remove('a11y-highlight-headings');
 
   }, [settings]);
 
@@ -37,6 +41,8 @@ export function AccessibilityWidget() {
       highlightLinks: false,
       monochrome: false,
       highContrast: false,
+      bigCursor: false,
+      highlightHeadings: false,
     });
   };
 
@@ -106,6 +112,24 @@ export function AccessibilityWidget() {
                   >
                     <Sun className="w-5 h-5" />
                     ניגודיות גבוהה
+                  </Button>
+
+                  <Button 
+                    variant={settings.bigCursor ? "default" : "outline"}
+                    className="w-full justify-start gap-3 h-12"
+                    onClick={() => toggleSetting('bigCursor')}
+                  >
+                    <MousePointer2 className="w-5 h-5" />
+                    סמן עכבר גדול
+                  </Button>
+
+                  <Button 
+                    variant={settings.highlightHeadings ? "default" : "outline"}
+                    className="w-full justify-start gap-3 h-12"
+                    onClick={() => toggleSetting('highlightHeadings')}
+                  >
+                    <Heading className="w-5 h-5" />
+                    הדגשת כותרות
                   </Button>
                   
                   <div className="pt-2 mt-2 border-t border-border">
