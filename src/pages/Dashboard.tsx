@@ -314,6 +314,8 @@ export default function Dashboard() {
               )}
           </CardContent>
         </Card>
+      </div>
+
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
         <Card className="col-span-1 lg:col-span-4 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl flex flex-col h-[400px]">
           <CardHeader>
