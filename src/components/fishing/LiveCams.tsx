@@ -52,9 +52,10 @@ const CAMS = [
     id: 'cam5',
     name: 'מצלמת חוף - נקודה חדשה',
     location: 'Israel',
-    url: 'https://www.ipcamlive.com/player/player.php?alias=65f00024400d7',
+    url: 'https://www.ipcamlive.com/65f00024400d7',
     thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=400&h=250',
-    status: 'LIVE'
+    status: 'LIVE',
+    external: true
   }
 ];
 
@@ -77,7 +78,11 @@ export function LiveCams() {
             className="snap-center shrink-0 w-64 cursor-pointer"
             onClick={() => {
               if (cam.status === 'LIVE') {
-                setSelectedCam(cam);
+                if ((cam as any).external) {
+                  window.open(cam.url, '_blank');
+                } else {
+                  setSelectedCam(cam);
+                }
               }
             }}
           >
