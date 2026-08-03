@@ -7,7 +7,7 @@ import { BadgeIcon } from "@/components/fishing/BadgeIcon";
 import { getImageUrl } from "@/hooks/useCatches";
 import { 
   ArrowRight, Trophy, Fish, Star, MapPin, Scale, 
-  UserPlus, Check, Users, MessageCircle, Camera, Calendar, Grid, BarChart3, Medal, ExternalLink
+  UserPlus, Check, Users, MessageCircle, Camera, Calendar, Grid, BarChart3, Medal, ExternalLink, Activity
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollowers } from "@/hooks/useFollowers";
