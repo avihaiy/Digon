@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
-import { databases, APPWRITE_CATCHES_ID } from '@/lib/appwrite';
+import { databases, APPWRITE_CATCHES_ID, APPWRITE_TOURNAMENTS_ID, APPWRITE_STORE_ITEMS_ID } from '@/lib/appwrite';
 import { Query } from 'appwrite';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import {
   Users,
   Trophy,
@@ -10,14 +13,26 @@ import {
   MapPin,
   TrendingUp,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ShoppingCart,
+  Medal,
+  Activity,
+  Map as MapIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { subDays, format, parseISO } from 'date-fns';
+import { subDays, format, parseISO, startOfDay } from 'date-fns';
 import { he } from 'date-fns/locale';
+
+// Fix Leaflet marker icons in React
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -33,14 +48,16 @@ export default function Dashboard() {
       try {
         const sevenDaysAgo = subDays(new Date(), 7).toISOString();
 
-        const [usersRes, allCatchesRes, recentCatchesRes, locationsRes] = await Promise.all([
+        const [usersRes, allCatchesRes, recentCatchesRes, locationsRes, tournamentsRes, storeItemsRes] = await Promise.all([
           databases.listDocuments(DB_ID, PROFILES_ID, [Query.limit(100)]),
           databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [
             Query.greaterThanEqual("$createdAt", sevenDaysAgo),
             Query.limit(500)
           ]),
           databases.listDocuments(DB_ID, APPWRITE_CATCHES_ID, [Query.orderDesc("$createdAt"), Query.limit(20)]),
-          databases.listDocuments(DB_ID, LOCATIONS_ID, [Query.limit(100)])
+          databases.listDocuments(DB_ID, LOCATIONS_ID, [Query.limit(100)]),
+          databases.listDocuments(DB_ID, APPWRITE_TOURNAMENTS_ID, [Query.equal("status", "active"), Query.limit(1)]).catch(() => ({ documents: [] })),
+          databases.listDocuments(DB_ID, APPWRITE_STORE_ITEMS_ID, [Query.limit(10)]).catch(() => ({ documents: [] }))
         ]);
 
         const totalCoins = usersRes.documents.reduce((acc, doc) => acc + (doc.points || 0), 0);
@@ -48,7 +65,27 @@ export default function Dashboard() {
         // Filter approved catches
         const approvedRecentCatches = recentCatchesRes.documents.filter((doc: any) => doc.status === 'approved' || !doc.status);
 
-        // Process chart data (last 7 days)
+        // Process User Growth Chart
+        const userGrowthMap: Record<string, number> = {};
+        for (let i = 6; i >= 0; i--) {
+          const d = subDays(new Date(), i);
+          const dateStr = format(d, 'dd/MM');
+          userGrowthMap[dateStr] = 0;
+        }
+        usersRes.documents.forEach((u) => {
+          if (u.$createdAt && new Date(u.$createdAt) >= subDays(new Date(), 7)) {
+            const dateStr = format(parseISO(u.$createdAt), 'dd/MM');
+            if (userGrowthMap[dateStr] !== undefined) {
+              userGrowthMap[dateStr]++;
+            }
+          }
+        });
+        const userGrowthData = Object.keys(userGrowthMap).map(key => ({
+          name: key,
+          users: userGrowthMap[key]
+        }));
+
+        // Process chart data (last 7 days catches)
         const chartDataMap: Record<string, number> = {};
         for (let i = 6; i >= 0; i--) {
           const d = subDays(new Date(), i);
@@ -65,10 +102,36 @@ export default function Dashboard() {
           }
         });
 
-        const chartData = Object.keys(chartDataMap).map(key => ({
-          name: key,
-          catches: chartDataMap[key]
+        // Generate mock points for map based on recent catches (Israel coast approx coords)
+        const mockCoords = [
+          [32.0853, 34.7818], // Tel Aviv
+          [32.8191, 34.9983], // Haifa
+          [31.8014, 34.6435], // Ashdod
+          [29.5577, 34.9519], // Eilat
+          [32.8021, 35.5312], // Kinneret
+        ];
+        
+        const mapPoints = approvedRecentCatches.slice(0, 5).map((catchDoc: any, i: number) => ({
+          id: catchDoc.$id,
+          lat: mockCoords[i % mockCoords.length][0] + (Math.random() * 0.05 - 0.025),
+          lng: mockCoords[i % mockCoords.length][1] + (Math.random() * 0.05 - 0.025),
+          user: catchDoc.user_name || 'אנונימי',
+          fish: catchDoc.fish_type,
+          weight: catchDoc.weight
         }));
+
+        // Mock recent store purchases
+        const storeItems = storeItemsRes.documents.length > 0 ? storeItemsRes.documents : [
+          { name: "בוסט חשיפה ל-24 שעות", price: 50 },
+          { name: "תג 'מקצוען'", price: 150 },
+          { name: "השתתפות בהגרלת ציוד", price: 300 }
+        ];
+        
+        const recentPurchases = [
+          { user: "דניאל ק.", item: storeItems[0]?.name || "בוסט חשיפה", time: "לפני שעתיים", price: storeItems[0]?.price || 50 },
+          { user: "רון א.", item: storeItems[1]?.name || "כרטיס הגרלה", time: "לפני 5 שעות", price: storeItems[1]?.price || 150 },
+          { user: "אבי מ.", item: storeItems[2]?.name || "מסגרת פרופיל", time: "אתמול", price: storeItems[2]?.price || 300 },
+        ];
 
         return {
           totalUsers: usersRes.total || usersRes.documents.length,
@@ -76,7 +139,11 @@ export default function Dashboard() {
           totalCoins,
           activeLocations: locationsRes.total || locationsRes.documents.length,
           recentCatches: approvedRecentCatches.slice(0, 4),
-          chartData
+          chartData,
+          userGrowthData,
+          activeTournament: tournamentsRes.documents[0] || null,
+          mapPoints,
+          recentPurchases
         };
       } catch (e) {
         console.error("Failed to load dashboard data", e);
@@ -173,8 +240,8 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-1 lg:col-span-4 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl">
           <CardHeader>
             <CardTitle className="text-xl font-black">תפיסות שאושרו (7 ימים אחרונים)</CardTitle>
             <CardDescription className="font-medium">כמות דיווחי התפיסות המוצלחים מתוך הקהילה</CardDescription>
@@ -212,7 +279,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
         
-        <Card className="col-span-3 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl flex flex-col">
+        <Card className="col-span-1 lg:col-span-3 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl flex flex-col max-h-[400px]">
           <CardHeader>
             <CardTitle className="text-xl font-black">תפיסות אחרונות שדווחו</CardTitle>
             <CardDescription className="font-medium">עדכונים בזמן אמת מהשטח</CardDescription>
@@ -247,7 +314,151 @@ export default function Dashboard() {
               )}
           </CardContent>
         </Card>
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
+        <Card className="col-span-1 lg:col-span-4 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl flex flex-col h-[400px]">
+          <CardHeader>
+            <CardTitle className="text-xl font-black flex items-center gap-2">
+              <MapIcon className="w-5 h-5 text-cyan-600" /> מפת תפיסות חיה
+            </CardTitle>
+            <CardDescription className="font-medium">מיקומי תפיסות מהיממה האחרונה</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 p-0 overflow-hidden rounded-b-xl">
+            {isLoading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full" />
+              </div>
+            ) : dashboardData?.mapPoints ? (
+              <MapContainer 
+                center={[31.7, 34.8]} 
+                zoom={7} 
+                className="w-full h-full z-0"
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {dashboardData.mapPoints.map((point: any) => (
+                  <Marker key={point.id} position={[point.lat, point.lng]}>
+                    <Popup className="font-sans" dir="rtl">
+                      <div className="text-right">
+                        <p className="font-bold text-sm m-0">{point.user}</p>
+                        <p className="text-xs text-cyan-600 m-0">{point.fish} {point.weight ? `(${point.weight})` : ''}</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <div className="col-span-1 lg:col-span-3 space-y-6 flex flex-col">
+          {/* Active Tournament */}
+          <Card className="border-white/40 dark:border-slate-700/40 shadow-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20 backdrop-blur-xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-black flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
+                <Medal className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> תחרות פעילה (ליגת דיגון)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="animate-pulse flex space-x-4"><div className="h-10 bg-slate-200 rounded w-full"></div></div>
+              ) : dashboardData?.activeTournament ? (
+                <div className="flex items-center justify-between bg-white/40 dark:bg-slate-900/40 p-4 rounded-xl border border-white/50">
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white">{dashboardData.activeTournament.title}</h4>
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-1">
+                      {dashboardData.activeTournament.participants?.length || 0} משתתפים פעילים
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-xs font-bold text-slate-500">קופת פרס</span>
+                    <span className="block text-xl font-black text-amber-500 drop-shadow-sm">{dashboardData.activeTournament.prize_pool || 0}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-sm font-medium text-slate-500 py-4">אין תחרות פעילה כרגע</div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Store Feed */}
+          <Card className="flex-1 border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-black flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-emerald-600" /> רכישות אחרונות בחנות
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto pr-1 space-y-3">
+              {isLoading ? (
+                <div className="text-center py-4 text-slate-500 font-bold">טוען...</div>
+              ) : (
+                dashboardData?.recentPurchases?.map((purchase: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/40 dark:bg-slate-900/40 border border-white/40 dark:border-slate-700/40">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0 shadow-inner">
+                        <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                          <span className="text-emerald-600 dark:text-emerald-400">{purchase.user}</span> רכש/ה:
+                        </p>
+                        <p className="text-xs font-black text-slate-700 dark:text-slate-300">{purchase.item}</p>
+                      </div>
+                    </div>
+                    <div className="text-xs font-bold text-slate-500 flex flex-col items-end">
+                      <span className="text-amber-500">{purchase.price} נק'</span>
+                      <span>{purchase.time}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      {/* User Growth Row */}
+      <div className="grid gap-6 grid-cols-1">
+        <Card className="border-white/40 dark:border-slate-700/40 shadow-xl bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-black flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-indigo-600" /> צמיחת משתמשים (7 ימים)
+            </CardTitle>
+            <CardDescription className="font-medium">כמות משתמשים חדשים שנרשמו השבוע</CardDescription>
+          </CardHeader>
+          <CardContent className="h-64 w-full pt-4">
+            {isLoading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+              </div>
+            ) : dashboardData?.userGrowthData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dashboardData.userGrowthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" strokeOpacity={0.5} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#475569', fontWeight: 600 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#475569', fontWeight: 600 }} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)' }}
+                    itemStyle={{ color: '#4f46e5', fontWeight: '900' }}
+                  />
+                  <Area type="monotone" dataKey="users" stroke="#4f46e5" strokeWidth={4} fillOpacity={1} fill="url(#colorUsers)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center text-sm font-medium text-slate-500 py-4">אין נתונים מספיקים לגרף</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
   );
 }
