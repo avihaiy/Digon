@@ -36,8 +36,16 @@ const CAMS = [
     id: 'cam4',
     name: 'אילת - החוף הצפוני',
     location: 'Eilat',
-    url: 'https://www.youtube.com/embed/P6IGK6Fq_8U?autoplay=1&mute=1', // Placeholder ID
+    url: 'https://www.youtube.com/embed/P6IGK6Fq_8U?autoplay=1&mute=1',
     thumbnail: 'https://images.unsplash.com/photo-1582298284594-e3c3b5860368?auto=format&fit=crop&q=80&w=400&h=250',
+    status: 'LIVE'
+  },
+  {
+    id: 'beachcam',
+    name: 'כל המצלמות - BeachCam.co.il',
+    location: 'Israel',
+    url: 'https://beachcam.co.il/list.html',
+    thumbnail: '/fishing_sunset_bg.jpg', // Using app background as placeholder
     status: 'LIVE'
   }
 ];
