@@ -1,1 +1,84 @@
-import { Client, Databases, Permission, Role } from 'node-appwrite'; import dotenv from 'dotenv'; dotenv.config(); const client = new Client().setEndpoint(process.env.VITE_APPWRITE_ENDPOINT).setProject(process.env.VITE_APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY); const databases = new Databases(client); const DB_ID = process.env.VITE_APPWRITE_DATABASE_ID; const COLLECTION_ID = 'purchases'; async function setupPurchases() { console.log('Setting up purchases collection...'); try { try { await databases.getCollection(DB_ID, COLLECTION_ID); console.log('Collection already exists.'); } catch (e) { console.log('Creating collection...'); await databases.createCollection(DB_ID, COLLECTION_ID, 'Purchases', [Permission.read(Role.any()), Permission.create(Role.users()), Permission.update(Role.users()), Permission.delete(Role.users())]); console.log('Collection created.'); } console.log('Creating attributes...'); const attributes = [{ key: 'user_name', type: 'string', size: 100, required: true }, { key: 'item_name', type: 'string', size: 100, required: true }, { key: 'price', type: 'integer', required: true, default: 0 }]; for (const attr of attributes) { try { if (attr.type === 'string') { await databases.createStringAttribute(DB_ID, COLLECTION_ID, attr.key, attr.size, attr.required, attr.default); } else if (attr.type === 'integer') { await databases.createIntegerAttribute(DB_ID, COLLECTION_ID, attr.key, attr.required, attr.default === undefined ? 0 : attr.default, attr.default !== undefined); } console.log(\Attribute \ created.\); } catch (e) { if (e.message.includes('already exists')) { console.log(\Attribute \ already exists.\); } else { console.error(\Error creating attribute \:\, e.message); } } } console.log('Wait for attributes to be ready before creating index...'); await new Promise(resolve => setTimeout(resolve, 3000)); try { await databases.createIndex(DB_ID, COLLECTION_ID, 'createdAt_desc', 'key', ['$createdAt'], ['DESC']); console.log('Index created.'); } catch(e) { if (e.message.includes('already exists')) { console.log('Index already exists.'); } else { console.error('Error creating index:', e.message); } } console.log('Purchases setup complete!'); } catch (e) { console.error('Setup failed:', e); } } setupPurchases();
+import { Client, Databases, Permission, Role } from 'node-appwrite';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const client = new Client()
+    .setEndpoint(process.env.VITE_APPWRITE_ENDPOINT)
+    .setProject(process.env.VITE_APPWRITE_PROJECT_ID)
+    .setKey(process.env.APPWRITE_API_KEY);
+
+const databases = new Databases(client);
+
+const DB_ID = process.env.VITE_APPWRITE_DATABASE_ID;
+const COLLECTION_ID = 'purchases';
+
+async function setupPurchases() {
+    console.log('Setting up purchases collection...');
+    
+    try {
+        // Create collection if it doesn't exist
+        try {
+            await databases.getCollection(DB_ID, COLLECTION_ID);
+            console.log('Collection already exists.');
+        } catch (e) {
+            console.log('Creating collection...');
+            await databases.createCollection(
+                DB_ID, 
+                COLLECTION_ID, 
+                'Purchases',
+                [
+                    Permission.read(Role.any()),
+                    Permission.create(Role.users()),
+                    Permission.update(Role.users()),
+                    Permission.delete(Role.users())
+                ]
+            );
+            console.log('Collection created.');
+        }
+
+        console.log('Creating attributes...');
+        // Create attributes
+        const attributes = [
+            { key: 'user_name', type: 'string', size: 100, required: true },
+            { key: 'item_name', type: 'string', size: 100, required: true },
+            { key: 'price', type: 'integer', required: true, default: 0 }
+        ];
+
+        for (const attr of attributes) {
+            try {
+                if (attr.type === 'string') {
+                    await databases.createStringAttribute(DB_ID, COLLECTION_ID, attr.key, attr.size, attr.required, attr.default);
+                } else if (attr.type === 'integer') {
+                    await databases.createIntegerAttribute(DB_ID, COLLECTION_ID, attr.key, attr.required, attr.default === undefined ? 0 : attr.default, attr.default !== undefined);
+                }
+                console.log(`Attribute ${attr.key} created.`);
+            } catch (e) {
+                if (e.message.includes('already exists')) {
+                    console.log(`Attribute ${attr.key} already exists.`);
+                } else {
+                    console.error(`Error creating attribute ${attr.key}:`, e.message);
+                }
+            }
+        }
+        
+        console.log('Wait for attributes to be ready before creating index...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        try {
+            await databases.createIndex(DB_ID, COLLECTION_ID, 'createdAt_desc', 'key', ['$createdAt'], ['DESC']);
+            console.log('Index created.');
+        } catch(e) {
+            if (e.message.includes('already exists')) {
+                console.log('Index already exists.');
+            } else {
+                console.error('Error creating index:', e.message);
+            }
+        }
+
+        console.log('Purchases setup complete!');
+    } catch (e) {
+        console.error('Setup failed:', e);
+    }
+}
+
+setupPurchases();
