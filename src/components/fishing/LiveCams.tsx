@@ -47,6 +47,14 @@ const CAMS = [
     url: 'https://beachcam.co.il/list.html',
     thumbnail: '/fishing_sunset_bg.jpg', // Using app background as placeholder
     status: 'LIVE'
+  },
+  {
+    id: 'cam5',
+    name: 'מצלמת חוף - נקודה חדשה',
+    location: 'Israel',
+    url: 'https://www.ipcamlive.com/player/player.php?alias=65f00024400d7',
+    thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=400&h=250',
+    status: 'LIVE'
   }
 ];
 
@@ -120,9 +128,9 @@ export function LiveCams() {
 
       {/* Video Modal */}
       <Dialog open={!!selectedCam} onOpenChange={(open) => !open && setSelectedCam(null)}>
-        <DialogContent className="max-w-4xl w-[95vw] p-0 bg-black border-slate-800 rounded-3xl overflow-hidden shadow-2xl [&>button]:hidden">
+        <DialogContent className="max-w-4xl w-[95vw] h-[80vh] md:h-auto p-0 bg-black border-slate-800 rounded-3xl overflow-hidden shadow-2xl [&>button]:hidden flex flex-col">
           {selectedCam && (
-            <div className="flex flex-col h-full relative">
+            <div className="flex flex-col flex-1 h-full relative">
               {/* Header */}
               <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent z-10 flex justify-between items-center pointer-events-none">
                 <div className="flex items-center gap-2 text-white pointer-events-auto">
@@ -137,8 +145,8 @@ export function LiveCams() {
                 </button>
               </div>
 
-              {/* Video Player (16:9 Aspect Ratio Container) */}
-              <div className="relative w-full pb-[56.25%] bg-black">
+              {/* Video Player / iframe container (Responsive) */}
+              <div className="relative w-full flex-1 min-h-[50vh] bg-black">
                 <iframe
                   src={selectedCam.url}
                   title={selectedCam.name}
