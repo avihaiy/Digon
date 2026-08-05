@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { Heart, MessageCircle, Share2, MoreVertical, MapPin, Music } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 // Dummy data for Reels (using reliable URLs)
 const INITIAL_REELS_DATA = [
@@ -260,9 +262,49 @@ function ReelItem({ reel, isActive }: { reel: any, isActive: boolean }) {
           <span className="text-white text-xs font-bold drop-shadow-md">שתף</span>
         </div>
 
-        <button className="w-10 h-10 flex items-center justify-center mt-2">
-          <MoreVertical className="w-6 h-6 text-white drop-shadow-md" />
-        </button>
+        <Drawer>
+          <DrawerTrigger asChild>
+            <button className="w-10 h-10 flex items-center justify-center mt-2 transition-transform active:scale-90">
+              <MoreVertical className="w-6 h-6 text-white drop-shadow-md" />
+            </button>
+          </DrawerTrigger>
+          <DrawerContent className="bg-black/95 text-white border-white/10">
+            <DrawerHeader className="border-b border-white/10 pb-4">
+              <DrawerTitle className="text-center text-white">אפשרויות</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex flex-col p-4 gap-2 pb-8">
+              <button 
+                onClick={() => toast.success("הקישור הועתק ללוח!")}
+                className="flex items-center gap-4 w-full p-4 hover:bg-white/10 rounded-xl transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <span className="font-medium text-base text-right flex-1" dir="rtl">העתק קישור</span>
+              </button>
+              
+              <button 
+                onClick={() => toast.success("הסרטון נשמר במועדפים!")}
+                className="flex items-center gap-4 w-full p-4 hover:bg-white/10 rounded-xl transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                  <Heart className="w-5 h-5" />
+                </div>
+                <span className="font-medium text-base text-right flex-1" dir="rtl">שמור סרטון</span>
+              </button>
+
+              <button 
+                onClick={() => toast.success("תודה על הדיווח, הנושא ייבדק.")}
+                className="flex items-center gap-4 w-full p-4 hover:bg-rose-500/10 rounded-xl transition-colors text-rose-500"
+              >
+                <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center">
+                  <span className="text-lg">!</span>
+                </div>
+                <span className="font-bold text-base text-right flex-1" dir="rtl">דיווח על התוכן</span>
+              </button>
+            </div>
+          </DrawerContent>
+        </Drawer>
       </div>
 
       {/* Bottom Info */}
