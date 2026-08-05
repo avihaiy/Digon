@@ -36,7 +36,7 @@ export function useReels() {
       const response = await databases.listDocuments(
         APPWRITE_DB_ID,
         APPWRITE_REELS_ID,
-        [Query.orderDesc('$createdAt'), Query.limit(20)]
+        [Query.limit(20)]
       );
       
       const formattedReels = response.documents.map(doc => ({
