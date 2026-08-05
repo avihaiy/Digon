@@ -22,30 +22,6 @@ import {
   LogOut,
   Menu,
   X, Home, Compass, MessageCircle, MapPin, Search, RefreshCw, Settings2,
-import { ReactNode, useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
-import { APP_CONFIG } from '@/config/app';
-import { Button } from '@/components/ui/button';
-import { NotificationsPanel } from '@/components/notifications/NotificationsPanel';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from '@/components/ui/badge';
-import { 
-  Users,
-  BarChart3,
-  Settings,
-  LogOut,
-  Menu,
-  X, Home, Compass, MessageCircle, MapPin, Search, RefreshCw, Settings2,
   ShoppingCart, Droplets, Fish, Trophy, Activity, Download, PlaySquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
