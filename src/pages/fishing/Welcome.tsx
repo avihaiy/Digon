@@ -99,7 +99,10 @@ export default function Welcome() {
               <div className="flex-[0_0_100%] min-w-0 px-8 text-center" key={index}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  animate={{ 
+                    opacity: selectedIndex === index ? 1 : 0.5, 
+                    scale: selectedIndex === index ? 1 : 0.9 
+                  }}
                   transition={{ duration: 0.5 }}
                   className={`bg-gradient-to-b ${slide.color} border border-white/10 p-8 rounded-[3rem] shadow-2xl backdrop-blur-xl`}
                 >
