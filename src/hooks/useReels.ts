@@ -120,12 +120,14 @@ export function useReels() {
       await databases.deleteDocument(APPWRITE_DB_ID, APPWRITE_REELS_ID, reelId);
       
       // 2. Try to delete the actual video file from storage
-      const fileIdMatch = videoUrl.match(/\/files\/([a-zA-Z0-9]+)\/view/);
-      if (fileIdMatch && fileIdMatch[1]) {
-        try {
-          await storage.deleteFile(APPWRITE_REELS_BUCKET_ID, fileIdMatch[1]);
-        } catch (e) {
-          console.error("Failed to delete video file, it might have already been deleted", e);
+      if (videoUrl && typeof videoUrl === 'string') {
+        const fileIdMatch = videoUrl.match(/\/files\/([a-zA-Z0-9]+)\/view/);
+        if (fileIdMatch && fileIdMatch[1]) {
+          try {
+            await storage.deleteFile(APPWRITE_REELS_BUCKET_ID, fileIdMatch[1]);
+          } catch (e) {
+            console.error("Failed to delete video file, it might have already been deleted", e);
+          }
         }
       }
       

@@ -311,9 +311,13 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
                 <button 
                   onClick={async () => {
                     const toastId = toast.loading("מוחק סרטון...");
-                    if (onDelete && await onDelete(reel.id || reel.$id, reel.videoUrl)) {
-                      toast.success("הסרטון נמחק בהצלחה", { id: toastId });
-                    } else {
+                    try {
+                      if (onDelete && await onDelete(reel.id || reel.$id, reel.videoUrl)) {
+                        toast.success("הסרטון נמחק בהצלחה", { id: toastId });
+                      } else {
+                        toast.error("לא ניתן למחוק את הסרטון", { id: toastId });
+                      }
+                    } catch (err) {
                       toast.error("שגיאה במחיקת הסרטון", { id: toastId });
                     }
                   }}
