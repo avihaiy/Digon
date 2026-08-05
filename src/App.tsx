@@ -36,6 +36,7 @@ import Tournaments from "@/pages/fishing/Tournaments";
 import TournamentView from "@/pages/fishing/TournamentView";
 import Messages from "@/pages/fishing/Messages";
 import SearchUsers from "@/pages/fishing/Search";
+import SecretAnalyzer from "@/pages/fishing/SecretAnalyzer";
 
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { OfflineSyncManager } from "@/hooks/useOfflineSync";
@@ -123,6 +124,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/tackle-box" element={<ProtectedRoute><PageTransition><TackleBox /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/store" element={<ProtectedRoute><PageTransition><Store /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/analytics" element={<ProtectedRoute><PageTransition><Analytics /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/secret-analyzer" element={<ProtectedRoute><PageTransition><SecretAnalyzer /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/leaderboard" element={<ProtectedRoute><PageTransition><Leaderboard /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/profile/:userId" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/profile" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />

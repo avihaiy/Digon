@@ -7,7 +7,7 @@ import { BadgeIcon } from "@/components/fishing/BadgeIcon";
 import { getImageUrl } from "@/hooks/useCatches";
 import { 
   ArrowRight, Trophy, Fish, Star, MapPin, Scale, 
-  UserPlus, Check, Users, MessageCircle, Camera, Calendar, Grid, BarChart3, Medal, ExternalLink, Activity, Info, Anchor, Edit3
+  UserPlus, Check, Users, MessageCircle, Camera, Calendar, Grid, BarChart3, Medal, ExternalLink, Activity, Info, Anchor, Edit3, Radar
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollowers } from "@/hooks/useFollowers";
@@ -455,6 +455,25 @@ export default function Profile() {
               transition={{ duration: 0.2 }}
               className="p-4 space-y-3"
             >
+              {/* Secret Analyzer Button (Only for own profile) */}
+              {isOwnProfile && (
+                <div 
+                  onClick={() => navigate('/fishing/secret-analyzer')}
+                  className="bg-slate-900 border border-emerald-500/30 p-4 rounded-3xl cursor-pointer hover:bg-slate-800 transition-colors flex items-center justify-between mb-4 shadow-lg shadow-emerald-500/10"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/50 text-emerald-400">
+                      <Radar className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-black text-sm flex items-center gap-2">מנתח סודי <span className="text-[9px] bg-emerald-500 text-black px-1.5 py-0.5 rounded font-mono">AI</span></h3>
+                      <p className="text-xs text-slate-400">נתח את היומן הפרטי שלך</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-emerald-500" />
+                </div>
+              )}
+              
               {/* Bio Section */}
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm relative">
                 {isOwnProfile && !isEditingBio && (
