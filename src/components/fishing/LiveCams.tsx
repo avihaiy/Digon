@@ -8,49 +8,26 @@ import { motion } from "framer-motion";
 // You can easily update these YouTube video IDs or iframe URLs
 const CAMS = [
   {
-    id: 'cam1',
-    name: 'תל אביב - חוף גורדון',
-    location: 'Tel Aviv',
-    // Using a sample YouTube embed. To use a specific video, replace with its ID
-    url: 'https://www.youtube.com/embed/5a8RjUf6rG4?autoplay=1&mute=1',
-    thumbnail: 'https://images.unsplash.com/photo-1544237517-578ceb8cb36b?auto=format&fit=crop&q=80&w=400&h=250',
-    status: 'LIVE'
-  },
-  {
-    id: 'cam2',
-    name: 'חיפה - בת גלים',
-    location: 'Haifa',
-    url: 'https://www.youtube.com/embed/P6IGK6Fq_8U?autoplay=1&mute=1', // Placeholder ID
-    thumbnail: 'https://images.unsplash.com/photo-1596484552993-9c869fb8cefc?auto=format&fit=crop&q=80&w=400&h=250',
-    status: 'LIVE'
-  },
-  {
-    id: 'cam3',
-    name: 'אשדוד - הקשתות',
-    location: 'Ashdod',
-    url: 'https://www.youtube.com/embed/P6IGK6Fq_8U?autoplay=1&mute=1', // Placeholder ID
-    thumbnail: 'https://images.unsplash.com/photo-1580130006764-585bb69eb74b?auto=format&fit=crop&q=80&w=400&h=250',
-    status: 'OFFLINE'
-  },
-  {
-    id: 'cam4',
-    name: 'אילת - החוף הצפוני',
-    location: 'Eilat',
-    url: 'https://www.youtube.com/embed/P6IGK6Fq_8U?autoplay=1&mute=1',
-    thumbnail: 'https://images.unsplash.com/photo-1582298284594-e3c3b5860368?auto=format&fit=crop&q=80&w=400&h=250',
-    status: 'LIVE'
-  },
-  {
     id: 'beachcam',
     name: 'כל המצלמות - BeachCam.co.il',
     location: 'Israel',
     url: 'https://beachcam.co.il/list.html',
     thumbnail: '/fishing_sunset_bg.jpg', // Using app background as placeholder
-    status: 'LIVE'
+    status: 'LIVE',
+    external: true
+  },
+  {
+    id: 'israelbeachcams',
+    name: 'ישראל ביץ\' קאמס',
+    location: 'Israel',
+    url: 'https://israelbeachcams.co.il/',
+    thumbnail: 'https://images.unsplash.com/photo-1544237517-578ceb8cb36b?auto=format&fit=crop&q=80&w=400&h=250',
+    status: 'LIVE',
+    external: true
   },
   {
     id: 'cam5',
-    name: 'מצלמת חוף - נקודה חדשה',
+    name: 'מצלמת חוף - נקודה חדשה (IPCamLive)',
     location: 'Israel',
     url: 'https://www.ipcamlive.com/65f00024400d7',
     thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=400&h=250',
