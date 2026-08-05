@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Video, Play, MapPin, X, ChevronDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Video, Play, MapPin, X, Heart, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useCams } from '@/hooks/useCams';
@@ -12,6 +13,25 @@ export function LiveCams() {
   const { cams, isLoading } = useCams();
   const [selectedCam, setSelectedCam] = useState<any>(null);
   const [activeRegion, setActiveRegion] = useState<string>('הכל');
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('digon_fav_cams');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('digon_fav_cams', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const toggleFavorite = (e: React.MouseEvent, camId: string) => {
+    e.stopPropagation();
+    setFavorites(prev => prev.includes(camId) ? prev.filter(id => id !== camId) : [...prev, camId]);
+  };
 
   const sortedRegions = useMemo(() => {
     const grouped = cams.reduce((acc, cam) => {
@@ -37,16 +57,60 @@ export function LiveCams() {
   }, [cams]);
 
   const filteredRegions = useMemo(() => {
-    if (activeRegion === 'הכל') return sortedRegions;
-    return sortedRegions.filter(r => r.name === activeRegion);
-  }, [sortedRegions, activeRegion]);
+    // Apply search filter first
+    const searchedCams = cams.filter(cam => 
+      cam.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      cam.location.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Group the searched cams
+    const grouped = searchedCams.reduce((acc, cam) => {
+      const region = cam.region || 'אחר';
+      if (!acc[region]) acc[region] = [];
+      acc[region].push(cam);
+      return acc;
+    }, {} as Record<string, typeof cams>);
+
+    const order = ['צפון', 'שרון', 'מרכז', 'דרום', 'כנרת', 'אילת', 'אחר'];
+    let regionsList = Object.keys(grouped).sort((a, b) => {
+      const idxA = order.indexOf(a);
+      const idxB = order.indexOf(b);
+      if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    }).map(region => ({
+      name: region,
+      cams: grouped[region]
+    }));
+
+    // If favorites tab is active, ONLY show favorites across all regions, or as a single category
+    if (activeRegion === 'מועדפים') {
+      const favCams = searchedCams.filter(c => favorites.includes(c.$id));
+      return [{ name: 'מועדפים שלי', cams: favCams }];
+    }
+
+    if (activeRegion !== 'הכל') {
+      regionsList = regionsList.filter(r => r.name === activeRegion);
+    }
+
+    return regionsList;
+  }, [cams, activeRegion, searchQuery, favorites]);
 
   if (isLoading) {
     return (
       <div className="w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 pb-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="w-full bg-slate-200 dark:bg-slate-800 rounded-xl aspect-video animate-pulse" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-4 pb-6 mt-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="w-full">
+              <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm relative h-full flex flex-col">
+                <div className="w-full aspect-video bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <CardContent className="p-2 sm:p-3 bg-white dark:bg-slate-950 flex-1 flex flex-col justify-start gap-2">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-3/4" />
+                  <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-1/2" />
+                </CardContent>
+              </Card>
+            </div>
           ))}
         </div>
       </div>
@@ -55,8 +119,20 @@ export function LiveCams() {
 
   return (
     <div className="w-full">
-      {/* Category Filter Chips */}
-      <div className="w-full overflow-x-auto pb-4 pt-2 px-4 scrollbar-hide">
+      {/* Search and Category Filter */}
+      <div className="px-4 pt-2">
+        <div className="relative mb-3">
+          <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="חפש מצלמה או אזור..." 
+            className="pr-9 rounded-2xl bg-card border-slate-200 dark:border-slate-800 shadow-sm h-10 text-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="w-full overflow-x-auto pb-4 px-4 scrollbar-hide">
         <div className="flex gap-2 min-w-max">
           <Button
             variant={activeRegion === 'הכל' ? 'default' : 'outline'}
@@ -65,6 +141,15 @@ export function LiveCams() {
             className={`rounded-full ${activeRegion === 'הכל' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}
           >
             הכל
+          </Button>
+          <Button
+            variant={activeRegion === 'מועדפים' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setActiveRegion('מועדפים')}
+            className={`rounded-full ${activeRegion === 'מועדפים' ? 'bg-rose-500 hover:bg-rose-600 text-white border-0' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-rose-500 hover:text-rose-600'}`}
+          >
+            <Heart className="w-3.5 h-3.5 mr-1" fill={activeRegion === 'מועדפים' ? "currentColor" : "none"} />
+            מועדפים
           </Button>
           {sortedRegions.map(region => (
             <Button
@@ -113,6 +198,14 @@ export function LiveCams() {
                   <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm relative group h-full flex flex-col">
                     <div className="absolute inset-0 bg-black/5 sm:bg-black/20 group-hover:bg-transparent transition-colors z-10" />
                     
+                    {/* Favorite Button */}
+                    <button 
+                      onClick={(e) => toggleFavorite(e, cam.$id)}
+                      className="absolute top-1 left-1 sm:top-2 sm:left-2 z-30 p-1.5 sm:p-2 bg-black/30 hover:bg-black/50 backdrop-blur-md rounded-full transition-colors"
+                    >
+                      <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${favorites.includes(cam.$id) ? 'text-rose-500 fill-rose-500' : 'text-white'}`} />
+                    </button>
+
                     {/* Thumbnail Section */}
                     <div className="relative w-full aspect-video bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0 border-b border-slate-100 dark:border-slate-800">
                       {cam.thumbnail ? (
@@ -177,6 +270,13 @@ export function LiveCams() {
             </div>
           </div>
         ))}
+        {filteredRegions.length === 0 && (
+          <div className="text-center p-8 text-muted-foreground bg-muted/20 rounded-xl border border-dashed">
+            <Video className="w-10 h-10 mx-auto mb-3 opacity-20" />
+            <p className="font-bold">לא נמצאו מצלמות התואמות לחיפוש שלך.</p>
+            {activeRegion === 'מועדפים' && <p className="text-sm mt-1">לחץ על כפתור הלב במצלמות כדי להוסיף אותן לכאן.</p>}
+          </div>
+        )}
       </div>
 
       {/* Video Modal */}
