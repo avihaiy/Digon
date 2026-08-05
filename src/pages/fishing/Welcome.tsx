@@ -64,7 +64,7 @@ function Welcome() {
         toast.success("מעולה! תקבל התראות על חלונות דייג.");
         new Notification("ברוך הבא לדיגון! 🎣", {
           body: "ככה ייראו ההתראות שתקבל כשהחברים שלך יתפסו דגים.",
-          icon: "/fishing_sunset_bg.jpg" // fallback icon
+          icon: "/fishing_bg.jpg" // fallback icon
         });
       } else {
         toast.error("ההתראות נחסמו. תוכל לשנות זאת בהגדרות הדפדפן.");
@@ -122,7 +122,7 @@ function Welcome() {
 
   return (
     <div className="min-h-[100dvh] bg-black text-white relative flex flex-col max-w-lg mx-auto overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/fishing_sunset_bg.jpg')] bg-cover bg-center opacity-20"></div>
+      <div className="absolute inset-0 bg-[url('/fishing_bg.jpg')] bg-cover bg-center opacity-20"></div>
       
       <div className="flex-1 relative z-10 flex flex-col justify-center">
         <div className="overflow-hidden w-full h-full flex flex-col justify-center" ref={emblaRef}>
