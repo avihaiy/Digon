@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Heart, MessageCircle, Share2, MoreVertical, MapPin, Music } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreVertical, MapPin, Music, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
@@ -169,17 +169,40 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [isBroken, setIsBroken] = useState(false);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Must start muted for iOS autoplay
   const { user } = useAuth();
 
   useEffect(() => {
     if (isActive) {
-      videoRef.current?.play().catch(e => console.log("Auto-play prevented", e));
-      setIsPlaying(true);
+      if (videoRef.current) {
+        // Try playing. If blocked, fallback to muted play
+        videoRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch((err) => {
+          console.warn("Autoplay blocked:", err);
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            setIsMuted(true);
+            videoRef.current.play().catch(e => console.error("Total playback failure:", e));
+          }
+        });
+      }
     } else {
-      videoRef.current?.pause();
-      if (videoRef.current) videoRef.current.currentTime = 0;
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+        setIsPlaying(false);
+      }
     }
   }, [isActive]);
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -230,7 +253,7 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
         className="w-full h-full object-cover"
         loop
         playsInline
-        muted={!isActive}
+        muted={isMuted}
         preload={isActive ? "auto" : "none"}
         onClick={togglePlay}
         onDoubleClick={handleDoubleTap}
@@ -246,6 +269,14 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
           <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
         </div>
       )}
+
+      {/* Mute/Unmute Button */}
+      <button 
+        onClick={toggleMute}
+        className="absolute top-1/2 left-4 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white"
+      >
+        {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+      </button>
 
       {/* Double Tap Heart Animation */}
       <AnimatePresence>
