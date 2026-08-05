@@ -203,7 +203,7 @@ export function CamsManager() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>ביטול</Button>
-            <Button onClick={handleSubmit} disabled={!name || !url || !thumbnail || addCam.isPending || updateCam.isPending}>
+            <Button onClick={handleSubmit} disabled={!name || !url || addCam.isPending || updateCam.isPending}>
               {editingCam ? 'שמור שינויים' : 'הוסף מצלמה'}
             </Button>
           </DialogFooter>

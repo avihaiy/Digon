@@ -44,12 +44,23 @@ export function LiveCams() {
           >
             <Card className="overflow-hidden border-slate-100 dark:border-slate-800 shadow-sm relative group">
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10" />
-              <div className="relative aspect-video w-full bg-slate-200 dark:bg-slate-800">
-                <img 
-                  src={cam.thumbnail} 
-                  alt={cam.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
+              <div className="relative aspect-video w-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                {cam.thumbnail ? (
+                  <img 
+                    src={cam.thumbnail} 
+                    alt={cam.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                ) : (
+                  <iframe
+                    src={cam.url}
+                    title={cam.name}
+                    className="w-full h-full border-0 pointer-events-none scale-105"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                )}
                 
                 {/* Status Badge */}
                 <div className="absolute top-2 right-2 z-20">
