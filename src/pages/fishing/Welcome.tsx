@@ -142,6 +142,9 @@ export default function Welcome() {
             המשך <ArrowRight className="w-5 h-5 mr-2" />
           </Button>
         )}
+        <div className="absolute bottom-2 left-0 right-0 text-center text-white/30 text-[10px]">
+          v{import.meta.env.VITE_APP_VERSION || '1.1.63'}
+        </div>
       </div>
     </div>
   );
