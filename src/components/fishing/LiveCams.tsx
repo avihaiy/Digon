@@ -85,14 +85,10 @@ export function LiveCams() {
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                       ) : (
-                        <iframe
-                          src={cam.url}
-                          title={cam.name}
-                          className="w-full h-full border-0 pointer-events-none scale-105"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          tabIndex={-1}
-                          aria-hidden="true"
-                        />
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900 text-slate-400 dark:text-slate-500">
+                          <Video className="w-10 h-10 mb-2 opacity-50" />
+                          <span className="text-xs font-medium opacity-70">אין תמונה מקדימה</span>
+                        </div>
                       )}
                       
                       {/* Status Badge */}
