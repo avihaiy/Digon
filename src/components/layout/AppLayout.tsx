@@ -22,6 +22,30 @@ import {
   LogOut,
   Menu,
   X, Home, Compass, MessageCircle, MapPin, Search, RefreshCw, Settings2,
+import { ReactNode, useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/hooks/use-toast';
+import { APP_CONFIG } from '@/config/app';
+import { Button } from '@/components/ui/button';
+import { NotificationsPanel } from '@/components/notifications/NotificationsPanel';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from '@/components/ui/badge';
+import { 
+  Users,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+  X, Home, Compass, MessageCircle, MapPin, Search, RefreshCw, Settings2,
   ShoppingCart, Droplets, Fish, Trophy, Activity, Download, PlaySquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -51,6 +75,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
+  const isReelsPage = location.pathname === '/fishing/reels';
 
   useEffect(() => {
     if (prefs?.a11y_large_text) {
@@ -213,118 +238,122 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen w-full max-w-[100vw]">
         {/* Top header */}
-        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(3.5rem + env(safe-area-inset-top))' }}>
-          <button
-            onClick={() => { triggerHaptic(); setSidebarOpen(true); }}
-            className="lg:hidden p-2 hover:bg-secondary rounded-lg active:scale-95 transition-transform"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-
-          <div className="flex items-center gap-2">
-            {/* Refresh Button with Update Indicator */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => needRefresh ? updateServiceWorker() : window.location.reload()}
-              title={needRefresh ? "עדכון זמין - לחץ לרענון" : "רענן עמוד"}
-              className="relative hidden lg:flex"
+        {!isReelsPage && (
+          <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(3.5rem + env(safe-area-inset-top))' }}>
+            <button
+              onClick={() => { triggerHaptic(); setSidebarOpen(true); }}
+              className="lg:hidden p-2 hover:bg-secondary rounded-lg active:scale-95 transition-transform"
             >
-              <RefreshCw className={cn("w-5 h-5", needRefresh && "animate-spin")} />
-              {needRefresh && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-pulse" />
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              {/* Refresh Button with Update Indicator */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => needRefresh ? updateServiceWorker() : window.location.reload()}
+                title={needRefresh ? "עדכון זמין - לחץ לרענון" : "רענן עמוד"}
+                className="relative hidden lg:flex"
+              >
+                <RefreshCw className={cn("w-5 h-5", needRefresh && "animate-spin")} />
+                {needRefresh && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-pulse" />
+                )}
+              </Button>
+              
+              {/* Theme Toggle - Hidden on mobile, they can use it on desktop or we can add it to sidebar later */}
+              <div className="hidden lg:block">
+                <ThemeToggle />
+              </div>
+
+              {/* Notifications */}
+              {user && (
+                <NotificationsPanel />
               )}
-            </Button>
-            
-            {/* Theme Toggle - Hidden on mobile, they can use it on desktop or we can add it to sidebar later */}
-            <div className="hidden lg:block">
-              <ThemeToggle />
-            </div>
 
-            {/* Notifications */}
-            {user && (
-              <NotificationsPanel />
-            )}
-
-            {/* Search Icon */}
-            {user && (
-              <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                <Link to="/fishing/search">
-                  <Search className="w-5 h-5" />
-                </Link>
-              </Button>
-            )}
-
-            {/* Points Badge linked to Store */}
-            {user && (
-              <Link to="/fishing/store">
-                <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border border-yellow-500/30 shadow-sm animate-fade-in hover-scale cursor-pointer hover:bg-yellow-500/30 transition-colors">
-                  <span className="font-bold text-sm">{points}</span>
-                  <span className="text-xs">נק׳</span>
-                </Badge>
-              </Link>
-            )}
-
-            {!user && (
-              <Button asChild variant="default" size="sm" className="bg-cyan-600 hover:bg-cyan-700 font-bold rounded-full text-xs">
-                <Link to="/login">
-                  התחבר / הירשם
-                </Link>
-              </Button>
-            )}
-
-            {/* Settings dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Settings className="w-5 h-5" />
+              {/* Search Icon */}
+              {user && (
+                <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                  <Link to="/fishing/search">
+                    <Search className="w-5 h-5" />
+                  </Link>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                {user ? (
-                  <>
+              )}
+
+              {/* Points Badge linked to Store */}
+              {user && (
+                <Link to="/fishing/store">
+                  <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border border-yellow-500/30 shadow-sm animate-fade-in hover-scale cursor-pointer hover:bg-yellow-500/30 transition-colors">
+                    <span className="font-bold text-sm">{points}</span>
+                    <span className="text-xs">נק׳</span>
+                  </Badge>
+                </Link>
+              )}
+
+              {!user && (
+                <Button asChild variant="default" size="sm" className="bg-cyan-600 hover:bg-cyan-700 font-bold rounded-full text-xs">
+                  <Link to="/login">
+                    התחבר / הירשם
+                  </Link>
+                </Button>
+              )}
+
+              {/* Settings dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Settings className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  {user ? (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/fishing/settings" className="flex items-center w-full">
+                          <Settings2 className="w-4 h-4 ml-2" />
+                          הגדרות חשבון
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                        <LogOut className="w-4 h-4 ml-2" />
+                        יציאה
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
                     <DropdownMenuItem asChild>
-                      <Link to="/fishing/settings" className="flex items-center w-full">
-                        <Settings2 className="w-4 h-4 ml-2" />
-                        הגדרות חשבון
+                      <Link to="/login" className="flex items-center text-primary">
+                        <Users className="w-4 h-4 ml-2" />
+                        התחברות / הרשמה
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                      <LogOut className="w-4 h-4 ml-2" />
-                      יציאה
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <DropdownMenuItem asChild>
-                    <Link to="/login" className="flex items-center text-primary">
-                      <Users className="w-4 h-4 ml-2" />
-                      התחברות / הרשמה
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
+        )}
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
+        <main className={cn("flex-1", !isReelsPage ? "p-4 lg:p-6 pb-20 lg:pb-6" : "pb-16 lg:pb-0")}>
           {children}
         </main>
 
         {/* Footer credit */}
-        <footer className="border-t border-border px-4 py-3 text-center">
-          <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">דיגון</span> - מערכת הדייג של ישראל
-            <span className="mx-2">•</span>
-            נבנתה ע"י <span className="font-medium text-foreground">{APP_CONFIG.developer.name}</span>
-            <span className="mx-2">•</span>
-            <span className="text-muted-foreground/70">v{APP_CONFIG.version}</span>
-          </p>
-        </footer>
+        {!isReelsPage && (
+          <footer className="border-t border-border px-4 py-3 text-center">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">דיגון</span> - מערכת הדייג של ישראל
+              <span className="mx-2">•</span>
+              נבנתה ע"י <span className="font-medium text-foreground">{APP_CONFIG.developer.name}</span>
+              <span className="mx-2">•</span>
+              <span className="text-muted-foreground/70">v{APP_CONFIG.version}</span>
+            </p>
+          </footer>
+        )}
 
-        <AccessibilityWidget />
+        {!isReelsPage && <AccessibilityWidget />}
 
         {/* Mobile Navigation */}
         <BottomNavigation />
