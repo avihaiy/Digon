@@ -168,6 +168,7 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
   const [isLiked, setIsLiked] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [isBroken, setIsBroken] = useState(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -234,7 +235,17 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
         onClick={togglePlay}
         onDoubleClick={handleDoubleTap}
         onError={() => setIsBroken(true)}
+        onCanPlay={() => setIsVideoLoaded(true)}
+        onWaiting={() => setIsVideoLoaded(false)}
+        onPlaying={() => setIsVideoLoaded(true)}
       />
+
+      {/* Loading Spinner */}
+      {!isVideoLoaded && !isBroken && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+          <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
+      )}
 
       {/* Double Tap Heart Animation */}
       <AnimatePresence>
