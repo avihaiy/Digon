@@ -327,7 +327,10 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
               )}
 
               <button 
-                onClick={() => toast.success("הקישור הועתק ללוח!")}
+                onClick={() => {
+                  navigator.clipboard.writeText(reel.videoUrl);
+                  toast.success("קישור הוידאו הועתק ללוח!");
+                }}
                 className="flex items-center gap-4 w-full p-4 hover:bg-white/10 rounded-xl transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
