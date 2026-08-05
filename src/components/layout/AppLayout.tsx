@@ -22,7 +22,7 @@ import {
   LogOut,
   Menu,
   X, Home, Compass, MessageCircle, MapPin, Search, RefreshCw, Settings2,
-  ShoppingCart, Droplets, Fish, Trophy, Activity, Download
+  ShoppingCart, Droplets, Fish, Trophy, Activity, Download, PlaySquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -39,6 +39,7 @@ const navItems = [
   { href: '/admin', icon: Settings, label: 'פאנל ניהול', adminOnly: true },
   { href: '/fishing/search', icon: Search, label: 'חיפוש' },
   { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
+  { href: '/fishing/reels', icon: PlaySquare, label: 'Reels' },
   { href: '/fishing/community', icon: ShoppingCart, label: 'שוק יד 2' },
   { href: '/fishing/tournaments', icon: Trophy, label: 'תחרויות' },
   { href: '/leaderboard', icon: Trophy, label: 'אלופים' },
