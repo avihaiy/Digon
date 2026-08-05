@@ -196,9 +196,9 @@ export default function Home() {
                   <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">תנאי ים נוחים</h4>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">תנאי ים בטוחים (נוח)</h4>
                   <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                    הים מתאים לדיג. מומלץ לצאת לים ולנצל את חלונות הפעילות!
+                    גובה הגלים מאפשר עמידה בטוחה. שים לב שתנאי הים לבדם אינם מבטיחים דיג מוצלח - בדוק את התחזית המלאה.
                   </p>
                 </div>
               </div>
