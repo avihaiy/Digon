@@ -181,23 +181,23 @@ export default function Home() {
         {!marineLoading && marineData.waveHeight !== null && (
           <div className="mt-4">
             {marineData.waveHeight > 1.2 ? (
-              <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-2xl flex gap-3 items-start">
+              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-l-4 border-rose-500 p-3 rounded-2xl flex gap-3 items-start shadow-sm">
                 <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5 animate-pulse" />
                 <div>
-                  <h4 className="font-bold text-rose-500 text-sm">זהירות: ים גלי עד רוגש</h4>
-                  <p className="text-xs text-rose-500/80 mt-0.5">
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">זהירות: ים גלי עד רוגש</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                     גובה הגלים מעל 1.2 מטר. מומלץ להיזהר בעמידה על שוברי גלים וסלעים קרובים למים.
                   </p>
                 </div>
               </div>
             ) : marineData.waveHeight <= 1.2 && marineData.waveHeight > 0 ? (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-2xl flex gap-3 items-start">
-                <div className="p-1 bg-emerald-500/20 rounded-full shrink-0 mt-0.5">
+              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-l-4 border-emerald-500 p-3 rounded-2xl flex gap-3 items-start shadow-sm">
+                <div className="p-1 bg-emerald-100 dark:bg-emerald-900/50 rounded-full shrink-0 mt-0.5">
                   <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
                 </div>
                 <div>
-                  <h4 className="font-bold text-emerald-600 dark:text-emerald-500 text-sm">תנאי ים נוחים</h4>
-                  <p className="text-xs text-emerald-600/80 dark:text-emerald-500/80 mt-0.5">
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">תנאי ים נוחים</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                     הים מתאים לדיג. מומלץ לצאת לים ולנצל את חלונות הפעילות!
                   </p>
                 </div>
