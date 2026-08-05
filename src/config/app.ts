@@ -6,7 +6,7 @@
 export const APP_CONFIG = {
   name: 'דיגון',
   description: 'מערכת הדייג של ישראל',
-  version: '1.1.62',
+  version: '1.1.63',
   lastUpdated: 'פברואר 2026',
   developer: {
     name: 'Avihai Yosipovich',

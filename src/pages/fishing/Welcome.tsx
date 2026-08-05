@@ -96,7 +96,7 @@ export default function Welcome() {
         <div className="overflow-hidden w-full h-full flex flex-col justify-center" ref={emblaRef}>
           <div className="flex h-full items-center">
             {slides.map((slide, index) => (
-              <div className="flex-[0_0_100%] min-w-0 px-8 text-center" key={index}>
+              <div className="w-full min-w-full shrink-0 px-8 text-center" key={index}>
                 <div
                   className={`bg-gradient-to-b ${slide.color} border border-white/10 p-8 rounded-[3rem] shadow-2xl backdrop-blur-xl`}
                 >

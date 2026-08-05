@@ -54,7 +54,7 @@ export default function Reels() {
 
   return (
     <div 
-      className="bg-black w-full max-w-lg mx-auto h-[calc(100dvh-4rem)] overflow-y-scroll snap-y snap-mandatory relative"
+      className="bg-black w-full max-w-lg mx-auto h-[calc(100vh-4rem)] overflow-y-scroll snap-y snap-mandatory relative"
       ref={containerRef}
       onScroll={handleScroll}
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
