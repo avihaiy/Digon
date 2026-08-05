@@ -24,7 +24,7 @@ export const APPWRITE_MESSAGES_ID = "messages";
 export const APPWRITE_RELATIONSHIPS_ID = "relationships";
 export const APPWRITE_CAMS_ID = "cams";
 export const APPWRITE_REELS_ID = "reels";
-export const APPWRITE_REELS_BUCKET_ID = "reels_videos";
+export const APPWRITE_REELS_BUCKET_ID = APPWRITE_CATCH_IMAGES_BUCKET_ID; // Reuse existing bucket due to Appwrite tier limits
 
 export default client;
 export const APPWRITE_PURCHASES_ID = 'purchases';
