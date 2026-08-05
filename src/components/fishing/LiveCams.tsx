@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Video, Play, MapPin, X, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -10,6 +11,7 @@ import { useCams } from '@/hooks/useCams';
 export function LiveCams() {
   const { cams, isLoading } = useCams();
   const [selectedCam, setSelectedCam] = useState<any>(null);
+  const [activeRegion, setActiveRegion] = useState<string>('הכל');
 
   const sortedRegions = useMemo(() => {
     const grouped = cams.reduce((acc, cam) => {
@@ -34,6 +36,11 @@ export function LiveCams() {
     }));
   }, [cams]);
 
+  const filteredRegions = useMemo(() => {
+    if (activeRegion === 'הכל') return sortedRegions;
+    return sortedRegions.filter(r => r.name === activeRegion);
+  }, [sortedRegions, activeRegion]);
+
   if (isLoading) {
     return (
       <div className="w-full">
@@ -48,8 +55,36 @@ export function LiveCams() {
 
   return (
     <div className="w-full">
+      {/* Category Filter Chips */}
+      <div className="w-full overflow-x-auto pb-4 pt-2 px-4 scrollbar-hide">
+        <div className="flex gap-2 min-w-max">
+          <Button
+            variant={activeRegion === 'הכל' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setActiveRegion('הכל')}
+            className={`rounded-full ${activeRegion === 'הכל' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}
+          >
+            הכל
+          </Button>
+          {sortedRegions.map(region => (
+            <Button
+              key={region.name}
+              variant={activeRegion === region.name ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveRegion(region.name)}
+              className={`rounded-full ${activeRegion === region.name ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}
+            >
+              {region.name}
+              <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full ${activeRegion === region.name ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                {region.cams.length}
+              </span>
+            </Button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-10 px-4 pb-6">
-        {sortedRegions.map(region => (
+        {filteredRegions.map(region => (
           <div key={region.name} className="flex flex-col">
             <div className="flex items-center gap-2 mb-4 pr-3 border-r-4 border-blue-500">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">{region.name}</h3>
