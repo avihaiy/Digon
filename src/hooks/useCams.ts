@@ -11,6 +11,7 @@ export interface CamData {
   thumbnail: string;
   status: string; // 'LIVE' | 'OFFLINE'
   external?: boolean;
+  source?: string;
 }
 
 export function useCams() {

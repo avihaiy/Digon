@@ -88,9 +88,16 @@ export function LiveCams() {
               
               <CardContent className="p-3 bg-white dark:bg-slate-900">
                 <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">{cam.name}</h4>
-                <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
-                  <MapPin className="w-3 h-3" />
-                  {cam.location}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                    <MapPin className="w-3 h-3" />
+                    {cam.location}
+                  </div>
+                  {cam.source && (
+                    <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 opacity-90 truncate">
+                      {cam.source}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

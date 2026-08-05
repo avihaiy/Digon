@@ -20,6 +20,7 @@ export function CamsManager() {
   const [thumbnail, setThumbnail] = useState('');
   const [status, setStatus] = useState('LIVE');
   const [external, setExternal] = useState(false);
+  const [source, setSource] = useState('');
 
   const resetForm = () => {
     setName('');
@@ -28,6 +29,7 @@ export function CamsManager() {
     setThumbnail('');
     setStatus('LIVE');
     setExternal(false);
+    setSource('');
     setEditingCam(null);
   };
 
@@ -44,6 +46,7 @@ export function CamsManager() {
     setThumbnail(cam.thumbnail);
     setStatus(cam.status);
     setExternal(cam.external || false);
+    setSource(cam.source || '');
     setIsModalOpen(true);
   };
 
@@ -54,7 +57,8 @@ export function CamsManager() {
       url,
       thumbnail,
       status,
-      external
+      external,
+      source
     };
 
     if (editingCam && editingCam.$id) {
@@ -120,6 +124,9 @@ export function CamsManager() {
                 <div className="p-4 flex flex-col gap-1">
                   <h4 className="font-bold text-slate-900 dark:text-white truncate">{cam.name}</h4>
                   <p className="text-sm text-slate-500">{cam.location}</p>
+                  {cam.source && (
+                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-1">מקור: {cam.source}</p>
+                  )}
                   
                   <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditModal(cam)}>
@@ -193,12 +200,23 @@ export function CamsManager() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center justify-between border border-slate-200 dark:border-slate-800 rounded-md p-3">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">קישור חיצוני</span>
-                <span className="text-xs text-slate-500">לפתוח בטאב חדש (למצלמות שחוסמות Embed)?</span>
+            <div>
+              <label className="text-sm font-medium mb-1 block">קישור חיצוני</label>
+              <div className="flex items-center justify-between border border-slate-200 dark:border-slate-800 rounded-md p-3">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">פתיחה בטאב חדש</span>
+                  <span className="text-xs text-slate-500">למצלמות שחוסמות Embed</span>
+                </div>
+                <Switch checked={external} onCheckedChange={setExternal} />
               </div>
-              <Switch checked={external} onCheckedChange={setExternal} />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">מקור הצילום (אופציונלי)</label>
+              <Input 
+                value={source} 
+                onChange={e => setSource(e.target.value)} 
+                placeholder="לדוגמה: עיריית חיפה"
+              />
             </div>
           </div>
           <DialogFooter>
