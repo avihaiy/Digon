@@ -22,6 +22,7 @@ export const APPWRITE_NOTIFICATIONS_ID = "notifications";
 export const APPWRITE_TOURNAMENTS_ID = "tournaments";
 export const APPWRITE_MESSAGES_ID = "messages";
 export const APPWRITE_RELATIONSHIPS_ID = "relationships";
+export const APPWRITE_CAMS_ID = "cams";
 
 export default client;
 export const APPWRITE_PURCHASES_ID = 'purchases';

@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil, BellRing, MessageSquareWarning } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil, BellRing, MessageSquareWarning, Video } from "lucide-react";
+import { CamsManager } from "@/components/admin/CamsManager";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
 const DB_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -591,6 +592,12 @@ export default function Admin() {
             <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
               <div className="p-4 bg-rose-500/10 rounded-2xl"><MessageSquareWarning className="w-8 h-8 text-rose-500" /></div>
               <h3 className="font-bold text-slate-800 dark:text-slate-200">פיקוח תגובות</h3>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("cams")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-teal-500/10 rounded-2xl"><Video className="w-8 h-8 text-teal-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">ניהול מצלמות חוף</h3>
             </CardContent>
           </Card>
           <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("settings")}>
@@ -1473,6 +1480,11 @@ export default function Admin() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Cams Tab */}
+      {activeTab === "cams" && (
+        <CamsManager />
       )}
 
       {/* Points Modal */}

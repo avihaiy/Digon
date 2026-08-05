@@ -5,46 +5,30 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Video, Play, MapPin, X } from "lucide-react";
 import { motion } from "framer-motion";
 
-// You can easily update these YouTube video IDs or iframe URLs
-const CAMS = [
-  {
-    id: 'beachcam',
-    name: 'כל המצלמות - BeachCam.co.il',
-    location: 'Israel',
-    url: 'https://beachcam.co.il/list.html',
-    thumbnail: '/fishing_sunset_bg.jpg', // Using app background as placeholder
-    status: 'LIVE',
-    external: true
-  },
-  {
-    id: 'israelbeachcams',
-    name: 'ישראל ביץ\' קאמס',
-    location: 'Israel',
-    url: 'https://israelbeachcams.co.il/',
-    thumbnail: 'https://images.unsplash.com/photo-1544237517-578ceb8cb36b?auto=format&fit=crop&q=80&w=400&h=250',
-    status: 'LIVE',
-    external: true
-  },
-  {
-    id: 'cam5',
-    name: 'מצלמת חוף - נקודה חדשה (IPCamLive)',
-    location: 'Israel',
-    url: 'https://www.ipcamlive.com/65f00024400d7',
-    thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=400&h=250',
-    status: 'LIVE',
-    external: true
-  }
-];
+import { useCams } from '@/hooks/useCams';
 
 export function LiveCams() {
-  const [selectedCam, setSelectedCam] = useState<typeof CAMS[0] | null>(null);
+  const { cams, isLoading } = useCams();
+  const [selectedCam, setSelectedCam] = useState<any>(null);
+
+  if (isLoading) {
+    return (
+      <div className="w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 pb-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="w-full bg-slate-200 dark:bg-slate-800 rounded-xl aspect-video animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 pb-6">
-        {CAMS.map((cam) => (
+        {cams.map((cam) => (
           <motion.div 
-            key={cam.id}
+            key={cam.$id}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="w-full cursor-pointer"

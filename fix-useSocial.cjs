@@ -1,0 +1,1 @@
+const fs = require('fs'); let content = fs.readFileSync('src/hooks/useSocial.ts', 'utf-8'); content = content.replace(/user\./g, 'user.\\').replace(/existingLike\./g, 'existingLike.\\').replace(/\/g, '\'\\\''); fs.writeFileSync('src/hooks/useSocial.ts', content);

@@ -1,0 +1,1 @@
+const fs = require('fs'); const content = fs.readFileSync('src/pages/fishing/Profile.tsx', 'utf-8'); const fixed = content.replace(/<\/Dialog>\s*<\/DialogContent>\s*<\/Dialog>/g, '<\/DialogContent>\n      <\/Dialog>'); fs.writeFileSync('src/pages/fishing/Profile.tsx', fixed);

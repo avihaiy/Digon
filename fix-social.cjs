@@ -1,0 +1,1 @@
+const fs = require('fs'); let content = fs.readFileSync('src/components/fishing/CatchSocial.tsx', 'utf-8'); content = content.replace('className={lex items-center gap-1.5 transition-colors }', 'className={lex items-center gap-1.5 transition-colors }').replace('className={w-6 h-6 }', 'className={w-6 h-6 }'); fs.writeFileSync('src/components/fishing/CatchSocial.tsx', content);
