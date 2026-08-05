@@ -14,11 +14,12 @@ import { BadgeIcon } from "@/components/fishing/BadgeIcon";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { getRankFromPoints } from "@/lib/gamification";
 
 export function SocialCatchCard({ report }: { report: any }) {
   const { user } = useAuth();
   const { likesCount, hasLiked, toggleLike, comments, commentsCount, addComment, isCommentLoading } = useSocial(report.$id);
-  const { badges, title, border } = useUserBadges(report.user_id);
+  const { badges, title, border, points } = useUserBadges(report.user_id);
   const [commentText, setCommentText] = useState("");
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
@@ -73,11 +74,16 @@ export function SocialCatchCard({ report }: { report: any }) {
               <Link to={`/profile/${report.user_id}`} className="text-sm font-semibold text-white hover:text-cyan-400 transition-colors">
                 {report.user_name}
               </Link>
-              {title && (
-                <span className="text-[10px] bg-cyan-900/40 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded-md font-bold">
-                  {title}
-                </span>
-              )}
+              {/* Show dynamic rank instead of static title */}
+              {(() => {
+                const rank = getRankFromPoints(points);
+                const Icon = rank.icon;
+                return (
+                  <span className={`text-[10px] ${rank.bgMedium} ${rank.color} border ${rank.borderLight} px-1.5 py-0.5 rounded-md font-bold flex items-center gap-1`}>
+                    <Icon className="w-2.5 h-2.5" /> {rank.name}
+                  </span>
+                );
+              })()}
               {badges?.length > 0 && (
                 <div className="flex items-center gap-0.5">
                   {badges.slice(0, 3).map((badgeId: string) => (

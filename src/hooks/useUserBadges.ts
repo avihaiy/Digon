@@ -29,6 +29,7 @@ export function useUserBadges(userId: string) {
     badges: (profileData?.badges as string[]) || [], 
     title: profileData?.title || null,
     border: profileData?.border || null,
+    points: profileData?.points || 0,
     isLoading 
   };
 }

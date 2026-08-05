@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CatchSocial } from "@/components/fishing/CatchSocial";
+import { getRankFromPoints } from "@/lib/gamification";
 
 type Tab = 'gallery' | 'stats' | 'badges';
 
@@ -261,14 +262,41 @@ export default function Profile() {
             </div>
 
             {/* Name & Title */}
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-2">
               {profile.full_name || profile.user_name || "דייג אנונימי"}
             </h1>
-            {profile.title && (
-              <span className="inline-flex items-center gap-1 mt-1 text-xs bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-400 px-2.5 py-0.5 rounded-full font-bold">
-                <Trophy className="w-3 h-3" /> {profile.title}
-              </span>
-            )}
+            
+            {/* Dynamic Gamification Rank */}
+            {(() => {
+              const rank = getRankFromPoints(profile.points || 0);
+              const Icon = rank.icon;
+              return (
+                <div className="w-full flex flex-col items-center mt-2">
+                  <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-bold ${rank.bgLight} ${rank.color}`}>
+                    <Icon className="w-3.5 h-3.5" /> {rank.name}
+                  </span>
+                  
+                  {/* Progress Bar */}
+                  {rank.name !== "פוסידון" && (
+                    <div className="w-full max-w-[200px] mt-3 flex flex-col gap-1">
+                      <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                        <span>{profile.points || 0} XP</span>
+                        <span>{rank.nextMax} XP</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${rank.progress}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className={`h-full ${rank.bg}`}
+                        />
+                      </div>
+                      <p className="text-[9px] text-slate-400 mt-0.5">עוד {rank.pointsRemaining} XP לדרגה הבאה</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Core Stats Bar */}
             <div className="flex items-center justify-between w-full mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">

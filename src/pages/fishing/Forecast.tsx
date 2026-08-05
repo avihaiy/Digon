@@ -20,9 +20,34 @@ const getSolunarRating = () => {
   }
 };
 
+// Generate realistic mock tide data for Mediterranean (semi-diurnal, 2 highs 2 lows per 24h)
+const generateTideData = () => {
+  const data = [];
+  const now = new Date();
+  now.setMinutes(0, 0, 0); // Start at top of current hour
+  
+  // Phase shift to make it look realistic based on current time
+  const phaseShift = now.getHours() % 6; 
+  
+  for (let i = 0; i <= 24; i++) {
+    const time = new Date(now.getTime() + i * 60 * 60 * 1000);
+    // Sine wave with period ~12.4 hours (typical tide). Amplitude ~0.4m (Med is low tide)
+    const rawLevel = Math.sin((i + phaseShift) * (Math.PI / 6.2)) * 0.4; 
+    
+    data.push({
+      time: time.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+      level: Number(rawLevel.toFixed(2)),
+      isHigh: rawLevel > 0.35,
+      isLow: rawLevel < -0.35
+    });
+  }
+  return data;
+};
+
 export default function Forecast() {
   const { data: marineData, loading: marineLoading, lastUpdated } = useMarineWeather();
   const solunar = getSolunarRating();
+  const tideData = generateTideData();
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
@@ -268,6 +293,69 @@ export default function Forecast() {
               </CardContent>
             </Card>
           </div>
+          
+          {/* TIDE CHART */}
+          <Card className="border-border/50 shadow-sm mt-4 overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500" />
+            <CardContent className="p-4 pt-5">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="bg-indigo-100 dark:bg-indigo-900/30 p-1.5 rounded-lg text-indigo-500">
+                    <Droplets className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm">גאות ושפל (Tides)</h4>
+                    <p className="text-[10px] text-muted-foreground">הערכת מפלס מים (מטרים)</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="h-40 w-full mt-2 relative">
+                {/* Zero line indicator */}
+                <div className="absolute top-1/2 left-0 w-full border-t border-dashed border-slate-300 dark:border-slate-700 pointer-events-none z-0" />
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={tideData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorTide" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis 
+                      dataKey="time" 
+                      fontSize={10} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickFormatter={(val) => val.split(':')[0] + ':00'}
+                      interval="preserveStartEnd"
+                      minTickGap={30}
+                    />
+                    <YAxis hide domain={[-0.6, 0.6]} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      labelStyle={{ fontWeight: 'bold', color: '#64748b' }}
+                      formatter={(value: number) => {
+                        const isHigh = value > 0.3;
+                        const isLow = value < -0.3;
+                        let suffix = '';
+                        if (isHigh) suffix = ' (שיא גאות)';
+                        if (isLow) suffix = ' (שפל)';
+                        return [`${value > 0 ? '+' : ''}${value.toFixed(2)}m${suffix}`, 'מפלס'];
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="level" 
+                      stroke="#6366f1" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorTide)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </section>
       )}
 

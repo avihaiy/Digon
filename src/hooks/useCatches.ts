@@ -162,6 +162,21 @@ export function useCatches() {
         console.error("Hot streak logic failed", e);
       }
 
+      // Add base +50 points for every catch
+      try {
+        const profileRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, [
+          Query.equal("user_id", user.$id)
+        ]);
+        if (profileRes.documents.length > 0) {
+          const profile = profileRes.documents[0];
+          await databases.updateDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, profile.$id, {
+            points: (profile.points || 0) + 50
+          });
+        }
+      } catch (e) {
+        console.error("Points logic failed", e);
+      }
+
       // 2. Create Document in Catches Collection
       let finalLocation = data.location;
       if (prefs?.privacy_hide_location) {
@@ -227,7 +242,7 @@ export function useCatches() {
         } else {
           toast({
             title: "הדיווח נשלח לאישור! 🎉",
-            description: "התפיסה תפורסם בקהילה ותזכה אותך בנקודות מיד לאחר אישור מנהל.",
+            description: "+50 נקודות מוניטין נוספו לחשבון שלך! התפיסה תפורסם בקהילה מיד לאחר אישור.",
           });
         }
       }
