@@ -363,8 +363,8 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
 
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(reel.videoUrl);
-                  toast.success("קישור הוידאו הועתק ללוח!");
+                  navigator.clipboard.writeText(`${window.location.origin}/fishing/reels`);
+                  toast.success("הקישור הועתק ללוח!");
                 }}
                 className="flex items-center gap-4 w-full p-4 hover:bg-white/10 rounded-xl transition-colors"
               >
