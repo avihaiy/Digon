@@ -26,6 +26,13 @@ export default function Home() {
   const { catches, isLoading: catchesLoading } = useCatches();
   const { activeTournaments } = useTournaments();
   
+  useEffect(() => {
+    // Check for onboarding
+    if (!localStorage.getItem("hasSeenOnboarding")) {
+      navigate("/fishing/welcome");
+    }
+  }, [navigate]);
+  
   // Get first name or use default
   const firstName = user?.name?.split(' ')[0] || 'דייג';
   
