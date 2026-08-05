@@ -97,14 +97,8 @@ export default function Welcome() {
           <div className="flex h-full items-center">
             {slides.map((slide, index) => (
               <div className="flex-[0_0_100%] min-w-0 px-8 text-center" key={index}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ 
-                    opacity: selectedIndex === index ? 1 : 0.5, 
-                    scale: selectedIndex === index ? 1 : 0.9 
-                  }}
-                  transition={{ duration: 0.5 }}
-                  className={`bg-gradient-to-b ${slide.color} border border-white/10 p-8 rounded-[3rem] shadow-2xl backdrop-blur-xl`}
+                <div
+                  className={`transition-all duration-500 transform ${selectedIndex === index ? "opacity-100 scale-100" : "opacity-0 scale-90"} bg-gradient-to-b ${slide.color} border border-white/10 p-8 rounded-[3rem] shadow-2xl backdrop-blur-xl`}
                 >
                   <div className="bg-white/5 w-24 h-24 mx-auto rounded-3xl flex items-center justify-center mb-6 shadow-inner ring-1 ring-white/20">
                     {slide.icon}
@@ -114,7 +108,7 @@ export default function Welcome() {
                     {slide.desc}
                   </p>
                   {slide.action}
-                </motion.div>
+                </div>
               </div>
             ))}
           </div>
