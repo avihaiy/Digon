@@ -42,7 +42,7 @@ export default function Locations() {
         const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, [
           Query.limit(50)
         ]);
-        return res.documents.filter((doc: any) => doc.status === 'approved' || !doc.status);
+        return res.documents;
       } catch (e) {
         return [];
       }
