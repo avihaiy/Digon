@@ -39,15 +39,18 @@ export default function VirtualAquarium() {
     // Extract species
     const speciesMap = new Map();
     userCatches.forEach(c => {
-      if (c.fish_species) {
-        if (!speciesMap.has(c.fish_species)) {
-          speciesMap.set(c.fish_species, {
-            name: c.fish_species,
+      // The database field is fish_type, not fish_species
+      const fishName = c.fish_type || c.fish_species; 
+      
+      if (fishName) {
+        if (!speciesMap.has(fishName)) {
+          speciesMap.set(fishName, {
+            name: fishName,
             count: 1,
-            asset: getFishAsset(c.fish_species)
+            asset: getFishAsset(fishName)
           });
         } else {
-          speciesMap.get(c.fish_species).count++;
+          speciesMap.get(fishName).count++;
         }
       }
     });
