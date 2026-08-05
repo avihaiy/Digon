@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Heart, MessageCircle, Share2, MoreVertical, MapPin, Music } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Dummy data for Reels
