@@ -272,9 +272,16 @@ export default function Profile() {
               const Icon = rank.icon;
               return (
                 <div className="w-full flex flex-col items-center mt-2">
-                  <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-bold ${rank.bgLight} ${rank.color}`}>
-                    <Icon className="w-3.5 h-3.5" /> {rank.name}
-                  </span>
+                  <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full font-bold ${rank.bgLight} ${rank.color}`}>
+                      <Icon className="w-3.5 h-3.5" /> {rank.name}
+                    </span>
+                    {profile.title && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-400 px-2.5 py-0.5 rounded-full font-bold border border-cyan-500/30">
+                        <Trophy className="w-3.5 h-3.5" /> {profile.title}
+                      </span>
+                    )}
+                  </div>
                   
                   {/* Progress Bar */}
                   {rank.name !== "פוסידון" && (

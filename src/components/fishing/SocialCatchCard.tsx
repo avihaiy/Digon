@@ -84,6 +84,13 @@ export function SocialCatchCard({ report }: { report: any }) {
                   </span>
                 );
               })()}
+              
+              {/* Show Store Title if purchased */}
+              {title && (
+                <span className="text-[10px] bg-cyan-900/40 text-cyan-400 border border-cyan-500/30 px-1.5 py-0.5 rounded-md font-bold flex items-center gap-1">
+                   {title}
+                </span>
+              )}
               {badges?.length > 0 && (
                 <div className="flex items-center gap-0.5">
                   {badges.slice(0, 3).map((badgeId: string) => (
