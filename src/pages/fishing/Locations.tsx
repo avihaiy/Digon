@@ -9,7 +9,7 @@ import { MapPin, Plus, Navigation2, Map as MapIcon, Star, Info } from "lucide-re
 import { LocationReportDialog } from "@/components/locations/LocationReportDialog";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import * as L from "leaflet";
 
 // Fix Leaflet marker icon issue in React
 const customIcon = new L.Icon({
