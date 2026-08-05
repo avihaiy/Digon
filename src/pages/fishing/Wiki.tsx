@@ -60,6 +60,50 @@ const FISH_DB = [
     kosher: false,
     danger: "רעיל ביותר! סכנת מוות באכילה. חותך קרסים בקלות.",
     desc: "מין פולש ומסוכן ביותר. מכיל רעל קטלני (טטרודוטוקסין). אסור למגע ואסור למאכל בשום צורה."
+  },
+  {
+    id: "intias",
+    name: "אנטיאס (שולה)",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Seriola_dumerili.jpg/640px-Seriola_dumerili.jpg",
+    season: "סתיו - חורף",
+    methods: ["ז'רז'ור כבד", "פיתיון חי", "סירה"],
+    baits: ["סבידה חיה", "בורי חי", "דמויים גדולים"],
+    kosher: true,
+    danger: null,
+    desc: "מלך הים התיכון. דג חזק מאוד המגיע למשקלים של עשרות קילוגרמים. נותן פייט בלתי נשכח."
+  },
+  {
+    id: "palamida",
+    name: "פלמידה (טונית אטלנטית)",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Euthynnus_alletteratus_2.jpg/640px-Euthynnus_alletteratus_2.jpg",
+    season: "אביב - קיץ",
+    methods: ["ז'רז'ור", "טרולינג (סירה)"],
+    baits: ["ג'יגים", "דמויים", "ניקלים"],
+    kosher: true,
+    danger: null,
+    desc: "דג מהיר מאוד שזז בלהקות. בשרו כהה ומתאים מאוד לסשימי או בישול. נלחם בעוצמה רבה."
+  },
+  {
+    id: "buri",
+    name: "בורי (קיפון)",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Mugil_cephalus.jpg/640px-Mugil_cephalus.jpg",
+    season: "כל השנה",
+    methods: ["בוס", "רשת (מסחרי)"],
+    baits: ["בצק מסריח", "פיתה"],
+    kosher: true,
+    danger: null,
+    desc: "דג צמחוני הנמצא לרוב קרוב לפני המים בנמלים ושוברי גלים. קשה מאוד ללכוד אותו בשל פיו העדין."
+  },
+  {
+    id: "marmir",
+    name: "מרמיר (שישן)",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Lithognathus_mormyrus.jpg/640px-Lithognathus_mormyrus.jpg",
+    season: "קיץ - סתיו",
+    methods: ["פיתיון חוף"],
+    baits: ["תולעים", "שניצל", "גמברי"],
+    kosher: true,
+    danger: null,
+    desc: "דג חוף קלאסי שאוהב קרקע חולית. מאופיין בפסים לאורך גופו, נתפס הרבה בדיג פיתיונות קל."
   }
 ];
 
