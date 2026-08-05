@@ -23,6 +23,8 @@ export const APPWRITE_TOURNAMENTS_ID = "tournaments";
 export const APPWRITE_MESSAGES_ID = "messages";
 export const APPWRITE_RELATIONSHIPS_ID = "relationships";
 export const APPWRITE_CAMS_ID = "cams";
+export const APPWRITE_REELS_ID = "reels";
+export const APPWRITE_REELS_BUCKET_ID = "reels_videos";
 
 export default client;
 export const APPWRITE_PURCHASES_ID = 'purchases';

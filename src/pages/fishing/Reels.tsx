@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useReels } from "@/hooks/useReels";
 import { toast } from "sonner";
 
 // Dummy data for Reels (using reliable URLs)
@@ -75,10 +76,14 @@ export default function ReelsWrapper() {
 
 function Reels() {
   const [activeReelIndex, setActiveReelIndex] = useState(0);
-  const [reels, setReels] = useState(INITIAL_REELS_DATA);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user, profile } = useAuth();
+  
+  // Use real backend data
+  const { reels, loading, uploadReel } = useReels();
+  
+  // Fallback to dummy data if DB is empty
+  const displayReels = reels.length > 0 ? reels : INITIAL_REELS_DATA;
 
   const handleScroll = () => {
     if (!containerRef.current) return;
@@ -87,34 +92,28 @@ function Reels() {
     if (windowHeight === 0) return;
     const newIndex = Math.round(scrollPosition / windowHeight);
     
-    if (newIndex !== activeReelIndex && newIndex >= 0 && newIndex < reels.length) {
+    if (newIndex !== activeReelIndex && newIndex >= 0 && newIndex < displayReels.length) {
       setActiveReelIndex(newIndex);
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      const newReel = {
-        id: "r" + Date.now(),
-        videoUrl: url,
-        user: { 
-          name: profile?.name || user?.name || "אני", 
-          avatar: profile?.avatar || "", 
-          handle: "@" + (profile?.name || "me").replace(/\s+/g, "_").toLowerCase() 
-        },
-        description: "סרטון חדש מהשטח! 🎣",
-        likes: 0,
-        comments: 0,
-        location: "המיקום שלי",
-        song: "Digon Original Audio"
-      };
-      
-      setReels([newReel, ...reels]);
-      setActiveReelIndex(0);
-      if (containerRef.current) {
-        containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      const toastId = toast.loading("מעלה את הסרטון שלך לשרת... ⏳");
+      try {
+        const newReel = await uploadReel(file);
+        if (newReel) {
+          toast.success("הסרטון עלה בהצלחה!", { id: toastId });
+          setActiveReelIndex(0);
+          if (containerRef.current) {
+            containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        } else {
+          toast.dismiss(toastId);
+        }
+      } catch (err) {
+        toast.error("שגיאה בהעלאת הסרטון. נסה שוב.", { id: toastId });
       }
     }
   };
@@ -152,9 +151,9 @@ function Reels() {
         </div>
       </div>
 
-      {reels.map((reel, index) => (
+      {displayReels.map((reel, index) => (
         <ReelItem 
-          key={reel.id} 
+          key={reel.id || (reel as any).$id} 
           reel={reel} 
           isActive={index === activeReelIndex} 
         />
