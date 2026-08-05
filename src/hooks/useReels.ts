@@ -76,7 +76,8 @@ export function useReels() {
 
       // 2. Get file view URL
       const fileUrl = storage.getFileView(APPWRITE_REELS_BUCKET_ID, uploadedFile.$id);
-
+      const finalVideoUrl = typeof fileUrl === 'string' ? fileUrl : (fileUrl?.href || fileUrl?.toString());
+      
       // 3. Create document in database
       const newReel = await databases.createDocument(
         APPWRITE_DB_ID,
@@ -84,7 +85,7 @@ export function useReels() {
         ID.unique(),
         {
           userId: user.$id,
-          videoUrl: fileUrl.href,
+          videoUrl: finalVideoUrl,
           description: "סרטון חדש מהשטח! 🎣",
           likes: 0,
           comments: 0,
