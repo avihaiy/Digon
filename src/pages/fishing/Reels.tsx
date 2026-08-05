@@ -80,7 +80,7 @@ function Reels() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Use real backend data
-  const { reels, loading, uploadReel } = useReels();
+  const { reels, loading, uploadReel, deleteReel } = useReels();
   
   // Fallback to dummy data if DB is empty
   const displayReels = reels.length > 0 ? reels : INITIAL_REELS_DATA;
