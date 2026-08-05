@@ -75,7 +75,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
-  const isReelsPage = location.pathname === '/fishing/reels';
+  const isReelsPage = location.pathname.includes('/fishing/reels');
 
   useEffect(() => {
     if (prefs?.a11y_large_text) {
