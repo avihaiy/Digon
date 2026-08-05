@@ -8,9 +8,9 @@ export default function LiveCamsPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
+    <div className="min-h-screen pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-4 flex items-center gap-3">
+      <div className="sticky top-0 z-40 bg-white/60 dark:bg-black/40 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 p-4 flex items-center gap-3">
         <Button 
           variant="ghost" 
           size="icon"
