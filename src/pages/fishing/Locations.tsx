@@ -22,16 +22,6 @@ const customIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-// Fallback Hardcoded premium spots with Lat/Lng for Israel coast
-const PREDEFINED_HOTSPOTS = [
-  { id: "hot1", name: "מרינה אשדוד", lat: 31.833, lng: 34.633, methods: "ז'רז'ור, פיתיונות", rating: 4.8 },
-  { id: "hot2", name: "חוף פלמחים", lat: 31.933, lng: 34.700, methods: "פיתיונות, סרף", rating: 4.5 },
-  { id: "hot3", name: "רידינג תל אביב", lat: 32.100, lng: 34.766, methods: "ז'רז'ור", rating: 4.2 },
-  { id: "hot4", name: "נמל יפו", lat: 32.050, lng: 34.733, methods: "ז'רז'ור לייט, בוס", rating: 4.6 },
-  { id: "hot5", name: "מזח הרצליה", lat: 32.166, lng: 34.783, methods: "ז'רז'ור", rating: 4.3 },
-  { id: "hot6", name: "שובר גלים אכזיב", lat: 33.050, lng: 35.100, methods: "ז'רז'ור פרימיום", rating: 4.9 },
-];
-
 export default function Locations() {
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map');
 
@@ -42,18 +32,17 @@ export default function Locations() {
         const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, [
           Query.limit(50)
         ]);
-        return res.documents;
+        return res.documents.filter((doc: any) => doc.status === 'approved');
       } catch (e) {
         return [];
       }
     },
   });
 
-  // Merge DB locations with predefined hotspots (if DB doesn't have lat/lng)
-  const allLocations = [...PREDEFINED_HOTSPOTS];
+  // Add DB locations
+  const allLocations: any[] = [];
   if (dbLocations) {
     dbLocations.forEach((loc: any) => {
-      // If DB has lat/lng we would use it. We'll just push them to the list for now
       if (!allLocations.find(l => l.name === loc.name)) {
         allLocations.push({
           id: loc.$id,
