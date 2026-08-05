@@ -639,7 +639,7 @@ export default function Profile() {
                 </h3>
                 <p className="text-sm text-muted-foreground">האוסף הדיגיטלי של מיני הדגים שתפסת</p>
               </div>
-              <VirtualAquarium />
+              <VirtualAquarium catches={catches} />
             </motion.div>
           )}
         </AnimatePresence>

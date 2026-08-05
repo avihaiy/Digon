@@ -25,20 +25,14 @@ const getFishAsset = (species: string) => {
   return { size: "w-16 h-12", type: "generic" };
 };
 
-export default function VirtualAquarium() {
-  const { user } = useAuth();
-  const { catches } = useCatches();
-  
+export default function VirtualAquarium({ catches }: { catches: any[] }) {
   // Extract unique fish species the user has caught
   const uniqueSpecies = useMemo(() => {
-    if (!catches) return [];
-    
-    // Filter only catches by this user
-    const userCatches = catches.filter(c => c.user_id === user?.id);
+    if (!catches || catches.length === 0) return [];
     
     // Extract species
     const speciesMap = new Map();
-    userCatches.forEach(c => {
+    catches.forEach(c => {
       // The database field is fish_type, not fish_species
       const fishName = c.fish_type || c.fish_species; 
       
@@ -56,7 +50,7 @@ export default function VirtualAquarium() {
     });
     
     return Array.from(speciesMap.values());
-  }, [catches, user?.id]);
+  }, [catches]);
 
   return (
     <div className="w-full h-[350px] relative rounded-3xl overflow-hidden shadow-inner border border-blue-900/30 bg-gradient-to-b from-blue-400 via-blue-600 to-blue-900">
