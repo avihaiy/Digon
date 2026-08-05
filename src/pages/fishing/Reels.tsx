@@ -3,22 +3,23 @@ import { Heart, MessageCircle, Share2, MoreVertical, MapPin, Music } from "lucid
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
-// Dummy data for Reels
-const REELS_DATA = [
+// Dummy data for Reels (using reliable URLs)
+const INITIAL_REELS_DATA = [
   {
     id: "r1",
-    videoUrl: "https://cdn.pixabay.com/video/2024/02/16/200742-913753239_large.mp4",
-    user: { name: "אביחי יוסף", avatar: "", handle: "@avihai" },
-    description: "פייט מטורף על הבוקר עם אינטיאס של 5 קילו! 🎣🔥",
-    likes: 1245,
-    comments: 84,
-    location: "מזח הרצליה",
-    song: "צליל מקורי - אביחי יוסף"
+    videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    user: { name: "דני דייג", avatar: "", handle: "@dani_fishing" },
+    description: "תפיסה מטורפת של אינטיאס 12 קילו מזרזר מהחוף! 🎣🔥",
+    likes: 1240,
+    comments: 89,
+    location: "מרינה הרצליה",
+    song: "Fishing Vibes - Original Mix"
   },
   {
     id: "r2",
-    videoUrl: "https://cdn.pixabay.com/video/2019/08/08/25852-352220197_large.mp4",
+    videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
     user: { name: "רון לוי", avatar: "", handle: "@ron_levy" },
     description: "שקיעה פצצה, הים פלטה, מחכים לאכילות...",
     likes: 852,
@@ -28,7 +29,7 @@ const REELS_DATA = [
   },
   {
     id: "r3",
-    videoUrl: "https://cdn.pixabay.com/video/2020/05/13/38914-422894541_large.mp4",
+    videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
     user: { name: "צוות אריות הים", avatar: "", handle: "@sea_lions" },
     description: "מי אמר שאין דגים באכזיב? ים עובד! 🌊🐟",
     likes: 2104,
@@ -72,16 +73,47 @@ export default function ReelsWrapper() {
 
 function Reels() {
   const [activeReelIndex, setActiveReelIndex] = useState(0);
+  const [reels, setReels] = useState(INITIAL_REELS_DATA);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, profile } = useAuth();
 
   const handleScroll = () => {
     if (!containerRef.current) return;
     const scrollPosition = containerRef.current.scrollTop;
     const windowHeight = containerRef.current.clientHeight;
+    if (windowHeight === 0) return;
     const newIndex = Math.round(scrollPosition / windowHeight);
     
-    if (newIndex !== activeReelIndex && newIndex >= 0 && newIndex < REELS_DATA.length) {
+    if (newIndex !== activeReelIndex && newIndex >= 0 && newIndex < reels.length) {
       setActiveReelIndex(newIndex);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const newReel = {
+        id: "r" + Date.now(),
+        videoUrl: url,
+        user: { 
+          name: profile?.name || user?.name || "אני", 
+          avatar: profile?.avatar || "", 
+          handle: "@" + (profile?.name || "me").replace(/\s+/g, "_").toLowerCase() 
+        },
+        description: "סרטון חדש מהשטח! 🎣",
+        likes: 0,
+        comments: 0,
+        location: "המיקום שלי",
+        song: "Digon Original Audio"
+      };
+      
+      setReels([newReel, ...reels]);
+      setActiveReelIndex(0);
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
 
@@ -95,11 +127,30 @@ function Reels() {
       <style>{`.hide-scroll::-webkit-scrollbar { display: none; }`}</style>
       
       {/* Header overlay */}
-      <div className="absolute top-4 left-0 right-0 z-50 flex justify-between px-4 pointer-events-none">
+      <div className="absolute top-4 left-0 right-0 z-50 flex justify-between items-center px-4 pointer-events-none">
         <h1 className="text-xl font-black text-white drop-shadow-md">Digon Reels</h1>
+        <div className="pointer-events-auto">
+          <input 
+            type="file" 
+            accept="video/*" 
+            capture="environment" 
+            className="hidden" 
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center transition-transform active:scale-90 border border-white/20"
+          >
+            <div className="w-5 h-5 flex flex-col items-center justify-center relative">
+              <div className="w-full h-[2px] bg-white absolute"></div>
+              <div className="w-[2px] h-full bg-white absolute"></div>
+            </div>
+          </button>
+        </div>
       </div>
 
-      {REELS_DATA.map((reel, index) => (
+      {reels.map((reel, index) => (
         <ReelItem 
           key={reel.id} 
           reel={reel} 
