@@ -39,14 +39,18 @@ export function useReels() {
         [Query.limit(20)]
       );
       
-      const formattedReels = response.documents.map(doc => ({
-        ...doc,
-        user: {
-          name: "דייג דיגון",
-          avatar: "",
-          handle: "@digon_user"
-        }
-      })) as ReelData[];
+      const formattedReels = response.documents.map(doc => {
+        const isMe = user && doc.userId === user.$id;
+        return {
+          ...doc,
+          id: doc.$id,
+          user: {
+            name: isMe ? (profile?.name || user.name || "אני") : "משתמש דיגון",
+            avatar: isMe ? (profile?.avatar || "") : "",
+            handle: isMe ? ("@" + (profile?.name || "me").replace(/\s+/g, "_").toLowerCase()) : "@digon_user"
+          }
+        };
+      }) as ReelData[];
       
       setReels(formattedReels);
     } catch (error) {
@@ -107,11 +111,38 @@ export function useReels() {
     }
   };
 
+  const deleteReel = async (reelId: string, videoUrl: string) => {
+    if (!user) return false;
+    
+    try {
+      // 1. Delete DB document
+      await databases.deleteDocument(APPWRITE_DB_ID, APPWRITE_REELS_ID, reelId);
+      
+      // 2. Try to delete the actual video file from storage
+      const fileIdMatch = videoUrl.match(/\/files\/([a-zA-Z0-9]+)\/view/);
+      if (fileIdMatch && fileIdMatch[1]) {
+        try {
+          await storage.deleteFile(APPWRITE_REELS_BUCKET_ID, fileIdMatch[1]);
+        } catch (e) {
+          console.error("Failed to delete video file, it might have already been deleted", e);
+        }
+      }
+      
+      // 3. Update UI
+      setReels(prev => prev.filter(r => r.$id !== reelId && (r as any).id !== reelId));
+      return true;
+    } catch (error) {
+      console.error("Delete error:", error);
+      throw error;
+    }
+  };
+
   return {
     reels,
     loading,
     uploadReel,
+    deleteReel,
     fetchReels,
-    setReels // Expose this in case Reels.tsx needs to fallback to INITIAL_REELS_DATA if error
+    setReels
   };
 }

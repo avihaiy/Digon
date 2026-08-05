@@ -156,17 +156,19 @@ function Reels() {
           key={reel.id || (reel as any).$id} 
           reel={reel} 
           isActive={index === activeReelIndex} 
+          onDelete={deleteReel}
         />
       ))}
     </div>
   );
 }
 
-function ReelItem({ reel, isActive }: { reel: any, isActive: boolean }) {
+function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, onDelete?: (id: string, url: string) => Promise<boolean> }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (isActive) {
@@ -272,6 +274,25 @@ function ReelItem({ reel, isActive }: { reel: any, isActive: boolean }) {
               <DrawerTitle className="text-center text-white">אפשרויות</DrawerTitle>
             </DrawerHeader>
             <div className="flex flex-col p-4 gap-2 pb-8">
+              {user && reel.userId === user.$id && (
+                <button 
+                  onClick={async () => {
+                    const toastId = toast.loading("מוחק סרטון...");
+                    if (onDelete && await onDelete(reel.id || reel.$id, reel.videoUrl)) {
+                      toast.success("הסרטון נמחק בהצלחה", { id: toastId });
+                    } else {
+                      toast.error("שגיאה במחיקת הסרטון", { id: toastId });
+                    }
+                  }}
+                  className="flex items-center gap-4 w-full p-4 hover:bg-rose-500/10 rounded-xl transition-colors text-rose-500"
+                >
+                  <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center">
+                    <span className="text-xl font-bold text-rose-500">×</span>
+                  </div>
+                  <span className="font-bold text-base text-right flex-1" dir="rtl">מחק סרטון</span>
+                </button>
+              )}
+
               <button 
                 onClick={() => toast.success("הקישור הועתק ללוח!")}
                 className="flex items-center gap-4 w-full p-4 hover:bg-white/10 rounded-xl transition-colors"
