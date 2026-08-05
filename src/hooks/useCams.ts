@@ -12,6 +12,7 @@ export interface CamData {
   status: string; // 'LIVE' | 'OFFLINE'
   external?: boolean;
   source?: string;
+  region?: string;
 }
 
 export function useCams() {

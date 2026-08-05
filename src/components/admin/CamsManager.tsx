@@ -21,6 +21,7 @@ export function CamsManager() {
   const [status, setStatus] = useState('LIVE');
   const [external, setExternal] = useState(false);
   const [source, setSource] = useState('');
+  const [region, setRegion] = useState('');
 
   const resetForm = () => {
     setName('');
@@ -30,6 +31,7 @@ export function CamsManager() {
     setStatus('LIVE');
     setExternal(false);
     setSource('');
+    setRegion('');
     setEditingCam(null);
   };
 
@@ -47,6 +49,7 @@ export function CamsManager() {
     setStatus(cam.status);
     setExternal(cam.external || false);
     setSource(cam.source || '');
+    setRegion(cam.region || '');
     setIsModalOpen(true);
   };
 
@@ -58,7 +61,8 @@ export function CamsManager() {
       thumbnail,
       status,
       external,
-      source
+      source,
+      region
     };
 
     if (editingCam && editingCam.$id) {
@@ -197,6 +201,25 @@ export function CamsManager() {
                 <SelectContent>
                   <SelectItem value="LIVE">LIVE</SelectItem>
                   <SelectItem value="OFFLINE">OFFLINE</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between border border-slate-200 dark:border-slate-800 rounded-md p-3">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">אזור המצלמה</span>
+                <span className="text-xs text-slate-500">לדוגמה: צפון, מרכז</span>
+              </div>
+              <Select value={region} onValueChange={setRegion}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="בחר אזור" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="צפון">צפון</SelectItem>
+                  <SelectItem value="שרון">שרון</SelectItem>
+                  <SelectItem value="מרכז">מרכז</SelectItem>
+                  <SelectItem value="דרום">דרום</SelectItem>
+                  <SelectItem value="כנרת">כנרת</SelectItem>
+                  <SelectItem value="אילת">אילת</SelectItem>
                 </SelectContent>
               </Select>
             </div>
