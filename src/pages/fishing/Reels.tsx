@@ -167,6 +167,7 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const [isBroken, setIsBroken] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -198,6 +199,27 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
     }
   };
 
+  if (isBroken) {
+    return (
+      <div className="w-full h-full snap-center snap-always relative bg-black flex items-center justify-center p-8">
+        <div className="text-center">
+          <p className="text-white/50 text-sm mb-4">הסרטון אינו זמין או נמחק מהשרת</p>
+          {user && reel.userId === user.$id && (
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={async () => {
+                if (onDelete) await onDelete(reel.id || reel.$id, reel.videoUrl);
+              }}
+            >
+              מחק סרטון פגום
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-full snap-center snap-always relative bg-black flex items-center justify-center overflow-hidden">
       {/* Video - Only load if active or adjacent to save memory on iOS */}
@@ -211,6 +233,7 @@ function ReelItem({ reel, isActive, onDelete }: { reel: any, isActive: boolean, 
         preload={isActive ? "auto" : "none"}
         onClick={togglePlay}
         onDoubleClick={handleDoubleTap}
+        onError={() => setIsBroken(true)}
       />
 
       {/* Double Tap Heart Animation */}
