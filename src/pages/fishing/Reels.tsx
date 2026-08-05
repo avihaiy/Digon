@@ -114,7 +114,7 @@ function ReelItem({ reel, isActive }: { reel: any, isActive: boolean }) {
 
   return (
     <div className="w-full h-full snap-center snap-always relative bg-black flex items-center justify-center overflow-hidden">
-      {/* Video */}
+      {/* Video - Only load if active or adjacent to save memory on iOS */}
       <video
         ref={videoRef}
         src={reel.videoUrl}
@@ -122,6 +122,7 @@ function ReelItem({ reel, isActive }: { reel: any, isActive: boolean }) {
         loop
         playsInline
         muted={!isActive}
+        preload={isActive ? "auto" : "none"}
         onClick={togglePlay}
         onDoubleClick={handleDoubleTap}
       />
