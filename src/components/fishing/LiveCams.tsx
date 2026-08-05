@@ -58,7 +58,7 @@ export function LiveCams() {
               </span>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {region.cams.map((cam) => (
                 <motion.div 
                   key={cam.$id}
@@ -75,9 +75,11 @@ export function LiveCams() {
                     }
                   }}
                 >
-                  <Card className="overflow-hidden border-slate-100 dark:border-slate-800 shadow-sm relative group h-full flex flex-col">
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10" />
-                    <div className="relative aspect-video w-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0">
+                  <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm relative group h-full flex flex-row sm:flex-col">
+                    <div className="absolute inset-0 bg-black/5 sm:bg-black/20 group-hover:bg-transparent transition-colors z-10" />
+                    
+                    {/* Thumbnail Section */}
+                    <div className="relative w-2/5 sm:w-full aspect-video sm:aspect-video bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0 border-l sm:border-l-0 sm:border-b border-slate-100 dark:border-slate-800">
                       {cam.thumbnail ? (
                         <img 
                           src={cam.thumbnail} 
@@ -86,20 +88,20 @@ export function LiveCams() {
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900 text-slate-400 dark:text-slate-500">
-                          <Video className="w-10 h-10 mb-2 opacity-50" />
-                          <span className="text-xs font-medium opacity-70">אין תמונה מקדימה</span>
+                          <Video className="w-8 h-8 sm:w-10 sm:h-10 mb-1 sm:mb-2 opacity-50" />
+                          <span className="text-[10px] sm:text-xs font-medium opacity-70">אין תמונה</span>
                         </div>
                       )}
                       
                       {/* Status Badge */}
-                      <div className="absolute top-2 right-2 z-20">
+                      <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-20">
                         {cam.status === 'LIVE' ? (
-                          <Badge className="bg-red-500 hover:bg-red-600 text-white font-bold flex items-center gap-1.5 px-2">
+                          <Badge className="bg-red-500 hover:bg-red-600 text-white font-bold flex items-center gap-1 px-1.5 py-0 sm:px-2 sm:py-0.5 text-[9px] sm:text-xs">
                             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                             לייב
                           </Badge>
                         ) : (
-                          <Badge variant="secondary" className="bg-black/50 text-white border-0 font-bold backdrop-blur-md">
+                          <Badge variant="secondary" className="bg-black/50 text-white border-0 font-bold backdrop-blur-md text-[9px] sm:text-xs px-1.5 py-0 sm:px-2 sm:py-0.5">
                             לא זמין
                           </Badge>
                         )}
@@ -108,23 +110,24 @@ export function LiveCams() {
                       {/* Play Button Overlay */}
                       {cam.status === 'LIVE' && (
                         <div className="absolute inset-0 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg">
-                            <Play className="w-5 h-5 text-white fill-white ml-1" />
+                          <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg">
+                            <Play className="w-4 h-4 sm:w-5 sm:h-5 text-white fill-white ml-0.5 sm:ml-1" />
                           </div>
                         </div>
                       )}
                     </div>
                     
-                    <CardContent className="p-3 bg-white dark:bg-slate-900 flex-1 flex flex-col justify-between">
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">{cam.name}</h4>
-                      <div className="flex flex-col gap-1 mt-1">
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <MapPin className="w-3 h-3" />
-                          {cam.location}
+                    {/* Content Section */}
+                    <CardContent className="p-3 sm:p-4 bg-white dark:bg-slate-950 flex-1 flex flex-col justify-center sm:justify-between w-3/5 sm:w-full">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-tight line-clamp-2">{cam.name}</h4>
+                      <div className="flex flex-col gap-0.5 sm:gap-1 mt-1 sm:mt-2">
+                        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          <span className="truncate">{cam.location}</span>
                         </div>
                         {cam.source && (
-                          <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 opacity-90 truncate">
-                            {cam.source}
+                          <div className="text-[10px] sm:text-xs font-semibold text-blue-600 dark:text-blue-400 opacity-90 truncate mt-0.5">
+                            מקור: {cam.source}
                           </div>
                         )}
                       </div>
