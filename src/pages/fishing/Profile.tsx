@@ -23,8 +23,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CatchSocial } from "@/components/fishing/CatchSocial";
 import { getRankFromPoints } from "@/lib/gamification";
+import VirtualAquarium from "@/components/fishing/VirtualAquarium";
 
-type Tab = 'gallery' | 'stats' | 'badges';
+type Tab = 'gallery' | 'stats' | 'badges' | 'aquarium';
 
 export default function Profile() {
   const { userId: urlUserId } = useParams();
@@ -390,6 +391,14 @@ export default function Profile() {
             <span className="text-[10px] font-black">הישגים</span>
             {activeTab === 'badges' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-4 right-4 h-1 bg-cyan-500 rounded-t-full" />}
           </button>
+          <button 
+            onClick={() => setActiveTab('aquarium')}
+            className={`flex-1 py-4 flex flex-col items-center gap-1 relative ${activeTab === 'aquarium' ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            <Fish className="w-5 h-5" />
+            <span className="text-[10px] font-black">אקווריום</span>
+            {activeTab === 'aquarium' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-4 right-4 h-1 bg-cyan-500 rounded-t-full" />}
+          </button>
         </div>
       </div>
 
@@ -614,6 +623,25 @@ export default function Profile() {
             </motion.div>
           )}
 
+          {/* AQUARIUM TAB */}
+          {activeTab === 'aquarium' && (
+            <motion.div 
+              key="aquarium"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="px-4 pb-6 space-y-4 pt-2"
+            >
+              <div className="flex flex-col mb-2">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  האקווריום שלי <Fish className="w-5 h-5 text-cyan-500" />
+                </h3>
+                <p className="text-sm text-muted-foreground">האוסף הדיגיטלי של מיני הדגים שתפסת</p>
+              </div>
+              <VirtualAquarium />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
