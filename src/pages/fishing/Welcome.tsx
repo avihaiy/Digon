@@ -6,7 +6,39 @@ import { Trophy, Radar, MapPin, Fish, BellRing, ArrowRight, ShieldCheck, Sparkle
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
-export default function Welcome() {
+import React from 'react';
+
+class WelcomeErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-red-900 text-white p-8 h-screen w-full overflow-auto" dir="ltr">
+          <h1 className="text-2xl font-bold mb-4">WELCOME CRASH</h1>
+          <pre className="text-xs whitespace-pre-wrap">{this.state.error?.message}</pre>
+          <pre className="text-xs mt-4 text-red-200">{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function WelcomeWrapper() {
+  return (
+    <WelcomeErrorBoundary>
+      <Welcome />
+    </WelcomeErrorBoundary>
+  );
+}
+
+function Welcome() {
   const navigate = useNavigate();
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
   const [selectedIndex, setSelectedIndex] = useState(0);

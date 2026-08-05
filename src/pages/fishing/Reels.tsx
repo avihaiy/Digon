@@ -37,7 +37,39 @@ const REELS_DATA = [
   }
 ];
 
-export default function Reels() {
+import React from 'react';
+
+class ReelsErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-red-900 text-white p-8 h-screen w-full overflow-auto" dir="ltr">
+          <h1 className="text-2xl font-bold mb-4">CRASH DETECTED</h1>
+          <pre className="text-xs whitespace-pre-wrap">{this.state.error?.message}</pre>
+          <pre className="text-xs mt-4 text-red-200">{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function ReelsWrapper() {
+  return (
+    <ReelsErrorBoundary>
+      <Reels />
+    </ReelsErrorBoundary>
+  );
+}
+
+function Reels() {
   const [activeReelIndex, setActiveReelIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
