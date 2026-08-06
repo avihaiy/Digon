@@ -43,7 +43,7 @@ export function useMarineWeather() {
 
       // Fetch Weather (Wind & Temp - Current and Hourly)
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,wind_speed_10m,wind_direction_10m&timezone=auto`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,wind_speed_10m,wind_direction_10m&timezone=auto&models=best_match`
       );
       const weatherJson = await weatherRes.json();
       
@@ -51,7 +51,7 @@ export function useMarineWeather() {
       const marineLat = 32.08;
       const marineLon = 34.75;
       const marineRes = await fetch(
-        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height&hourly=wave_height&timezone=auto`
+        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height&hourly=wave_height&timezone=auto&models=best_match`
       );
       const marineJson = await marineRes.json();
 
