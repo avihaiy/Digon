@@ -23,32 +23,6 @@ const LOCATIONS_ID = APPWRITE_LOCATIONS_ID;
 export default function Admin() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
-
-  // Helper to convert any image to JPEG to bypass Appwrite extension restrictions
-  const convertToJpeg = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return reject("Canvas context not available");
-          ctx.drawImage(img, 0, 0);
-          canvas.toBlob((blob) => {
-            if (!blob) return reject("Blob conversion failed");
-            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" }));
-          }, 'image/png'); // Use PNG which is universally accepted
-        };
-        img.onerror = reject;
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
   const [uploadingImage, setUploadingImage] = useState(false);
   const [activeTab, setActiveTab] = useState("home"); // home, users, locations, catches, ads, raffles, store, settings, tournaments, notifications, comments
   const { tournaments, createTournament, endTournament, deleteTournament } = useTournaments();
@@ -1172,8 +1146,7 @@ export default function Admin() {
                       if (!file) return;
                       setUploadingImage(true);
                       try {
-                        const jpegFile = await convertToJpeg(file);
-                        const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), jpegFile);
+                        const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), file);
                         const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
                         setNewStoreItem({...newStoreItem, image_url: url.href});
                         toast.success("תמונה הועלתה בהצלחה!");
@@ -1748,8 +1721,7 @@ export default function Admin() {
                     if (!file) return;
                     setUploadingImage(true);
                     try {
-                      const jpegFile = await convertToJpeg(file);
-                      const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), jpegFile);
+                      const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), file);
                       const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
                       setEditStoreItemData({...editStoreItemData, image_url: url.href});
                       toast.success("תמונה הועלתה בהצלחה!");

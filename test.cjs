@@ -1,2 +1,1 @@
-const SunCalc = require('suncalc');
-console.log(Object.keys(SunCalc));
+const { Client, Databases } = require('node-appwrite'); const client = new Client().setEndpoint('https://fra.cloud.appwrite.io/v1').setProject('6a6747ed00311fb9e755'); const databases = new Databases(client); databases.listDocuments('6a674a380025507f9db2', 'store_items').then(res = 
