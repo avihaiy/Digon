@@ -504,22 +504,6 @@ export default function Forecast() {
         )}
       </section>
 
-      {/* Target Species Recommendation */}
-      <div className="px-4">
-        <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-2xl p-4">
-          <h3 className="text-sm font-bold text-cyan-800 dark:text-cyan-300 flex items-center gap-2 mb-2">
-            <Fish className="w-4 h-4" />
-            דגי המטרה המומלצים לעכשיו
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {targetSpecies.map((fish, i) => (
-              <Badge key={i} variant="outline" className="bg-white/50 dark:bg-black/20 border-cyan-200 dark:border-cyan-800">
-                {fish}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Hourly Tide & Wave Graph */}
       {marineData.dailyForecast && marineData.dailyForecast.length > 0 && (
