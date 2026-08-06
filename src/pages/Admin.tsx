@@ -26,7 +26,7 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("home"); // home, users, locations, catches, ads, raffles, store, settings, tournaments, notifications, comments
   const { tournaments, createTournament, endTournament, deleteTournament } = useTournaments();
   const [newLocationName, setNewLocationName] = useState("");
-  const [newStoreItem, setNewStoreItem] = useState({ name: "", description: "", cost: "", type: "title", value: "" });
+  const [newStoreItem, setNewStoreItem] = useState({ name: "", description: "", cost: "", type: "title", value: "", image_url: "" });
   
   // Points Modal State
   const [pointsModalOpen, setPointsModalOpen] = useState(false);
@@ -973,9 +973,9 @@ export default function Admin() {
           </CardHeader>
           <CardContent>
             <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl mb-8 border border-slate-200 dark:border-slate-800">
-              <h3 className="font-bold mb-4">הוספת חבילה חדשה</h3>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <Input placeholder="שם החבילה (למשל: תואר מלך)" value={newStoreItem.name} onChange={e => setNewStoreItem({...newStoreItem, name: e.target.value})} />
+              <h3 className="font-bold mb-4">הוספת פריט / חבילה חדשה</h3>
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <Input placeholder="שם החבילה/מוצר" value={newStoreItem.name} onChange={e => setNewStoreItem({...newStoreItem, name: e.target.value})} />
                 <Input placeholder="תיאור קצר" value={newStoreItem.description} onChange={e => setNewStoreItem({...newStoreItem, description: e.target.value})} />
                 <Input type="number" placeholder="עלות (נקודות)" value={newStoreItem.cost} onChange={e => setNewStoreItem({...newStoreItem, cost: e.target.value})} />
                 <select 
@@ -988,15 +988,21 @@ export default function Admin() {
                   <option value="tickets">כרטיסי הגרלה</option>
                   <option value="ai_credits">סריקות AI</option>
                   <option value="feature">פיצ'ר מיוחד</option>
+                  <option value="aliexpress">המלצת AliExpress</option>
                 </select>
-                <Input placeholder="ערך פנימי (למשל: gold או 1)" value={newStoreItem.value} onChange={e => setNewStoreItem({...newStoreItem, value: e.target.value})} />
+                <Input placeholder="ערך / קישור AliExpress" value={newStoreItem.value} onChange={e => setNewStoreItem({...newStoreItem, value: e.target.value})} />
+                {newStoreItem.type === 'aliexpress' && (
+                  <Input placeholder="קישור לתמונה (חובה לאליאקספרס)" value={newStoreItem.image_url} onChange={e => setNewStoreItem({...newStoreItem, image_url: e.target.value})} />
+                )}
               </div>
               <Button 
                 className="mt-4 bg-yellow-500 hover:bg-yellow-600 w-full md:w-auto"
-                disabled={!newStoreItem.name || !newStoreItem.cost || !newStoreItem.value || addStoreItemMutation.isPending}
+                disabled={!newStoreItem.name || (newStoreItem.type !== 'aliexpress' && !newStoreItem.cost) || !newStoreItem.value || addStoreItemMutation.isPending}
                 onClick={() => {
-                  addStoreItemMutation.mutate(newStoreItem);
-                  setNewStoreItem({ name: "", description: "", cost: "", type: "title", value: "" });
+                  const payload: any = { ...newStoreItem };
+                  if (payload.type === 'aliexpress' && !payload.cost) payload.cost = 0; // Cost is 0 for aliexpress items
+                  addStoreItemMutation.mutate(payload);
+                  setNewStoreItem({ name: "", description: "", cost: "", type: "title", value: "", image_url: "" });
                 }}
               >
                 הוסף לחנות
