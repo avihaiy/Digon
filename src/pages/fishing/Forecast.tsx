@@ -125,8 +125,8 @@ export default function Forecast() {
 
       {/* Solunar Fishing Score */}
       <section className="px-4">
-        <Card className="border-border/50 shadow-sm overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-[50px] -z-10" />
+        <Card className="border-white/20 dark:border-slate-700/50 shadow-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl overflow-hidden relative transition-all hover:shadow-xl">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[50px] -z-10" />
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -158,8 +158,8 @@ export default function Forecast() {
               
               {/* Score Explanations */}
               {solunar.explanations && solunar.explanations.length > 0 && (
-                <div className="w-full bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-border/50 text-right">
-                  <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1">
+                <div className="w-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-white/30 dark:border-slate-700/50 text-right mt-4">
+                  <h4 className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-2 flex items-center gap-1">
                     <Info className="w-3 h-3" /> ממה מורכב הציון?
                   </h4>
                   <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
@@ -179,23 +179,23 @@ export default function Forecast() {
 
       {/* Daily Windows */}
       <section className="px-4">
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-primary" />
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-slate-100">
+          <Clock className="w-5 h-5 text-amber-500" />
           חלונות זהב להיום
         </h3>
         <div className="space-y-3">
-          <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between shadow-sm">
+          <div className="p-4 rounded-2xl border border-white/20 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex items-center justify-between shadow-md hover:scale-[1.02] transition-transform">
             <div>
-              <div className="font-bold text-lg">05:30 - 08:00</div>
+              <div className="font-black text-lg text-slate-800 dark:text-slate-100">05:30 - 08:00</div>
               <div className="text-sm text-muted-foreground flex items-center gap-1">
                 <Sun className="w-3.5 h-3.5" /> שעות הזריחה
               </div>
             </div>
             <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold">מצוין</Badge>
           </div>
-          <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between shadow-sm">
+          <div className="p-4 rounded-2xl border border-white/20 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex items-center justify-between shadow-md hover:scale-[1.02] transition-transform">
             <div>
-              <div className="font-bold text-lg">18:15 - 20:30</div>
+              <div className="font-black text-lg text-slate-800 dark:text-slate-100">18:15 - 20:30</div>
               <div className="text-sm text-muted-foreground flex items-center gap-1">
                 <Sun className="w-3.5 h-3.5" /> שעות השקיעה
               </div>
@@ -208,19 +208,19 @@ export default function Forecast() {
       {/* Sea Conditions */}
       <section className="px-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold flex items-center gap-2">
-            <Waves className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-bold flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-slate-100">
+            <Waves className="w-5 h-5 text-blue-500" />
             מצב הים המעודכן
           </h3>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50 px-2 py-1 rounded-full backdrop-blur-sm">
             {lastUpdated.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="border-border/50 shadow-sm">
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="border-white/20 dark:border-slate-700/50 shadow-md bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl hover:scale-[1.03] transition-transform">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-              <div className="p-3 bg-blue-500/10 rounded-full text-blue-500 mb-3">
+              <div className="p-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl text-white shadow-inner mb-3">
                 <Waves className="w-6 h-6" />
               </div>
               <p className="text-2xl font-black">
@@ -231,9 +231,9 @@ export default function Forecast() {
             </CardContent>
           </Card>
           
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-white/20 dark:border-slate-700/50 shadow-md bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl hover:scale-[1.03] transition-transform">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-              <div className="p-3 bg-cyan-500/10 rounded-full text-cyan-500 mb-3">
+              <div className="p-3 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-2xl text-white shadow-inner mb-3">
                 <Wind className="w-6 h-6" />
               </div>
               <p className="text-2xl font-black">
@@ -246,9 +246,9 @@ export default function Forecast() {
             </CardContent>
           </Card>
           
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-white/20 dark:border-slate-700/50 shadow-md bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl hover:scale-[1.03] transition-transform">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-              <div className="p-3 bg-orange-500/10 rounded-full text-orange-500 mb-3">
+              <div className="p-3 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl text-white shadow-inner mb-3">
                 <ThermometerSun className="w-6 h-6" />
               </div>
               <p className="text-2xl font-black">
@@ -259,9 +259,9 @@ export default function Forecast() {
             </CardContent>
           </Card>
           
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-white/20 dark:border-slate-700/50 shadow-md bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl hover:scale-[1.03] transition-transform">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-              <div className="p-3 bg-indigo-500/10 rounded-full text-indigo-500 mb-3">
+              <div className="p-3 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-2xl text-white shadow-inner mb-3">
                 <Compass className="w-6 h-6" />
               </div>
               <p className="text-base font-bold mt-1 text-muted-foreground">
@@ -275,11 +275,15 @@ export default function Forecast() {
 
       {/* Forecast Charts Section */}
       {marineData.hourlyForecast && marineData.hourlyForecast.length > 0 && (
-        <section className="px-4 space-y-4">
-          <h3 className="font-bold text-lg mb-2">תחזית 24 שעות</h3>
+        <section className="px-4 space-y-4 mt-6">
+          <h3 className="font-bold text-lg mb-2 flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-slate-100">
+            <Clock className="w-5 h-5 text-primary" />
+            תחזית 24 שעות
+          </h3>
           
-          <Card className="border-border/50 shadow-sm">
-            <CardContent className="p-4">
+          <Card className="border-white/20 dark:border-slate-700/50 shadow-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-[50px] -z-10" />
+            <CardContent className="p-4 pt-5">
               <div className="flex items-center gap-2 mb-2">
                 <Waves className="w-4 h-4 text-blue-500" />
                 <h4 className="font-bold text-sm">גובה גלים (מטר)</h4>
@@ -324,14 +328,14 @@ export default function Forecast() {
 
           {/* Hourly Scrollable List */}
           <section className="px-4 mt-6">
-            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg mb-3 flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-slate-100">
+              <Clock className="w-5 h-5 text-indigo-500" />
               תחזית לפי שעות
             </h3>
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x">
               {selectedDayHours.map((hour, idx) => (
-                <div key={idx} className="snap-center shrink-0 w-20 bg-white dark:bg-slate-800 rounded-2xl p-3 border border-border shadow-sm flex flex-col items-center text-center">
-                  <span className="text-xs font-bold text-slate-500 mb-2">{hour.time}</span>
+                <div key={idx} className="snap-center shrink-0 w-[72px] bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-[1.2rem] p-3 border border-white/20 dark:border-slate-700/50 shadow-sm flex flex-col items-center text-center hover:bg-white/90 transition-colors">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">{hour.time}</span>
                   
                   {/* Wave */}
                   <Waves className="w-4 h-4 text-blue-500 mb-1" />
@@ -353,8 +357,9 @@ export default function Forecast() {
           </section>
           
           {/* TIDE CHART */}
-          <Card className="border-border/50 shadow-sm mt-4 overflow-hidden relative">
+          <Card className="border-white/20 dark:border-slate-700/50 shadow-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl mt-6 overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500" />
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-[50px] -z-10" />
             <CardContent className="p-4 pt-5">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
