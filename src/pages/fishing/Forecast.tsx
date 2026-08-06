@@ -7,7 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 
 import { CalendarDays } from "lucide-react";
 
-import { getSolunarData, getTargetSpecies } from '@/lib/solunar';
+import { getSolunarData, getTargetSpecies, getDynamicGoldWindows, GoldWindow } from '@/lib/solunar';
 import { useMemo, useState } from 'react';
 
 // Generate realistic mock tide data for Mediterranean (semi-diurnal, 2 highs 2 lows per 24h)
@@ -56,7 +56,8 @@ export default function Forecast() {
         marineData.temperature,
         marineData.wavePeriod,
         marineData.surfacePressure,
-        marineData.windDirection
+        marineData.windDirection,
+        marineData.cloudCover
       );
     }
     // If it's a future day, pass max conditions from dailyForecast
@@ -66,6 +67,8 @@ export default function Forecast() {
     }
     return getSolunarData(targetDate);
   }, [targetDate, marineData, selectedDayIndex]);
+  
+  const goldWindows = useMemo(() => getDynamicGoldWindows(targetDate), [targetDate]);
   
   const selectedDayHours = useMemo(() => {
     if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
@@ -192,24 +195,22 @@ export default function Forecast() {
           חלונות זהב להיום
         </h3>
         <div className="space-y-3">
-          <div className="p-4 rounded-2xl border border-white/20 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex items-center justify-between shadow-md hover:scale-[1.02] transition-transform">
-            <div>
-              <div className="font-black text-lg text-slate-800 dark:text-slate-100">05:30 - 08:00</div>
-              <div className="text-sm text-muted-foreground flex items-center gap-1">
-                <Sun className="w-3.5 h-3.5" /> שעות הזריחה
+          {goldWindows.map((window, idx) => (
+            <div key={idx} className="p-4 rounded-2xl border border-white/20 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex items-center justify-between shadow-md hover:scale-[1.02] transition-transform">
+              <div>
+                <div className="font-black text-lg text-slate-800 dark:text-slate-100">
+                  {window.startHour.toString().padStart(2, '0')}:00 - {window.endHour.toString().padStart(2, '0')}:00
+                </div>
+                <div className="text-sm text-muted-foreground flex items-center gap-1">
+                  {window.type === 'major' ? <Fish className="w-3.5 h-3.5 text-amber-500" /> : <Sun className="w-3.5 h-3.5" />} 
+                  {window.label}
+                </div>
               </div>
+              <Badge className={cn("text-white font-bold", window.type === 'major' ? "bg-amber-500 hover:bg-amber-600" : "bg-emerald-500 hover:bg-emerald-600")}>
+                {window.type === 'major' ? "פעילות שיא" : "מצוין"}
+              </Badge>
             </div>
-            <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold">מצוין</Badge>
-          </div>
-          <div className="p-4 rounded-2xl border border-white/20 dark:border-slate-700/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex items-center justify-between shadow-md hover:scale-[1.02] transition-transform">
-            <div>
-              <div className="font-black text-lg text-slate-800 dark:text-slate-100">18:15 - 20:30</div>
-              <div className="text-sm text-muted-foreground flex items-center gap-1">
-                <Sun className="w-3.5 h-3.5" /> שעות השקיעה
-              </div>
-            </div>
-            <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold">מצוין</Badge>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -265,7 +266,9 @@ export default function Forecast() {
                 {marineLoading ? "..." : marineData.temperature !== null ? Math.round(marineData.temperature) : "---"}
                 <span className="text-sm font-normal text-muted-foreground ms-1">°C</span>
               </p>
-              <p className="text-xs text-muted-foreground mt-1 font-medium">טמפ' אוויר</p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                טמפ' (עננות: {marineLoading ? "..." : marineData.cloudCover !== null ? marineData.cloudCover : "---"}%)
+              </p>
             </CardContent>
           </Card>
           

@@ -11,6 +11,7 @@ interface MarineWeatherData {
   temperature: number | null; // in celsius
   surfacePressure: number | null; // in hPa
   wavePeriod: number | null; // in seconds
+  cloudCover: number | null; // in percentage
   locationName: string;
   hourlyForecast?: { time: string; waveHeight: number; temperature: number; windSpeed: number }[];
   dailyForecast?: { 
@@ -20,7 +21,7 @@ interface MarineWeatherData {
     tempMax: number; 
     tempMin: number;
     windSpeedMax: number; 
-    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number; wavePeriod: number; surfacePressure: number }[];
+    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number; wavePeriod: number; surfacePressure: number; cloudCover: number }[];
   }[];
 }
 
@@ -32,6 +33,7 @@ export function useMarineWeather() {
     temperature: null,
     surfacePressure: null,
     wavePeriod: null,
+    cloudCover: null,
     locationName: 'תל אביב (ברירת מחדל)',
     hourlyForecast: [],
     dailyForecast: [],
@@ -45,9 +47,9 @@ export function useMarineWeather() {
       setLoading(true);
       setError(null);
 
-      // Fetch Weather (Wind, Temp, Pressure - Current and Hourly)
+      // Fetch Weather (Wind, Temp, Pressure, Clouds - Current and Hourly)
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure&timezone=auto&models=best_match`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&timezone=auto&models=best_match`
       );
       const weatherJson = await weatherRes.json();
       
@@ -90,6 +92,7 @@ export function useMarineWeather() {
           const wind = weatherJson.hourly.wind_speed_10m[i] || 0;
           const dir = weatherJson.hourly.wind_direction_10m[i] || 0;
           const pressure = weatherJson.hourly.surface_pressure ? weatherJson.hourly.surface_pressure[i] || 0 : 0;
+          const clouds = weatherJson.hourly.cloud_cover ? weatherJson.hourly.cloud_cover[i] || 0 : 0;
           
           const hourData = {
             time: dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
@@ -99,7 +102,8 @@ export function useMarineWeather() {
             windSpeed: wind,
             windDirection: dir,
             wavePeriod: period,
-            surfacePressure: pressure
+            surfacePressure: pressure,
+            cloudCover: clouds
           };
 
           if (!dailyForecastMap.has(dayKey)) {
@@ -132,6 +136,7 @@ export function useMarineWeather() {
         temperature: weatherJson.current?.temperature_2m ?? null,
         surfacePressure: weatherJson.current?.surface_pressure ?? null,
         wavePeriod: marineJson.current?.wave_period ?? null,
+        cloudCover: weatherJson.current?.cloud_cover ?? null,
         locationName,
         hourlyForecast,
         dailyForecast,

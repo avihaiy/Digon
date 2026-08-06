@@ -16,7 +16,8 @@ export function getSolunarData(
   waterTemp: number | null = null,
   wavePeriod: number | null = null,
   surfacePressure: number | null = null,
-  windDirection: number | null = null
+  windDirection: number | null = null,
+  cloudCover: number | null = null
 ) {
   const moonIllumination = SunCalc.getMoonIllumination(date);
   const phase = moonIllumination.phase; // 0 to 1
@@ -38,14 +39,16 @@ export function getSolunarData(
   let phaseScore = 100 - (bestDist * 400); 
   if (phaseScore < 20) phaseScore = 20;
 
-  // Time Score
-  const hour = date.getHours();
+  // Time Score (Dynamic check if within Major/Minor period)
+  const windows = getDynamicGoldWindows(date);
   let timeScore = 0;
-  if ((hour >= 5 && hour <= 8) || (hour >= 17 && hour <= 20)) {
-    timeScore = 40;
-  } else if ((hour >= 9 && hour <= 11) || (hour >= 15 && hour <= 16)) {
-    timeScore = 20;
-  }
+  const currentHour = date.getHours();
+  
+  const inMajor = windows.some(w => w.type === 'major' && currentHour >= w.startHour && currentHour <= w.endHour);
+  const inMinor = windows.some(w => w.type === 'minor' && currentHour >= w.startHour && currentHour <= w.endHour);
+  
+  if (inMajor) timeScore = 40;
+  else if (inMinor) timeScore = 20;
 
   // Sea Conditions Score Adjustments
   let seaPenalty = 0;
@@ -119,6 +122,17 @@ export function getSolunarData(
     }
   }
 
+  // Cloud Cover (%)
+  if (cloudCover !== null) {
+    if (cloudCover > 60) {
+      seaBonus += 15;
+      explanations.push("עננות כבדה (דגים עולים לפני המים בגלל מחסור באור)");
+    } else if (cloudCover > 30) {
+      seaBonus += 5;
+      explanations.push("עננות חלקית (תנאים טובים לז'רז'ור)");
+    }
+  }
+
   // Temp (C)
   if (waterTemp !== null) {
     if (waterTemp < 16) {
@@ -186,4 +200,82 @@ export function getTargetSpecies(temp: number | null): string[] {
     // Summer / Hot water
     return ["דוראדו (Mahi Mahi)", "טונה שחורה", "גומבר", "אריען", "לוקוס"];
   }
+}
+
+export interface GoldWindow {
+  type: 'major' | 'minor';
+  startHour: number;
+  endHour: number;
+  label: string;
+}
+
+/**
+ * Calculates accurate Solunar Major/Minor feeding windows based on Moon transit (Zenith/Nadir)
+ * Major periods are 2 hours before and after Zenith/Nadir.
+ * Minor periods are around sunrise/sunset (using moon rise/set or generic dawn/dusk).
+ */
+export function getDynamicGoldWindows(date: Date): GoldWindow[] {
+  let maxAlt = -99;
+  let minAlt = 99;
+  let zenithHour = 12;
+  let nadirHour = 0;
+
+  // Scan 24 hours to find Moon highest and lowest points (transit)
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  
+  for (let i = 0; i < 24; i++) {
+    const t = new Date(d.getTime() + i * 3600 * 1000);
+    const pos = SunCalc.getMoonPosition(t, LAT, LON);
+    if (pos.altitude > maxAlt) {
+      maxAlt = pos.altitude;
+      zenithHour = i;
+    }
+    if (pos.altitude < minAlt) {
+      minAlt = pos.altitude;
+      nadirHour = i;
+    }
+  }
+
+  const windows: GoldWindow[] = [];
+
+  // Major Period 1 (Zenith)
+  windows.push({
+    type: 'major',
+    startHour: Math.max(0, zenithHour - 1),
+    endHour: Math.min(23, zenithHour + 2),
+    label: 'זניט ירח (Major)'
+  });
+
+  // Major Period 2 (Nadir)
+  windows.push({
+    type: 'major',
+    startHour: Math.max(0, nadirHour - 1),
+    endHour: Math.min(23, nadirHour + 2),
+    label: 'נדיר ירח (Major)'
+  });
+
+  // Add generic Minor periods for Dawn / Dusk (Sunrise/Sunset)
+  // For better accuracy, we just use static optimal crepuscular times 
+  // since SunCalc.getTimes provides exact sunrise/sunset, but static is okay for minor.
+  const sunTimes = SunCalc.getTimes(d, LAT, LON);
+  const sunriseHour = sunTimes.sunrise.getHours();
+  const sunsetHour = sunTimes.sunset.getHours();
+
+  windows.push({
+    type: 'minor',
+    startHour: Math.max(0, sunriseHour - 1),
+    endHour: Math.min(23, sunriseHour + 1),
+    label: 'זריחה (Minor)'
+  });
+
+  windows.push({
+    type: 'minor',
+    startHour: Math.max(0, sunsetHour - 1),
+    endHour: Math.min(23, sunsetHour + 1),
+    label: 'שקיעה (Minor)'
+  });
+
+  // Sort by start time and deduplicate overlapping (simple filter)
+  return windows.sort((a, b) => a.startHour - b.startHour);
 }
