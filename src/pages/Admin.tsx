@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil, BellRing, MessageSquareWarning, Video, ShoppingCart, ExternalLink } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil, BellRing, MessageSquareWarning, Video, ShoppingCart, ExternalLink, Upload, Loader2 } from "lucide-react";
 import { CamsManager } from "@/components/admin/CamsManager";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
@@ -23,6 +23,7 @@ const LOCATIONS_ID = APPWRITE_LOCATIONS_ID;
 export default function Admin() {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [activeTab, setActiveTab] = useState("home"); // home, users, locations, catches, ads, raffles, store, settings, tournaments, notifications, comments
   const { tournaments, createTournament, endTournament, deleteTournament } = useTournaments();
   const [newLocationName, setNewLocationName] = useState("");
@@ -1081,7 +1082,38 @@ export default function Admin() {
                 <Input placeholder="שם המוצר" value={newStoreItem.name} onChange={e => setNewStoreItem({...newStoreItem, name: e.target.value})} />
                 <Input placeholder="תיאור קצר (לדוגמה: פיתיון מנצח ללברק)" value={newStoreItem.description} onChange={e => setNewStoreItem({...newStoreItem, description: e.target.value})} />
                 <Input placeholder="קישור למוצר באליאקספרס" value={newStoreItem.value} onChange={e => setNewStoreItem({...newStoreItem, value: e.target.value})} />
-                <Input placeholder="קישור לתמונה (חובה)" value={newStoreItem.image_url} onChange={e => setNewStoreItem({...newStoreItem, image_url: e.target.value})} />
+                <div className="flex gap-2">
+                  <Input placeholder="קישור לתמונה או העלאה" value={newStoreItem.image_url} onChange={e => setNewStoreItem({...newStoreItem, image_url: e.target.value})} className="flex-1" />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    id="aliexpress-image-upload" 
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingImage(true);
+                      try {
+                        const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), file);
+                        const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
+                        setNewStoreItem({...newStoreItem, image_url: url.href});
+                        toast.success("תמונה הועלתה בהצלחה!");
+                      } catch (err) {
+                        toast.error("שגיאה בהעלאת תמונה");
+                      } finally {
+                        setUploadingImage(false);
+                      }
+                    }}
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="shrink-0"
+                    onClick={() => document.getElementById('aliexpress-image-upload')?.click()}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  </Button>
+                </div>
               </div>
               <Button 
                 className="mt-4 bg-orange-500 hover:bg-orange-600 w-full md:w-auto text-white"
