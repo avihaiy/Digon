@@ -45,8 +45,9 @@ export default function GearRecommendations() {
           <p className="text-sm text-muted-foreground mb-4">
             ציוד דייג איכותי שנבדק על ידי הצוות במים של ישראל, זמין לרכישה ישירה ובטוחה באליאקספרס 🎣
           </p>
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 w-full text-xs text-orange-600 dark:text-orange-400">
-            <strong>חשוב לדעת:</strong> אני לא מוכר את הציוד ואין הבטחה ממני על המוצרים, אני רק ממליץ על מוצרים טובים מאלי אקספרס.
+          <div className="bg-slate-900/80 backdrop-blur-md border border-orange-500/30 rounded-xl p-4 w-full text-sm text-slate-200 shadow-xl text-right">
+            <strong className="text-orange-400 block mb-1">חשוב לדעת:</strong> 
+            אני לא מוכר את הציוד ואין הבטחה ממני על המוצרים, אני רק ממליץ על מוצרים טובים מאלי אקספרס.
           </div>
         </div>
 
