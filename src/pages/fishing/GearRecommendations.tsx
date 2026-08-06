@@ -4,7 +4,7 @@ import { databases, APPWRITE_DB_ID, APPWRITE_STORE_ITEMS_ID } from "@/lib/appwri
 import { Query } from "appwrite";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingCart, ExternalLink, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 export default function GearRecommendations() {
@@ -19,14 +19,15 @@ export default function GearRecommendations() {
       return res.documents;
     }
   });
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto min-h-[calc(100vh-80px)]">
       <div className="sticky top-0 z-40 bg-[#020610]/80 backdrop-blur-xl border-b border-white/5 px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/fishing" className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/5">
+          <button onClick={() => navigate(-1)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/5">
             <ArrowRight className="w-5 h-5 text-white" />
-          </Link>
+          </button>
           <h1 className="font-black text-xl text-white tracking-tight leading-none text-start flex items-center gap-2">
             המלצות ציוד <ShoppingCart className="w-5 h-5 text-orange-500" />
           </h1>
