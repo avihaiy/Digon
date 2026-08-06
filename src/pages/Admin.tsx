@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil, BellRing, MessageSquareWarning, Video } from "lucide-react";
+import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil, BellRing, MessageSquareWarning, Video, ShoppingCart, ExternalLink } from "lucide-react";
 import { CamsManager } from "@/components/admin/CamsManager";
 
 // The Database and Collection IDs should ideally come from env, but we hardcode for this migration script
@@ -988,7 +988,6 @@ export default function Admin() {
                   <option value="tickets">כרטיסי הגרלה</option>
                   <option value="ai_credits">סריקות AI</option>
                   <option value="feature">פיצ'ר מיוחד</option>
-                  <option value="aliexpress">המלצת AliExpress</option>
                 </select>
                 <Input placeholder="ערך / קישור AliExpress" value={newStoreItem.value} onChange={e => setNewStoreItem({...newStoreItem, value: e.target.value})} />
                 {newStoreItem.type === 'aliexpress' && (
@@ -1020,7 +1019,7 @@ export default function Admin() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {storeItemsData?.map((item: any) => (
+                  {storeItemsData?.filter((item: any) => item.type !== 'aliexpress').map((item: any) => (
                     <TableRow key={item.$id} className={item.is_active ? '' : 'opacity-50'}>
                       <TableCell>
                         <div className="font-medium">{item.name}</div>
@@ -1053,8 +1052,97 @@ export default function Admin() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(!storeItemsData || storeItemsData.length === 0) && (
+                  {(!storeItemsData || storeItemsData.filter((i: any) => i.type !== 'aliexpress').length === 0) && (
                     <TableRow><TableCell colSpan={4} className="text-center">אין חבילות בחנות</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AliExpress Tab */}
+      {activeTab === "aliexpress" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-orange-500"/> ניהול המלצות ציוד (AliExpress)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl mb-8 border border-slate-200 dark:border-slate-800">
+              <h3 className="font-bold mb-4">הוספת מוצר מומלץ חדש</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Input placeholder="שם המוצר" value={newStoreItem.name} onChange={e => setNewStoreItem({...newStoreItem, name: e.target.value})} />
+                <Input placeholder="תיאור קצר (לדוגמה: פיתיון מנצח ללברק)" value={newStoreItem.description} onChange={e => setNewStoreItem({...newStoreItem, description: e.target.value})} />
+                <Input placeholder="קישור למוצר באליאקספרס" value={newStoreItem.value} onChange={e => setNewStoreItem({...newStoreItem, value: e.target.value})} />
+                <Input placeholder="קישור לתמונה (חובה)" value={newStoreItem.image_url} onChange={e => setNewStoreItem({...newStoreItem, image_url: e.target.value})} />
+              </div>
+              <Button 
+                className="mt-4 bg-orange-500 hover:bg-orange-600 w-full md:w-auto text-white"
+                disabled={!newStoreItem.name || !newStoreItem.value || !newStoreItem.image_url || addStoreItemMutation.isPending}
+                onClick={() => {
+                  const payload: any = { ...newStoreItem, type: 'aliexpress', cost: 0 };
+                  addStoreItemMutation.mutate(payload);
+                  setNewStoreItem({ name: "", description: "", cost: "", type: "title", value: "", image_url: "" });
+                }}
+              >
+                הוסף להמלצות
+              </Button>
+            </div>
+
+            {storeItemsLoading ? <p>טוען מוצרים...</p> : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>שם המוצר</TableHead>
+                    <TableHead>קישור אליאקספרס</TableHead>
+                    <TableHead>סטטוס (פעיל/כבוי)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {storeItemsData?.filter((item: any) => item.type === 'aliexpress').map((item: any) => (
+                    <TableRow key={item.$id} className={item.is_active ? '' : 'opacity-50'}>
+                      <TableCell>
+                        <div className="font-medium flex items-center gap-3">
+                          {item.image_url && <img src={item.image_url} alt="" className="w-10 h-10 rounded-md object-cover border border-slate-200 dark:border-slate-800" />}
+                          <div>
+                            <div>{item.name}</div>
+                            <div className="text-xs text-muted-foreground">{item.description}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <a href={item.value} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline flex items-center gap-1 text-xs bg-blue-500/10 px-2 py-1 rounded-md w-fit">
+                          צפה במוצר <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant={item.is_active ? "default" : "outline"}
+                            size="sm"
+                            className={item.is_active ? "bg-green-500 hover:bg-green-600" : ""}
+                            onClick={() => toggleStoreItemMutation.mutate({ id: item.$id, isActive: !item.is_active })}
+                          >
+                            {item.is_active ? "פעיל - מוצג" : "כבוי - מוסתר"}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if(window.confirm("האם אתה בטוח שברצונך למחוק מוצר זה?")) {
+                                deleteStoreItemMutation.mutate(item.$id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!storeItemsData || storeItemsData.filter((i: any) => i.type === 'aliexpress').length === 0) && (
+                    <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">אין עדיין המלצות ציוד. הוסף את המוצר הראשון שלך!</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
