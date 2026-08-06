@@ -417,11 +417,12 @@ export default function Forecast() {
             <Info className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
             <div>
               <h4 className="font-bold text-emerald-500 text-sm">תנאי בטיחות מצוינים</h4>
-              <div className="text-sm font-bold mt-1 text-slate-900 dark:text-white">
-              {marineData.temperature ? `${Math.round(marineData.temperature)}°` : '...'}
+              <p className="text-xs text-emerald-500/80 mt-1">
+                הים נוח יחסית ומתאים גם למתחילים ולדייג משפחתי.
+              </p>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* Target Species Recommendation */}
