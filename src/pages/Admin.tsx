@@ -600,6 +600,12 @@ export default function Admin() {
               <h3 className="font-bold text-slate-800 dark:text-slate-200">ניהול מצלמות חוף</h3>
             </CardContent>
           </Card>
+          <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("aliexpress")}>
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
+              <div className="p-4 bg-orange-500/10 rounded-2xl"><ShoppingCart className="w-8 h-8 text-orange-500" /></div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">המלצות ציוד</h3>
+            </CardContent>
+          </Card>
           <Card className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-slate-200 dark:border-slate-800" onClick={() => setActiveTab("settings")}>
             <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-3">
               <div className="p-4 bg-slate-500/10 rounded-2xl"><Settings className="w-8 h-8 text-slate-500" /></div>
