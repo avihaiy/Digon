@@ -1166,7 +1166,7 @@ export default function Admin() {
                       try {
                         const renamedFile = new File([file], "upload_" + Date.now() + "." + (file.name.split('.').pop() || 'png'), { type: file.type });
                         const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), renamedFile);
-                        const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
+                        const url = storage.getFilePreview(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
                         setNewStoreItem(prev => ({...prev, image_url: url.toString()}));
                         alert("התמונה הועלתה בהצלחה! הקישור נוצר.");
                       } catch (err: any) {
@@ -1742,7 +1742,7 @@ export default function Admin() {
                     try {
                       const renamedFile = new File([file], "upload_" + Date.now() + "." + (file.name.split('.').pop() || 'png'), { type: file.type });
                       const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), renamedFile);
-                      const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
+                      const url = storage.getFilePreview(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
                       setEditStoreItemData(prev => ({...prev, image_url: url.toString()}));
                       alert("התמונה הועלתה בהצלחה! הקישור נוצר.");
                     } catch (err: any) {
