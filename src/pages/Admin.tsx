@@ -43,8 +43,6 @@ export default function Admin() {
   const [editLocation, setEditLocation] = useState("");
   const [editMapUrl, setEditMapUrl] = useState("");
 
-  const [editMapUrl, setEditMapUrl] = useState("");
-
   // Edit Store Item Modal State
   const [editStoreItemModalOpen, setEditStoreItemModalOpen] = useState(false);
   const [selectedStoreItemToEdit, setSelectedStoreItemToEdit] = useState<any>(null);
