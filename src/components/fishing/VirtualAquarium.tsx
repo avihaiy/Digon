@@ -141,14 +141,7 @@ function AnimatedFish({ fish, index, total }: { fish: any, index: number, total:
       className={`absolute z-20 ${fish.asset.size} flex flex-col items-center group cursor-pointer`}
       style={{ top: 0, left: 0, width: '100px' }} // bounding box
     >
-      {/* SVG Fish representation (Silhouette) */}
-      <svg viewBox="0 0 100 50" className="w-full h-full drop-shadow-lg fill-white/80 group-hover:fill-cyan-300 transition-colors">
-        <path d="M80,25 C70,10 40,5 20,20 C10,25 0,20 0,20 C5,30 5,40 0,50 C10,45 20,40 30,45 C50,55 70,40 80,25 Z M95,15 C90,20 80,25 80,25 L95,35 Z" />
-        {/* Eye */}
-        <circle cx="25" cy="22" r="2" fill="#0f172a" />
-        {/* Fin */}
-        <path d="M45,15 C55,10 65,15 65,15 C60,20 50,20 45,15 Z" fill="rgba(255,255,255,0.5)" />
-      </svg>
+      <FishSvg type={fish.asset.type} className="w-full h-full drop-shadow-lg group-hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] transition-all" />
       
       {/* Label on hover */}
       <div className="opacity-0 group-hover:opacity-100 absolute -bottom-6 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap pointer-events-none transition-opacity">
@@ -156,4 +149,61 @@ function AnimatedFish({ fish, index, total }: { fish: any, index: number, total:
       </div>
     </motion.div>
   );
+}
+
+function FishSvg({ type, className }: { type: string, className?: string }) {
+  // Return different SVGs based on type
+  switch (type) {
+    case 'grouper':
+      return (
+        <svg viewBox="0 0 100 50" className={className}>
+          <path d="M85,25 C75,5 35,5 15,20 C5,25 0,20 0,20 C5,35 5,45 0,50 C15,45 25,40 35,45 C55,55 75,45 85,25 Z M95,15 C90,25 85,25 85,25 L95,40 Z" fill="#475569" />
+          <circle cx="25" cy="22" r="2.5" fill="#0f172a" />
+          <path d="M40,15 C55,10 65,15 65,15 C60,25 50,25 40,15 Z" fill="rgba(255,255,255,0.4)" />
+          {/* Grouper spots */}
+          <circle cx="45" cy="35" r="1.5" fill="rgba(255,255,255,0.3)" />
+          <circle cx="60" cy="30" r="2" fill="rgba(255,255,255,0.3)" />
+          <circle cx="70" cy="25" r="1.5" fill="rgba(255,255,255,0.3)" />
+        </svg>
+      );
+    case 'amberjack':
+      return (
+        <svg viewBox="0 0 100 50" className={className}>
+          <path d="M90,25 C75,15 45,10 20,20 C10,23 0,25 0,25 C10,27 20,28 30,30 C50,40 75,35 90,25 Z M98,10 C92,20 90,25 90,25 L98,40 Z" fill="#94a3b8" />
+          <path d="M20,20 C45,10 75,15 90,25 C75,20 45,15 20,20 Z" fill="#cbd5e1" />
+          <circle cx="22" cy="23" r="1.5" fill="#0f172a" />
+          <path d="M50,15 C55,12 65,15 65,15 C60,18 55,18 50,15 Z" fill="rgba(255,255,255,0.6)" />
+        </svg>
+      );
+    case 'bream':
+      return (
+        <svg viewBox="0 0 100 60" className={className}>
+          <path d="M80,30 C70,0 40,0 20,20 C10,25 0,25 0,25 C10,35 15,45 25,50 C40,60 70,60 80,30 Z M95,15 C90,25 80,30 80,30 L95,45 Z" fill="#cbd5e1" />
+          <circle cx="22" cy="22" r="2" fill="#0f172a" />
+          <path d="M40,20 C45,10 55,15 55,15 C50,25 45,25 40,20 Z" fill="rgba(255,255,255,0.5)" />
+          {/* Bream stripes */}
+          <path d="M40,10 L40,50 M55,10 L55,50 M70,15 L70,45" stroke="rgba(0,0,0,0.2)" strokeWidth="3" fill="none" />
+          <circle cx="75" cy="30" r="3" fill="rgba(0,0,0,0.4)" />
+        </svg>
+      );
+    case 'mackerel':
+      return (
+        <svg viewBox="0 0 100 30" className={className}>
+          <path d="M95,15 C75,5 40,5 15,12 C5,14 0,15 0,15 C5,16 15,18 30,22 C50,28 75,25 95,15 Z M100,5 C95,10 95,15 95,15 L100,25 Z" fill="#38bdf8" />
+          {/* Silver belly */}
+          <path d="M15,12 C40,5 75,5 95,15 C75,10 40,10 15,12 Z" fill="#e0f2fe" />
+          <circle cx="18" cy="14" r="1" fill="#0f172a" />
+          {/* Mackerel zig-zag stripes */}
+          <path d="M30,8 L32,12 L35,7 M45,7 L47,12 L50,6 M60,8 L62,13 L65,7" stroke="#0284c7" strokeWidth="1.5" fill="none" />
+        </svg>
+      );
+    default:
+      return (
+        <svg viewBox="0 0 100 50" className={className}>
+          <path d="M80,25 C70,10 40,5 20,20 C10,25 0,20 0,20 C5,30 5,40 0,50 C10,45 20,40 30,45 C50,55 70,40 80,25 Z M95,15 C90,20 80,25 80,25 L95,35 Z" fill="rgba(255,255,255,0.8)" />
+          <circle cx="25" cy="22" r="2" fill="#0f172a" />
+          <path d="M45,15 C55,10 65,15 65,15 C60,20 50,20 45,15 Z" fill="rgba(255,255,255,0.5)" />
+        </svg>
+      );
+  }
 }

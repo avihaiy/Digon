@@ -3,6 +3,7 @@ import { ID, Query } from 'appwrite';
 import { databases, storage, APPWRITE_DB_ID, APPWRITE_REELS_ID, APPWRITE_REELS_BUCKET_ID } from '@/lib/appwrite';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { compressVideoLocally } from '@/lib/videoCompression';
 
 export interface ReelData {
   $id: string;
@@ -67,11 +68,17 @@ export function useReels() {
     }
 
     try {
+      // 0. Compress video locally
+      let fileToUpload = file;
+      if (file.type.startsWith('video/')) {
+        fileToUpload = await compressVideoLocally(file);
+      }
+
       // 1. Upload video to storage
       const uploadedFile = await storage.createFile(
         APPWRITE_REELS_BUCKET_ID,
         ID.unique(),
-        file
+        fileToUpload
       );
 
       // 2. Get file view URL

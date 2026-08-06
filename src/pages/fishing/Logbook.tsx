@@ -4,7 +4,9 @@ import { databases, APPWRITE_DB_ID, APPWRITE_CATCHES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { getImageUrl } from "@/hooks/useCatches";
 import { useAuth } from "@/hooks/useAuth";
-import { Fish, MapPin, Calendar, Scale, Lock, BookOpen } from "lucide-react";
+import { Fish, MapPin, Calendar, Scale, Lock, BookOpen, WifiOff, RefreshCw } from "lucide-react";
+import { getPendingCatches, syncOfflineCatches, PendingCatch } from "@/lib/offlineSync";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -25,6 +27,39 @@ export default function Logbook() {
     },
     enabled: !!user
   });
+
+  // Offline Catches State
+  const [offlineCatches, setOfflineCatches] = useState<PendingCatch[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    getPendingCatches().then(setOfflineCatches);
+    
+    // Auto sync when online
+    const handleOnline = async () => {
+      if (offlineCatches.length > 0) {
+        handleSync();
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [offlineCatches.length]);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    const res = await syncOfflineCatches();
+    setIsSyncing(false);
+    
+    if (res.success) {
+      toast({ title: "סונכרן בהצלחה", description: res.message });
+      getPendingCatches().then(setOfflineCatches);
+      // Refresh online catches
+      window.location.reload(); 
+    } else {
+      toast({ title: "שגיאת סנכרון", description: res.message, variant: "destructive" });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -55,6 +90,30 @@ export default function Logbook() {
           </div>
         </div>
       </div>
+
+      {/* Offline Sync Banner */}
+      {offlineCatches.length > 0 && (
+        <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3 text-orange-800 dark:text-orange-200">
+            <div className="bg-orange-100 dark:bg-orange-900 p-2 rounded-full">
+              <WifiOff className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm">יש לך {offlineCatches.length} תפיסות שממתינות לסנכרון</p>
+              <p className="text-xs opacity-80">נשמרו באופליין ויעלו לשרת כשתהיה קליטה</p>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-orange-200 text-orange-700 hover:bg-orange-100"
+            onClick={handleSync}
+            disabled={isSyncing}
+          >
+            {isSyncing ? <RefreshCw className="w-4 h-4 animate-spin" /> : "סנכרן"}
+          </Button>
+        </div>
+      )}
 
       {/* Stats Summary */}
       <div className="grid grid-cols-3 gap-3">

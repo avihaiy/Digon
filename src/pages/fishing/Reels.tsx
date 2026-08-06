@@ -100,7 +100,7 @@ function Reels() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const toastId = toast.loading("מעלה את הסרטון שלך לשרת... ⏳");
+      const toastId = toast.loading("מכווץ ומעלה סרטון... (זה עשוי לקחת קצת זמן) ⏳");
       try {
         const newReel = await uploadReel(file);
         if (newReel) {

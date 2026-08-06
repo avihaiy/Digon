@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
+import { saveCatchOffline } from "@/lib/offlineSync";
 
 export interface CatchReport {
   $id: string;
@@ -60,28 +61,37 @@ export function useCatches() {
       if (!user) throw new Error("חובה להתחבר כדי לדווח על תפיסה");
 
       if (!navigator.onLine) {
-        if (!data.imageBase64) throw new Error("חסרה תמונה בפורמט אופליין");
-        
         let finalLocation = data.location;
         if (prefs?.privacy_hide_location) {
           finalLocation = finalLocation.split("|||")[0].trim();
         }
 
-        const offlineCatch = {
-          id: Date.now().toString(),
+        const payload = {
           user_id: user.$id,
           user_name: user.name || user.email?.split("@")[0] || "דייג אנונימי",
           fish_type: data.fishType,
           weight: data.weight || null,
           location: finalLocation,
-          imageBase64: data.imageBase64,
-          isPrivate: data.isPrivate || false,
-          timestamp: new Date().toISOString()
+          status: 'pending', // Await approval
         };
-        
-        const existing = JSON.parse(localStorage.getItem("offline_catches") || "[]");
-        existing.push(offlineCatch);
-        localStorage.setItem("offline_catches", JSON.stringify(existing));
+
+        if (data.isPrivate) {
+          (payload as any).isPrivate = true;
+        }
+        if (data.tournamentId) {
+          (payload as any).tournamentId = data.tournamentId;
+        }
+        if (data.isFlared) {
+          (payload as any).isFlared = true;
+        }
+
+        await saveCatchOffline({
+          id: Date.now().toString(),
+          userId: user.$id,
+          timestamp: Date.now(),
+          data: payload,
+          imageFile: data.imageFile,
+        });
         
         return { offline: true };
       }

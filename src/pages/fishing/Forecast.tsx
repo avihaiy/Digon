@@ -7,18 +7,8 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 
 import { CalendarDays } from "lucide-react";
 
-// Simulated Solunar logic based on current hour
-const getSolunarRating = () => {
-  const hour = new Date().getHours();
-  // Best fishing times usually at dawn (5-8) and dusk (17-20)
-  if ((hour >= 5 && hour <= 8) || (hour >= 17 && hour <= 20)) {
-    return { rating: "מצוין", score: 95, color: "text-emerald-500", bg: "bg-emerald-500/10", message: "זמן מעולה לדייג! הדגים בשיא הפעילות." };
-  } else if ((hour >= 9 && hour <= 11) || (hour >= 15 && hour <= 16)) {
-    return { rating: "טוב", score: 65, color: "text-yellow-500", bg: "bg-yellow-500/10", message: "זמן טוב לדייג. פעילות בינונית צפויה." };
-  } else {
-    return { rating: "חלש", score: 35, color: "text-rose-500", bg: "bg-rose-500/10", message: "זמן חלש לדייג. מומלץ לחכות לשעות הפעילות." };
-  }
-};
+import { getSolunarData, getTargetSpecies } from '@/lib/solunar';
+import { useMemo, useState } from 'react';
 
 // Generate realistic mock tide data for Mediterranean (semi-diurnal, 2 highs 2 lows per 24h)
 const generateTideData = () => {
@@ -46,8 +36,25 @@ const generateTideData = () => {
 
 export default function Forecast() {
   const { data: marineData, loading: marineLoading, lastUpdated } = useMarineWeather();
-  const solunar = getSolunarRating();
-  const tideData = generateTideData();
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+
+  // Compute solunar based on selected day
+  const targetDate = useMemo(() => {
+    if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
+      return marineData.dailyForecast[selectedDayIndex].date;
+    }
+    return new Date();
+  }, [marineData.dailyForecast, selectedDayIndex]);
+
+  const solunar = useMemo(() => getSolunarData(targetDate), [targetDate]);
+  const tideData = useMemo(() => generateTideData(), [targetDate]); // Keep mock for Med tide shape
+  const targetSpecies = useMemo(() => getTargetSpecies(marineData.temperature), [marineData.temperature]);
+
+  // Safety Warning Logic (only relevant if looking at today)
+  const isUnsafe = selectedDayIndex === 0 && (
+    (marineData.waveHeight && marineData.waveHeight > 1.5) || 
+    (marineData.windSpeed && marineData.windSpeed > 30) // 30 km/h is ~16 knots
+  );
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
@@ -58,11 +65,44 @@ export default function Forecast() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             תחזית דייג <Sun className="w-6 h-6 text-yellow-500" />
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            מצב הים, זמני פעילות (Solunar) ותנאים
+          <p className="text-sm text-slate-500 flex items-center gap-1">
+            <MapPin className="w-3 h-3" /> {marineData.locationName}
           </p>
         </div>
       </div>
+
+      {/* Safety Warning Banner */}
+      {isUnsafe && (
+        <div className="mx-4 bg-rose-50 dark:bg-rose-950/50 border-2 border-rose-500 rounded-2xl p-4 flex items-start gap-3 shadow-sm animate-pulse">
+          <AlertTriangle className="w-6 h-6 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-bold text-rose-800 dark:text-rose-300">אזהרת ים מסוכן!</h3>
+            <p className="text-sm text-rose-700 dark:text-rose-400 leading-tight">
+              הגלים והרוחות כרגע גבוהים ומסוכנים. לא מומלץ לצאת לים בקיאק או סירה קטנה. אנא היזהרו!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Day Selector */}
+      {marineData.dailyForecast && marineData.dailyForecast.length > 0 && (
+        <div className="mx-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
+          {marineData.dailyForecast.map((day, idx) => (
+            <button
+              key={idx}
+              onClick={() => setSelectedDayIndex(idx)}
+              className={cn(
+                "snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap",
+                selectedDayIndex === idx 
+                  ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" 
+                  : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50"
+              )}
+            >
+              {idx === 0 ? "היום" : idx === 1 ? "מחר" : day.dayName}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Solunar Fishing Score */}
       <section className="px-4">
@@ -377,15 +417,31 @@ export default function Forecast() {
             <Info className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
             <div>
               <h4 className="font-bold text-emerald-500 text-sm">תנאי בטיחות מצוינים</h4>
-              <p className="text-xs text-emerald-500/80 mt-1">
-                הים נוח יחסית ומתאים גם למתחילים ולדייג משפחתי.
-              </p>
+              <div className="text-sm font-bold mt-1 text-slate-900 dark:text-white">
+              {marineData.temperature ? `${Math.round(marineData.temperature)}°` : '...'}
             </div>
           </div>
-        )}
+        </div>
       </section>
 
-      {/* 7-Day Forecast */}
+      {/* Target Species Recommendation */}
+      <div className="px-4">
+        <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-cyan-800 dark:text-cyan-300 flex items-center gap-2 mb-2">
+            <Fish className="w-4 h-4" />
+            דגי המטרה המומלצים לעכשיו
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {targetSpecies.map((fish, i) => (
+              <Badge key={i} variant="outline" className="bg-white/50 dark:bg-black/20 border-cyan-200 dark:border-cyan-800">
+                {fish}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Hourly Tide & Wave Graph */}
       {marineData.dailyForecast && marineData.dailyForecast.length > 0 && (
         <section className="px-4 space-y-4 pt-4 border-t border-border/50">
           <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
