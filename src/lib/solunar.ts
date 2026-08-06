@@ -1,4 +1,5 @@
-import * as SunCalc from 'suncalc';
+import * as SunCalcModule from 'suncalc';
+const SunCalc = (SunCalcModule as any).default || SunCalcModule;
 
 // Tel Aviv coordinates
 const LAT = 32.0853;
