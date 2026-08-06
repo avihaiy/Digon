@@ -417,6 +417,20 @@ export default function Admin() {
     onError: () => toast.error("שגיאה בעדכון הפריט"),
   });
 
+  // Delete Store Item Mutation
+  const deleteStoreItemMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await databases.deleteDocument(DB_ID, APPWRITE_STORE_ITEMS_ID, id);
+    },
+    onSuccess: () => {
+      toast.success("נמחק בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-store-items"] });
+      queryClient.invalidateQueries({ queryKey: ["store-items-aliexpress"] });
+      queryClient.invalidateQueries({ queryKey: ["store-items"] });
+    },
+    onError: () => toast.error("שגיאה במחיקת הפריט"),
+  });
+
   // Toggle Ads Mutationus Mutation
   const updateAdStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
