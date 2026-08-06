@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { DirectionProvider } from "@radix-ui/react-direction";
 import AppLayout from "@/components/layout/AppLayout";
 import Login from "@/pages/Login";
+import TermsOfUse from "@/pages/TermsOfUse";
 import Dashboard from "@/pages/Dashboard";
 import Admin from "@/pages/Admin";
 import Home from "@/pages/Home";
@@ -103,6 +104,7 @@ const AnimatedRoutes = () => {
       <Routes location={location} key={location.pathname}>
         {/* Public Routes */}
         <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
+        <Route path="/terms" element={<PageTransition><TermsOfUse /></PageTransition>} />
         
         {/* Appwrite Digon Protected Routes */}
         <Route path="/" element={<LayoutRoute><PageTransition><Home /></PageTransition></LayoutRoute>} />

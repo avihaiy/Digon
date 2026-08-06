@@ -240,6 +240,12 @@ export default function Login() {
                   isRegistering ? 'הרשמה' : 'התחברות'
                 )}
               </Button>
+              
+              {isRegistering && (
+                <p className="text-xs text-center text-muted-foreground mt-3 animate-fade-in">
+                  בעצם ההרשמה, אני מסכים ל<a href="/terms" target="_blank" rel="noreferrer" className="text-cyan-500 hover:underline">תנאי השימוש ומדיניות הפרטיות</a>.
+                </p>
+              )}
             </form>
 
             <div className="text-center pt-4 border-t">
