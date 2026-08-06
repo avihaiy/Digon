@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon, Video } from 'lucide-react';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon, Video, ShoppingCart } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { useTournaments } from '@/hooks/useTournaments';
@@ -267,6 +267,12 @@ export default function Home() {
               <StoreIcon className="w-5 h-5 text-yellow-600" />
             </div>
             <span className="font-bold text-[11px] leading-tight">חנות</span>
+          </Link>
+          <Link to="/fishing/gear" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
+            <div className="bg-orange-500/10 p-2.5 rounded-full mb-2 animate-pulse">
+              <ShoppingCart className="w-5 h-5 text-orange-500" />
+            </div>
+            <span className="font-bold text-[11px] leading-tight">ציוד מומלץ</span>
           </Link>
           <Link to="/fishing/knots" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
             <div className="bg-emerald-500/10 p-2.5 rounded-full mb-2">
