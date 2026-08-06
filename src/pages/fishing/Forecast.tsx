@@ -58,6 +58,14 @@ export default function Forecast() {
     }
     return getSolunarData(targetDate);
   }, [targetDate, marineData, selectedDayIndex]);
+  
+  const selectedDayHours = useMemo(() => {
+    if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
+      return marineData.dailyForecast[selectedDayIndex].hours || [];
+    }
+    return marineData.hourlyForecast || [];
+  }, [marineData, selectedDayIndex]);
+
   const tideData = useMemo(() => generateTideData(), [targetDate]); // Keep mock for Med tide shape
   const targetSpecies = useMemo(() => getTargetSpecies(marineData.temperature), [marineData.temperature]);
 
@@ -314,53 +322,35 @@ export default function Forecast() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="border-border/50 shadow-sm">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-1 mb-2">
-                  <ThermometerSun className="w-3.5 h-3.5 text-orange-500" />
-                  <h4 className="font-bold text-xs">טמפרטורה</h4>
+          {/* Hourly Scrollable List */}
+          <section className="px-4 mt-6">
+            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
+              תחזית לפי שעות
+            </h3>
+            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x">
+              {selectedDayHours.map((hour, idx) => (
+                <div key={idx} className="snap-center shrink-0 w-20 bg-white dark:bg-slate-800 rounded-2xl p-3 border border-border shadow-sm flex flex-col items-center text-center">
+                  <span className="text-xs font-bold text-slate-500 mb-2">{hour.time}</span>
+                  
+                  {/* Wave */}
+                  <Waves className="w-4 h-4 text-blue-500 mb-1" />
+                  <span className="text-sm font-black text-blue-600 dark:text-blue-400">{hour.waveHeight.toFixed(1)}m</span>
+                  
+                  <div className="w-full h-px bg-border my-2" />
+                  
+                  {/* Wind */}
+                  <div className="relative">
+                    <Wind 
+                      className="w-4 h-4 text-cyan-500 mb-1" 
+                      style={{ transform: `rotate(${hour.windDirection || 0}deg)` }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">{Math.round(hour.windSpeed)}<span className="text-[9px]">קמש</span></span>
                 </div>
-                <div className="h-16 w-full mt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={marineData.hourlyForecast}>
-                      <defs>
-                        <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <Tooltip formatter={(value: number) => [`${value.toFixed(1)}°`, 'מעלות']} />
-                      <Area type="monotone" dataKey="temperature" stroke="#f97316" strokeWidth={2} fillOpacity={1} fill="url(#colorTemp)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/50 shadow-sm">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-1 mb-2">
-                  <Wind className="w-3.5 h-3.5 text-cyan-500" />
-                  <h4 className="font-bold text-xs">רוח (קמ״ש)</h4>
-                </div>
-                <div className="h-16 w-full mt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={marineData.hourlyForecast}>
-                      <defs>
-                        <linearGradient id="colorWind" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <Tooltip formatter={(value: number) => [`${value.toFixed(1)}`, 'קמ״ש']} />
-                      <Area type="monotone" dataKey="windSpeed" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorWind)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              ))}
+            </div>
+          </section>
           
           {/* TIDE CHART */}
           <Card className="border-border/50 shadow-sm mt-4 overflow-hidden relative">

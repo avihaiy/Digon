@@ -18,6 +18,7 @@ interface MarineWeatherData {
     tempMax: number; 
     tempMin: number;
     windSpeedMax: number; 
+    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number }[];
   }[];
 }
 
@@ -82,6 +83,16 @@ export function useMarineWeather() {
           const wave = marineJson.hourly.wave_height[i] || 0;
           const temp = weatherJson.hourly.temperature_2m[i] || 0;
           const wind = weatherJson.hourly.wind_speed_10m[i] || 0;
+          const dir = weatherJson.hourly.wind_direction_10m[i] || 0;
+          
+          const hourData = {
+            time: dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+            date: dateObj,
+            waveHeight: wave,
+            temperature: temp,
+            windSpeed: wind,
+            windDirection: dir
+          };
 
           if (!dailyForecastMap.has(dayKey)) {
             dailyForecastMap.set(dayKey, {
@@ -90,7 +101,8 @@ export function useMarineWeather() {
               waveHeightMax: wave,
               tempMax: temp,
               tempMin: temp,
-              windSpeedMax: wind
+              windSpeedMax: wind,
+              hours: [hourData]
             });
           } else {
             const current = dailyForecastMap.get(dayKey);
@@ -98,6 +110,7 @@ export function useMarineWeather() {
             current.tempMax = Math.max(current.tempMax, temp);
             current.tempMin = Math.min(current.tempMin, temp);
             current.windSpeedMax = Math.max(current.windSpeedMax, wind);
+            current.hours.push(hourData);
           }
         }
       }
