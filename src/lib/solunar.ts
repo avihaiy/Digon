@@ -183,23 +183,84 @@ export function getSolunarData(
   };
 }
 
+export interface FishRecommendation {
+  species: string[];
+  bestMethod: string;
+  reasoning: string;
+  iconType: 'lure' | 'bait' | 'squid';
+}
+
 /**
- * Recommend target species based on water temperature and month
+ * AI Algorithm to recommend target species and methods based on live Mediterranean conditions
  */
-export function getTargetSpecies(temp: number | null): string[] {
-  const month = new Date().getMonth() + 1; // 1-12
+export function getSmartTargetSpecies(
+  waveHeight: number | null, 
+  temp: number | null, 
+  cloudCover: number | null
+): FishRecommendation {
   
-  if (!temp) return ["סרגוס", "דניס", "לוקוס"]; // fallback
+  // Fallbacks
+  const w = waveHeight ?? 0.5;
+  const t = temp ?? 22;
+  const c = cloudCover ?? 10;
   
-  // Mediterranean simplified model
-  if (temp < 19) {
-    return ["קלאמרי", "סבידה", "אינטיאס", "סרגוס", "פלמידה"];
-  } else if (temp >= 19 && temp < 24) {
-    return ["פלמידה", "לוקוס", "גומבר", "טרחון", "ברקודה"];
-  } else {
-    // Summer / Hot water
-    return ["דוראדו (Mahi Mahi)", "טונה שחורה", "גומבר", "אריען", "לוקוס"];
+  const isWinter = t < 20;
+  
+  // SCENARIO 1: Flat Sea (ים פלטה)
+  if (w < 0.3) {
+    if (isWinter) {
+      return {
+        species: ["קלמרי", "סבידה", "ברקודה"],
+        bestMethod: "ז'רז'ור קלמרים או דמויים קטנים",
+        reasoning: "הים שטוח לגמרי והמים קרים. תנאים מושלמים לדינונים (קלמרי/סבידה) ולטורפים עדינים.",
+        iconType: 'squid'
+      };
+    } else {
+      return {
+        species: ["דוראדו (Mahi)", "טונה שחורה", "טרחון"],
+        bestMethod: "ז'רז'ור טופ-ווטר או ג'יג קל",
+        reasoning: "ים שטוח ומים חמים. דגי ים פתוח יחפשו טרף על פני המים. חפש רתיחות!",
+        iconType: 'lure'
+      };
+    }
   }
+  
+  // SCENARIO 2: Working Sea (ים עובד)
+  if (w >= 0.3 && w <= 0.9) {
+    if (c > 50) {
+      return {
+        species: ["גומבר", "לוקוס", "פלמידה", "אינטיאס"],
+        bestMethod: "ז'רז'ור כבד / בינוני",
+        reasoning: "הים עובד ויש עננות שמסתירה את השמש! הטורפים הגדולים עולים קרוב לחוף לתקוף.",
+        iconType: 'lure'
+      };
+    } else {
+      return {
+        species: ["סרגוס", "לוקוס", "דניס"],
+        bestMethod: "דייג פיתיונות או בוס",
+        reasoning: "ים אידיאלי ('מים עובדים') אך שמשי. מומלץ לחפש את הדגים סביב סלעים ובורות עם פיתיונות.",
+        iconType: 'bait'
+      };
+    }
+  }
+  
+  // SCENARIO 3: Stormy/High Sea (ים גבוה/סוער)
+  if (w > 0.9) {
+    return {
+      species: ["סרגוס גדול", "לבט (שישן)", "לוקוס מפלצת"],
+      bestMethod: "דייג פיתיונות כבד מהחוף/סלעים",
+      reasoning: "הים גועש והמים עכורים. טורפי ז'רז'ור יתרחקו, אבל דגי הקרקעית (סרגוסים) חוגגים על מה שעף מהסלעים.",
+      iconType: 'bait'
+    };
+  }
+
+  // Generic fallback
+  return {
+    species: ["סרגוס", "טרחון"],
+    bestMethod: "פיתיונות או ז'רז'ור קל",
+    reasoning: "תנאים רגילים, הכל אפשרי.",
+    iconType: 'lure'
+  };
 }
 
 export interface GoldWindow {

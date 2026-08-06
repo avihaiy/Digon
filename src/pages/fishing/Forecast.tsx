@@ -7,7 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 
 import { CalendarDays } from "lucide-react";
 
-import { getSolunarData, getTargetSpecies, getDynamicGoldWindows, GoldWindow } from '@/lib/solunar';
+import { getSolunarData, getSmartTargetSpecies, getDynamicGoldWindows, GoldWindow } from '@/lib/solunar';
 import { useMemo, useState } from 'react';
 
 // Generate realistic mock tide data for Mediterranean (semi-diurnal, 2 highs 2 lows per 24h)
@@ -78,7 +78,19 @@ export default function Forecast() {
   }, [marineData, selectedDayIndex]);
 
   const tideData = useMemo(() => generateTideData(), [targetDate]); // Keep mock for Med tide shape
-  const targetSpecies = useMemo(() => getTargetSpecies(marineData.temperature), [marineData.temperature]);
+  
+  const aiRecommendation = useMemo(() => {
+    // If looking at today, use current conditions
+    if (selectedDayIndex === 0) {
+      return getSmartTargetSpecies(marineData.waveHeight, marineData.temperature, marineData.cloudCover);
+    }
+    // If future day, use max
+    if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
+      const dayData = marineData.dailyForecast[selectedDayIndex];
+      return getSmartTargetSpecies(dayData.waveHeightMax, dayData.tempMax, null); // cloud cover not currently saved for daily max, use fallback
+    }
+    return getSmartTargetSpecies(null, null, null);
+  }, [marineData, selectedDayIndex]);
 
   // Safety Warning Logic (only relevant if looking at today)
   const isUnsafe = selectedDayIndex === 0 && (
@@ -134,22 +146,53 @@ export default function Forecast() {
         </div>
       )}
 
+      {/* Target Species AI Recommendation */}
+      <section className="px-4">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-slate-100">
+          <Fish className="w-5 h-5 text-emerald-500" />
+          המלצת AI להיום
+        </h3>
+        <Card className="border-white/20 dark:border-slate-700/50 shadow-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl overflow-hidden relative transition-all hover:shadow-xl">
+          <div className="absolute top-0 left-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] -z-10" />
+          <CardContent className="p-5">
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-black text-lg text-slate-800 dark:text-slate-100">
+                    {aiRecommendation.species.join(" / ")}
+                  </h4>
+                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                    <Droplets className="w-4 h-4" /> 
+                    {aiRecommendation.bestMethod}
+                  </p>
+                </div>
+                {aiRecommendation.iconType === 'lure' && <Badge className="bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-none">ז'רז'ור</Badge>}
+                {aiRecommendation.iconType === 'bait' && <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 border-none">פיתיונות</Badge>}
+                {aiRecommendation.iconType === 'squid' && <Badge className="bg-purple-500/20 text-purple-700 dark:text-purple-300 border-none">דיונונים</Badge>}
+              </div>
+              <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-white/30 dark:border-slate-700/50 mt-2">
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-tight">
+                  <span className="font-bold text-slate-700 dark:text-slate-200">למה?</span> {aiRecommendation.reasoning}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Solunar Fishing Score */}
       <section className="px-4">
         <Card className="border-white/20 dark:border-slate-700/50 shadow-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl overflow-hidden relative transition-all hover:shadow-xl">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[50px] -z-10" />
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="font-bold text-lg">פעילות הדגים עכשיו</h2>
-                <p className="text-sm text-muted-foreground mt-1">{solunar.message}</p>
-              </div>
-              <Badge variant="outline" className={cn("font-bold px-3 py-1 text-sm border-0", solunar.bg, solunar.color)}>
-                {solunar.rating}
-              </Badge>
-            </div>
-
-            <div className="flex flex-col items-center justify-center">
+          <div className={cn("absolute top-0 right-0 w-32 h-32 rounded-full blur-[40px] opacity-20 -z-10", solunar.color.replace('text-', 'bg-'))} />
+          <CardContent className="p-5 flex flex-col items-center">
+            <h3 className="text-lg font-bold w-full text-right mb-4 flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-slate-100">
+              <span className="text-2xl">{solunar.phaseName.includes('מלא') ? '🌕' : '🌙'}</span> 
+              ציון דייג משוקלל
+            </h3>
+            
+            <div className="w-full flex flex-col items-center">
+              {/* Circular Score */}
               <div className="relative w-32 h-32 flex items-center justify-center mb-4">
                 <svg className="transform -rotate-90 w-32 h-32">
                   <circle cx="64" cy="64" r="54" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-muted/20" />
