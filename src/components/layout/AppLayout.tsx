@@ -42,7 +42,8 @@ const navItems = [
   { href: '/fishing/reels', icon: PlaySquare, label: 'Reels' },
   { href: '/fishing/community', icon: ShoppingCart, label: 'שוק יד 2' },
   { href: '/fishing/tournaments', icon: Trophy, label: 'תחרויות' },
-  { href: '/leaderboard', icon: Trophy, label: 'אלופים' },
+  { href: '/leaderboard', icon: Trophy, label: 'טבלת אלופים' },
+  { href: '/terms', icon: FileText, label: 'תנאי שימוש' },
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
@@ -146,14 +147,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
               >
                 <Download className="w-5 h-5" />
                 <span>התקן אפליקציה</span>
-              </Link>
-              <Link
-                to="/terms"
-                onClick={() => setSidebarOpen(false)}
-                className={cn('nav-item mt-1', location.pathname === '/terms' && 'active')}
-              >
-                <FileText className="w-5 h-5" />
-                <span>תנאי שימוש</span>
               </Link>
             </div>
           </nav>
