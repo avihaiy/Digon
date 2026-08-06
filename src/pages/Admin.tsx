@@ -462,14 +462,18 @@ export default function Admin() {
   // Add Store Item Mutation
   const addStoreItemMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await databases.createDocument(DB_ID, APPWRITE_STORE_ITEMS_ID, ID.unique(), {
+      const payload: any = {
         name: data.name,
         description: data.description,
         cost: parseInt(data.cost),
         type: data.type,
         value: data.value,
         is_active: true
-      });
+      };
+      if (data.image_url) {
+        payload.image_url = data.image_url;
+      }
+      const res = await databases.createDocument(DB_ID, APPWRITE_STORE_ITEMS_ID, ID.unique(), payload);
       return res;
     },
     onSuccess: (newDoc) => {
