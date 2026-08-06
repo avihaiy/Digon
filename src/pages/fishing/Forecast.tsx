@@ -46,7 +46,18 @@ export default function Forecast() {
     return new Date();
   }, [marineData.dailyForecast, selectedDayIndex]);
 
-  const solunar = useMemo(() => getSolunarData(targetDate), [targetDate]);
+  const solunar = useMemo(() => {
+    // If we're looking at "today", pass current conditions
+    if (selectedDayIndex === 0) {
+      return getSolunarData(targetDate, marineData.waveHeight, marineData.windSpeed, marineData.temperature);
+    }
+    // If it's a future day, pass max conditions from dailyForecast
+    if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
+      const dayData = marineData.dailyForecast[selectedDayIndex];
+      return getSolunarData(targetDate, dayData.waveHeightMax, dayData.windSpeedMax, dayData.tempMax);
+    }
+    return getSolunarData(targetDate);
+  }, [targetDate, marineData, selectedDayIndex]);
   const tideData = useMemo(() => generateTideData(), [targetDate]); // Keep mock for Med tide shape
   const targetSpecies = useMemo(() => getTargetSpecies(marineData.temperature), [marineData.temperature]);
 
@@ -120,7 +131,7 @@ export default function Forecast() {
             </div>
 
             <div className="flex flex-col items-center justify-center">
-              <div className="relative w-32 h-32 flex items-center justify-center">
+              <div className="relative w-32 h-32 flex items-center justify-center mb-4">
                 <svg className="transform -rotate-90 w-32 h-32">
                   <circle cx="64" cy="64" r="54" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-muted/20" />
                   <circle
@@ -136,6 +147,23 @@ export default function Forecast() {
                   <span className="text-[10px] text-muted-foreground font-bold">ציון משוקלל</span>
                 </div>
               </div>
+              
+              {/* Score Explanations */}
+              {solunar.explanations && solunar.explanations.length > 0 && (
+                <div className="w-full bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 border border-border/50 text-right">
+                  <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1">
+                    <Info className="w-3 h-3" /> ממה מורכב הציון?
+                  </h4>
+                  <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                    {solunar.explanations.map((exp: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-slate-400 mt-1">•</span>
+                        <span>{exp}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
