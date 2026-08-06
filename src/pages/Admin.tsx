@@ -1149,7 +1149,7 @@ export default function Admin() {
                         const renamedFile = new File([file], "upload_" + Date.now() + "." + (file.name.split('.').pop() || 'png'), { type: file.type });
                         const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), renamedFile);
                         const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
-                        setNewStoreItem({...newStoreItem, image_url: url.href});
+                        setNewStoreItem(prev => ({...prev, image_url: url.toString()}));
                         alert("התמונה הועלתה בהצלחה! הקישור נוצר.");
                       } catch (err: any) {
                         alert("שגיאה בהעלאה: " + (err?.message || "Unknown error"));
@@ -1725,7 +1725,7 @@ export default function Admin() {
                       const renamedFile = new File([file], "upload_" + Date.now() + "." + (file.name.split('.').pop() || 'png'), { type: file.type });
                       const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), renamedFile);
                       const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
-                      setEditStoreItemData({...editStoreItemData, image_url: url.href});
+                      setEditStoreItemData(prev => ({...prev, image_url: url.toString()}));
                       alert("התמונה הועלתה בהצלחה! הקישור נוצר.");
                     } catch (err: any) {
                       alert("שגיאה בהעלאה: " + (err?.message || "Unknown error"));
