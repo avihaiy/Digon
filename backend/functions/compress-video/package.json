@@ -1,0 +1,14 @@
+{
+  "name": "compress-video",
+  "version": "1.0.0",
+  "description": "Appwrite function to compress videos and optimize for web streaming (faststart)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "node-appwrite": "^11.0.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0"
+  }
+}
