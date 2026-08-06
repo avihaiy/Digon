@@ -231,68 +231,6 @@ export default function Store() {
           </div>
         )}
 
-        {/* AliExpress Recommendations */}
-        {storeItems && storeItems.filter(i => i.type === 'aliexpress').length > 0 && (
-          <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
-            <div className="flex flex-col items-center justify-center text-center mb-6">
-              <div className="p-3 bg-orange-500/10 rounded-full mb-2">
-                <ShoppingCart className="w-6 h-6 text-orange-500" />
-              </div>
-              <h3 className="font-black text-xl text-slate-900 dark:text-white">
-                המלצות הציוד שלנו
-              </h3>
-              <p className="text-sm text-muted-foreground max-w-[250px] mt-1">
-                ציוד דייג מומלץ שנבדק על ידי הצוות, זמין לרכישה ישירה באליאקספרס 🎣
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              {storeItems.filter(i => i.type === 'aliexpress').map((item) => (
-                <a 
-                  key={item.$id} 
-                  href={item.value} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="block group"
-                >
-                  <Card className="h-full border-orange-500/20 bg-gradient-to-b from-white to-orange-50/30 dark:from-slate-900 dark:to-orange-900/10 hover:shadow-lg transition-all hover:-translate-y-1 overflow-hidden relative">
-                    <div className="aspect-square w-full bg-white dark:bg-slate-800 relative overflow-hidden">
-                      {item.image_url ? (
-                        <img 
-                          src={item.image_url} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-300">
-                          <ShoppingCart className="w-8 h-8 opacity-50" />
-                        </div>
-                      )}
-                      <div className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                        מומלץ
-                      </div>
-                    </div>
-                    <CardContent className="p-3 flex flex-col justify-between h-[calc(100%-100%)]">
-                      <div>
-                        <h4 className="font-bold text-sm leading-tight line-clamp-2 mb-1 group-hover:text-orange-500 transition-colors">
-                          {item.name}
-                        </h4>
-                        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-snug">
-                          {item.description}
-                        </p>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-2">
-                        <span className="text-xs font-black text-orange-600 dark:text-orange-500 flex items-center gap-1">
-                          קנה עכשיו <ExternalLink className="w-3 h-3" />
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

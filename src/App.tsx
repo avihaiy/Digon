@@ -136,6 +136,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/tournaments/:tournamentId" element={<ProtectedRoute><PageTransition><TournamentView /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/messages" element={<ProtectedRoute><PageTransition><Messages /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/search" element={<ProtectedRoute><PageTransition><SearchUsers /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/gear" element={<ProtectedRoute><PageTransition><GearRecommendations /></PageTransition></ProtectedRoute>} />
         <Route path="/profile/:userId" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
         <Route path="/leaderboard" element={<LayoutRoute><PageTransition><Leaderboard /></PageTransition></LayoutRoute>} />
         

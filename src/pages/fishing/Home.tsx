@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import FishingLayout from "@/components/fishing/FishingLayout";
-import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, ChevronRight, MoreHorizontal, Bell, LucideIcon, BookOpen, Video } from "lucide-react";
+import { Settings, Trophy, MapPin, Waves, Play, Fish, ChevronLeft, ChevronRight, MoreHorizontal, Bell, LucideIcon, BookOpen, Video, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -215,6 +215,28 @@ const Home = () => {
               <div className="text-amber-200/70 text-xs font-medium mt-1.5">המר נקודות להטבות ועיצובים!</div>
             </div>
             <ChevronLeft className="w-5 h-5 text-yellow-500/70" />
+          </motion.div>
+        </Link>
+
+        {/* AliExpress Gear Banner */}
+        <Link to="/fishing/gear">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="mt-4 relative overflow-hidden bg-gradient-to-r from-orange-500/20 via-rose-500/20 to-orange-500/20 backdrop-blur-xl rounded-[2.5rem] p-6 border border-orange-500/30 flex items-center justify-between shadow-[0_10px_40px_rgba(249,115,22,0.15)] group cursor-pointer"
+          >
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-rose-600 rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-[0_0_25px_rgba(249,115,22,0.4)]">
+              <ShoppingCart className="w-8 h-8 text-white drop-shadow-md" />
+            </div>
+            <div className="text-start flex-1 px-5">
+              <div className="flex flex-col items-start">
+                <span className="text-3xl font-black bg-gradient-to-r from-orange-200 to-rose-400 bg-clip-text text-transparent drop-shadow-sm">המלצות ציוד</span>
+                <span className="text-orange-400 font-bold text-[11px] tracking-widest mt-1">AliExpress</span>
+              </div>
+              <div className="text-orange-200/70 text-xs font-medium mt-1.5">הציוד שנבדק על ידינו - ישר אליך!</div>
+            </div>
+            <ChevronLeft className="w-5 h-5 text-orange-500/70" />
           </motion.div>
         </Link>
 
