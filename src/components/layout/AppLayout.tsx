@@ -22,7 +22,7 @@ import {
   LogOut,
   Menu,
   X, Home, Compass, MessageCircle, MapPin, Search, RefreshCw, Settings2,
-  ShoppingCart, Droplets, Fish, Trophy, Activity, Download, PlaySquare
+  ShoppingCart, Droplets, Fish, Trophy, Activity, Download, PlaySquare, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -146,6 +146,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
               >
                 <Download className="w-5 h-5" />
                 <span>התקן אפליקציה</span>
+              </Link>
+              <Link
+                to="/terms"
+                onClick={() => setSidebarOpen(false)}
+                className={cn('nav-item mt-1', location.pathname === '/terms' && 'active')}
+              >
+                <FileText className="w-5 h-5" />
+                <span>תנאי שימוש</span>
               </Link>
             </div>
           </nav>
