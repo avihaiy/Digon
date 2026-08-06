@@ -123,8 +123,12 @@ export default function Store() {
                 return (
                   <Card key={item.$id} className={`border-2 ${isOwned ? 'border-primary' : 'border-border/50'}`}>
                     <CardContent className="p-4 text-center flex flex-col h-full">
-                      <div className={`w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center ${isGold ? 'border-4 border-yellow-400 bg-muted' : 'bg-primary/10'}`}>
-                        <Icon className={`w-6 h-6 ${isGold ? 'text-yellow-600' : 'text-primary'}`} />
+                      <div className={`w-16 h-16 mx-auto mb-3 flex items-center justify-center overflow-hidden ${isGold ? 'border-4 border-yellow-400 bg-muted rounded-full' : 'bg-primary/10 rounded-2xl'}`}>
+                        {item.image_url ? (
+                          <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Icon className={`w-6 h-6 ${isGold ? 'text-yellow-600' : 'text-primary'}`} />
+                        )}
                       </div>
                       <h4 className="font-bold text-sm mb-1">{item.name}</h4>
                       <p className="text-xs text-muted-foreground mb-3 flex-1">{item.description}</p>
@@ -214,9 +218,16 @@ export default function Store() {
             {storeItems.filter(i => i.type !== 'title' && i.type !== 'border' && i.type !== 'tickets' && i.type !== 'ai_credits' && i.type !== 'aliexpress').map((item) => (
               <Card key={item.$id} className="mb-3">
                 <CardContent className="p-5 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-bold">{item.name}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                  <div className="flex items-center gap-3">
+                    {item.image_url ? (
+                      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-sm border border-border/50">
+                        <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ) : null}
+                    <div>
+                      <h4 className="font-bold">{item.name}</h4>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </div>
                   </div>
                   <Button 
                     disabled={loading || points < item.cost} 
