@@ -1146,12 +1146,13 @@ export default function Admin() {
                       if (!file) return;
                       setUploadingImage(true);
                       try {
-                        const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), file);
+                        const renamedFile = new File([file], "upload_" + Date.now() + "." + (file.name.split('.').pop() || 'png'), { type: file.type });
+                        const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), renamedFile);
                         const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
                         setNewStoreItem({...newStoreItem, image_url: url.href});
-                        toast.success("תמונה הועלתה בהצלחה!");
+                        alert("התמונה הועלתה בהצלחה! הקישור נוצר.");
                       } catch (err: any) {
-                        toast.error("שגיאה בהעלאת תמונה: " + (err?.message || "Unknown error"));
+                        alert("שגיאה בהעלאה: " + (err?.message || "Unknown error"));
                         console.error(err);
                       } finally {
                         setUploadingImage(false);
@@ -1721,12 +1722,13 @@ export default function Admin() {
                     if (!file) return;
                     setUploadingImage(true);
                     try {
-                      const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), file);
+                      const renamedFile = new File([file], "upload_" + Date.now() + "." + (file.name.split('.').pop() || 'png'), { type: file.type });
+                      const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), renamedFile);
                       const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
                       setEditStoreItemData({...editStoreItemData, image_url: url.href});
-                      toast.success("תמונה הועלתה בהצלחה!");
+                      alert("התמונה הועלתה בהצלחה! הקישור נוצר.");
                     } catch (err: any) {
-                      toast.error("שגיאה בהעלאת תמונה: " + (err?.message || "Unknown error"));
+                      alert("שגיאה בהעלאה: " + (err?.message || "Unknown error"));
                       console.error(err);
                     } finally {
                       setUploadingImage(false);
