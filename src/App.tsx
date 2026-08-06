@@ -39,7 +39,7 @@ import SearchUsers from "@/pages/fishing/Search";
 import SecretAnalyzer from "@/pages/fishing/SecretAnalyzer";
 import Welcome from "@/pages/fishing/Welcome";
 import Reels from "@/pages/fishing/Reels";
-
+import GearRecommendations from "@/pages/fishing/GearRecommendations";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { OfflineSyncManager } from "@/hooks/useOfflineSync";
 
