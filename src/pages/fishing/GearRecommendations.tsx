@@ -42,9 +42,12 @@ export default function GearRecommendations() {
           <h3 className="font-black text-2xl text-slate-900 dark:text-white mb-2">
             הציוד המומלץ שלנו
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mb-4">
             ציוד דייג איכותי שנבדק על ידי הצוות במים של ישראל, זמין לרכישה ישירה ובטוחה באליאקספרס 🎣
           </p>
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 w-full text-xs text-orange-600 dark:text-orange-400">
+            <strong>חשוב לדעת:</strong> אני לא מוכר את הציוד ואין הבטחה ממני על המוצרים, אני רק ממליץ על מוצרים טובים מאלי אקספרס.
+          </div>
         </div>
 
         {isLoading ? (
