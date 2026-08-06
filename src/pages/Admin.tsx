@@ -39,8 +39,8 @@ export default function Admin() {
           ctx.drawImage(img, 0, 0);
           canvas.toBlob((blob) => {
             if (!blob) return reject("Blob conversion failed");
-            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpeg", { type: "image/jpeg" }));
-          }, 'image/jpeg', 0.85); // Compress slightly as well
+            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" }));
+          }, 'image/png'); // Use PNG which is universally accepted
         };
         img.onerror = reject;
         img.src = e.target?.result as string;
