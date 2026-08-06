@@ -43,6 +43,12 @@ export default function Admin() {
   const [editLocation, setEditLocation] = useState("");
   const [editMapUrl, setEditMapUrl] = useState("");
 
+  const [editMapUrl, setEditMapUrl] = useState("");
+
+  // Edit Store Item Modal State
+  const [editStoreItemModalOpen, setEditStoreItemModalOpen] = useState(false);
+  const [selectedStoreItemToEdit, setSelectedStoreItemToEdit] = useState<any>(null);
+  const [editStoreItemData, setEditStoreItemData] = useState({ name: "", description: "", cost: "", type: "title", value: "", image_url: "" });
 
   // Fetch Users (Profiles)
   const { data: usersData, isLoading: usersLoading } = useQuery({
@@ -383,7 +389,21 @@ export default function Admin() {
     onError: () => toast.error("שגיאה באישור התפיסה"),
   });
 
-  // Update Ad Status Mutation
+  // Edit Store Item Mutation
+  const editStoreItemMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string, data: any }) => {
+      await databases.updateDocument(DB_ID, APPWRITE_STORE_ITEMS_ID, id, data);
+    },
+    onSuccess: () => {
+      toast.success("הפריט עודכן בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-store-items"] });
+      queryClient.invalidateQueries({ queryKey: ["store-items-aliexpress"] });
+      setEditStoreItemModalOpen(false);
+    },
+    onError: () => toast.error("שגיאה בעדכון הפריט"),
+  });
+
+  // Toggle Ads Mutationus Mutation
   const updateAdStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       await databases.updateDocument(DB_ID, ADS_ID, id, { status });
@@ -1044,6 +1064,24 @@ export default function Admin() {
                           >
                             {item.is_active ? "פעיל - מוצג" : "כבוי - מוסתר"}
                           </Button>
+                          <Button 
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedStoreItemToEdit(item);
+                              setEditStoreItemData({
+                                name: item.name || "",
+                                description: item.description || "",
+                                cost: item.cost || "",
+                                type: item.type || "title",
+                                value: item.value || "",
+                                image_url: item.image_url || ""
+                              });
+                              setEditStoreItemModalOpen(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
                           <Button
                             variant="destructive"
                             size="sm"
@@ -1163,6 +1201,24 @@ export default function Admin() {
                             onClick={() => toggleStoreItemMutation.mutate({ id: item.$id, isActive: !item.is_active })}
                           >
                             {item.is_active ? "פעיל - מוצג" : "כבוי - מוסתר"}
+                          </Button>
+                          <Button 
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedStoreItemToEdit(item);
+                              setEditStoreItemData({
+                                name: item.name || "",
+                                description: item.description || "",
+                                cost: item.cost || "",
+                                type: item.type || "aliexpress",
+                                value: item.value || "",
+                                image_url: item.image_url || ""
+                              });
+                              setEditStoreItemModalOpen(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="destructive"
@@ -1617,6 +1673,72 @@ export default function Admin() {
       {/* Cams Tab */}
       {activeTab === "cams" && (
         <CamsManager />
+      )}
+
+      {/* Edit Store Item Modal */}
+      {editStoreItemModalOpen && selectedStoreItemToEdit && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl w-full max-w-sm shadow-xl relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setEditStoreItemModalOpen(false)}
+              className="absolute top-4 end-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-center mb-4">עריכת פריט</h2>
+            <div className="space-y-3">
+              <Input placeholder="שם המוצר" value={editStoreItemData.name} onChange={e => setEditStoreItemData({...editStoreItemData, name: e.target.value})} />
+              <Input placeholder="תיאור קצר" value={editStoreItemData.description} onChange={e => setEditStoreItemData({...editStoreItemData, description: e.target.value})} />
+              {editStoreItemData.type !== 'aliexpress' && (
+                <Input type="number" placeholder="עלות (נקודות)" value={editStoreItemData.cost} onChange={e => setEditStoreItemData({...editStoreItemData, cost: e.target.value})} />
+              )}
+              <Input placeholder="קישור למוצר באליאקספרס / ערך" value={editStoreItemData.value} onChange={e => setEditStoreItemData({...editStoreItemData, value: e.target.value})} />
+              
+              <div className="flex gap-2">
+                <Input placeholder="קישור לתמונה או העלאה" value={editStoreItemData.image_url} onChange={e => setEditStoreItemData({...editStoreItemData, image_url: e.target.value})} className="flex-1" />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  id="edit-store-image-upload" 
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingImage(true);
+                    try {
+                      const uploaded = await storage.createFile(APPWRITE_CATCH_IMAGES_BUCKET_ID, ID.unique(), file);
+                      const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
+                      setEditStoreItemData({...editStoreItemData, image_url: url.href});
+                      toast.success("תמונה הועלתה בהצלחה!");
+                    } catch (err) {
+                      toast.error("שגיאה בהעלאת תמונה");
+                    } finally {
+                      setUploadingImage(false);
+                    }
+                  }}
+                />
+                <Button 
+                  variant="outline" 
+                  className="shrink-0"
+                  onClick={() => document.getElementById('edit-store-image-upload')?.click()}
+                  disabled={uploadingImage}
+                >
+                  {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                </Button>
+              </div>
+
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4"
+                disabled={!editStoreItemData.name || !editStoreItemData.value || editStoreItemMutation.isPending}
+                onClick={() => {
+                  editStoreItemMutation.mutate({ id: selectedStoreItemToEdit.$id, data: editStoreItemData });
+                }}
+              >
+                {editStoreItemMutation.isPending ? "שומר..." : "שמור שינויים"}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Points Modal */}
