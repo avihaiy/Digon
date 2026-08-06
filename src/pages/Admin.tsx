@@ -437,6 +437,7 @@ export default function Admin() {
       toast.success("הפריט עודכן בהצלחה!");
       queryClient.invalidateQueries({ queryKey: ["admin-store-items"] });
       queryClient.invalidateQueries({ queryKey: ["store-items-aliexpress"] });
+      queryClient.invalidateQueries({ queryKey: ["store-items"] });
       setEditStoreItemModalOpen(false);
     },
     onError: () => toast.error("שגיאה בעדכון הפריט"),
