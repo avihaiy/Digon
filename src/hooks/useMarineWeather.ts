@@ -9,6 +9,8 @@ interface MarineWeatherData {
   windSpeed: number | null; // in km/h
   windDirection: number | null; // in degrees
   temperature: number | null; // in celsius
+  surfacePressure: number | null; // in hPa
+  wavePeriod: number | null; // in seconds
   locationName: string;
   hourlyForecast?: { time: string; waveHeight: number; temperature: number; windSpeed: number }[];
   dailyForecast?: { 
@@ -18,7 +20,7 @@ interface MarineWeatherData {
     tempMax: number; 
     tempMin: number;
     windSpeedMax: number; 
-    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number }[];
+    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number; wavePeriod: number; surfacePressure: number }[];
   }[];
 }
 
@@ -28,6 +30,8 @@ export function useMarineWeather() {
     windSpeed: null,
     windDirection: null,
     temperature: null,
+    surfacePressure: null,
+    wavePeriod: null,
     locationName: 'תל אביב (ברירת מחדל)',
     hourlyForecast: [],
     dailyForecast: [],
@@ -41,17 +45,17 @@ export function useMarineWeather() {
       setLoading(true);
       setError(null);
 
-      // Fetch Weather (Wind & Temp - Current and Hourly)
+      // Fetch Weather (Wind, Temp, Pressure - Current and Hourly)
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,wind_speed_10m,wind_direction_10m&timezone=auto&models=best_match`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure&timezone=auto&models=best_match`
       );
       const weatherJson = await weatherRes.json();
       
-      // Fetch Marine (Waves)
+      // Fetch Marine (Waves & Period)
       const marineLat = 32.08;
       const marineLon = 34.75;
       const marineRes = await fetch(
-        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height&hourly=wave_height&timezone=auto&models=best_match`
+        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height,wave_period&hourly=wave_height,wave_period&timezone=auto&models=best_match`
       );
       const marineJson = await marineRes.json();
 
@@ -81,9 +85,11 @@ export function useMarineWeather() {
           const dayKey = dateObj.toLocaleDateString('he-IL');
           
           const wave = marineJson.hourly.wave_height[i] || 0;
+          const period = marineJson.hourly.wave_period ? marineJson.hourly.wave_period[i] || 0 : 0;
           const temp = weatherJson.hourly.temperature_2m[i] || 0;
           const wind = weatherJson.hourly.wind_speed_10m[i] || 0;
           const dir = weatherJson.hourly.wind_direction_10m[i] || 0;
+          const pressure = weatherJson.hourly.surface_pressure ? weatherJson.hourly.surface_pressure[i] || 0 : 0;
           
           const hourData = {
             time: dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
@@ -91,7 +97,9 @@ export function useMarineWeather() {
             waveHeight: wave,
             temperature: temp,
             windSpeed: wind,
-            windDirection: dir
+            windDirection: dir,
+            wavePeriod: period,
+            surfacePressure: pressure
           };
 
           if (!dailyForecastMap.has(dayKey)) {
@@ -122,6 +130,8 @@ export function useMarineWeather() {
         windSpeed: weatherJson.current?.wind_speed_10m ?? null,
         windDirection: weatherJson.current?.wind_direction_10m ?? null,
         temperature: weatherJson.current?.temperature_2m ?? null,
+        surfacePressure: weatherJson.current?.surface_pressure ?? null,
+        wavePeriod: marineJson.current?.wave_period ?? null,
         locationName,
         hourlyForecast,
         dailyForecast,

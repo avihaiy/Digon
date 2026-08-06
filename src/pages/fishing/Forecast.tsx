@@ -1,7 +1,7 @@
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info, Droplets, MapPin } from "lucide-react";
+import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info, Droplets, MapPin, Cloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -49,7 +49,15 @@ export default function Forecast() {
   const solunar = useMemo(() => {
     // If we're looking at "today", pass current conditions
     if (selectedDayIndex === 0) {
-      return getSolunarData(targetDate, marineData.waveHeight, marineData.windSpeed, marineData.temperature);
+      return getSolunarData(
+        targetDate, 
+        marineData.waveHeight, 
+        marineData.windSpeed, 
+        marineData.temperature,
+        marineData.wavePeriod,
+        marineData.surfacePressure,
+        marineData.windDirection
+      );
     }
     // If it's a future day, pass max conditions from dailyForecast
     if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
@@ -227,7 +235,9 @@ export default function Forecast() {
                 {marineLoading ? "..." : marineData.waveHeight !== null ? marineData.waveHeight.toFixed(1) : "---"}
                 <span className="text-sm font-normal text-muted-foreground ms-1">מ'</span>
               </p>
-              <p className="text-xs text-muted-foreground mt-1 font-medium">גובה גלים</p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">
+                גובה (כל {marineLoading ? "..." : marineData.wavePeriod !== null ? Math.round(marineData.wavePeriod) : "---"} ש')
+              </p>
             </CardContent>
           </Card>
           
@@ -255,19 +265,19 @@ export default function Forecast() {
                 {marineLoading ? "..." : marineData.temperature !== null ? Math.round(marineData.temperature) : "---"}
                 <span className="text-sm font-normal text-muted-foreground ms-1">°C</span>
               </p>
-              <p className="text-xs text-muted-foreground mt-1 font-medium">טמפרטורת אוויר</p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">טמפ' אוויר</p>
             </CardContent>
           </Card>
           
           <Card className="border-white/20 dark:border-slate-700/50 shadow-md bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl hover:scale-[1.03] transition-transform">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
               <div className="p-3 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-2xl text-white shadow-inner mb-3">
-                <Compass className="w-6 h-6" />
+                <Cloud className="w-6 h-6" />
               </div>
-              <p className="text-base font-bold mt-1 text-muted-foreground">
-                {marineLoading ? "..." : marineData.locationName}
+              <p className="text-xl font-black mt-1">
+                {marineLoading ? "..." : marineData.surfacePressure !== null ? Math.round(marineData.surfacePressure) : "---"}
               </p>
-              <p className="text-xs text-muted-foreground mt-1 font-medium">מיקום מדידה</p>
+              <p className="text-xs text-muted-foreground mt-1 font-medium">לחץ ברומטרי</p>
             </CardContent>
           </Card>
         </div>

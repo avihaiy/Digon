@@ -13,7 +13,10 @@ export function getSolunarData(
   date: Date = new Date(),
   waveHeight: number | null = null,
   windSpeed: number | null = null,
-  waterTemp: number | null = null
+  waterTemp: number | null = null,
+  wavePeriod: number | null = null,
+  surfacePressure: number | null = null,
+  windDirection: number | null = null
 ) {
   const moonIllumination = SunCalc.getMoonIllumination(date);
   const phase = moonIllumination.phase; // 0 to 1
@@ -49,30 +52,70 @@ export function getSolunarData(
   let seaBonus = 0;
   let explanations: string[] = [];
 
-  // Wind (km/h)
+  // Wind (km/h) & Direction
   if (windSpeed !== null) {
+    const isEastWind = windDirection !== null && (windDirection > 45 && windDirection < 135);
+    
     if (windSpeed > 30) {
-      seaPenalty += 40;
-      explanations.push("רוח חזקה מאוד מקשה על הדייג");
+      if (isEastWind) {
+        seaPenalty += 10;
+        explanations.push("רוח מזרחית ערה (הים יהיה יחסית שטוח אבל יעופו חולות)");
+      } else {
+        seaPenalty += 40;
+        explanations.push("רוח חזקה מאוד מקשה על הדייג");
+      }
     } else if (windSpeed > 20) {
-      seaPenalty += 15;
-      explanations.push("רוח מתונה עד ערה");
+      if (isEastWind) {
+        seaBonus += 10;
+        explanations.push("רוח מזרחית מתונה - אידיאלי למים שקטים סמוך לחוף!");
+      } else {
+        seaPenalty += 15;
+        explanations.push("רוח מתונה עד ערה");
+      }
     } else if (windSpeed < 10) {
       seaBonus += 10;
     }
   }
 
-  // Waves (m)
+  // Waves (m) & Period (s)
   if (waveHeight !== null) {
     if (waveHeight > 1.5) {
       seaPenalty += 50; // Stormy
       explanations.push("ים גבה גלים ומסוכן");
     } else if (waveHeight >= 0.4 && waveHeight <= 0.8) {
       seaBonus += 15; // Perfect working water
-      explanations.push("גלים אידיאליים ('מים עובדים')");
+      explanations.push("גובה גלים אידיאלי ('מים עובדים')");
     } else if (waveHeight < 0.2) {
       seaPenalty += 5; // Flat
       explanations.push("ים פלטה (פחות מומלץ לפיתיונות)");
+    }
+  }
+
+  // Wave Period Adjustments
+  if (wavePeriod !== null && waveHeight !== null && waveHeight > 0.3) {
+    if (wavePeriod < 4) {
+      seaPenalty += 15;
+      explanations.push("זמן גל קצר (צ'ופי/מכונת כביסה)");
+    } else if (wavePeriod >= 5 && wavePeriod <= 8) {
+      seaBonus += 20;
+      explanations.push("זמן בין גלים מעולה! סוול מסודר");
+    } else if (wavePeriod > 10) {
+      seaPenalty += 20;
+      explanations.push("סוול ארוך וחזק (סכנת גלים שואבים)");
+    }
+  }
+
+  // Barometric Pressure (hPa)
+  if (surfacePressure !== null) {
+    if (surfacePressure > 1020) {
+      seaBonus += 15;
+      explanations.push("לחץ ברומטרי גבוה ויציב (מעולה לאכילות)");
+    } else if (surfacePressure < 1005) {
+      seaPenalty += 20;
+      explanations.push("שקע ברומטרי (דגים נוטים לרדת לעומק)");
+    } else {
+      // Normal pressure, slight bonus
+      seaBonus += 5;
     }
   }
 
