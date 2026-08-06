@@ -1134,8 +1134,9 @@ export default function Admin() {
                         const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
                         setNewStoreItem({...newStoreItem, image_url: url.href});
                         toast.success("תמונה הועלתה בהצלחה!");
-                      } catch (err) {
-                        toast.error("שגיאה בהעלאת תמונה");
+                      } catch (err: any) {
+                        toast.error("שגיאה בהעלאת תמונה: " + (err?.message || "Unknown error"));
+                        console.error(err);
                       } finally {
                         setUploadingImage(false);
                       }
@@ -1708,8 +1709,9 @@ export default function Admin() {
                       const url = storage.getFileView(APPWRITE_CATCH_IMAGES_BUCKET_ID, uploaded.$id);
                       setEditStoreItemData({...editStoreItemData, image_url: url.href});
                       toast.success("תמונה הועלתה בהצלחה!");
-                    } catch (err) {
-                      toast.error("שגיאה בהעלאת תמונה");
+                    } catch (err: any) {
+                      toast.error("שגיאה בהעלאת תמונה: " + (err?.message || "Unknown error"));
+                      console.error(err);
                     } finally {
                       setUploadingImage(false);
                     }
