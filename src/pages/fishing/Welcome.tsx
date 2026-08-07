@@ -121,8 +121,9 @@ function Welcome() {
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white relative flex flex-col max-w-lg mx-auto overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/fishing_bg.jpg')] bg-cover bg-center opacity-20"></div>
+    <div className="min-h-[100dvh] bg-slate-950 text-white relative flex flex-col max-w-lg mx-auto overflow-hidden">
+      <div className="absolute inset-0 bg-[url('/fishing_bg.jpg')] bg-cover bg-center opacity-40 mix-blend-luminosity"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/80 to-slate-950"></div>
       
       <div className="flex-1 relative z-10 flex flex-col justify-center">
         <div className="overflow-hidden w-full h-full flex flex-col justify-center" ref={emblaRef}>

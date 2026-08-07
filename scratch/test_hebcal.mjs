@@ -1,1 +1,0 @@
-import hebcal from @hebcal/core; console.log(Object.keys(hebcal));
