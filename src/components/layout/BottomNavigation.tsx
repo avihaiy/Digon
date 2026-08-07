@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, MapPin, Activity, Trophy, ShoppingCart, Search, PlaySquare } from 'lucide-react';
+import { Home, MapPin, Activity, Trophy, ShoppingCart, Search, PlaySquare, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
@@ -11,8 +11,8 @@ export default function BottomNavigation() {
 
   const tabs = [
     { href: '/', icon: Home, label: 'ראשי' },
+    { href: '/fishing/messages', icon: MessageCircle, label: 'צ\'אט' },
     { href: '/fishing/reels', icon: PlaySquare, label: 'Reels' },
-    { href: '/fishing/search', icon: Search, label: 'חיפוש' },
     { href: '/fishing/locations', icon: MapPin, label: 'מיקומים' },
     { href: '/fishing/tournaments', icon: Trophy, label: 'תחרויות' },
     { href: '/leaderboard', icon: Trophy, label: 'אלופים' },

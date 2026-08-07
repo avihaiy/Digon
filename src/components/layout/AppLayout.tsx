@@ -37,6 +37,7 @@ interface AppLayoutProps {
 const navItems = [
   { href: '/', icon: Home, label: 'ראשי' },
   { href: '/admin', icon: Settings, label: 'פאנל ניהול', adminOnly: true },
+  { href: '/fishing/messages', icon: MessageCircle, label: 'צ\'אט וערוצים' },
   { href: '/fishing/search', icon: Search, label: 'חיפוש' },
   { href: '/fishing/locations', icon: MapPin, label: 'מיקומי דיג' },
   { href: '/fishing/reels', icon: PlaySquare, label: 'Reels' },
@@ -247,6 +248,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
               {/* Notifications */}
               {user && (
                 <NotificationsPanel />
+              )}
+
+              {/* Messages / Channels Icon */}
+              {user && (
+                <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative" title="צ'אט וערוצים">
+                  <Link to="/fishing/messages">
+                    <MessageCircle className="w-5 h-5" />
+                  </Link>
+                </Button>
               )}
 
               {/* Search Icon */}
