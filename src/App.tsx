@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,9 +18,7 @@ import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
 import Install from "@/pages/Install";
 import FishingHome from "@/pages/fishing/Home";
-import Community from "@/pages/fishing/Community";
 import Forecast from "@/pages/fishing/Forecast";
-import LiveCamsPage from "@/pages/fishing/LiveCamsPage";
 import Locations from "@/pages/fishing/Locations";
 import Identify from "@/pages/fishing/Identify";
 import Wiki from "@/pages/fishing/Wiki";
@@ -27,22 +26,32 @@ import Knots from "@/pages/fishing/Knots";
 import Radar from "@/pages/fishing/Radar";
 import WeightCalculator from "@/pages/fishing/WeightCalculator";
 import Logbook from "@/pages/fishing/Logbook";
-import TackleBox from "@/pages/fishing/TackleBox";
-import Store from "@/pages/fishing/Store";
-import Analytics from "@/pages/fishing/Analytics";
 import Settings from "@/pages/fishing/Settings";
 import Leaderboard from "@/pages/fishing/Leaderboard";
 import Profile from "@/pages/fishing/Profile";
-import Tournaments from "@/pages/fishing/Tournaments";
 import TournamentView from "@/pages/fishing/TournamentView";
 import Messages from "@/pages/fishing/Messages";
 import SearchUsers from "@/pages/fishing/Search";
-import SecretAnalyzer from "@/pages/fishing/SecretAnalyzer";
 import Welcome from "@/pages/fishing/Welcome";
-import Reels from "@/pages/fishing/Reels";
 import GearRecommendations from "@/pages/fishing/GearRecommendations";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { OfflineSyncManager } from "@/hooks/useOfflineSync";
+
+// Lazy-loaded heavy modules for maximum initial page load speed
+const Community = lazy(() => import("@/pages/fishing/Community"));
+const LiveCamsPage = lazy(() => import("@/pages/fishing/LiveCamsPage"));
+const TackleBox = lazy(() => import("@/pages/fishing/TackleBox"));
+const Store = lazy(() => import("@/pages/fishing/Store"));
+const Analytics = lazy(() => import("@/pages/fishing/Analytics"));
+const Tournaments = lazy(() => import("@/pages/fishing/Tournaments"));
+const SecretAnalyzer = lazy(() => import("@/pages/fishing/SecretAnalyzer"));
+const Reels = lazy(() => import("@/pages/fishing/Reels"));
+
+const PageLoader = () => (
+  <div className="min-h-[50vh] flex items-center justify-center p-8">
+    <div className="animate-spin w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full" />
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -100,8 +109,9 @@ const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <Suspense fallback={<PageLoader />}>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
         {/* Public Routes */}
         <Route path="/login" element={<PublicRoute><PageTransition><Login /></PageTransition></PublicRoute>} />
         <Route path="/terms" element={<PageTransition><TermsOfUse /></PageTransition>} />
@@ -149,6 +159,7 @@ const AnimatedRoutes = () => {
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
+    </Suspense>
   );
 };
 

@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useTournaments } from "@/hooks/useTournaments";
 import { Switch } from "@/components/ui/switch";
+import { compressImage } from "@/lib/imageCompression";
 
 interface CatchReportDialogProps {
   children: React.ReactNode;
@@ -98,11 +99,12 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
     }
 
     try {
+      const compressed = await compressImage(imageFile, { maxWidth: 1920, quality: 0.85 });
       await reportCatch({
         fishType,
         weight,
         location: mapUrl.trim() ? `${location} ||| ${mapUrl.trim()}` : location,
-        imageFile,
+        imageFile: compressed,
         tournamentId: selectedTournament || undefined,
         imageBase64: imagePreview || undefined,
         isPrivate,

@@ -15,6 +15,8 @@ interface ScanResult {
   danger: string | null;
   description: string;
   tips: string;
+  minSize?: string;
+  bestBait?: string;
 }
 
 export default function Identify() {
@@ -61,14 +63,16 @@ export default function Identify() {
       if (!apiKey) {
         // Fallback to Mock Mode if no API key is provided
         toast.info("מפתח API של Gemini לא נמצא, מציג תוצאה להדגמה.");
-        await new Promise(resolve => setTimeout(resolve, 2500)); // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
         setResult({
           name: "לוקוס לבן (דקר)",
           confidence: 96,
           kosher: true,
           danger: null,
           description: "דג טורף ממשפחת הדקריים, נחשב לאחד ממשובחי הדגים בים התיכון.",
-          tips: "מומלץ להשתמש בשיטת ז'רז'ור עם דמויים גדולים או פיתיון חי ליד סלעים."
+          tips: "מומלץ להשתמש בשיטת ז'רז'ור עם דמויים גדולים או פיתיון חי ליד סלעים.",
+          minSize: "45 ס״מ (חוק הגנת הדייג בישראל)",
+          bestBait: "סבידה / תמנון / דמוי שוקע 120 מ״מ"
         });
         return;
       }
@@ -93,7 +97,9 @@ export default function Identify() {
           "kosher": boolean,
           "danger": "string warning if it's venomous/poisonous (like Aras or Abu Nafha), otherwise null",
           "description": "Short description in Hebrew",
-          "tips": "One short fishing tip or culinary tip in Hebrew"
+          "tips": "One short fishing tip or culinary tip in Hebrew",
+          "minSize": "Minimum legal catch size in Israel (e.g. 45 ס״מ) or 'אין הגבלה'",
+          "bestBait": "Recommended bait in Hebrew"
         }
       `;
 
@@ -265,7 +271,7 @@ export default function Identify() {
                       {result.description}
                     </p>
 
-                    <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl flex gap-3 items-start">
+                    <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl flex gap-3 items-start mb-3">
                       <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                       <div>
                         <h4 className="font-bold text-blue-600 text-sm">טיפ לדייג</h4>
@@ -273,6 +279,22 @@ export default function Identify() {
                       </div>
                     </div>
 
+                    {(result.minSize || result.bestBait) && (
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {result.minSize && (
+                          <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-xl">
+                            <span className="text-muted-foreground block font-medium mb-0.5">גודל מינימלי מותר:</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-100">{result.minSize}</span>
+                          </div>
+                        )}
+                        {result.bestBait && (
+                          <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-xl">
+                            <span className="text-muted-foreground block font-medium mb-0.5">פיתיון מומלץ:</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-100">{result.bestBait}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 )}
               </Card>
