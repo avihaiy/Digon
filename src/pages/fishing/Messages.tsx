@@ -128,11 +128,41 @@ export default function Messages({
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 pb-20 max-w-2xl mx-auto px-4 mt-6">
       <div className="flex flex-col">
-        <h1 className="text-2xl font-bold tracking-tight">הודעות 💬</h1>
+        <h1 className="text-2xl font-bold tracking-tight">הודעות וערוצי קהילה 💬</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          השיחות הפרטיות שלך עם דייגים אחרים
+          שיחות פרטיות וערוצי חוף אזוריים בלייב
         </p>
       </div>
+
+      {/* Regional Squad Channels */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">ערוצי דייג אזוריים</h2>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { id: 'squad-north', name: '🌊 חוף צפון', desc: 'חיפה, עכו, ראש הנקרה' },
+            { id: 'squad-center', name: '🌊 חוף מרכז', desc: 'תל אביב, הרצליה, נתניה' },
+            { id: 'squad-south', name: '🌊 חוף דרום', desc: 'אשדוד, אשקלון, זיקים' },
+            { id: 'squad-kinneret', name: '⛵ כנרת ונהרות', desc: 'דייג מתוקים בצפון' },
+            { id: 'squad-eilat', name: '🐠 אילת וים סוף', desc: 'דייג מים עמוקים' },
+          ].map((channel) => (
+            <Card 
+              key={channel.id} 
+              className="cursor-pointer border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors rounded-2xl"
+              onClick={() => {
+                setActiveChatId(channel.id);
+                setActiveChatName(channel.name);
+              }}
+            >
+              <CardContent className="p-3">
+                <h4 className="font-bold text-sm text-cyan-600 dark:text-cyan-400">{channel.name}</h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{channel.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1 pt-2">הודעות פרטיות</h2>
 
       {isLoadingInbox ? (
         <div className="flex justify-center p-8">
