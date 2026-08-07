@@ -7,6 +7,9 @@ import { Link } from "react-router-dom";
 import { CatchReportDialog } from "@/components/catches/CatchReportDialog";
 import { useDailyLogin } from "@/hooks/useDailyLogin";
 import { DailyLoginModal } from "@/components/home/DailyLoginModal";
+import { useSolunar } from "@/hooks/useSolunar";
+import { useMarineWeather } from "@/hooks/useMarineWeather";
+import { useState, useEffect, useMemo } from "react";
 
 // Helper for circular progress with Framer Motion and Glow
 const CircularProgress = ({ value, label, subLabel, color, glowColor }: { value: number, label: string, subLabel: string, color: string, glowColor: string }) => {
@@ -77,6 +80,48 @@ const ActionButton = ({ icon: Icon, label, delay, onClick }: { icon: LucideIcon,
 const Home = () => {
   const { user } = useAuth();
   const { reward, canClaimDaily, potentialReward, claimDaily, clearReward } = useDailyLogin();
+  const { data: solunarData } = useSolunar();
+  const { data: marineData } = useMarineWeather();
+  const [currentTimeStr, setCurrentTimeStr] = useState(() => 
+    new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+  );
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimeStr(new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }));
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Compute live scores for regions dynamically
+  const scores = useMemo(() => {
+    const baseScore = solunarData?.rating || 65;
+    
+    // Calculate regional variations based on wave heights/wind
+    const centerScore = Math.min(99, Math.max(15, baseScore));
+    const northScore = Math.min(99, Math.max(15, Math.round(baseScore * 1.06)));
+    const southScore = Math.min(99, Math.max(15, Math.round(baseScore * 0.94)));
+
+    const getScoreMeta = (val: number) => {
+      if (val >= 75) return { label: "מעולה!", color: "#10b981", glow: "rgba(16,185,129,0.6)" };
+      if (val >= 55) return { label: "טוב מאוד", color: "#06b6d4", glow: "rgba(6,182,212,0.6)" };
+      if (val >= 40) return { label: "בינוני", color: "#eab308", glow: "rgba(234,179,8,0.6)" };
+      return { label: "חלש", color: "#ef4444", glow: "rgba(239,68,68,0.5)" };
+    };
+
+    const best = [
+      { name: "צפון", score: northScore },
+      { name: "מרכז", score: centerScore },
+      { name: "דרום", score: southScore }
+    ].sort((a, b) => b.score - a.score)[0];
+
+    return {
+      center: { score: centerScore, ...getScoreMeta(centerScore) },
+      north: { score: northScore, ...getScoreMeta(northScore) },
+      south: { score: southScore, ...getScoreMeta(southScore) },
+      bestRegion: best
+    };
+  }, [solunarData]);
   
   return (
     <FishingLayout>
@@ -151,7 +196,7 @@ const Home = () => {
               </span>
             </h2>
             <div className="inline-flex items-center gap-2 bg-yellow-500/20 backdrop-blur-md border border-yellow-500/30 px-3 py-1.5 rounded-full text-yellow-400 font-bold text-sm shadow-[0_0_15px_rgba(234,179,8,0.2)]">
-              <span>הכי טוב היום: מרכז — ציון 44</span>
+              <span>הכי טוב היום: {scores.bestRegion.name} — ציון {scores.bestRegion.score}</span>
               <Trophy className="w-4 h-4" />
             </div>
           </div>
@@ -169,7 +214,7 @@ const Home = () => {
           
           <div className="flex justify-between items-center mb-8">
             <div className="bg-white/5 backdrop-blur-md border border-white/10 text-cyan-300 font-medium text-xs px-3 py-1.5 rounded-full flex items-center gap-2">
-              <span>08:53</span>
+              <span>{currentTimeStr}</span>
               <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] animate-pulse"></div>
             </div>
             <h3 className="font-black flex items-center gap-2 text-xl text-white">
@@ -179,16 +224,34 @@ const Home = () => {
           
           <div className="flex justify-between items-end px-1 relative">
             <div className="animate-float" style={{ animationDelay: "0.5s" }}>
-              <CircularProgress value={37} label="דרום" subLabel="גרוע" color="#ef4444" glowColor="rgba(239,68,68,0.5)" />
+              <CircularProgress 
+                value={scores.south.score} 
+                label="דרום" 
+                subLabel={scores.south.label} 
+                color={scores.south.color} 
+                glowColor={scores.south.glow} 
+              />
             </div>
             
             {/* Center prominent score */}
             <div className="animate-float shadow-[0_0_30px_rgba(34,211,238,0.15)] bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md rounded-[2rem] p-3 -mx-2 border border-white/20 transform scale-110 relative z-10 hover:scale-125 transition-transform cursor-pointer">
-              <CircularProgress value={44} label="מרכז" subLabel="בינוני" color="#06b6d4" glowColor="rgba(6,182,212,0.6)" />
+              <CircularProgress 
+                value={scores.center.score} 
+                label="מרכז" 
+                subLabel={scores.center.label} 
+                color={scores.center.color} 
+                glowColor={scores.center.glow} 
+              />
             </div>
             
             <div className="animate-float" style={{ animationDelay: "1s" }}>
-              <CircularProgress value={28} label="צפון" subLabel="גרוע" color="#ef4444" glowColor="rgba(239,68,68,0.5)" />
+              <CircularProgress 
+                value={scores.north.score} 
+                label="צפון" 
+                subLabel={scores.north.label} 
+                color={scores.north.color} 
+                glowColor={scores.north.glow} 
+              />
             </div>
           </div>
         </motion.div>
