@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import SunCalc from 'suncalc';
+import * as SunCalc from 'suncalc';
 
 const LAT = 32.0853; // Default to Tel Aviv
 const LON = 34.7818;

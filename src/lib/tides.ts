@@ -1,4 +1,4 @@
-import SunCalc from 'suncalc';
+import * as SunCalc from 'suncalc';
 
 const LAT = 32.0853;
 const LON = 34.7818;

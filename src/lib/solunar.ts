@@ -1,4 +1,4 @@
-import SunCalc from 'suncalc';
+import * as SunCalc from 'suncalc';
 
 // Tel Aviv coordinates
 const LAT = 32.0853;
