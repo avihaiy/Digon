@@ -40,7 +40,10 @@ export function getSolunarData(
   cloudCover: number | null = null,
   pressureTrend: number | null = null,
   isTurbid: boolean = false,
-  waveDirection: number | null = null
+  waveDirection: number | null = null,
+  windGusts: number | null = null,
+  cape: number | null = null,
+  oceanCurrentVelocity: number | null = null
 ) {
   const moonIllumination = SunCalc.getMoonIllumination(date);
   const phase = moonIllumination.phase; // 0 to 1
