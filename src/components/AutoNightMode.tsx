@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import * as SunCalcModule from 'suncalc';
-
-const SunCalc = typeof (SunCalcModule as any) === 'function' ? SunCalcModule : (SunCalcModule as any).default ? (SunCalcModule as any).default : SunCalcModule;
+import SunCalc from 'suncalc';
 
 const LAT = 32.0853; // Default to Tel Aviv
 const LON = 34.7818;
