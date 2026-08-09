@@ -9,15 +9,21 @@ const LON = 34.7818;
  * Get Moon phase and fishing score for a given date
  * @returns { score: number, rating: string, message: string, phaseName: string }
  */
+export type FishingStyle = 'lure' | 'bait' | 'kayak' | 'ultralight';
+
 export function getSolunarData(
   date: Date = new Date(),
+  fishingStyle: FishingStyle = 'lure',
   waveHeight: number | null = null,
   windSpeed: number | null = null,
   waterTemp: number | null = null,
   wavePeriod: number | null = null,
   surfacePressure: number | null = null,
   windDirection: number | null = null,
-  cloudCover: number | null = null
+  cloudCover: number | null = null,
+  pressureTrend: number | null = null,
+  isTurbid: boolean = false,
+  waveDirection: number | null = null
 ) {
   const moonIllumination = SunCalc.getMoonIllumination(date);
   const phase = moonIllumination.phase; // 0 to 1
@@ -55,81 +61,130 @@ export function getSolunarData(
   let seaBonus = 0;
   let explanations: string[] = [];
 
+  // Wind vs Swell conflict (migahetz)
+  let isFlattenedByWind = false;
+  if (windDirection !== null && waveDirection !== null && windSpeed !== null && windSpeed > 15) {
+    const angleDiff = Math.abs((windDirection - waveDirection + 360) % 360);
+    if (angleDiff > 120 && angleDiff < 240) {
+      isFlattenedByWind = true;
+      explanations.push("רוח נגדית מגהצת את הגלים (הים נראה נמוך יותר ממה שהוא)");
+    }
+  }
+
   // Wind (km/h) & Direction
   if (windSpeed !== null) {
     const isEastWind = windDirection !== null && (windDirection > 45 && windDirection < 135);
     
     if (windSpeed > 30) {
-      if (isEastWind) {
-        seaPenalty += 10;
-        explanations.push("רוח מזרחית ערה (הים יהיה יחסית שטוח אבל יעופו חולות)");
-      } else {
-        seaPenalty += 40;
-        explanations.push("רוח חזקה מאוד מקשה על הדייג");
-      }
+      seaPenalty += (fishingStyle === 'kayak' || fishingStyle === 'ultralight') ? 60 : 30;
+      explanations.push("רוח חזקה מאוד - מקשה על הדייג ופסול לקיאק!");
     } else if (windSpeed > 20) {
-      if (isEastWind) {
-        seaBonus += 10;
-        explanations.push("רוח מזרחית מתונה - אידיאלי למים שקטים סמוך לחוף!");
+      if (isEastWind || isFlattenedByWind) {
+        if (fishingStyle === 'ultralight') {
+           seaBonus += 20;
+           explanations.push("רוח מזרחית/נגדית - אידיאלי לאולטרה לייט קרוב לחוף");
+        } else {
+           seaBonus += 5;
+           explanations.push("רוח מזרחית/נגדית - ים פלטה יחסית");
+        }
       } else {
-        seaPenalty += 15;
-        explanations.push("רוח מתונה עד ערה");
+        seaPenalty += (fishingStyle === 'kayak') ? 40 : 15;
+        explanations.push("רוח ערה - הקפד על משקלים מתאימים");
       }
     } else if (windSpeed < 10) {
-      seaBonus += 10;
+      if (fishingStyle === 'kayak' || fishingStyle === 'ultralight') {
+        seaBonus += 20;
+        explanations.push("רוח חלשה - אידיאלי לקיאק ולאולטרה לייט!");
+      }
     }
   }
 
-  // Waves (m) & Period (s)
+  // Waves (m)
   if (waveHeight !== null) {
     if (waveHeight > 1.5) {
-      seaPenalty += 50; // Stormy
-      explanations.push("ים גבה גלים ומסוכן");
-    } else if (waveHeight >= 0.4 && waveHeight <= 0.8) {
-      seaBonus += 15; // Perfect working water
-      explanations.push("גובה גלים אידיאלי ('מים עובדים')");
-    } else if (waveHeight < 0.2) {
-      seaPenalty += 5; // Flat
-      explanations.push("ים פלטה (פחות מומלץ לפיתיונות)");
+      if (fishingStyle === 'kayak') {
+        seaPenalty += 100;
+        explanations.push("גלים מעל 1.5 - סכנת נפשות לקיאק!");
+      } else if (fishingStyle === 'lure') {
+        seaPenalty += 20;
+        explanations.push("ים גועש - ייתכן קושי לז'רז'ר אם הים סוגר");
+      } else {
+        seaPenalty += 30;
+        explanations.push("ים גבה גלים ומסוכן");
+      }
+    } else if (waveHeight >= 0.6 && waveHeight <= 1.2) {
+      if (fishingStyle === 'lure') {
+        seaBonus += 30;
+        explanations.push("גובה גלים זהב ללברקים ('מים עובדים')!");
+      } else if (fishingStyle === 'kayak') {
+        seaPenalty += 20;
+        explanations.push("גלים גבוהים יחסית ליציאה בקיאק");
+      } else {
+        seaBonus += 15;
+        explanations.push("מים עובדים - טוב לפיתיונות");
+      }
+    } else if (waveHeight < 0.3) {
+      if (fishingStyle === 'lure') {
+        seaPenalty += 10;
+        explanations.push("ים פלטה - הטורפים קצת ביישנים");
+      } else if (fishingStyle === 'ultralight' || fishingStyle === 'kayak') {
+        seaBonus += 25;
+        explanations.push("ים פלטה - אידיאלי לסגנון שלך!");
+      }
     }
   }
 
   // Wave Period Adjustments
-  if (wavePeriod !== null && waveHeight !== null && waveHeight > 0.3) {
+  if (wavePeriod !== null && waveHeight !== null && waveHeight > 0.4) {
     if (wavePeriod < 4) {
       seaPenalty += 15;
       explanations.push("זמן גל קצר (צ'ופי/מכונת כביסה)");
-    } else if (wavePeriod >= 5 && wavePeriod <= 8) {
+    } else if (wavePeriod >= 6 && wavePeriod <= 9) {
       seaBonus += 20;
       explanations.push("זמן בין גלים מעולה! סוול מסודר");
-    } else if (wavePeriod > 10) {
-      seaPenalty += 20;
-      explanations.push("סוול ארוך וחזק (סכנת גלים שואבים)");
     }
   }
 
-  // Barometric Pressure (hPa)
+  // Barometric Pressure (hPa) & Trend
   if (surfacePressure !== null) {
-    if (surfacePressure > 1020) {
-      seaBonus += 15;
-      explanations.push("לחץ ברומטרי גבוה ויציב (מעולה לאכילות)");
-    } else if (surfacePressure < 1005) {
-      seaPenalty += 20;
-      explanations.push("שקע ברומטרי (דגים נוטים לרדת לעומק)");
+    if (pressureTrend !== null) {
+       if (pressureTrend < -2) {
+         seaBonus += 35;
+         explanations.push("צניחת לחץ ברומטרי מהירה! הטורפים נכנסים לאטרף אכילות לפני החזית.");
+       } else if (pressureTrend > 2) {
+         seaPenalty += 20;
+         explanations.push("עליית לחץ ברומטרי פתאומית - ייתכן 'נעילת פיות' (Lockjaw).");
+       } else {
+         if (surfacePressure > 1020) seaBonus += 10;
+       }
     } else {
-      // Normal pressure, slight bonus
-      seaBonus += 5;
+       if (surfacePressure > 1020) {
+         seaBonus += 15;
+         explanations.push("לחץ ברומטרי גבוה ויציב");
+       } else if (surfacePressure < 1005) {
+         seaPenalty += 10;
+       }
     }
   }
 
   // Cloud Cover (%)
   if (cloudCover !== null) {
-    if (cloudCover > 60) {
-      seaBonus += 15;
-      explanations.push("עננות כבדה (דגים עולים לפני המים בגלל מחסור באור)");
+    if (cloudCover > 60 && fishingStyle === 'lure') {
+      seaBonus += 20;
+      explanations.push("עננות כבדה (דגים עולים לתקוף בפני המים)");
     } else if (cloudCover > 30) {
       seaBonus += 5;
-      explanations.push("עננות חלקית (תנאים טובים לז'רז'ור)");
+    }
+  }
+
+  // Turbidity
+  if (isTurbid) {
+    if (fishingStyle === 'lure' || fishingStyle === 'ultralight') {
+      seaPenalty += 30;
+      explanations.push("המים עכורים! (מומלץ דמויים רועשים/צבעים בוהקים או לעבור לפיתיונות)");
+    } else if (fishingStyle === 'bait') {
+      seaBonus += 15;
+      explanations.push("מים עכורים - מעולה לפיתיונות ריחניים (סרגוסים ולוקוסים מחפשים אוכל).");
     }
   }
 
@@ -196,60 +251,94 @@ export interface FishRecommendation {
 export function getSmartTargetSpecies(
   waveHeight: number | null, 
   temp: number | null, 
-  cloudCover: number | null
+  cloudCover: number | null,
+  fishingStyle: FishingStyle = 'lure',
+  isTurbid: boolean = false
 ): FishRecommendation {
-  
-  // Fallbacks
   const w = waveHeight ?? 0.5;
   const t = temp ?? 22;
   const c = cloudCover ?? 10;
   
   const isWinter = t < 20;
-  
-  // SCENARIO 1: Flat Sea (ים פלטה)
-  if (w < 0.3) {
-    if (isWinter) {
+
+  if (isTurbid) {
+    if (fishingStyle === 'lure' || fishingStyle === 'ultralight') {
       return {
-        species: ["קלמרי", "סבידה", "ברקודה"],
-        bestMethod: "ז'רז'ור קלמרים או דמויים קטנים",
-        reasoning: "הים שטוח לגמרי והמים קרים. תנאים מושלמים לדינונים (קלמרי/סבידה) ולטורפים עדינים.",
-        iconType: 'squid'
+        species: ["לוקוס (על הריפים)", "ברקודה"],
+        bestMethod: "דמויים בצבעים זוהרים/רועשים (Rattling)",
+        reasoning: "המים עכורים ולכן דגים מתקשים לראות. השתמש בדמויים שעושים ויברציות.",
+        iconType: 'lure'
       };
     } else {
       return {
-        species: ["דוראדו (Mahi)", "טונה שחורה", "טרחון"],
-        bestMethod: "ז'רז'ור טופ-ווטר או ג'יג קל",
-        reasoning: "ים שטוח ומים חמים. דגי ים פתוח יחפשו טרף על פני המים. חפש רתיחות!",
-        iconType: 'lure'
+        species: ["סרגוס", "לבט", "לוקוס"],
+        bestMethod: "פיתיונות מסריחים (סבידה/גמברי)",
+        reasoning: "מים עכורים מביאים את הסרגוסים לחפש אוכל בעזרת חוש הריח! זמן פצצה.",
+        iconType: 'bait'
+      };
+    }
+  }
+
+  // SCENARIO 1: Flat Sea (ים פלטה)
+  if (w < 0.4) {
+    if (fishingStyle === 'ultralight' || fishingStyle === 'kayak') {
+      return {
+        species: isWinter ? ["קלמרי", "סבידה", "טרחון קטן"] : ["טרחון", "פלמידה", "טונה שחורה"],
+        bestMethod: "ז'רז'ור קלמרים / פופרים קטנים",
+        reasoning: "ים שטוח לגמרי מושלם לסגנון שלך. חפש רתיחות!",
+        iconType: isWinter ? 'squid' : 'lure'
+      };
+    } else if (fishingStyle === 'bait') {
+      return {
+        species: ["דניס", "מרמיר", "בורי"],
+        bestMethod: "פיתיונות על רגש (בוס או חוף עדין)",
+        reasoning: "המים צלולים והדגים חשדניים. השתמש בחוטים דקים ופיתיון טבעי.",
+        iconType: 'bait'
       };
     }
   }
   
   // SCENARIO 2: Working Sea (ים עובד)
-  if (w >= 0.3 && w <= 0.9) {
+  if (w >= 0.4 && w <= 1.2) {
+    if (fishingStyle === 'kayak') {
+      return {
+        species: ["פלמידה", "אינטיאס", "דוראדו"],
+        bestMethod: "טרולינג זהיר",
+        reasoning: "הים קצת גלי, סע בזהירות וחפש את הטורפים בקווי העומק.",
+        iconType: 'lure'
+      };
+    }
     if (c > 50) {
       return {
-        species: ["גומבר", "לוקוס", "פלמידה", "אינטיאס"],
-        bestMethod: "ז'רז'ור כבד / בינוני",
-        reasoning: "הים עובד ויש עננות שמסתירה את השמש! הטורפים הגדולים עולים קרוב לחוף לתקוף.",
+        species: ["לברק!", "גומבר", "לוקוס"],
+        bestMethod: "ז'רז'ור (כלבים / מינואו)",
+        reasoning: "ים עובד + עננות = זמן לברקים! טורפים יוצאים לאכול בקצף.",
         iconType: 'lure'
       };
     } else {
       return {
         species: ["סרגוס", "לוקוס", "דניס"],
         bestMethod: "דייג פיתיונות או בוס",
-        reasoning: "ים אידיאלי ('מים עובדים') אך שמשי. מומלץ לחפש את הדגים סביב סלעים ובורות עם פיתיונות.",
+        reasoning: "מים עובדים עוזרים לדגים ביישנים לצאת לאכול.",
         iconType: 'bait'
       };
     }
   }
   
   // SCENARIO 3: Stormy/High Sea (ים גבוה/סוער)
-  if (w > 0.9) {
+  if (w > 1.2) {
+    if (fishingStyle === 'kayak') {
+      return {
+        species: [],
+        bestMethod: "להישאר בבית",
+        reasoning: "הים סוער מדי לקיאק. סכנת חיים.",
+        iconType: 'lure'
+      };
+    }
     return {
       species: ["סרגוס גדול", "לבט (שישן)", "לוקוס מפלצת"],
       bestMethod: "דייג פיתיונות כבד מהחוף/סלעים",
-      reasoning: "הים גועש והמים עכורים. טורפי ז'רז'ור יתרחקו, אבל דגי הקרקעית (סרגוסים) חוגגים על מה שעף מהסלעים.",
+      reasoning: "הים גועש. טורפי ז'רז'ור יתרחקו, אבל דגי הקרקעית (סרגוסים) חוגגים בזרמים.",
       iconType: 'bait'
     };
   }
@@ -262,7 +351,6 @@ export function getSmartTargetSpecies(
     iconType: 'lure'
   };
 }
-
 export interface GoldWindow {
   type: 'major' | 'minor';
   startHour: number;

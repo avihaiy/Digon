@@ -12,6 +12,9 @@ interface MarineWeatherData {
   surfacePressure: number | null; // in hPa
   wavePeriod: number | null; // in seconds
   cloudCover: number | null; // in percentage
+  pressureTrend: number | null; // delta hPa over last 12h
+  isTurbid: boolean; // if max wave in past 48h > 1.5m
+  waveDirection: number | null; // in degrees
   locationName: string;
   hourlyForecast?: { time: string; waveHeight: number; temperature: number; windSpeed: number }[];
   dailyForecast?: { 
@@ -21,7 +24,7 @@ interface MarineWeatherData {
     tempMax: number; 
     tempMin: number;
     windSpeedMax: number; 
-    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number; wavePeriod: number; surfacePressure: number; cloudCover: number }[];
+    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number; wavePeriod: number; surfacePressure: number; cloudCover: number; waveDirection: number }[];
   }[];
 }
 
@@ -34,6 +37,9 @@ export function useMarineWeather() {
     surfacePressure: null,
     wavePeriod: null,
     cloudCover: null,
+    pressureTrend: null,
+    isTurbid: false,
+    waveDirection: null,
     locationName: 'תל אביב (ברירת מחדל)',
     hourlyForecast: [],
     dailyForecast: [],
@@ -47,52 +53,89 @@ export function useMarineWeather() {
       setLoading(true);
       setError(null);
 
-      // Fetch Weather (Wind, Temp, Pressure, Clouds - Current and Hourly)
+      // Fetch Weather (Wind, Temp, Pressure, Clouds - Current and Hourly with past 12h)
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&timezone=auto&models=best_match`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&past_hours=12&timezone=auto&models=best_match`
       );
       const weatherJson = await weatherRes.json();
       
-      // Fetch Marine (Waves & Period)
+      // Fetch Marine (Waves, Direction & Period with past 48h)
       const marineLat = 32.08;
       const marineLon = 34.75;
       const marineRes = await fetch(
-        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height,wave_period&hourly=wave_height,wave_period&timezone=auto&models=best_match`
+        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height,wave_direction,wave_period&hourly=wave_height,wave_direction,wave_period&past_hours=48&timezone=auto&models=best_match`
       );
       const marineJson = await marineRes.json();
 
       let hourlyForecast = [];
       let dailyForecastMap = new Map();
 
+      let isTurbid = false;
+      let pressureTrend = null;
+      let waveDirection = marineJson.current?.wave_direction ?? null;
+
       if (marineJson.hourly?.time && weatherJson.hourly?.time) {
-        // Get next 24 hours for hourly forecast
-        const startIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date(new Date().setHours(0,0,0,0)));
-        const currentIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date());
-        const endIndex = currentIndex > -1 ? currentIndex + 24 : 24;
+        const marineStartIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date(new Date().setHours(0,0,0,0)));
+        const marineCurrentIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date());
         
-        for (let i = currentIndex > -1 ? currentIndex : 0; i < endIndex && i < marineJson.hourly.time.length; i++) {
-           hourlyForecast.push({
-             time: new Date(marineJson.hourly.time[i]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
-             waveHeight: marineJson.hourly.wave_height[i] || 0,
-             temperature: weatherJson.hourly.temperature_2m[i] || 0,
-             windSpeed: weatherJson.hourly.wind_speed_10m[i] || 0
-           });
+        const weatherStartIndex = weatherJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date(new Date().setHours(0,0,0,0)));
+        const weatherCurrentIndex = weatherJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date());
+
+        // Calculate Turbidity
+        if (marineCurrentIndex > -1) {
+          const pastWaves = marineJson.hourly.wave_height.slice(0, marineCurrentIndex);
+          const maxPastWave = Math.max(...pastWaves.filter((w: number) => w !== null));
+          if (maxPastWave >= 1.5) {
+            isTurbid = true;
+          }
+        }
+
+        // Calculate Pressure Trend
+        if (weatherCurrentIndex >= 12) {
+          const currentPressure = weatherJson.hourly.surface_pressure[weatherCurrentIndex];
+          const pastPressure = weatherJson.hourly.surface_pressure[weatherCurrentIndex - 12];
+          if (currentPressure !== null && pastPressure !== null) {
+            pressureTrend = currentPressure - pastPressure;
+          }
+        }
+
+        // Align arrays for forecast loop (using start index of each)
+        const endIndex = marineCurrentIndex > -1 ? marineCurrentIndex + 24 : 24;
+        
+        for (let i = 0; i < 24; i++) {
+           const mIdx = (marineCurrentIndex > -1 ? marineCurrentIndex : 0) + i;
+           const wIdx = (weatherCurrentIndex > -1 ? weatherCurrentIndex : 0) + i;
+           
+           if (mIdx < marineJson.hourly.time.length && wIdx < weatherJson.hourly.time.length) {
+             hourlyForecast.push({
+               time: new Date(marineJson.hourly.time[mIdx]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+               waveHeight: marineJson.hourly.wave_height[mIdx] || 0,
+               temperature: weatherJson.hourly.temperature_2m[wIdx] || 0,
+               windSpeed: weatherJson.hourly.wind_speed_10m[wIdx] || 0
+             });
+           }
         }
 
         // Compute Daily Forecast for 7 days
-        const daysToProcess = Math.min(marineJson.hourly.time.length, startIndex + 7 * 24);
-        for (let i = startIndex > -1 ? startIndex : 0; i < daysToProcess; i++) {
-          const dateStr = marineJson.hourly.time[i];
+        for (let i = 0; i < 7 * 24; i++) {
+          const mIdx = (marineStartIndex > -1 ? marineStartIndex : 0) + i;
+          const wIdx = (weatherStartIndex > -1 ? weatherStartIndex : 0) + i;
+
+          if (mIdx >= marineJson.hourly.time.length || wIdx >= weatherJson.hourly.time.length) break;
+
+          const dateStr = marineJson.hourly.time[mIdx];
           const dateObj = new Date(dateStr);
           const dayKey = dateObj.toLocaleDateString('he-IL');
           
-          const wave = marineJson.hourly.wave_height[i] || 0;
-          const period = marineJson.hourly.wave_period ? marineJson.hourly.wave_period[i] || 0 : 0;
-          const temp = weatherJson.hourly.temperature_2m[i] || 0;
-          const wind = weatherJson.hourly.wind_speed_10m[i] || 0;
-          const dir = weatherJson.hourly.wind_direction_10m[i] || 0;
-          const pressure = weatherJson.hourly.surface_pressure ? weatherJson.hourly.surface_pressure[i] || 0 : 0;
-          const clouds = weatherJson.hourly.cloud_cover ? weatherJson.hourly.cloud_cover[i] || 0 : 0;
+          const wave = marineJson.hourly.wave_height[mIdx] || 0;
+          const period = marineJson.hourly.wave_period ? marineJson.hourly.wave_period[mIdx] || 0 : 0;
+          const wDir = marineJson.hourly.wave_direction ? marineJson.hourly.wave_direction[mIdx] || 0 : 0;
+          
+          const temp = weatherJson.hourly.temperature_2m[wIdx] || 0;
+          const wind = weatherJson.hourly.wind_speed_10m[wIdx] || 0;
+          const dir = weatherJson.hourly.wind_direction_10m[wIdx] || 0;
+          const pressure = weatherJson.hourly.surface_pressure ? weatherJson.hourly.surface_pressure[wIdx] || 0 : 0;
+          const clouds = weatherJson.hourly.cloud_cover ? weatherJson.hourly.cloud_cover[wIdx] || 0 : 0;
           
           const hourData = {
             time: dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
@@ -103,7 +146,8 @@ export function useMarineWeather() {
             windDirection: dir,
             wavePeriod: period,
             surfacePressure: pressure,
-            cloudCover: clouds
+            cloudCover: clouds,
+            waveDirection: wDir
           };
 
           if (!dailyForecastMap.has(dayKey)) {
@@ -137,6 +181,9 @@ export function useMarineWeather() {
         surfacePressure: weatherJson.current?.surface_pressure ?? null,
         wavePeriod: marineJson.current?.wave_period ?? null,
         cloudCover: weatherJson.current?.cloud_cover ?? null,
+        pressureTrend,
+        isTurbid,
+        waveDirection,
         locationName,
         hourlyForecast,
         dailyForecast,
