@@ -29,6 +29,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { usePWAUpdate } from '@/hooks/usePWAUpdate';
 import BottomNavigation from './BottomNavigation';
 import { AccessibilityWidget } from './AccessibilityWidget';
+import { AutoNightMode } from '@/components/AutoNightMode';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -48,6 +49,7 @@ const navItems = [
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  // Render AutoNightMode silently in the background
   const { user, userRole, points, signOut, isAdmin, prefs } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,6 +87,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen flex">
+      <AutoNightMode />
       {/* Sidebar */}
       <aside
         className={cn(
