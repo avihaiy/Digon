@@ -11,6 +11,24 @@ const LON = 34.7818;
  */
 export type FishingStyle = 'lure' | 'bait' | 'kayak' | 'ultralight';
 
+
+export interface SunlightTimes {
+  dawn: Date; // First light
+  sunrise: Date;
+  sunset: Date;
+  dusk: Date; // Last light
+}
+
+export function getSunlightTimes(date: Date = new Date()): SunlightTimes {
+  const times = SunCalc.getTimes(date, LAT, LON);
+  return {
+    dawn: times.dawn,
+    sunrise: times.sunrise,
+    sunset: times.sunset,
+    dusk: times.dusk
+  };
+}
+
 export function getSolunarData(
   date: Date = new Date(),
   fishingStyle: FishingStyle = 'lure',
@@ -60,6 +78,25 @@ export function getSolunarData(
   let seaPenalty = 0;
   let seaBonus = 0;
   let explanations: string[] = [];
+
+  // CAPE (Thunderstorm Risk)
+  let hasStormRisk = false;
+  if (cape !== null && cape > 1000) {
+    hasStormRisk = true;
+    seaPenalty += 100;
+    explanations.push("סכנת ברקים (CAPE גבוה) - סכנת התחשמלות לחכות קרבון!");
+  }
+
+  // Currents
+  if (oceanCurrentVelocity !== null && oceanCurrentVelocity > 1) { // roughly 0.5 knots
+    if (fishingStyle === 'bait') {
+      seaBonus += 15;
+      explanations.push("זרם היקפי חזק במים - דגים טורפים עומדים מול הזרם ומחכים לאוכל.");
+    } else if (fishingStyle === 'lure') {
+      seaBonus += 10;
+      explanations.push("זרם טוב מפעיל את פיתיונות הדמוי טוב יותר.");
+    }
+  }
 
   // Wind vs Swell conflict (migahetz)
   let isFlattenedByWind = false;

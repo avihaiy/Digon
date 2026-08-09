@@ -7,7 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 
 import { CalendarDays } from "lucide-react";
 
-import { getSolunarData, getSmartTargetSpecies, getDynamicGoldWindows, GoldWindow, FishingStyle } from '@/lib/solunar';
+import { getSolunarData, getSmartTargetSpecies, getDynamicGoldWindows, GoldWindow, FishingStyle, getSunlightTimes } from '@/lib/solunar';
 import { getMediterraneanTides } from '@/lib/tides';
 import { useMemo, useState } from 'react';
 
@@ -48,6 +48,7 @@ export default function Forecast() {
     return new Date();
   }, [marineData.dailyForecast, selectedDayIndex]);
 
+  const sunlight = useMemo(() => getSunlightTimes(targetDate), [targetDate]);
   const solunar = useMemo(() => {
     if (selectedDayIndex === 0) {
       return getSolunarData(
@@ -67,7 +68,7 @@ export default function Forecast() {
     }
     if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
       const dayData = marineData.dailyForecast[selectedDayIndex];
-      return getSolunarData(targetDate, fishingStyle, dayData.waveHeightMax, dayData.windSpeedMax, dayData.tempMax);
+      return getSolunarData(targetDate, fishingStyle, dayData.waveHeightMax, dayData.windSpeedMax, dayData.tempMax, null, null, null, null, null, false, null, dayData.windGustsMax, dayData.capeMax, null);
     }
     return getSolunarData(targetDate, fishingStyle);
   }, [targetDate, marineData, selectedDayIndex, fishingStyle]);

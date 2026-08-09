@@ -8,6 +8,10 @@ interface MarineWeatherData {
   waveHeight: number | null; // in meters
   windSpeed: number | null; // in km/h
   windDirection: number | null; // in degrees
+  windGusts: number | null; // in km/h
+  cape: number | null; // Convective Available Potential Energy (Thunderstorm risk)
+  oceanCurrentVelocity: number | null; // in km/h
+  oceanCurrentDirection: number | null; // in degrees
   temperature: number | null; // in celsius
   surfacePressure: number | null; // in hPa
   wavePeriod: number | null; // in seconds
@@ -23,8 +27,10 @@ interface MarineWeatherData {
     waveHeightMax: number; 
     tempMax: number; 
     tempMin: number;
-    windSpeedMax: number; 
-    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number; wavePeriod: number; surfacePressure: number; cloudCover: number; waveDirection: number }[];
+    windSpeedMax: number;
+    windGustsMax: number;
+    capeMax: number; 
+    hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number; wavePeriod: number; surfacePressure: number; cloudCover: number; waveDirection: number; windGusts: number; cape: number; oceanCurrentVelocity: number; oceanCurrentDirection: number }[];
   }[];
 }
 
@@ -32,6 +38,11 @@ export function useMarineWeather() {
   const [data, setData] = useState<MarineWeatherData>({
     waveHeight: null,
     windSpeed: null,
+    windDirection: null,
+    windGusts: null,
+    cape: null,
+    oceanCurrentVelocity: null,
+    oceanCurrentDirection: null,
     windDirection: null,
     temperature: null,
     surfacePressure: null,
@@ -55,7 +66,7 @@ export function useMarineWeather() {
 
       // Fetch Weather (Wind, Temp, Pressure, Clouds - Current and Hourly with past 12h)
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&past_hours=12&timezone=auto&models=best_match`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&past_hours=12&timezone=auto&models=best_match`
       );
       const weatherJson = await weatherRes.json();
       
@@ -63,7 +74,7 @@ export function useMarineWeather() {
       const marineLat = 32.08;
       const marineLon = 34.75;
       const marineRes = await fetch(
-        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height,wave_direction,wave_period&hourly=wave_height,wave_direction,wave_period&past_hours=48&timezone=auto&models=best_match`
+        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&hourly=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&past_hours=48&timezone=auto&models=best_match`
       );
       const marineJson = await marineRes.json();
 
@@ -136,6 +147,10 @@ export function useMarineWeather() {
           const dir = weatherJson.hourly.wind_direction_10m[wIdx] || 0;
           const pressure = weatherJson.hourly.surface_pressure ? weatherJson.hourly.surface_pressure[wIdx] || 0 : 0;
           const clouds = weatherJson.hourly.cloud_cover ? weatherJson.hourly.cloud_cover[wIdx] || 0 : 0;
+          const gusts = weatherJson.hourly.wind_gusts_10m ? weatherJson.hourly.wind_gusts_10m[wIdx] || 0 : 0;
+          const cape = weatherJson.hourly.cape ? weatherJson.hourly.cape[wIdx] || 0 : 0;
+          const curVel = marineJson.hourly.ocean_current_velocity ? marineJson.hourly.ocean_current_velocity[mIdx] || 0 : 0;
+          const curDir = marineJson.hourly.ocean_current_direction ? marineJson.hourly.ocean_current_direction[mIdx] || 0 : 0;
           
           const hourData = {
             time: dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
@@ -147,7 +162,11 @@ export function useMarineWeather() {
             wavePeriod: period,
             surfacePressure: pressure,
             cloudCover: clouds,
-            waveDirection: wDir
+            waveDirection: wDir,
+            windGusts: gusts,
+            cape: cape,
+            oceanCurrentVelocity: curVel,
+            oceanCurrentDirection: curDir
           };
 
           if (!dailyForecastMap.has(dayKey)) {
@@ -158,6 +177,8 @@ export function useMarineWeather() {
               tempMax: temp,
               tempMin: temp,
               windSpeedMax: wind,
+              windGustsMax: gusts,
+              capeMax: cape,
               hours: [hourData]
             });
           } else {
@@ -166,6 +187,8 @@ export function useMarineWeather() {
             current.tempMax = Math.max(current.tempMax, temp);
             current.tempMin = Math.min(current.tempMin, temp);
             current.windSpeedMax = Math.max(current.windSpeedMax, wind);
+            current.windGustsMax = Math.max(current.windGustsMax, gusts);
+            current.capeMax = Math.max(current.capeMax, cape);
             current.hours.push(hourData);
           }
         }
@@ -177,6 +200,10 @@ export function useMarineWeather() {
         waveHeight: marineJson.current?.wave_height ?? null,
         windSpeed: weatherJson.current?.wind_speed_10m ?? null,
         windDirection: weatherJson.current?.wind_direction_10m ?? null,
+        windGusts: weatherJson.current?.wind_gusts_10m ?? null,
+        cape: weatherJson.current?.cape ?? null,
+        oceanCurrentVelocity: marineJson.current?.ocean_current_velocity ?? null,
+        oceanCurrentDirection: marineJson.current?.ocean_current_direction ?? null,
         temperature: weatherJson.current?.temperature_2m ?? null,
         surfacePressure: weatherJson.current?.surface_pressure ?? null,
         wavePeriod: marineJson.current?.wave_period ?? null,
