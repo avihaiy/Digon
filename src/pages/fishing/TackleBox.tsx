@@ -151,15 +151,15 @@ export default function TackleBox() {
               <Plus className="w-6 h-6" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="rounded-3xl p-6">
+          <DialogContent className="rounded-3xl p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 shadow-2xl">
             <DialogHeader>
-              <DialogTitle className="text-xl">הוספת ציוד חדש</DialogTitle>
+              <DialogTitle className="text-2xl font-black flex items-center gap-2 text-slate-800 dark:text-slate-100"><Package className="w-7 h-7 text-cyan-500" /> הוספת ציוד לקופסה</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleAdd} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label>סוג הציוד</Label>
+                <Label className="text-slate-700 dark:text-slate-300 font-bold">סוג הציוד</Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="h-12 rounded-2xl bg-muted/50 border-0">
+                  <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-cyan-500 shadow-inner font-medium text-lg">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -170,29 +170,29 @@ export default function TackleBox() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>מותג (לדוגמה: Shimano, Daiwa)</Label>
+                <Label className="text-slate-700 dark:text-slate-300 font-bold">מותג (לדוגמה: Shimano, Daiwa)</Label>
                 <Input 
                   value={brand} 
                   onChange={(e) => setBrand(e.target.value)} 
-                  className="h-12 rounded-2xl bg-muted/50 border-0" 
+                  className="h-14 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 shadow-inner font-medium text-lg placeholder:text-slate-400 dark:placeholder:text-slate-500" 
                   placeholder="הזן מותג..."
                 />
               </div>
               <div className="space-y-2">
-                <Label>שם הדגם / הציוד</Label>
+                <Label className="text-slate-700 dark:text-slate-300 font-bold">שם הדגם / הציוד</Label>
                 <Input 
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
-                  className="h-12 rounded-2xl bg-muted/50 border-0" 
+                  className="h-14 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 shadow-inner font-medium text-lg placeholder:text-slate-400 dark:placeholder:text-slate-500" 
                   placeholder="לדוגמה: Stradic CI4+"
                 />
               </div>
               <div className="space-y-2">
-                <Label>מפרט טכני (אופציונלי)</Label>
+                <Label className="text-slate-700 dark:text-slate-300 font-bold">מפרט טכני (אופציונלי)</Label>
                 <Input 
                   value={specs} 
                   onChange={(e) => setSpecs(e.target.value)} 
-                  className="h-12 rounded-2xl bg-muted/50 border-0" 
+                  className="h-14 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 shadow-inner font-medium text-lg placeholder:text-slate-400 dark:placeholder:text-slate-500" 
                   placeholder={
                     category === 'rod' ? 'לדוגמה: משקלי זריקה 10-30g' : 
                     category === 'reel' ? 'לדוגמה: מידה 3000' : 
@@ -201,7 +201,7 @@ export default function TackleBox() {
                   }
                 />
               </div>
-              <Button type="submit" className="w-full h-12 rounded-2xl text-lg font-bold mt-2">
+              <Button type="submit" className="w-full h-14 rounded-2xl text-lg font-black mt-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all duration-300 border-0">
                 הוסף לקופסה
               </Button>
             </form>
