@@ -521,92 +521,75 @@ export default function Wiki() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="h-full overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-shadow relative bg-white dark:bg-slate-900 rounded-3xl group flex flex-col">
-                  {fish.danger && (
-                    <div className="absolute top-4 left-4 z-10">
-                      <Badge className="font-bold flex gap-1 items-center bg-rose-600 text-white shadow-lg border-0">
-                        <AlertTriangle className="w-4 h-4" /> אזהרה
-                      </Badge>
+                <Card className="h-full overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 relative bg-white dark:bg-slate-900 rounded-3xl group flex flex-col p-6">
+                  <div className="flex justify-between items-start mb-5">
+                    <div className="pr-2">
+                      <h3 className="font-black text-2xl text-slate-800 dark:text-slate-100 mb-1 leading-tight">
+                        {fish.name}
+                      </h3>
+                      <p className="text-sm text-slate-500 font-bold bg-slate-100 dark:bg-slate-800 inline-block px-3 py-1 rounded-full">
+                        ⏱️ {fish.season}
+                      </p>
                     </div>
-                  )}
-                  {fish.habitat === 'freshwater' && !fish.danger && (
-                    <div className="absolute top-4 left-4 z-10">
-                      <Badge className="font-bold flex gap-1 items-center bg-emerald-600/90 text-white shadow-lg border-0 backdrop-blur-md">
-                        <Droplet className="w-4 h-4" /> כנרת ונחלים
-                      </Badge>
+                    <div className="bg-cyan-50 dark:bg-cyan-900/30 p-3.5 rounded-2xl shrink-0">
+                       <Fish className="w-7 h-7 text-cyan-600 dark:text-cyan-400" />
                     </div>
-                  )}
-                  {fish.habitat === 'sea' && !fish.danger && (
-                    <div className="absolute top-4 left-4 z-10">
-                      <Badge className="font-bold flex gap-1 items-center bg-cyan-600/90 text-white shadow-lg border-0 backdrop-blur-md">
-                        <Waves className="w-4 h-4" /> ים תיכון
-                      </Badge>
-                    </div>
-                  )}
+                  </div>
                   
-                  <div className="h-56 w-full bg-slate-100 dark:bg-slate-800 relative overflow-hidden shrink-0">
-                    <div className="absolute inset-0 flex items-center justify-center text-slate-300 dark:text-slate-700">
-                      <Fish className="w-20 h-20" />
-                    </div>
-                    <img 
-                      src={fish.image} 
-                      alt={fish.name} 
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
-                    <h3 className="absolute bottom-4 right-4 z-20 font-black text-2xl text-white drop-shadow-md">
-                      {fish.name}
-                    </h3>
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {fish.habitat === 'freshwater' && !fish.danger && (
+                      <Badge className="font-bold flex gap-1 items-center bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-400 border-0 px-2.5 py-1">
+                        <Droplet className="w-3.5 h-3.5" /> כנרת ונחלים
+                      </Badge>
+                    )}
+                    {fish.habitat === 'sea' && !fish.danger && (
+                      <Badge className="font-bold flex gap-1 items-center bg-cyan-100 text-cyan-800 hover:bg-cyan-100 dark:bg-cyan-500/20 dark:text-cyan-400 border-0 px-2.5 py-1">
+                        <Waves className="w-3.5 h-3.5" /> ים תיכון
+                      </Badge>
+                    )}
+                    {fish.danger && (
+                      <Badge className="font-bold flex gap-1 items-center bg-rose-100 text-rose-800 hover:bg-rose-100 dark:bg-rose-500/20 dark:text-rose-400 border-0 px-2.5 py-1">
+                        <AlertTriangle className="w-3.5 h-3.5" /> סכנה
+                      </Badge>
+                    )}
+                    {fish.kosher ? (
+                      <Badge className="font-bold flex gap-1 items-center bg-slate-100 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 border-0 px-2.5 py-1">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> כשר
+                      </Badge>
+                    ) : (
+                      <Badge className="font-bold flex gap-1 items-center bg-slate-100 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 border-0 px-2.5 py-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> לא כשר
+                      </Badge>
+                    )}
                   </div>
 
-                  <CardContent className="p-5 flex flex-col h-full justify-between">
-                    <div>
-                      <div className="flex items-center gap-3 mb-4">
-                        {fish.kosher ? (
-                          <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-sm bg-emerald-500/10 px-2 py-1 rounded-lg">
-                            <CheckCircle className="w-4 h-4" /> כשר
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5 text-rose-500 font-bold text-sm bg-rose-500/10 px-2 py-1 rounded-lg">
-                            <AlertTriangle className="w-4 h-4" /> לא כשר
-                          </span>
-                        )}
-                        <span className="text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
-                          ⏱️ {fish.season}
-                        </span>
-                      </div>
+                  <p className="text-slate-600 dark:text-slate-300 font-medium leading-relaxed mb-6 text-base">
+                    {fish.desc}
+                  </p>
 
-                      <p className="text-slate-600 dark:text-slate-300 font-medium leading-relaxed mb-4">
-                        {fish.desc}
+                  {fish.danger && (
+                    <div className="mb-6 bg-rose-500/10 border border-rose-500/30 p-4 rounded-2xl">
+                      <p className="text-sm font-black text-rose-700 dark:text-rose-400 leading-snug flex items-start gap-2.5">
+                        <Skull className="w-5 h-5 shrink-0" />
+                        <span>{fish.danger}</span>
                       </p>
-
-                      {fish.danger && (
-                        <div className="mb-4 bg-rose-500/10 border border-rose-500/30 p-3.5 rounded-2xl">
-                          <p className="text-sm font-black text-rose-600 dark:text-rose-400 leading-tight flex items-start gap-2">
-                            <Skull className="w-5 h-5 shrink-0" />
-                            <span>{fish.danger}</span>
-                          </p>
-                        </div>
-                      )}
                     </div>
+                  )}
 
-                    <div className="grid grid-cols-2 gap-3 border-t border-slate-100 dark:border-slate-800 pt-5 mt-auto">
-                      <div>
-                        <div className="text-xs font-bold text-cyan-600 dark:text-cyan-500 mb-1.5">🎣 שיטות דיג</div>
-                        <ul className="text-sm space-y-1 font-medium text-slate-700 dark:text-slate-300">
-                          {fish.methods.map((m, idx) => <li key={idx}>• {m}</li>)}
-                        </ul>
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-amber-600 dark:text-amber-500 mb-1.5">🪱 פיתיון מועדף</div>
-                        <ul className="text-sm space-y-1 font-medium text-slate-700 dark:text-slate-300">
-                          {fish.baits.map((b, idx) => <li key={idx}>• {b}</li>)}
-                        </ul>
-                      </div>
+                  <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-slate-800 pt-5 mt-auto">
+                    <div>
+                      <div className="text-xs font-black text-cyan-600 dark:text-cyan-500 mb-2 uppercase tracking-wide">שיטות דיג</div>
+                      <ul className="text-sm space-y-1.5 font-bold text-slate-700 dark:text-slate-300">
+                        {fish.methods.map((m, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-cyan-500 mt-0.5">•</span> {m}</li>)}
+                      </ul>
                     </div>
-                  </CardContent>
+                    <div>
+                      <div className="text-xs font-black text-amber-600 dark:text-amber-500 mb-2 uppercase tracking-wide">פיתיון מועדף</div>
+                      <ul className="text-sm space-y-1.5 font-bold text-slate-700 dark:text-slate-300">
+                        {fish.baits.map((b, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-amber-500 mt-0.5">•</span> {b}</li>)}
+                      </ul>
+                    </div>
+                  </div>
                 </Card>
               </motion.div>
             ))}
