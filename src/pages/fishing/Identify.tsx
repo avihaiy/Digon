@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ScanSearch, UploadCloud, Camera, RefreshCw, AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { ScanSearch, UploadCloud, Camera, RefreshCw, AlertTriangle, CheckCircle, Info, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { compressImage } from "@/lib/imageCompression";
+import { applyDigonFilter } from "@/lib/imageFilter";
 
 interface ScanResult {
   name: string;
@@ -28,6 +29,7 @@ export default function Identify() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [manualName, setManualName] = useState("");
+  const [isSharing, setIsSharing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,6 +48,51 @@ export default function Identify() {
       } catch (err) {
         toast.error("שגיאה בטעינת התמונה.");
       }
+    }
+  };
+
+  
+  const handleShare = async () => {
+    if (!image || !result) return;
+    setIsSharing(true);
+    
+    try {
+      // Convert base64 to File
+      const res = await fetch(image);
+      const blob = await res.blob();
+      const file = new File([blob], "scanned_fish.jpg", { type: "image/jpeg" });
+      
+      // Apply Digon Pro Filter
+      const stampedFile = await applyDigonFilter(file, {
+        fishType: result.name,
+        weight: "זיהוי AI",
+        location: "אפליקציית Digon",
+      });
+
+      // Share or Download
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [stampedFile] })) {
+        await navigator.share({
+          files: [stampedFile],
+          title: 'זיהוי דג - Digon',
+          text: `סרקתי דג בים וגיליתי שזה ${result.name}! זיהוי חכם מתוך אפליקציית Digon 🐟`,
+        });
+      } else {
+        // Fallback to Download
+        const url = URL.createObjectURL(stampedFile);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `digon_scan.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("התמונה נשמרה בהצלחה!");
+      }
+    } catch (err) {
+      console.error("Share error:", err);
+      toast.error("שגיאה בשיתוף התמונה");
+    } finally {
+      setIsSharing(false);
     }
   };
 
