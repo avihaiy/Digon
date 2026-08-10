@@ -148,6 +148,19 @@ export default function Forecast() {
         </div>
       )}
 
+      {/* CAPE Warning Banner */}
+      {marineData.cape !== null && marineData.cape > 1000 && selectedDayIndex === 0 && (
+        <div className="mx-4 bg-yellow-400 dark:bg-yellow-500/90 border-2 border-yellow-600 rounded-2xl p-4 flex items-start gap-3 shadow-lg animate-pulse text-yellow-950 dark:text-yellow-950 mb-4 mt-2">
+          <Zap className="w-6 h-6 shrink-0 mt-0.5 fill-current" />
+          <div>
+            <h3 className="font-black text-lg">סכנת סופות רעמים (CAPE גבוה)</h3>
+            <p className="text-sm font-bold leading-tight mt-1">
+              ישנו סיכון גבוה לברקים! סכנת התחשמלות לחכות קרבון. לא לדוג!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Safety Warning Banner */}
       {isUnsafe && (
         <div className="mx-4 bg-rose-50 dark:bg-rose-950/50 border-2 border-rose-500 rounded-2xl p-4 flex items-start gap-3 shadow-sm animate-pulse">
