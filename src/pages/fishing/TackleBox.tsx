@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { useTackleBox, GearCategory } from "@/hooks/useTackleBox";
+import { useTackleBox, GearCategory, TackleSetup } from "@/hooks/useTackleBox";
 import { useMarineWeather } from "@/hooks/useMarineWeather";
 import { BrainCircuit } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Trash2, Plus, Package, Fish, Anchor, Sparkles } from "lucide-react";
+import { Trash2, Plus, Package, Fish, Anchor, Sparkles, Camera, Wrench, X, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -22,7 +22,7 @@ const CATEGORIES: { id: GearCategory, name: string, icon: React.ReactNode } = [
 ];
 
 export default function TackleBox() {
-  const { gear, addGear, removeGear } = useTackleBox();
+  const { gear, setups, addGear, removeGear, addSetup, removeSetup, markServiced } = useTackleBox();
   const { data: marineData } = useMarineWeather();
 
   const smartRecommendation = useMemo(() => {
@@ -108,10 +108,79 @@ export default function TackleBox() {
   };
   
   const [category, setCategory] = useState<string>("rod");
+  const [price, setPrice] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const MAX_SIZE = 200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        // Compress heavily to save localStorage space (0.6 quality WebP)
+        const compressedBase64 = canvas.toDataURL("image/webp", 0.6);
+        setImagePreview(compressedBase64);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const [specs, setSpecs] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [brand, setBrand] = useState("");
   const [name, setName] = useState("");
+  
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [setupName, setSetupName] = useState("");
+  const [setupRod, setSetupRod] = useState("");
+  const [setupReel, setSetupReel] = useState("");
+  const [setupLure, setSetupLure] = useState("");
+
+  const handleAddSetup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setupName) {
+      toast.error("אנא מלא שם לסטאפ");
+      return;
+    }
+    addSetup({
+      name: setupName,
+      rodId: setupRod || undefined,
+      reelId: setupReel || undefined,
+      lureId: setupLure || undefined
+    });
+    setSetupOpen(false);
+    setSetupName("");
+    setSetupRod("");
+    setSetupReel("");
+    setSetupLure("");
+    toast.success("סטאפ חדש נוצר בהצלחה!");
+  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,7 +232,14 @@ export default function TackleBox() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map(c => (
+                    
+            <button
+              onClick={() => setFilterCategory("setups")}
+              className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors ${filterCategory === "setups" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+            >
+              סטאפים אישיים
+            </button>
+            {CATEGORIES.map(c => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -187,6 +263,36 @@ export default function TackleBox() {
                   placeholder="לדוגמה: Stradic CI4+"
                 />
               </div>
+              <div className="space-y-2">
+                <Label className="text-slate-700 dark:text-slate-300 font-bold">תמונה (אופציונלי)</Label>
+                <div className="flex gap-2">
+                  {imagePreview ? (
+                    <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                      <img src={imagePreview} className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setImagePreview(null)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button type="button" variant="outline" className="flex-1 h-14 rounded-2xl border-slate-200 dark:border-slate-700 text-slate-500" onClick={() => cameraInputRef.current?.click()}>
+                        <Camera className="w-5 h-5 ml-2" /> צלם
+                      </Button>
+                      <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} className="hidden" onChange={handleFileChange} />
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-slate-700 dark:text-slate-300 font-bold">מחיר מוערך ₪ (אופציונלי)</Label>
+                <Input 
+                  type="number"
+                  value={price} 
+                  onChange={(e) => setPrice(e.target.value)} 
+                  className="h-14 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 shadow-inner font-medium text-lg placeholder:text-slate-400 dark:placeholder:text-slate-500" 
+                  placeholder="למשל: 350"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-slate-700 dark:text-slate-300 font-bold">מפרט טכני (אופציונלי)</Label>
                 <Input 
@@ -249,7 +355,62 @@ export default function TackleBox() {
       )}
 
       <div className="px-4 flex-1">
-        {gear.length === 0 ? (
+        
+        {filterCategory === "setups" ? (
+          <div className="space-y-4">
+            <Button onClick={() => setSetupOpen(true)} className="w-full h-14 rounded-2xl border-2 border-dashed border-cyan-500/50 bg-cyan-500/5 text-cyan-600 font-bold hover:bg-cyan-500/10">
+              <Plus className="w-5 h-5 ml-2" /> צור סטאפ חדש (Combo)
+            </Button>
+            
+            <Dialog open={setupOpen} onOpenChange={setSetupOpen}>
+              <DialogContent className="rounded-3xl p-6 bg-white dark:bg-slate-900 border-0 shadow-2xl">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold flex items-center gap-2"><Fish className="text-cyan-500" /> בניית סטאפ</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddSetup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>שם הסטאפ (למשל: לייט כנרת)</Label>
+                    <Input value={setupName} onChange={e => setSetupName(e.target.value)} className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>חכה</Label>
+                    <Select value={setupRod} onValueChange={setSetupRod}>
+                      <SelectTrigger className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800"><SelectValue placeholder="בחר חכה..." /></SelectTrigger>
+                      <SelectContent>
+                        {gear.filter(g => g.category === 'rod').map(g => <SelectItem key={g.id} value={g.id}>{g.brand} {g.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>רולר</Label>
+                    <Select value={setupReel} onValueChange={setSetupReel}>
+                      <SelectTrigger className="h-14 rounded-2xl bg-slate-50 dark:bg-slate-800"><SelectValue placeholder="בחר רולר..." /></SelectTrigger>
+                      <SelectContent>
+                        {gear.filter(g => g.category === 'reel').map(g => <SelectItem key={g.id} value={g.id}>{g.brand} {g.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" className="w-full h-14 rounded-2xl font-bold bg-cyan-500 text-white">שמור סטאפ</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {setups.map(setup => (
+              <Card key={setup.id} className="border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden relative">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-lg">{setup.name}</h3>
+                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => removeSetup(setup.id)}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                  <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    {setup.rodId && <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-cyan-500" /> {gear.find(g => g.id === setup.rodId)?.brand} {gear.find(g => g.id === setup.rodId)?.name}</div>}
+                    {setup.reelId && <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500" /> {gear.find(g => g.id === setup.reelId)?.brand} {gear.find(g => g.id === setup.reelId)?.name}</div>}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : gear.length === 0 ? (
           <div className="text-center p-8 bg-muted/30 rounded-3xl mt-8">
             <Package className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground font-medium mb-4">הקופסה שלך ריקה.</p>
