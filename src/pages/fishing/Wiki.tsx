@@ -10,7 +10,7 @@ export type Habitat = "sea" | "freshwater";
 export interface FishData {
   id: string;
   name: string;
-  image: string;
+  image?: string;
   season: string;
   methods: string[];
   baits: string[];
@@ -25,7 +25,6 @@ const FISH_DB: FishData[] = [
   {
     id: "locus",
     name: "לוקוס לבן (דקר)",
-    image: "/fish/locus.jpg",
     season: "אביב - קיץ",
     methods: ["ז'רז'ור", "פיתיון", "סירה"],
     baits: ["קלמארי", "סבידה", "דגים חיים"],
@@ -37,7 +36,6 @@ const FISH_DB: FishData[] = [
   {
     id: "denis",
     name: "דניס (צ'יפורה)",
-    image: "/fish/denis.jpg",
     season: "סתיו - חורף",
     methods: ["פיתיון חוף", "בוס"],
     baits: ["תולעים", "גמברי", "בצק מסריח"],
@@ -49,7 +47,6 @@ const FISH_DB: FishData[] = [
   {
     id: "sargus",
     name: "סרגוס (ספרוס)",
-    image: "/fish/sargus.jpg",
     season: "כל השנה (במיוחד חורף)",
     methods: ["בוס", "פיתיון חוף"],
     baits: ["בצק", "גמברי", "תולעים"],
@@ -61,7 +58,6 @@ const FISH_DB: FishData[] = [
   {
     id: "aras",
     name: "ארס (סיכן)",
-    image: "/fish/aras.jpg",
     season: "קיץ - סתיו",
     methods: ["בוס"],
     baits: ["בצק", "אצות"],
@@ -73,7 +69,6 @@ const FISH_DB: FishData[] = [
   {
     id: "avo-nafha",
     name: "אבו נפחא (לגינון)",
-    image: "/fish/avo-nafha.jpg",
     season: "כל השנה",
     methods: ["נתפס בטעות בכל השיטות"],
     baits: ["הכל"],
@@ -85,7 +80,6 @@ const FISH_DB: FishData[] = [
   {
     id: "intias",
     name: "אנטיאס (שולה)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=6",
     season: "סתיו - חורף",
     methods: ["ז'רז'ור כבד", "פיתיון חי", "סירה"],
     baits: ["סבידה חיה", "בורי חי", "דמויים גדולים"],
@@ -97,7 +91,6 @@ const FISH_DB: FishData[] = [
   {
     id: "palamida",
     name: "פלמידה (טונית אטלנטית)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=7",
     season: "אביב - קיץ",
     methods: ["ז'רז'ור", "טרולינג (סירה)"],
     baits: ["ג'יגים", "דמויים", "ניקלים"],
@@ -109,7 +102,6 @@ const FISH_DB: FishData[] = [
   {
     id: "marmir",
     name: "מרמיר (שישן)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=8",
     season: "קיץ - סתיו",
     methods: ["פיתיון חוף"],
     baits: ["תולעים", "שניצל", "גמברי"],
@@ -121,7 +113,6 @@ const FISH_DB: FishData[] = [
   {
     id: "gombar",
     name: "גומבר (Bluefish)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=9",
     season: "קיץ - סתיו",
     methods: ["ז'רז'ור", "פיתיון חי"],
     baits: ["טופ-ווטר", "פופרים", "בורי חי"],
@@ -133,7 +124,6 @@ const FISH_DB: FishData[] = [
   {
     id: "barracuda",
     name: "מליטה (ברקודה)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=10",
     season: "סתיו - חורף",
     methods: ["ז'רז'ור", "פיתיון חי"],
     baits: ["דמויי מינו (Minnow)", "דגים קטנים"],
@@ -145,7 +135,6 @@ const FISH_DB: FishData[] = [
   {
     id: "tarchon",
     name: "טרכון (Trevally)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=11",
     season: "אביב - סתיו",
     methods: ["ז'רז'ור", "סירה"],
     baits: ["ג'יגים קטנים", "סיליקונים"],
@@ -157,7 +146,6 @@ const FISH_DB: FishData[] = [
   {
     id: "labrak",
     name: "לברק (Sea Bass)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=12",
     season: "חורף",
     methods: ["ז'רז'ור", "פיתיון חי"],
     baits: ["סיליקונים", "דמויים קטנים", "בורי קטן"],
@@ -169,7 +157,6 @@ const FISH_DB: FishData[] = [
   {
     id: "musar",
     name: "מוסר (Meagre)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=13",
     season: "כל השנה",
     methods: ["ז'רז'ור כבד", "סירה"],
     baits: ["ג'יגים", "דמויים גדולים", "פיתיון חי"],
@@ -181,7 +168,6 @@ const FISH_DB: FishData[] = [
   {
     id: "farida",
     name: "פרידה (Pagrus)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=14",
     season: "כל השנה",
     methods: ["סירה", "ג'יגינג"],
     baits: ["קלמארי", "ג'יגים איטיים"],
@@ -193,7 +179,6 @@ const FISH_DB: FishData[] = [
   {
     id: "safmit",
     name: "שפמית ארסית (דג נחש)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=15",
     season: "קיץ",
     methods: ["נתפס בטעות בפיתיונות"],
     baits: ["בשר", "תולעים"],
@@ -205,7 +190,6 @@ const FISH_DB: FishData[] = [
   {
     id: "calamari",
     name: "קלמארי / סבידה",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=16",
     season: "חורף - אביב",
     methods: ["ז'רז'ור מיוחד (Eging)"],
     baits: ["בובות קלמארי (Egi)"],
@@ -217,7 +201,6 @@ const FISH_DB: FishData[] = [
   {
     id: "zaharon",
     name: "זהרון (Lionfish)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=17",
     season: "כל השנה",
     methods: ["צלילה", "פיתיון"],
     baits: ["דגים קטנים"],
@@ -231,7 +214,6 @@ const FISH_DB: FishData[] = [
   {
     id: "buri",
     name: "בורי (קיפון)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=18",
     season: "כל השנה",
     methods: ["בוס", "רשת"],
     baits: ["בצק מסריח", "פיתה"],
@@ -243,7 +225,6 @@ const FISH_DB: FishData[] = [
   {
     id: "musht",
     name: "מושט / אמנון (Tilapia)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=19",
     season: "אביב - קיץ",
     methods: ["בוס", "ז'רז'ור קל"],
     baits: ["תירס", "בצק", "תולעים", "ספינרים קטנים"],
@@ -255,7 +236,6 @@ const FISH_DB: FishData[] = [
   {
     id: "karpion",
     name: "קרפיון (Carp)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=20",
     season: "אביב - סתיו",
     methods: ["פיתיון (Carp Fishing)"],
     baits: ["בויליס", "בצק", "תירס"],
@@ -267,7 +247,6 @@ const FISH_DB: FishData[] = [
   {
     id: "barbus",
     name: "בינית / שרבוט (Barbus)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=21",
     season: "אביב - קיץ",
     methods: ["בוס", "ז'רז'ור"],
     baits: ["תירס", "כפיות (Spoons)"],
@@ -279,7 +258,6 @@ const FISH_DB: FishData[] = [
   {
     id: "catfish",
     name: "שפמנון (Catfish)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=22",
     season: "קיץ (במיוחד בלילה)",
     methods: ["פיתיון בשרי"],
     baits: ["חלקי עוף", "נקניקייה", "דגים קטנים"],
@@ -291,7 +269,6 @@ const FISH_DB: FishData[] = [
   {
     id: "silver-carp",
     name: "כסיף (Silver Carp)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=23",
     season: "קיץ",
     methods: ["פיתיון צף"],
     baits: ["לחם צף", "בצק מיוחד"],
@@ -303,7 +280,6 @@ const FISH_DB: FishData[] = [
   {
     id: "tzelofach",
     name: "צלופח אירופי (Eel)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=24",
     season: "כל השנה",
     methods: ["פיתיון קרקעית"],
     baits: ["תולעים", "בשר"],
@@ -315,7 +291,6 @@ const FISH_DB: FishData[] = [
   {
     id: "trout",
     name: "פורל / טרוטה (Trout)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=25",
     season: "חורף - אביב",
     methods: ["ז'רז'ור קל", "Fly Fishing"],
     baits: ["ספינרים קטנים", "זבובי דיג"],
@@ -328,7 +303,6 @@ const FISH_DB: FishData[] = [
   {
     id: "televizia",
     name: "טלוויזיה (Whiting)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=26",
     season: "קיץ - סתיו",
     methods: ["פיתיון חוף חלבי/קליל"],
     baits: ["תולעים", "שניצל", "גמברי קטן"],
@@ -340,7 +314,6 @@ const FISH_DB: FishData[] = [
   {
     id: "plamida-lavana",
     name: "פלמידה לבנה (Spanish Mackerel)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=27",
     season: "סתיו - חורף",
     methods: ["ז'רז'ור", "טרולינג", "פיתיון חי"],
     baits: ["ג'יגים מהירים", "דמויי מינו", "בורי חי"],
@@ -352,7 +325,6 @@ const FISH_DB: FishData[] = [
   {
     id: "tona-shchora",
     name: "טונה שחורה (Little Tunny)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=28",
     season: "אביב - קיץ",
     methods: ["ז'רז'ור כבד", "סירה", "קיאק"],
     baits: ["ג'יגים", "דמויי משקולת (Casting Jigs)"],
@@ -364,7 +336,6 @@ const FISH_DB: FishData[] = [
   {
     id: "tamnun",
     name: "תמנון (Octopus)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=29",
     season: "חורף",
     methods: ["ז'רז'ור אגינג (Eging)", "פיתיון מקרקעית"],
     baits: ["בובות קלמארי גדולות", "סרטנים"],
@@ -376,7 +347,6 @@ const FISH_DB: FishData[] = [
   {
     id: "salpa",
     name: "סולבי / סלפה (Salema)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=30",
     season: "אביב - קיץ",
     methods: ["בוס", "פיתיון חוף"],
     baits: ["בצק מסריח", "אצות"],
@@ -388,7 +358,6 @@ const FISH_DB: FishData[] = [
   {
     id: "lavnun",
     name: "לבנון הכנרת (Sardine)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=31",
     season: "כל השנה",
     methods: ["בוס", "רשת (מסחרי)"],
     baits: ["בצק", "תולעים"],
@@ -401,7 +370,6 @@ const FISH_DB: FishData[] = [
   {
     id: "kachlon",
     name: "כחלון קוצני (Lichia)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=32",
     season: "קיץ - סתיו",
     methods: ["ז'רז'ור אולטרה-לייט", "פיתיון חוף"],
     baits: ["ג'יגים קטנטנים", "תולעים"],
@@ -413,7 +381,6 @@ const FISH_DB: FishData[] = [
   {
     id: "dorado",
     name: "דוראדו / רעמתן (Mahi-Mahi)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=33",
     season: "קיץ - סתיו",
     methods: ["ז'רז'ור סירה / קיאק", "טרולינג"],
     baits: ["דמויים טרופיים", "פיתיון חי (בורי/סבידה)"],
@@ -425,7 +392,6 @@ const FISH_DB: FishData[] = [
   {
     id: "halilon",
     name: "חלילון (Cornetfish)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=34",
     season: "קיץ - סתיו",
     methods: ["ז'רז'ור"],
     baits: ["דמויי מינו", "סיליקונים"],
