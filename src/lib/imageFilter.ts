@@ -53,11 +53,16 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         ctx.shadowOffsetY = 2;
 
         ctx.fillStyle = "#f97316"; // Orange 500
-        ctx.fillText("DIGON", padding, canvas.height - padding);
+        ctx.fillText("DIGON", padding, canvas.height - padding - baseFontSize * 0.9);
         
         const textWidth = ctx.measureText("DIGON ").width;
         ctx.fillStyle = "#ffffff";
-        ctx.fillText("PRO", padding + textWidth, canvas.height - padding);
+        ctx.fillText("PRO", padding + textWidth, canvas.height - padding - baseFontSize * 0.9);
+
+        // Add URL under DIGON PRO
+        ctx.font = `600 ${baseFontSize * 0.65}px sans-serif`;
+        ctx.fillStyle = "#cbd5e1"; // Slate 300
+        ctx.fillText("https://digon.vercel.app", padding, canvas.height - padding + 2);
 
         // Reset shadow for smaller text to keep it crisp
         ctx.shadowBlur = 5;
@@ -69,7 +74,7 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         // Fish Info
         ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
         const fishText = `${options.fishType || 'דג לא ידוע'} ${options.weight ? '| ' + options.weight : ''}`;
-        ctx.fillText(fishText, canvas.width - padding, canvas.height - padding - baseFontSize * 1.8);
+        ctx.fillText(fishText, canvas.width - padding, canvas.height - padding - baseFontSize * 2.2);
 
         // Weather & Location Info
         ctx.font = `normal ${baseFontSize * 0.8}px sans-serif`;
@@ -84,7 +89,7 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         }
         
         ctx.fillStyle = "#cbd5e1"; // Slate 300
-        ctx.fillText(weatherStr, canvas.width - padding, canvas.height - padding);
+        ctx.fillText(weatherStr, canvas.width - padding, canvas.height - padding - baseFontSize * 0.9);
 
         canvas.toBlob(
           (blob) => {
