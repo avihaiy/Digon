@@ -57,10 +57,16 @@ export default function Identify() {
     setIsSharing(true);
     
     try {
-      // Convert base64 to File
-      const res = await fetch(image);
-      const blob = await res.blob();
-      const file = new File([blob], "scanned_fish.jpg", { type: "image/jpeg" });
+      // Convert base64 to File robustly
+      const arr = image.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const file = new File([u8arr], "scanned_fish.jpg", { type: mime });
       
       // Apply Digon Pro Filter
       const stampedFile = await applyDigonFilter(file, {
