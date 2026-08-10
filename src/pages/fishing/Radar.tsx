@@ -183,21 +183,21 @@ export default function Radar() {
         <div className="flex gap-2 pointer-events-auto overflow-x-auto pb-2 scrollbar-hide rtl">
           <button 
             onClick={() => setFilter("all")}
-            className={\`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border \${filter === 'all' ? 'bg-white text-slate-900 border-white' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}\`}
+            className={`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border ${filter === 'all' ? 'bg-white text-slate-900 border-white' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}`}
           >
             <Filter className="w-4 h-4 inline-block mr-1.5" />
             הכל
           </button>
           <button 
             onClick={() => setFilter("sea")}
-            className={\`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border \${filter === 'sea' ? 'bg-cyan-500 text-white border-cyan-400' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}\`}
+            className={`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border ${filter === 'sea' ? 'bg-cyan-500 text-white border-cyan-400' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}`}
           >
             <Waves className="w-4 h-4 inline-block mr-1.5" />
             ים תיכון וים סוף
           </button>
           <button 
             onClick={() => setFilter("fresh")}
-            className={\`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border \${filter === 'fresh' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}\`}
+            className={`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border ${filter === 'fresh' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}`}
           >
             <Droplet className="w-4 h-4 inline-block mr-1.5" />
             כנרת ומתוקים
