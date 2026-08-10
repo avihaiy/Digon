@@ -2,29 +2,17 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_CATCHES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
-import { Target, MapPin, Map, Flame } from "lucide-react";
+import { MapPin, Navigation2, Flame, Map, Droplet, Waves, Filter } from "lucide-react";
 import { getImageUrl } from "@/hooks/useCatches";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-
-// Fix for leaflet default icon issue in React
-import icon from "leaflet/dist/images/marker-icon.png";
-import iconShadow from "leaflet/dist/images/marker-shadow.png";
-
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 
 // Rough coordinates for common Israel fishing spots
 const LOCATIONS_MAP: Record<string, [number, number]> = {
@@ -50,54 +38,77 @@ const LOCATIONS_MAP: Record<string, [number, number]> = {
 
 const DEFAULT_CENTER: [number, number] = [31.9, 34.8]; // Central Israel
 
+const createCustomIcon = (imageUrl: string, isFreshwater: boolean) => {
+  const color = isFreshwater ? '#10b981' : '#06b6d4'; // Emerald for freshwater, Cyan for sea
+  const bgImage = imageUrl ? `url('${imageUrl}')` : 'none';
+  
+  return L.divIcon({
+    className: 'custom-div-icon bg-transparent border-0',
+    html: `
+      <div style="
+        width: 44px; height: 44px; 
+        border-radius: 50%; 
+        border: 3px solid ${color}; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        background-color: #1e293b;
+        background-image: ${bgImage};
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        ${!imageUrl ? `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-1.5 1.5-3 2.5-5 3.5-3 1.5-7 2-10.5.5-3.5-1.5-5.5-3.5-7-6Z"/><path d="M18 12v.5"/><path d="M16 17.93a9.77 9.77 0 0 1-5.04.07"/><path d="M9.46 17.65a9.66 9.66 0 0 1-5.3-2.02"/></svg>` : ''}
+        <div style="position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid ${color};"></div>
+      </div>
+    `,
+    iconSize: [44, 54],
+    iconAnchor: [22, 54],
+    popupAnchor: [0, -54]
+  });
+};
+
+// Create custom cluster icon
+const createClusterCustomIcon = function (cluster: any) {
+  return L.divIcon({
+    html: `<div class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border-2 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.5)]">
+             <span class="text-white font-black text-sm drop-shadow-md">${cluster.getChildCount()}</span>
+           </div>`,
+    className: 'custom-marker-cluster bg-transparent',
+    iconSize: L.point(48, 48, true),
+  });
+};
+
 export default function Radar() {
-  const { profileData, points, updateProfileField, loading: authLoading } = useAuth();
-  const [unlocking, setUnlocking] = useState(false);
   const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
+  const [filter, setFilter] = useState<"all" | "sea" | "fresh">("all");
 
-  const isUnlocked = (profileData?.radar_unlock || 0) > 0 || profileData?.radar_unlocked === "true";
-
-  const handleUnlock = async () => {
-    if (points < 50) {
-      toast.error("אין לך מספיק נקודות לפתוח את הראדאר!");
-      return;
-    }
-    setUnlocking(true);
-    const success = await updateProfileField('radar_unlocked', "true");
-    if (success) {
-      updateProfileField('points', points - 50);
-      toast.success("הראדאר נפתח עבורך לתמיד! 🎯");
-    } else {
-      toast.error("שגיאה בפתיחת הראדאר");
-    }
-    setUnlocking(false);
-  };
-
-  const { data: catches = [], isLoading } = useQuery({
+  const { data: allCatches = [], isLoading } = useQuery({
     queryKey: ["map-catches"],
     queryFn: async () => {
       try {
         const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, [
           Query.equal("status", "approved"),
           Query.orderDesc("$createdAt"),
-          Query.limit(200) // Last 200 catches for the map to make heatmap fuller
+          Query.limit(300) // Last 300 catches
         ]);
         return res.documents;
       } catch (e) {
         return [];
       }
     },
-    enabled: isUnlocked
   });
 
-  // Calculate heatmap data grouped by general location coordinates
-  const heatmapData = useMemo(() => {
-    if (!catches.length) return [];
-    
-    const locationCounts: Record<string, { count: number, coords: [number, number] }> = {};
-    
-    catches.forEach((c: any) => {
-      if (!c.location) return;
+  // Filter catches and process coordinates
+  const catches = useMemo(() => {
+    return allCatches.filter((c: any) => {
+      if (!c.location) return false;
+      const isFreshwater = c.location.includes("כנרת") || c.location.includes("טבריה");
+      if (filter === "sea" && isFreshwater) return false;
+      if (filter === "fresh" && !isFreshwater) return false;
+      return true;
+    }).map((c: any) => {
       const locText = c.location.split('|||')[0].trim();
       let coords = LOCATIONS_MAP[locText];
       if (!coords) {
@@ -105,141 +116,189 @@ export default function Radar() {
         const match = sortedKeys.find(k => locText.includes(k));
         if (match) coords = LOCATIONS_MAP[match];
       }
-      if (coords) {
-        const key = `${coords[0]},${coords[1]}`;
-        if (!locationCounts[key]) {
-          locationCounts[key] = { count: 0, coords };
-        }
-        locationCounts[key].count += 1;
+      
+      if (!coords) return null;
+      
+      // Add slight random offset to prevent exact overlapping of markers in the same spot
+      const offsetLat = coords[0] + (Math.random() - 0.5) * 0.015;
+      const offsetLon = coords[1] + (Math.random() - 0.5) * 0.015;
+      const isFreshwater = c.location.includes("כנרת") || c.location.includes("טבריה");
+
+      return {
+        ...c,
+        coords: [offsetLat, offsetLon],
+        isFreshwater
+      };
+    }).filter(Boolean);
+  }, [allCatches, filter]);
+
+  // Calculate heatmap data
+  const heatmapData = useMemo(() => {
+    if (!catches.length) return [];
+    
+    const locationCounts: Record<string, { count: number, coords: [number, number] }> = {};
+    
+    catches.forEach((c: any) => {
+      // Use rounded coordinates to group them for the heatmap
+      const key = `${c.coords[0].toFixed(2)},${c.coords[1].toFixed(2)}`;
+      if (!locationCounts[key]) {
+        locationCounts[key] = { count: 0, coords: [parseFloat(c.coords[0].toFixed(2)), parseFloat(c.coords[1].toFixed(2))] };
       }
+      locationCounts[key].count += 1;
     });
 
     return Object.values(locationCounts);
   }, [catches]);
 
   return (
-    <div className="space-y-4 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto flex flex-col h-[calc(100vh-80px)]">
+    <div className="absolute inset-0 z-10 bg-slate-900 pb-16 overflow-hidden">
       
-      <div className="flex flex-col px-4 mt-6 shrink-0">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            מפת תפיסות חיה <MapPin className="w-6 h-6 text-rose-500" />
-          </h1>
-          {isUnlocked && (
-            <ToggleGroup type="single" value={viewMode} onValueChange={(val) => val && setViewMode(val as any)} dir="ltr" className="scale-90">
-              <ToggleGroupItem value="markers" aria-label="Markers mode" className="data-[state=on]:bg-rose-500 data-[state=on]:text-white">
-                <Map className="w-4 h-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="heatmap" aria-label="Heatmap mode" className="data-[state=on]:bg-orange-500 data-[state=on]:text-white">
-                <Flame className="w-4 h-4" />
-              </ToggleGroupItem>
-            </ToggleGroup>
-          )}
+      {/* Floating Header */}
+      <div className="absolute top-4 inset-x-4 z-[1000] flex items-center justify-between pointer-events-none">
+        <Link to="/" className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center pointer-events-auto hover:bg-white/20 shadow-lg transition-colors text-white">
+          <ChevronRight className="w-6 h-6" />
+        </Link>
+        <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl shadow-xl pointer-events-auto flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-rose-500 animate-pulse" />
+          <h1 className="text-lg font-black tracking-tight text-white m-0">ראדאר תפיסות</h1>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          איפה הדגים נושכים ברגע זה? מבוסס על דיווחי הקהילה.
-        </p>
+        <div className="w-10"></div> {/* Spacer for centering */}
       </div>
 
-      {!isUnlocked && !authLoading ? (
-        <div className="px-4 mt-8 flex-1">
-          <Card className="border-rose-500/30 bg-rose-500/5 text-center h-full flex flex-col items-center justify-center">
-            <CardContent className="p-8">
-              <div className="w-20 h-20 bg-rose-500/20 rounded-full mx-auto flex items-center justify-center mb-4">
-                <Target className="w-10 h-10 text-rose-500" />
-              </div>
-              <h2 className="text-xl font-bold mb-2">מפת לייב נעולה</h2>
-              <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
-                גלה בדיוק איפה תופסים דגים ברגע זה. המפה סורקת נתונים מהקהילה ומציגה סיכות ומפת חום על חופי ישראל בזמן אמת!
-              </p>
-              <Button 
-                onClick={handleUnlock} 
-                disabled={unlocking || points < 50}
-                className="w-full max-w-xs h-14 text-lg font-bold bg-rose-500 hover:bg-rose-600 rounded-2xl mx-auto"
-              >
-                פתח לצמיתות (50 🪙)
-              </Button>
-            </CardContent>
-          </Card>
+      {/* Floating Filters & Controls */}
+      <div className="absolute bottom-24 inset-x-4 z-[1000] flex flex-col gap-3 pointer-events-none">
+        {/* Toggle Mode */}
+        <div className="flex justify-end pointer-events-auto">
+          <ToggleGroup type="single" value={viewMode} onValueChange={(val) => val && setViewMode(val as any)} dir="ltr" className="bg-slate-900/90 backdrop-blur-xl p-1 rounded-full border border-white/10 shadow-lg">
+            <ToggleGroupItem value="markers" aria-label="Markers mode" className="rounded-full data-[state=on]:bg-cyan-500 data-[state=on]:text-white">
+              <Map className="w-4 h-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="heatmap" aria-label="Heatmap mode" className="rounded-full data-[state=on]:bg-orange-500 data-[state=on]:text-white">
+              <Flame className="w-4 h-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
-      ) : (
-        <div className="flex-1 px-4 mb-4 relative z-0">
-          <div className="w-full h-full rounded-2xl overflow-hidden border-4 border-slate-800 shadow-xl min-h-[400px]">
-            {isLoading ? (
-              <div className="w-full h-full flex items-center justify-center bg-slate-900">
-                <div className="animate-spin w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full" />
-              </div>
-            ) : (
-              <MapContainer center={DEFAULT_CENTER} zoom={8} className="w-full h-full z-0">
-                <TileLayer
-                  url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-                />
-                
-                {viewMode === 'markers' ? (
-                  catches.map((c: any) => {
-                    if (!c.location) return null;
-                    const locText = c.location.split('|||')[0].trim();
-                    let coords = LOCATIONS_MAP[locText];
-                    if (!coords) {
-                      const sortedKeys = Object.keys(LOCATIONS_MAP).sort((a, b) => b.length - a.length);
-                      const match = sortedKeys.find(k => locText.includes(k));
-                      if (match) coords = LOCATIONS_MAP[match];
-                    }
-                    if (!coords) return null;
 
-                    const offsetLat = coords[0] + (Math.random() - 0.5) * 0.02;
-                    const offsetLon = coords[1] + (Math.random() - 0.5) * 0.02;
+        {/* Filter Chips */}
+        <div className="flex gap-2 pointer-events-auto overflow-x-auto pb-2 scrollbar-hide rtl">
+          <button 
+            onClick={() => setFilter("all")}
+            className={\`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border \${filter === 'all' ? 'bg-white text-slate-900 border-white' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}\`}
+          >
+            <Filter className="w-4 h-4 inline-block mr-1.5" />
+            הכל
+          </button>
+          <button 
+            onClick={() => setFilter("sea")}
+            className={\`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border \${filter === 'sea' ? 'bg-cyan-500 text-white border-cyan-400' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}\`}
+          >
+            <Waves className="w-4 h-4 inline-block mr-1.5" />
+            ים תיכון וים סוף
+          </button>
+          <button 
+            onClick={() => setFilter("fresh")}
+            className={\`px-4 py-2 rounded-full text-sm font-bold shrink-0 shadow-lg transition-all border \${filter === 'fresh' ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-slate-900/80 backdrop-blur-xl text-slate-300 border-white/10 hover:bg-slate-800'}\`}
+          >
+            <Droplet className="w-4 h-4 inline-block mr-1.5" />
+            כנרת ומתוקים
+          </button>
+        </div>
+      </div>
 
-                    return (
-                      <Marker key={c.$id} position={[offsetLat, offsetLon]}>
-                        <Popup className="custom-popup" dir="rtl">
-                          <div className="text-center">
-                            <img src={getImageUrl(c.image_id)} alt="catch" className="w-full h-24 object-cover rounded-md mb-2" />
-                            <p className="font-bold text-sm text-cyan-600">{c.fish_type}</p>
-                            <p className="text-xs text-gray-500">{c.user_name}</p>
-                            <p className="text-[10px] text-gray-400 mb-2">{new Date(c.$createdAt).toLocaleDateString('he-IL')}</p>
+      {/* Fullscreen Map Layer */}
+      <div className="w-full h-full relative z-[1]">
+        {isLoading ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900">
+            <div className="animate-spin w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full mb-4" />
+            <p className="text-slate-400 font-bold tracking-wide">טוען ראדאר סודי...</p>
+          </div>
+        ) : (
+          <MapContainer 
+            center={DEFAULT_CENTER} 
+            zoom={8} 
+            className="w-full h-full"
+            zoomControl={false} // Hide default controls to keep it native looking
+          >
+            <TileLayer
+              url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"}
+              attribution='&copy; OpenStreetMap'
+            />
+            
+            {viewMode === 'markers' ? (
+              <MarkerClusterGroup
+                chunkedLoading
+                iconCreateFunction={createClusterCustomIcon}
+                showCoverageOnHover={false}
+                maxClusterRadius={40}
+              >
+                {catches.map((c: any) => {
+                  const icon = createCustomIcon(getImageUrl(c.image_id), c.isFreshwater);
+                  return (
+                    <Marker key={c.$id} position={c.coords} icon={icon}>
+                      <Popup className="custom-popup p-0 border-0 shadow-none bg-transparent" minWidth={220} dir="rtl">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col">
+                          <div className="h-28 relative bg-slate-100 dark:bg-slate-800">
+                            {c.image_id ? (
+                              <img src={getImageUrl(c.image_id)} alt="catch" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-300"><MapPin className="w-10 h-10" /></div>
+                            )}
+                            <Badge className="absolute top-2 right-2 bg-black/60 text-white backdrop-blur-md border-0 text-[10px]">
+                              {new Date(c.$createdAt).toLocaleDateString('he-IL')}
+                            </Badge>
+                          </div>
+                          
+                          <div className="p-4 text-center">
+                            <h3 className="font-black text-lg text-slate-900 dark:text-white mb-0.5 leading-tight">{c.fish_type}</h3>
+                            <p className="text-xs text-cyan-600 dark:text-cyan-400 font-bold mb-3">{c.user_name}</p>
+                            
+                            {c.weight && (
+                              <Badge variant="outline" className="mb-3 text-[10px] font-bold">
+                                ממוצע משקל: {c.weight} ק"ג
+                              </Badge>
+                            )}
                             
                             {c.location.includes('|||') && (
                               <Button 
                                 size="sm" 
-                                variant="outline" 
-                                className="w-full h-7 text-[10px] gap-1 rounded-full border-cyan-500/30 text-cyan-600 hover:bg-cyan-50"
+                                className="w-full h-8 text-xs font-bold gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
                                 onClick={() => window.open(c.location.split('|||')[1].trim(), '_blank')}
                               >
-                                נווט לנקודה המדויקת
+                                <Navigation2 className="w-3.5 h-3.5" /> נווט לנקודה
                               </Button>
                             )}
                           </div>
-                        </Popup>
-                      </Marker>
-                    );
-                  })
-                ) : (
-                  heatmapData.map((data, idx) => (
-                    <CircleMarker
-                      key={`heat-${idx}`}
-                      center={data.coords}
-                      radius={Math.min(40, 15 + data.count * 3)}
-                      pathOptions={{
-                        fillColor: data.count > 5 ? '#ef4444' : data.count > 2 ? '#f97316' : '#eab308',
-                        fillOpacity: 0.6,
-                        color: 'transparent'
-                      }}
-                    >
-                      <Popup dir="rtl">
-                        <div className="font-bold text-center">
-                          {data.count} תפיסות לאחרונה באזור זה!
                         </div>
                       </Popup>
-                    </CircleMarker>
-                  ))
-                )}
-              </MapContainer>
+                    </Marker>
+                  );
+                })}
+              </MarkerClusterGroup>
+            ) : (
+              // Heatmap Bubbles Layer
+              heatmapData.map((data, idx) => (
+                <CircleMarker
+                  key={`heat-${idx}`}
+                  center={data.coords}
+                  radius={Math.min(50, 20 + data.count * 4)}
+                  pathOptions={{
+                    fillColor: data.count > 10 ? '#ef4444' : data.count > 3 ? '#f97316' : '#eab308',
+                    fillOpacity: 0.6,
+                    color: 'transparent'
+                  }}
+                >
+                  <Popup dir="rtl">
+                    <div className="font-bold text-center text-sm p-1">
+                      🔥 אזור חם!<br/>
+                      {data.count} תפיסות מדווחות
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              ))
             )}
-          </div>
-        </div>
-      )}
+          </MapContainer>
+        )}
+      </div>
     </div>
   );
 }
