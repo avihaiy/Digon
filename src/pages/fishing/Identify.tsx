@@ -113,7 +113,7 @@ export default function Identify() {
       let text = "";
       try {
         // Try Pro first
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
         const aiResult = await model.generateContent([
           prompt,
           { inlineData: { data: base64Data, mimeType: mimeType } }
@@ -122,7 +122,7 @@ export default function Identify() {
       } catch (proError: any) {
         console.warn("Pro model failed, falling back to Flash:", proError);
         // Fallback to Flash (handles rate limits or model availability issues)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
         const aiResult = await model.generateContent([
           prompt,
           { inlineData: { data: base64Data, mimeType: mimeType } }
