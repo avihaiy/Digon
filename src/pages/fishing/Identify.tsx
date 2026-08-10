@@ -25,6 +25,8 @@ export default function Identify() {
   const [image, setImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [manualName, setManualName] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,7 +81,7 @@ export default function Identify() {
 
       // Real Gemini API Call
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
       
       // Extract mime type and base64 data dynamically
       const mimeMatch = base64Str.match(/^data:(image\/[a-zA-Z0-9]+);base64,/);
@@ -88,7 +90,10 @@ export default function Identify() {
       
       const prompt = `
         You are an expert marine biologist and fisherman in Israel (Mediterranean Sea, Red Sea, Sea of Galilee).
-        Identify the fish in this image.
+        Identify the fish in this image with maximum accuracy.
+        First, analyze the shape, fins, scales, color patterns, and mouth.
+        Consider common Israeli fish: דניס, ברמונדי, לוקוס, פרידה, אנטיאס, פלמידה, גומבר, בורי, אראס, אבו נפחא, מרמיר, סרגוס, טרכון, שולה, טונה שחורה, חרב, אבונפחא.
+        If it's an invasive species from the Red Sea (Lessepsian migration), note it.
         If the image DOES NOT contain a fish or marine creature, return "לא זוהה דג בתמונה" for the name, 0 for confidence, and explain what you see in the description.
         Respond in pure JSON format (without markdown blocks) with the following structure:
         {
