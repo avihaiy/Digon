@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTackleBox, GearCategory } from "@/hooks/useTackleBox";
+import { useMarineWeather } from "@/hooks/useMarineWeather";
+import { BrainCircuit } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +22,39 @@ const CATEGORIES: { id: GearCategory, name: string, icon: React.ReactNode } = [
 
 export default function TackleBox() {
   const { gear, addGear, removeGear } = useTackleBox();
+  const { data: marineData } = useMarineWeather();
+
+  const smartRecommendation = useMemo(() => {
+    if (!gear.length) return null;
+    if (marineData.isTurbid) {
+      const brightLure = gear.find(g => g.category === 'lure' && (g.name.includes('זוהר') || g.name.includes('צהוב') || g.name.includes('לבן') || g.name.includes('רועש') || g.brand.toLowerCase().includes('topwater')));
+      return {
+        text: 'המים עכורים היום (Turbid). מומלץ להשתמש בדמוי בולט, בהיר או מרעיש:',
+        item: brightLure || gear.find(g => g.category === 'lure') || gear[0]
+      };
+    }
+    if (marineData.waveHeight && marineData.waveHeight > 1.0) {
+      const heavy = gear.find(g => g.category === 'lure' && (g.name.includes('ג\'יג') || g.name.includes('כבד') || g.name.toLowerCase().includes('jig')));
+      return {
+        text: 'הגלים גבוהים יחסית (מעל 1 מטר). קח איתך דמוי כבד יותר כמו ג\'יג:',
+        item: heavy || gear[0]
+      };
+    }
+    if (marineData.cloudCover && marineData.cloudCover < 30 && marineData.waveHeight && marineData.waveHeight <= 0.6) {
+      const topwater = gear.find(g => g.category === 'lure' && (g.name.includes('פופר') || g.name.includes('טופ') || g.name.toLowerCase().includes('popper') || g.name.toLowerCase().includes('top')));
+      return {
+        text: 'הים פלטה ויש שמש! זמן מעולה לדמויי טופ-ווטר / כלבים:',
+        item: topwater || gear.find(g => g.category === 'lure') || gear[0]
+      };
+    }
+    
+    // Default fallback
+    return {
+      text: 'מזג האוויר קלאסי. פריט מומלץ מהקופסה שלך להיום:',
+      item: gear.find(g => g.category === 'lure') || gear[0]
+    };
+  }, [gear, marineData]);
+
   const [open, setOpen] = useState(false);
   
   const [category, setCategory] = useState<string>("rod");
@@ -107,6 +142,22 @@ export default function TackleBox() {
           </DialogContent>
         </Dialog>
       </div>
+      {/* Smart Recommendation Banner */}
+      {smartRecommendation && gear.length > 0 && (
+        <div className="mx-4 mt-4 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-start gap-3 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/20 rounded-full blur-[40px] pointer-events-none" />
+          <BrainCircuit className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-bold text-emerald-800 dark:text-emerald-300">המלצת AI יומית</h3>
+            <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1 leading-tight">
+              {smartRecommendation.text}
+            </p>
+            <div className="mt-2 inline-flex items-center gap-2 bg-white/60 dark:bg-black/20 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+              <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{smartRecommendation.item?.brand} {smartRecommendation.item?.name}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="px-4 flex-1">
         {gear.length === 0 ? (

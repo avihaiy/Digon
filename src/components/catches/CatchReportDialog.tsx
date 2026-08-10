@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useCatches } from "@/hooks/useCatches";
 import { Camera, Image as ImageIcon, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useMarineWeather } from "@/hooks/useMarineWeather";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useTournaments } from "@/hooks/useTournaments";
@@ -39,6 +40,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
   const [isPrivate, setIsPrivate] = useState(false);
   const [useFlare, setUseFlare] = useState(false);
   const { activeTournaments } = useTournaments();
+  const { data: marineData } = useMarineWeather();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -108,7 +110,8 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
         tournamentId: selectedTournament || undefined,
         imageBase64: imagePreview || undefined,
         isPrivate,
-        isFlared: useFlare
+        isFlared: useFlare,
+        text: (marineData && marineData.waveHeight !== null) ? `תנאי הים בעת התפיסה: גלים ${marineData.waveHeight} מ', טמפ' מים ${marineData.temperature || '?'}°, רוח ${marineData.windSpeed || '?'} קמ"ש, לחץ אוויר ${marineData.surfacePressure || '?'} hPa` : ''
       });
       setOpen(false);
     } catch (error) {

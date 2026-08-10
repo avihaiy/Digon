@@ -203,7 +203,8 @@ export function useCatches() {
         status: data.isPrivate ? 'private' : 'pending', // Private skips approval and community feed
         tournament_id: data.tournamentId || "",
         is_early_bird: isEarlyBird,
-        is_flared: data.isFlared || false
+        is_flared: data.isFlared || false,
+        text: data.text || null
       };
 
       if (data.isFlared) {

@@ -114,6 +114,11 @@ export default function Locations() {
               url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             />
+            {/* Bathymetry & Sea Marks Overlay (OpenSeaMap) */}
+            <TileLayer
+              url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
+              attribution='&copy; OpenSeaMap'
+            />
             {allLocations.map((loc, idx) => (
               <Marker key={loc.id || idx} position={[loc.lat, loc.lng]} icon={customIcon}>
                 <Popup className="custom-popup">
