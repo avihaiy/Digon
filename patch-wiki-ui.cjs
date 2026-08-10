@@ -369,19 +369,19 @@ export default function Wiki() {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button onClick={() => setFilter("all")} className={\`whitespace-nowrap px-4 py-2.5 rounded-2xl text-sm font-bold transition-all \${filter === "all" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}\`}>
+          <button onClick={() => setFilter("all")} className={`whitespace-nowrap px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${filter === "all" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
             הכל
           </button>
-          <button onClick={() => setFilter("sea")} className={\`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all \${filter === "sea" ? "bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}\`}>
+          <button onClick={() => setFilter("sea")} className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${filter === "sea" ? "bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
             <Waves className="w-4 h-4" /> ים תיכון
           </button>
-          <button onClick={() => setFilter("freshwater")} className={\`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all \${filter === "freshwater" ? "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}\`}>
+          <button onClick={() => setFilter("freshwater")} className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${filter === "freshwater" ? "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
             <Droplet className="w-4 h-4" /> מים מתוקים
           </button>
-          <button onClick={() => setFilter("danger")} className={\`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all \${filter === "danger" ? "bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}\`}>
+          <button onClick={() => setFilter("danger")} className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${filter === "danger" ? "bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
             <Skull className="w-4 h-4" /> מסוכנים
           </button>
-          <button onClick={() => setFilter("kosher")} className={\`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all \${filter === "kosher" ? "bg-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}\`}>
+          <button onClick={() => setFilter("kosher")} className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${filter === "kosher" ? "bg-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
             <CheckCircle className="w-4 h-4" /> כשרים
           </button>
         </div>
@@ -399,7 +399,7 @@ export default function Wiki() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="h-full overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-shadow relative bg-white dark:bg-slate-900 rounded-3xl group flex flex-col">
+                <Card className="h-full overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-shadow relative bg-white dark:bg-slate-900 rounded-3xl group">
                   {fish.danger && (
                     <div className="absolute top-4 left-4 z-10">
                       <Badge className="font-bold flex gap-1 items-center bg-rose-600 text-white shadow-lg border-0">
@@ -422,7 +422,7 @@ export default function Wiki() {
                     </div>
                   )}
                   
-                  <div className="h-56 w-full bg-slate-100 dark:bg-slate-800 relative overflow-hidden shrink-0">
+                  <div className="h-56 w-full bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
                     <div className="absolute inset-0 flex items-center justify-center text-slate-300 dark:text-slate-700">
                       <Fish className="w-20 h-20" />
                     </div>
@@ -438,38 +438,36 @@ export default function Wiki() {
                     </h3>
                   </div>
 
-                  <CardContent className="p-5 flex flex-col h-full justify-between">
-                    <div>
-                      <div className="flex items-center gap-3 mb-4">
-                        {fish.kosher ? (
-                          <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-sm bg-emerald-500/10 px-2 py-1 rounded-lg">
-                            <CheckCircle className="w-4 h-4" /> כשר
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5 text-rose-500 font-bold text-sm bg-rose-500/10 px-2 py-1 rounded-lg">
-                            <AlertTriangle className="w-4 h-4" /> לא כשר
-                          </span>
-                        )}
-                        <span className="text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
-                          ⏱️ {fish.season}
+                  <CardContent className="p-5 flex flex-col h-[calc(100%-14rem)]">
+                    <div className="flex items-center gap-3 mb-4">
+                      {fish.kosher ? (
+                        <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold text-sm bg-emerald-500/10 px-2 py-1 rounded-lg">
+                          <CheckCircle className="w-4 h-4" /> כשר
                         </span>
-                      </div>
-
-                      <p className="text-slate-600 dark:text-slate-300 font-medium leading-relaxed mb-4">
-                        {fish.desc}
-                      </p>
-
-                      {fish.danger && (
-                        <div className="mb-4 bg-rose-500/10 border border-rose-500/30 p-3.5 rounded-2xl">
-                          <p className="text-sm font-black text-rose-600 dark:text-rose-400 leading-tight flex items-start gap-2">
-                            <Skull className="w-5 h-5 shrink-0" />
-                            <span>{fish.danger}</span>
-                          </p>
-                        </div>
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-rose-500 font-bold text-sm bg-rose-500/10 px-2 py-1 rounded-lg">
+                          <AlertTriangle className="w-4 h-4" /> לא כשר
+                        </span>
                       )}
+                      <span className="text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">
+                        ⏱️ {fish.season}
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 border-t border-slate-100 dark:border-slate-800 pt-5 mt-auto">
+                    <p className="text-slate-600 dark:text-slate-300 font-medium leading-relaxed flex-1">
+                      {fish.desc}
+                    </p>
+
+                    {fish.danger && (
+                      <div className="mt-4 bg-rose-500/10 border border-rose-500/30 p-3.5 rounded-2xl">
+                        <p className="text-sm font-black text-rose-600 dark:text-rose-400 leading-tight flex items-start gap-2">
+                          <Skull className="w-5 h-5 shrink-0" />
+                          <span>{fish.danger}</span>
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 dark:border-slate-800 pt-5">
                       <div>
                         <div className="text-xs font-bold text-cyan-600 dark:text-cyan-500 mb-1.5">🎣 שיטות דיג</div>
                         <ul className="text-sm space-y-1 font-medium text-slate-700 dark:text-slate-300">
@@ -501,3 +499,6 @@ export default function Wiki() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/pages/fishing/Wiki.tsx', code);
