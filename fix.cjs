@@ -1,1 +1,4 @@
-const fs = require('fs'); const content = fs.readFileSync('src/pages/fishing/Profile.tsx', 'utf-8'); const fixed = content.replace(/<\/Dialog>\s*<\/DialogContent>\s*<\/Dialog>/g, '<\/DialogContent>\n      <\/Dialog>'); fs.writeFileSync('src/pages/fishing/Profile.tsx', fixed);
+const fs = require('fs');
+let c = fs.readFileSync('src/pages/fishing/Wiki.tsx', 'utf8');
+c = c.replace(/\\`/g, '`');
+fs.writeFileSync('src/pages/fishing/Wiki.tsx', c);
