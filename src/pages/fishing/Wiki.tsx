@@ -540,6 +540,7 @@ export default function Wiki() {
                     <img 
                       src={fish.image} 
                       alt={fish.name} 
+                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
