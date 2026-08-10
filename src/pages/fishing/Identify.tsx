@@ -144,10 +144,11 @@ export default function Identify() {
       const base64Data = base64Str.split(",")[1];
       
       const prompt = `
-        You are an expert marine biologist and fisherman in Israel (Mediterranean Sea, Red Sea, Sea of Galilee).
+        You are an expert marine biologist and fisherman in Israel (Mediterranean Sea, Red Sea, Sea of Galilee / Kinneret, and Jordan River).
         Identify the fish in this image with maximum accuracy.
         First, analyze the shape, fins, scales, color patterns, and mouth.
-        Consider common Israeli fish: דניס, ברמונדי, לוקוס, פרידה, אנטיאס, פלמידה, גומבר, בורי, אראס, אבו נפחא, מרמיר, סרגוס, טרכון, שולה, טונה שחורה, חרב.
+        Consider common Israeli sea fish: דניס, ברמונדי, לוקוס, פרידה, אנטיאס, פלמידה, גומבר, בורי, אראס, אבו נפחא, מרמיר, סרגוס, טרכון.
+        Consider common Israeli freshwater fish (Kinneret & Rivers): מושט (אמנון), קרפיון, שפמנון, בינית, כסיף, בורי מים מתוקים.
         If it's an invasive species from the Red Sea (Lessepsian migration), note it.
         If the image DOES NOT contain a fish or marine creature, return "לא זוהה דג בתמונה" for the name, 0 for confidence, and explain what you see in the description.
         Respond in pure JSON format (without markdown blocks) with the following structure:
