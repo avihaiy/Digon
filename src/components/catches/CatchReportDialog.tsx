@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCatches } from "@/hooks/useCatches";
+import { useTackleBox } from "@/hooks/useTackleBox";
 import { Camera, Image as ImageIcon, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarineWeather } from "@/hooks/useMarineWeather";
@@ -29,9 +30,11 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
   const { user, profileData } = useAuth();
   const navigate = useNavigate();
   const { reportCatch, isReporting } = useCatches();
+  const { gear, incrementCatchCount } = useTackleBox();
   const [open, setOpen] = useState(false);
   
   const [fishType, setFishType] = useState("");
+  const [selectedLureId, setSelectedLureId] = useState("");
   const [weight, setWeight] = useState("");
   const [location, setLocation] = useState("");
   const [mapUrl, setMapUrl] = useState("");
@@ -68,6 +71,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
       setMapUrl("");
       setIsPrivate(false);
       setApplyFilter(true);
+      setSelectedLureId("");
     }
   };
 
@@ -129,6 +133,11 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
         isFlared: useFlare,
         text: (marineData && marineData.waveHeight !== null) ? `תנאי הים בעת התפיסה: גלים ${marineData.waveHeight} מ', טמפ' מים ${marineData.temperature || '?'}°, רוח ${marineData.windSpeed || '?'} קמ"ש, לחץ אוויר ${marineData.surfacePressure || '?'} hPa` : ''
       });
+      
+      if (selectedLureId) {
+        incrementCatchCount(selectedLureId);
+      }
+      
       setOpen(false);
     } catch (error) {
       // Error is handled in the hook
@@ -262,6 +271,25 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
               className="text-left dir-ltr"
             />
           </div>
+
+          {gear.filter(g => g.category === 'lure').length > 0 && (
+            <div className="space-y-2 border border-blue-500/20 bg-blue-500/5 p-3 rounded-xl mt-4">
+              <Label htmlFor="lure" className="text-blue-500 font-bold flex items-center gap-1">
+                <span>🐟</span> דמוי / פיתיון מנצח (מתוך הקופסה)
+              </Label>
+              <select
+                id="lure"
+                value={selectedLureId}
+                onChange={(e) => setSelectedLureId(e.target.value)}
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm"
+              >
+                <option value="">-- לא נבחר --</option>
+                {gear.filter(g => g.category === 'lure').map(lure => (
+                  <option key={lure.id} value={lure.id}>{lure.brand} - {lure.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {activeTournaments.filter(t => user && t.participants?.includes(user.$id)).length > 0 && (
             <div className="space-y-2 border border-yellow-500/30 bg-yellow-500/10 p-3 rounded-xl mt-4">

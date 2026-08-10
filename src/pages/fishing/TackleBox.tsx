@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useTackleBox, GearCategory } from "@/hooks/useTackleBox";
 import { useMarineWeather } from "@/hooks/useMarineWeather";
 import { BrainCircuit } from "lucide-react";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Trash2, Plus, Package, Fish, Anchor } from "lucide-react";
+import { Trash2, Plus, Package, Fish, Anchor, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -56,8 +57,59 @@ export default function TackleBox() {
   }, [gear, marineData]);
 
   const [open, setOpen] = useState(false);
+  const [aiAdvisorOpen, setAiAdvisorOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+
+  const getTackleAdvice = async () => {
+    if (gear.length === 0) {
+      toast.error("קופסת הציוד שלך ריקה. הוסף פריטים קודם.");
+      return;
+    }
+    setAiAdvisorOpen(true);
+    setAiLoading(true);
+    setAiAdvice(null);
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        toast.error("מפתח API חסר");
+        setAiLoading(false);
+        return;
+      }
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
+      
+      const gearListStr = gear.map(g => `${g.category}: ${g.brand} ${g.name} (${g.specs || 'ללא מפרט'})`).join('\n');
+      
+      const prompt = `
+      You are a professional fishing tackle advisor in Israel. 
+      The user wants to know what setup (rod, reel, lure) to tie on RIGHT NOW based on their actual tackle box and current marine weather.
+      
+      Marine Weather right now:
+      Wave Height: ${marineData.waveHeight}m
+      Wind Speed: ${marineData.windSpeed} km/h
+      Water Temp: ${marineData.temperature}°C
+      Cloud Cover: ${marineData.cloudCover}%
+      
+      User's Tackle Box:
+      ${gearListStr}
+      
+      Reply in Hebrew. Be enthusiastic but professional. Suggest one specific combo (rod+reel+lure/bait) from their box that fits the weather, and explain briefly WHY it fits (e.g., "The waves are high, so use this heavy jig with your powerful rod"). Keep it under 4 sentences.
+      `;
+      
+      const result = await model.generateContent(prompt);
+      setAiAdvice(result.response.text());
+    } catch (e) {
+      console.error(e);
+      setAiAdvice("התרחשה שגיאה בהתייעצות עם המומחה. נסה שוב.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
   
   const [category, setCategory] = useState<string>("rod");
+  const [specs, setSpecs] = useState("");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [brand, setBrand] = useState("");
   const [name, setName] = useState("");
 
@@ -135,6 +187,20 @@ export default function TackleBox() {
                   placeholder="לדוגמה: Stradic CI4+"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>מפרט טכני (אופציונלי)</Label>
+                <Input 
+                  value={specs} 
+                  onChange={(e) => setSpecs(e.target.value)} 
+                  className="h-12 rounded-2xl bg-muted/50 border-0" 
+                  placeholder={
+                    category === 'rod' ? 'לדוגמה: משקלי זריקה 10-30g' : 
+                    category === 'reel' ? 'לדוגמה: מידה 3000' : 
+                    category === 'lure' ? 'לדוגמה: 15g Sinking' : 
+                    'לדוגמה: מידה / משקל / צבע'
+                  }
+                />
+              </div>
               <Button type="submit" className="w-full h-12 rounded-2xl text-lg font-bold mt-2">
                 הוסף לקופסה
               </Button>
@@ -159,6 +225,29 @@ export default function TackleBox() {
         </div>
       )}
 
+      {/* Filter Tabs */}
+      {gear.length > 0 && (
+        <div className="px-4 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex items-center gap-2 min-w-max">
+            <button
+              onClick={() => setFilterCategory("all")}
+              className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors ${filterCategory === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+            >
+              הכל
+            </button>
+            {CATEGORIES.map(c => (
+              <button
+                key={c.id}
+                onClick={() => setFilterCategory(c.id)}
+                className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors flex items-center gap-1.5 ${filterCategory === c.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="px-4 flex-1">
         {gear.length === 0 ? (
           <div className="text-center p-8 bg-muted/30 rounded-3xl mt-8">
@@ -171,7 +260,7 @@ export default function TackleBox() {
         ) : (
           <div className="space-y-3">
             <AnimatePresence>
-              {gear.map((item) => {
+              {gear.filter(item => filterCategory === "all" || item.category === filterCategory).map((item) => {
                 const cat = CATEGORIES.find(c => c.id === item.category);
                 return (
                   <motion.div

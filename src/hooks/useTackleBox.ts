@@ -8,6 +8,8 @@ export interface GearItem {
   name: string;
   brand: string;
   description?: string;
+  specs?: string; // e.g., "10-30g", "3000", "15g Sinking"
+  catchCount?: number;
 }
 
 const STORAGE_KEY = "digon_tackle_box";
@@ -43,9 +45,21 @@ export function useTackleBox() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   };
 
+  const incrementCatchCount = (id: string) => {
+    const updated = gear.map(item => {
+      if (item.id === id) {
+        return { ...item, catchCount: (item.catchCount || 0) + 1 };
+      }
+      return item;
+    });
+    setGear(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
   return {
     gear,
     addGear,
-    removeGear
+    removeGear,
+    incrementCatchCount
   };
 }
