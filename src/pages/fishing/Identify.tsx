@@ -391,6 +391,18 @@ export default function Identify() {
                 )}
               </Card>
 
+              {result && (
+                <Button 
+                  variant="default" 
+                  className="w-full h-14 rounded-2xl gap-2 text-lg font-bold mt-4 bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
+                  onClick={handleShare}
+                  disabled={isSharing}
+                >
+                  <Share2 className="w-5 h-5" />
+                  {isSharing ? "מכין תמונה..." : "שתף תמונה ממותגת"}
+                </Button>
+              )}
+
               {(!isScanning || result) && (
                 <Button 
                   variant="outline" 
