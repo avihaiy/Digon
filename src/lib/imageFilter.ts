@@ -26,7 +26,7 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         // Draw dark gradient at the bottom (25% of the height)
-        const gradientHeight = canvas.height * 0.25;
+        const gradientHeight = Math.max(canvas.height * 0.25, baseFontSize * 6);
         const gradient = ctx.createLinearGradient(0, canvas.height - gradientHeight, 0, canvas.height);
         gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
         gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.6)");
@@ -36,7 +36,8 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         ctx.fillRect(0, canvas.height - gradientHeight, canvas.width, gradientHeight);
 
         // Base sizing based on image resolution
-        const baseFontSize = Math.max(24, Math.floor(canvas.height * 0.04));
+        // Use the smaller dimension so portrait images don't get huge fonts
+        const baseFontSize = Math.max(18, Math.floor(Math.min(canvas.width, canvas.height) * 0.045));
         const padding = baseFontSize;
 
         // Draw DIGON PRO Badge
@@ -67,7 +68,7 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         // Fish Info
         ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
         const fishText = `${options.fishType || 'דג לא ידוע'} ${options.weight ? '| ' + options.weight : ''}`;
-        ctx.fillText(fishText, canvas.width - padding, canvas.height - padding - baseFontSize * 1.5);
+        ctx.fillText(fishText, canvas.width - padding, canvas.height - padding - baseFontSize * 1.8);
 
         // Weather & Location Info
         ctx.font = `normal ${baseFontSize * 0.8}px sans-serif`;
