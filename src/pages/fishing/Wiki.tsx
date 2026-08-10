@@ -25,7 +25,7 @@ const FISH_DB: FishData[] = [
   {
     id: "locus",
     name: "לוקוס לבן (דקר)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=1",
+    image: "/fish/locus.jpg",
     season: "אביב - קיץ",
     methods: ["ז'רז'ור", "פיתיון", "סירה"],
     baits: ["קלמארי", "סבידה", "דגים חיים"],
@@ -37,7 +37,7 @@ const FISH_DB: FishData[] = [
   {
     id: "denis",
     name: "דניס (צ'יפורה)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=2",
+    image: "/fish/denis.jpg",
     season: "סתיו - חורף",
     methods: ["פיתיון חוף", "בוס"],
     baits: ["תולעים", "גמברי", "בצק מסריח"],
@@ -49,7 +49,7 @@ const FISH_DB: FishData[] = [
   {
     id: "sargus",
     name: "סרגוס (ספרוס)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=3",
+    image: "/fish/sargus.jpg",
     season: "כל השנה (במיוחד חורף)",
     methods: ["בוס", "פיתיון חוף"],
     baits: ["בצק", "גמברי", "תולעים"],
@@ -61,7 +61,7 @@ const FISH_DB: FishData[] = [
   {
     id: "aras",
     name: "ארס (סיכן)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=4",
+    image: "/fish/aras.jpg",
     season: "קיץ - סתיו",
     methods: ["בוס"],
     baits: ["בצק", "אצות"],
@@ -73,7 +73,7 @@ const FISH_DB: FishData[] = [
   {
     id: "avo-nafha",
     name: "אבו נפחא (לגינון)",
-    image: "https://loremflickr.com/640/480/fish,ocean?lock=5",
+    image: "/fish/avo-nafha.jpg",
     season: "כל השנה",
     methods: ["נתפס בטעות בכל השיטות"],
     baits: ["הכל"],
