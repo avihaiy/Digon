@@ -63,9 +63,8 @@ export default function Identify() {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       
       if (!apiKey) {
-        // Fallback to Mock Mode if no API key is provided
         toast.info("מפתח API של Gemini לא נמצא, מציג תוצאה להדגמה.");
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
         setResult({
           name: "לוקוס לבן (דקר)",
           confidence: 96,
@@ -79,11 +78,8 @@ export default function Identify() {
         return;
       }
 
-      // Real Gemini API Call
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
       
-      // Extract mime type and base64 data dynamically
       const mimeMatch = base64Str.match(/^data:(image\/[a-zA-Z0-9]+);base64,/);
       const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
       const base64Data = base64Str.split(",")[1];
@@ -92,7 +88,7 @@ export default function Identify() {
         You are an expert marine biologist and fisherman in Israel (Mediterranean Sea, Red Sea, Sea of Galilee).
         Identify the fish in this image with maximum accuracy.
         First, analyze the shape, fins, scales, color patterns, and mouth.
-        Consider common Israeli fish: דניס, ברמונדי, לוקוס, פרידה, אנטיאס, פלמידה, גומבר, בורי, אראס, אבו נפחא, מרמיר, סרגוס, טרכון, שולה, טונה שחורה, חרב, אבונפחא.
+        Consider common Israeli fish: דניס, ברמונדי, לוקוס, פרידה, אנטיאס, פלמידה, גומבר, בורי, אראס, אבו נפחא, מרמיר, סרגוס, טרכון, שולה, טונה שחורה, חרב.
         If it's an invasive species from the Red Sea (Lessepsian migration), note it.
         If the image DOES NOT contain a fish or marine creature, return "לא זוהה דג בתמונה" for the name, 0 for confidence, and explain what you see in the description.
         Respond in pure JSON format (without markdown blocks) with the following structure:
@@ -108,26 +104,40 @@ export default function Identify() {
         }
       `;
 
-      const aiResult = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType: mimeType
-          }
-        }
-      ]);
-
-      const text = aiResult.response.text();
-      // Clean up markdown block if Gemini accidentally wraps it
-      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      let text = "";
+      try {
+        // Try Pro first
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const aiResult = await model.generateContent([
+          prompt,
+          { inlineData: { data: base64Data, mimeType: mimeType } }
+        ]);
+        text = aiResult.response.text();
+      } catch (proError: any) {
+        console.warn("Pro model failed, falling back to Flash:", proError);
+        // Fallback to Flash (handles rate limits or model availability issues)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const aiResult = await model.generateContent([
+          prompt,
+          { inlineData: { data: base64Data, mimeType: mimeType } }
+        ]);
+        text = aiResult.response.text();
+      }
       
-      const parsedResult: ScanResult = JSON.parse(cleanedText);
+      // Robust JSON extraction
+      let cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const firstBrace = cleanedText.indexOf('{');
+      const lastBrace = cleanedText.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+      }
+      
+      const parsedResult = JSON.parse(cleanedText);
       setResult(parsedResult);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI Error:", error);
-      toast.error("שגיאה בזיהוי התמונה. נסה שוב.");
+      toast.error(`שגיאה בזיהוי התמונה: ${error.message || 'נסה שוב'}`);
     } finally {
       setIsScanning(false);
     }
