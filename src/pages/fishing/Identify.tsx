@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { compressImage } from "@/lib/imageCompression";
 
 interface ScanResult {
   name: string;
@@ -30,16 +31,21 @@ export default function Identify() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setImage(base64);
-        analyzeImage(base64);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImage(file, { maxWidth: 1024, quality: 0.8 });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          setImage(base64);
+          analyzeImage(base64);
+        };
+        reader.readAsDataURL(compressed);
+      } catch (err) {
+        toast.error("שגיאה בטעינת התמונה.");
+      }
     }
   };
 
@@ -132,12 +138,36 @@ export default function Identify() {
         cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
       }
       
-      const parsedResult = JSON.parse(cleanedText);
-      setResult(parsedResult);
+            try {
+        const parsedResult = JSON.parse(cleanedText);
+        setResult(parsedResult);
+      } catch (parseError) {
+        console.error("JSON Parse Error. Raw text:", text);
+        setResult({
+          name: "זיהוי לא ברור",
+          confidence: 0,
+          kosher: false,
+          danger: null,
+          description: text || "הבינה המלאכותית לא הצליחה לזהות בוודאות. נסה לצלם מזווית אחרת או קרוב יותר.",
+          tips: "וודא שהדג מואר היטב ושלם.",
+          minSize: "",
+          bestBait: ""
+        });
+      }
       
     } catch (error: any) {
       console.error("AI Error:", error);
       toast.error(`שגיאה בזיהוי התמונה: ${error.message || 'נסה שוב'}`);
+      setResult({
+        name: "שגיאת תקשורת / שרת",
+        confidence: 0,
+        kosher: false,
+        danger: null,
+        description: error.message || "החיבור לשרת נכשל. בדוק את החיבור לאינטרנט ונסה שוב.",
+        tips: "",
+        minSize: "",
+        bestBait: ""
+      });
     } finally {
       setIsScanning(false);
     }
