@@ -25,6 +25,10 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         // Draw original image
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+        // Base sizing based on image resolution
+        // Use the smaller dimension so portrait images don't get huge fonts
+        const baseFontSize = Math.max(18, Math.floor(Math.min(canvas.width, canvas.height) * 0.045));
+
         // Draw dark gradient at the bottom (25% of the height)
         const gradientHeight = Math.max(canvas.height * 0.25, baseFontSize * 6);
         const gradient = ctx.createLinearGradient(0, canvas.height - gradientHeight, 0, canvas.height);
@@ -35,9 +39,6 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         ctx.fillStyle = gradient;
         ctx.fillRect(0, canvas.height - gradientHeight, canvas.width, gradientHeight);
 
-        // Base sizing based on image resolution
-        // Use the smaller dimension so portrait images don't get huge fonts
-        const baseFontSize = Math.max(18, Math.floor(Math.min(canvas.width, canvas.height) * 0.045));
         const padding = baseFontSize;
 
         // Draw DIGON PRO Badge
