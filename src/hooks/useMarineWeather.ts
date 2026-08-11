@@ -63,6 +63,24 @@ export function useMarineWeather() {
       setLoading(true);
       setError(null);
 
+      let finalLocationName = locationName;
+      
+      // If it's a generic "Your location", try to find the actual city
+      if (locationName === 'המיקום שלך') {
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=he`, {
+            headers: { 'User-Agent': 'Digon Fishing App' }
+          });
+          const geoJson = await geoRes.json();
+          const city = geoJson.address?.city || geoJson.address?.town || geoJson.address?.village || geoJson.address?.suburb;
+          if (city) {
+            finalLocationName = `המיקום שלך - ${city.replace('־', ' ').split('–')[0]}`; // Clean up "תל-אביב-יפו" -> "תל אביב"
+          }
+        } catch (e) {
+          console.warn('Geocoding failed', e);
+        }
+      }
+
       // Fetch Weather (Wind, Temp, Pressure, Clouds - Current and Hourly with past 12h)
       const weatherRes = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&past_hours=12&timezone=auto&models=best_match`
@@ -70,10 +88,8 @@ export function useMarineWeather() {
       const weatherJson = await weatherRes.json();
       
       // Fetch Marine (Waves, Direction & Period with past 48h)
-      const marineLat = 32.08;
-      const marineLon = 34.75;
       const marineRes = await fetch(
-        `https://marine-api.open-meteo.com/v1/marine?latitude=${marineLat}&longitude=${marineLon}&current=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&hourly=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&past_hours=48&timezone=auto&models=best_match`
+        `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&hourly=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&past_hours=48&timezone=auto&models=best_match`
       );
       const marineJson = await marineRes.json();
 
@@ -210,7 +226,7 @@ export function useMarineWeather() {
         pressureTrend,
         isTurbid,
         waveDirection,
-        locationName,
+        locationName: finalLocationName,
         hourlyForecast,
         dailyForecast,
       });
