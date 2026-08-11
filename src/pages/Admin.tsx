@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Users, MapPin, LayoutList, Trash2, Check, X, Camera, Ticket, Store as StoreIcon, Settings, Coins, Trophy, Pencil, BellRing, MessageSquareWarning, Video, ShoppingCart, ExternalLink, Upload, Loader2 } from "lucide-react";
 import { CamsManager } from "@/components/admin/CamsManager";
 
