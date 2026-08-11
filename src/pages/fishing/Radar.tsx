@@ -145,15 +145,10 @@ export default function Radar() {
       
       if (!coords) return null;
       
-      // Add slight random offset to prevent exact overlapping of markers in the same spot
-      const offsetLat = coords[0] + (Math.random() - 0.5) * 0.015;
-      const offsetLon = coords[1] + (Math.random() - 0.5) * 0.015;
-      const isFreshwater = c.location.includes("כנרת") || c.location.includes("טבריה");
-
       return {
         ...c,
-        coords: [offsetLat, offsetLon],
-        isFreshwater
+        coords: [coords[0], coords[1]],
+        isFreshwater: c.location.includes("כנרת") || c.location.includes("טבריה")
       };
     }).filter(Boolean);
   }, [allCatches, filter]);
