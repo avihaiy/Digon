@@ -43,7 +43,6 @@ export function useMarineWeather() {
     cape: null,
     oceanCurrentVelocity: null,
     oceanCurrentDirection: null,
-    windDirection: null,
     temperature: null,
     surfacePressure: null,
     wavePeriod: null,
