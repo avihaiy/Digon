@@ -143,10 +143,10 @@ export default function Radar() {
       // Attempt to extract exact coordinates from Waze/Google Maps URL
       if (mapUrl) {
         // Look for typical Israel coordinates: Lat ~29-34, Lng ~34-36
-        const match = mapUrl.match(/(29|3[0-3])\.\d+[,%2C]+(3[4-5])\.\d+/);
+        const match = mapUrl.match(/(29|3[0-3])\.\d+(,|%2C)(3[4-5])\.\d+/);
         if (match) {
-          const lat = parseFloat(match[0].split(/[,%2C]+/)[0]);
-          const lng = parseFloat(match[0].split(/[,%2C]+/)[1]);
+          const lat = parseFloat(match[0].replace('%2C', ',').split(',')[0]);
+          const lng = parseFloat(match[0].replace('%2C', ',').split(',')[1]);
           if (!isNaN(lat) && !isNaN(lng)) {
             coords = [lat, lng];
           }
