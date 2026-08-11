@@ -127,15 +127,15 @@ export default function Forecast() {
 
       {/* Pro Metrics (Turbidity, Pressure Trend) */}
       {selectedDayIndex === 0 && (
-        <div className="mx-4 grid grid-cols-2 gap-3">
+        <div className="mx-4 flex flex-wrap gap-3">
           {marineData.isTurbid && (
-             <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-3 flex items-center gap-2">
+             <div className="flex-1 min-w-[140px] bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-3 flex items-center gap-2">
                <Droplets className="w-5 h-5 text-orange-500" />
                <span className="text-sm font-bold text-orange-700 dark:text-orange-400">מים עכורים!</span>
              </div>
           )}
           {marineData.pressureTrend !== null && Math.abs(marineData.pressureTrend) > 1 && (
-             <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 flex items-center gap-2">
+             <div className="flex-1 min-w-[140px] bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 flex items-center gap-2">
                <Activity className="w-5 h-5 text-blue-500" />
                <div className="flex flex-col">
                  <span className="text-xs text-blue-600 dark:text-blue-400">מגמת לחץ (12 ש')</span>
@@ -147,7 +147,7 @@ export default function Forecast() {
           )}
           
           {marineData.windGusts !== null && (
-             <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex items-center gap-2 shadow-sm hover:scale-105 transition-transform">
+             <div className="flex-1 min-w-[140px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex items-center gap-2 shadow-sm hover:scale-105 transition-transform">
                <Wind className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                <div className="flex flex-col">
                  <span className="text-xs text-slate-500 dark:text-slate-400">משבי רוח קרובים</span>
@@ -157,7 +157,7 @@ export default function Forecast() {
           )}
           
           {marineData.oceanCurrentVelocity !== null && (
-             <div className="bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 rounded-xl p-3 flex items-center gap-2 shadow-sm hover:scale-105 transition-transform">
+             <div className="flex-1 min-w-[140px] bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 rounded-xl p-3 flex items-center gap-2 shadow-sm hover:scale-105 transition-transform">
                <Navigation className="w-5 h-5 text-cyan-500" style={{ transform: `rotate(${marineData.oceanCurrentDirection || 0}deg)` }} />
                <div className="flex flex-col">
                  <span className="text-xs text-cyan-600 dark:text-cyan-400">זרם ימי סמוך</span>
