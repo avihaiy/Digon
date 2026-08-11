@@ -3,16 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_CATCHES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { Button } from "@/components/ui/button";
-import { MapPin, Navigation2, Flame, Map, Droplet, Waves, Filter } from "lucide-react";
+import { MapPin, Navigation2, Flame, Map, Droplet, Waves, Filter, Crosshair, ChevronRight } from "lucide-react";
 import { getImageUrl } from "@/hooks/useCatches";
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
 
 // Rough coordinates for common Israel fishing spots
 const LOCATIONS_MAP: Record<string, [number, number]> = {
@@ -78,6 +77,33 @@ const createClusterCustomIcon = function (cluster: any) {
     className: 'custom-marker-cluster bg-transparent',
     iconSize: L.point(48, 48, true),
   });
+};
+
+const PopupActions = ({ coords, wazeUrl }: { coords: [number, number], wazeUrl: string }) => {
+  const map = useMap();
+  
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <Button 
+        size="sm" 
+        className="flex-1 h-8 text-[11px] font-bold gap-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+        onClick={() => window.open(wazeUrl, '_blank')}
+      >
+        <Navigation2 className="w-3 h-3" /> נווט
+      </Button>
+      <Button 
+        size="sm" 
+        variant="outline"
+        className="flex-1 h-8 text-[11px] font-bold gap-1 rounded-xl border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+        onClick={() => {
+          map.flyTo(coords, 17, { duration: 1.5 });
+          map.closePopup();
+        }}
+      >
+        <Crosshair className="w-3 h-3" /> התמקד
+      </Button>
+    </div>
+  );
 };
 
 export default function Radar() {
@@ -259,13 +285,7 @@ export default function Radar() {
                             )}
                             
                             {c.location.includes('|||') && (
-                              <Button 
-                                size="sm" 
-                                className="w-full h-8 text-xs font-bold gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
-                                onClick={() => window.open(c.location.split('|||')[1].trim(), '_blank')}
-                              >
-                                <Navigation2 className="w-3.5 h-3.5" /> נווט לנקודה
-                              </Button>
+                              <PopupActions coords={c.coords} wazeUrl={c.location.split('|||')[1].trim()} />
                             )}
                           </div>
                         </div>

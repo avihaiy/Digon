@@ -5,9 +5,9 @@ import { Query } from "appwrite";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Plus, Navigation2, Map as MapIcon, Star, Info } from "lucide-react";
+import { MapPin, Plus, Navigation2, Map as MapIcon, Star, Info, Crosshair } from "lucide-react";
 import { LocationReportDialog } from "@/components/locations/LocationReportDialog";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import * as L from "leaflet";
 
@@ -21,6 +21,33 @@ const customIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
+
+const PopupActions = ({ coords, wazeUrl }: { coords: [number, number], wazeUrl: string }) => {
+  const map = useMap();
+  
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <Button 
+        size="sm" 
+        className="flex-1 h-7 text-[11px] font-bold gap-1 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white"
+        onClick={() => window.open(wazeUrl, '_blank')}
+      >
+        <Navigation2 className="w-3 h-3" /> נווט
+      </Button>
+      <Button 
+        size="sm" 
+        variant="outline"
+        className="flex-1 h-7 text-[11px] font-bold gap-1 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+        onClick={() => {
+          map.flyTo(coords, 17, { duration: 1.5 });
+          map.closePopup();
+        }}
+      >
+        <Crosshair className="w-3 h-3" /> התמקד
+      </Button>
+    </div>
+  );
+};
 
 export default function Locations() {
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map');
@@ -128,13 +155,7 @@ export default function Locations() {
                       <Star className="w-3 h-3 fill-yellow-500" /> {loc.rating}
                     </div>
                     <p className="text-[10px] text-slate-500 mb-2">{loc.methods}</p>
-                    <Button 
-                      size="sm" 
-                      className="w-full h-7 text-xs bg-cyan-500 hover:bg-cyan-600 rounded-lg"
-                      onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`, '_blank')}
-                    >
-                      נווט לנקודה
-                    </Button>
+                    <PopupActions coords={[loc.lat, loc.lng]} wazeUrl={`https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`} />
                   </div>
                 </Popup>
               </Marker>
