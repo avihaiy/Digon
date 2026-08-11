@@ -136,11 +136,31 @@ export default function Radar() {
       return true;
     }).map((c: any) => {
       const locText = c.location.split('|||')[0].trim();
-      let coords = LOCATIONS_MAP[locText];
+      const mapUrl = c.location.includes('|||') ? c.location.split('|||')[1].trim() : '';
+      
+      let coords: [number, number] | null = null;
+      
+      // Attempt to extract exact coordinates from Waze/Google Maps URL
+      if (mapUrl) {
+        // Look for typical Israel coordinates: Lat ~29-34, Lng ~34-36
+        const match = mapUrl.match(/(29|3[0-3])\.\d+[,%2C]+(3[4-5])\.\d+/);
+        if (match) {
+          const lat = parseFloat(match[0].split(/[,%2C]+/)[0]);
+          const lng = parseFloat(match[0].split(/[,%2C]+/)[1]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            coords = [lat, lng];
+          }
+        }
+      }
+
+      // Fallback to generic map mapping
       if (!coords) {
-        const sortedKeys = Object.keys(LOCATIONS_MAP).sort((a, b) => b.length - a.length);
-        const match = sortedKeys.find(k => locText.includes(k));
-        if (match) coords = LOCATIONS_MAP[match];
+        coords = LOCATIONS_MAP[locText] || null;
+        if (!coords) {
+          const sortedKeys = Object.keys(LOCATIONS_MAP).sort((a, b) => b.length - a.length);
+          const match = sortedKeys.find(k => locText.includes(k));
+          if (match) coords = LOCATIONS_MAP[match];
+        }
       }
       
       if (!coords) return null;
