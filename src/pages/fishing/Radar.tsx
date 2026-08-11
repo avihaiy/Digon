@@ -220,8 +220,8 @@ export default function Radar() {
             zoomControl={false} // Hide default controls to keep it native looking
           >
             <TileLayer
-              url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"}
-              attribution='&copy; OpenStreetMap'
+              url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://mt1.google.com/vt/lyrs=m&hl=he&x={x}&y={y}&z={z}"}
+              attribution={viewMode === 'heatmap' ? '&copy; CartoDB' : 'Map data © Google'}
             />
             
             {viewMode === 'markers' ? (
