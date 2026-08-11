@@ -115,7 +115,9 @@ export default function Home() {
       {/* Sea Conditions Widget */}
       <section className="px-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-200">מצב הים כעת</h2>
+          <h2 className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-200">
+            מצב הים כעת <span className="font-normal text-xs text-muted-foreground ml-1">({marineData.locationName?.replace('המיקום שלך - ', '')})</span>
+          </h2>
           <div className="flex items-center gap-2">
             <button 
               onClick={refreshData}
