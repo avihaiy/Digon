@@ -30,6 +30,11 @@ interface MarineWeatherData {
     windSpeedMax: number;
     windGustsMax: number;
     capeMax: number; 
+    sunrise: string;
+    sunset: string;
+    uvIndexMax: number;
+    rainProbMax: number;
+    biteTimes: { start: string, end: string, rating: 'good' | 'excellent' }[];
     hours: { time: string; date: Date; waveHeight: number; temperature: number; windSpeed: number; windDirection: number; wavePeriod: number; surfacePressure: number; cloudCover: number; waveDirection: number; windGusts: number; cape: number; oceanCurrentVelocity: number; oceanCurrentDirection: number }[];
   }[];
 }
@@ -81,9 +86,9 @@ export function useMarineWeather() {
         }
       }
 
-      // Fetch Weather (Wind, Temp, Pressure, Clouds - Current and Hourly with past 12h)
+      // Fetch Weather (Wind, Temp, Pressure, Clouds - Current, Hourly, Daily)
       const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&past_hours=12&timezone=auto&models=best_match`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&daily=sunrise,sunset,uv_index_max,precipitation_probability_max,temperature_2m_max,temperature_2m_min&past_hours=12&timezone=auto&models=best_match`
       );
       const weatherJson = await weatherRes.json();
       
@@ -185,6 +190,35 @@ export function useMarineWeather() {
           };
 
           if (!dailyForecastMap.has(dayKey)) {
+            // Find index in daily array
+            const dailyIdx = weatherJson.daily?.time?.findIndex((t: string) => t === dateStr.split('T')[0]);
+            
+            let sunrise = "06:00";
+            let sunset = "19:30";
+            let uvIndexMax = 0;
+            let rainProbMax = 0;
+            let biteTimes: any[] = [];
+            
+            if (dailyIdx > -1 && weatherJson.daily) {
+              const srDate = new Date(weatherJson.daily.sunrise[dailyIdx]);
+              const ssDate = new Date(weatherJson.daily.sunset[dailyIdx]);
+              sunrise = srDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+              sunset = ssDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+              uvIndexMax = weatherJson.daily.uv_index_max[dailyIdx] || 0;
+              rainProbMax = weatherJson.daily.precipitation_probability_max[dailyIdx] || 0;
+              
+              // Calculate Bite Times (Golden Hours: 1 hour before to 1.5 hours after sunrise/sunset)
+              const srStart = new Date(srDate.getTime() - 60 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+              const srEnd = new Date(srDate.getTime() + 90 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+              const ssStart = new Date(ssDate.getTime() - 60 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+              const ssEnd = new Date(ssDate.getTime() + 90 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+              
+              biteTimes = [
+                { start: srStart, end: srEnd, rating: 'excellent' },
+                { start: ssStart, end: ssEnd, rating: 'good' }
+              ];
+            }
+
             dailyForecastMap.set(dayKey, {
               date: dateObj,
               dayName: dateObj.toLocaleDateString('he-IL', { weekday: 'long' }),
@@ -194,6 +228,11 @@ export function useMarineWeather() {
               windSpeedMax: wind,
               windGustsMax: gusts,
               capeMax: cape,
+              sunrise,
+              sunset,
+              uvIndexMax,
+              rainProbMax,
+              biteTimes,
               hours: [hourData]
             });
           } else {

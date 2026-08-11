@@ -1,8 +1,9 @@
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info, Droplets, MapPin, Cloud, Activity, Zap, Navigation } from "lucide-react";
+import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info, Droplets, MapPin, Cloud, Activity, Zap, Navigation, CloudRain, Moon, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 import { CalendarDays } from "lucide-react";
@@ -110,10 +111,24 @@ export default function Forecast() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             תחזית דייג <Sun className="w-6 h-6 text-yellow-500" />
           </h1>
-          <p className="text-sm text-slate-500 flex items-center gap-1">
-            <MapPin className="w-3 h-3" /> {marineData.locationName}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-slate-500 flex items-center gap-1">
+              <MapPin className="w-3 h-3" /> {marineData.locationName}
+            </p>
+            {marineData.dailyForecast?.[0] && (
+              <span className="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Droplets className="w-3 h-3" /> ים {marineData.dailyForecast[0].tempMax}°
+              </span>
+            )}
+          </div>
         </div>
+        <Link 
+          to="/fishing/cams" 
+          className="flex items-center gap-1.5 text-xs font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors"
+        >
+          <Video className="w-4 h-4" /> 
+          מצלמות 
+        </Link>
       </div>
 
       
@@ -292,6 +307,55 @@ export default function Forecast() {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+              
+              {/* Daily Sun, Rain, UV & Bite Times */}
+              {marineData.dailyForecast[selectedDayIndex] && (
+                <div className="w-full mt-4 space-y-3">
+                  {/* Bite Times */}
+                  {marineData.dailyForecast[selectedDayIndex].biteTimes && marineData.dailyForecast[selectedDayIndex].biteTimes.length > 0 && (
+                    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
+                      <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-2 flex items-center gap-1">
+                        <Fish className="w-4 h-4" /> זמני אכילות (שעות זהב)
+                      </h4>
+                      <div className="flex flex-col gap-2">
+                        {marineData.dailyForecast[selectedDayIndex].biteTimes.map((bt, i) => (
+                          <div key={i} className="flex justify-between items-center bg-white/60 dark:bg-slate-900/60 p-2 rounded-lg text-sm">
+                            <span className="font-bold text-slate-700 dark:text-slate-200">{bt.start} - {bt.end}</span>
+                            <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300">
+                              {bt.rating === 'excellent' ? 'מצוין' : 'טוב'}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Sun & Environment Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-white/30 dark:border-slate-700/50 flex flex-col gap-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500 flex items-center gap-1"><Sun className="w-4 h-4 text-yellow-500" /> זריחה</span>
+                        <span className="font-bold">{marineData.dailyForecast[selectedDayIndex].sunrise}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500 flex items-center gap-1"><Moon className="w-4 h-4 text-indigo-400" /> שקיעה</span>
+                        <span className="font-bold">{marineData.dailyForecast[selectedDayIndex].sunset}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-white/30 dark:border-slate-700/50 flex flex-col gap-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500 flex items-center gap-1"><CloudRain className="w-4 h-4 text-blue-400" /> גשם</span>
+                        <span className="font-bold">{marineData.dailyForecast[selectedDayIndex].rainProbMax}%</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500 flex items-center gap-1"><Sun className="w-4 h-4 text-orange-400" /> קרינה UV</span>
+                        <span className="font-bold">{marineData.dailyForecast[selectedDayIndex].uvIndexMax}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
