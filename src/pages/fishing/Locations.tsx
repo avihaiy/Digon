@@ -66,32 +66,20 @@ export default function Locations() {
     },
   });
 
-  const DEFAULT_ISRAEL_SPOTS = [
-    { id: 'spot-1', name: 'ראש הנקרה - סלעי הגבול', lat: 33.0903, lng: 35.1039, methods: 'ז\'רז\'ור כבד, שור ג\'יג', rating: 4.9 },
-    { id: 'spot-2', name: 'חיפה - שובר הגלים הראשי', lat: 32.8277, lng: 34.9810, methods: 'ז\'רז\'ור, פתיונות, בוס', rating: 4.7 },
-    { id: 'spot-3', name: 'מרינה הרצליה - השובר החיצוני', lat: 32.1624, lng: 34.7933, methods: 'ז\'רז\'ור קל, פתיונות, אגינג', rating: 4.6 },
-    { id: 'spot-4', name: 'תל אביב - מזח רידינג', lat: 32.1023, lng: 34.7734, methods: 'ז\'רז\'ור, פתיונות, בולונז', rating: 4.8 },
-    { id: 'spot-5', name: 'אשדוד - השובר הצפוני', lat: 31.8260, lng: 34.6415, methods: 'שור ג\'יג, פתיונות חי', rating: 4.8 },
-    { id: 'spot-6', name: 'אשקלון - מרינה סלעים', lat: 31.6831, lng: 34.5558, methods: 'ז\'רז\'ור, פתיונות', rating: 4.5 },
-    { id: 'spot-7', name: 'אילת - חוף המזח הדרומי', lat: 29.5085, lng: 34.9220, methods: 'ז\'רז\'ור מים מלוחים, ג\'יגינג', rating: 4.9 },
-    { id: 'spot-8', name: 'כנרת - חוף חלוקים', lat: 32.8421, lng: 35.6121, methods: 'דייג עדשים, קרפיונים, בלייק באס', rating: 4.7 }
-  ];
-
-  // Add DB locations + Default spots
-  const allLocations: any[] = [...DEFAULT_ISRAEL_SPOTS];
+  // Use DB locations
+  const allLocations: any[] = [];
   if (dbLocations) {
     dbLocations.forEach((loc: any) => {
-      if (!allLocations.find(l => l.name === loc.name)) {
         allLocations.push({
           id: loc.$id,
           name: loc.name,
-          lat: loc.lat || 32.0853,
-          lng: loc.lng || 34.7818,
+          lat: loc.latitude || 32.0853,
+          lng: loc.longitude || 34.7818,
           methods: loc.fishing_methods || "כללי",
           rating: 4.5,
+          map_url: loc.map_url,
           dbLoc: loc
         });
-      }
     });
   }
 

@@ -78,13 +78,27 @@ export function LocationReportDialog({ children }: { children: React.ReactNode }
         imageUrl = file.$id; // saving just the id in image_url column or creating full url
       }
 
+      let latitude = 32.0853; // Default Tel Aviv
+      let longitude = 34.7818;
+      if (data.mapUrl) {
+        const match = data.mapUrl.match(/(29|3[0-3])\.\d+(,|%2C)(3[4-5])\.\d+/);
+        if (match) {
+          const lat = parseFloat(match[0].replace('%2C', ',').split(',')[0]);
+          const lng = parseFloat(match[0].replace('%2C', ',').split(',')[1]);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            latitude = lat;
+            longitude = lng;
+          }
+        }
+      }
+
       await databases.createDocument(APPWRITE_DB_ID, APPWRITE_LOCATIONS_ID, ID.unique(), {
         name: data.name,
         user_id: user.$id,
         added_by: user.$id,
         status: 'pending',
-        latitude: 31.0,
-        longitude: 35.0,
+        latitude,
+        longitude,
         map_url: data.mapUrl,
         image_url: imageUrl,
         fishing_methods: data.fishingMethods
