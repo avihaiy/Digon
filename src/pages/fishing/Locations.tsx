@@ -138,8 +138,8 @@ export default function Locations() {
             zoomControl={false}
           >
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://mt1.google.com/vt/lyrs=m&hl=he&x={x}&y={y}&z={z}"
+              attribution='Map data © Google'
             />
             {/* Bathymetry & Sea Marks Overlay (OpenSeaMap) */}
             <TileLayer
