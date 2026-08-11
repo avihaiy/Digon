@@ -15,8 +15,8 @@ import { Link } from "react-router-dom";
 
 // Rough coordinates for common Israel fishing spots
 const LOCATIONS_MAP: Record<string, [number, number]> = {
-  "חוף לגונה עכו": [32.921, 35.080],
-  "לגונה עכו": [32.921, 35.080],
+  "חוף לגונה עכו": [32.9444, 35.0741],
+  "לגונה עכו": [32.9444, 35.0741],
   "חוף ארגמן עכו": [32.9184, 35.0788],
   "תל אביב": [32.0853, 34.7818],
   "אשדוד": [31.8044, 34.6553],
