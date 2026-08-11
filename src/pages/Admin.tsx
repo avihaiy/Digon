@@ -44,9 +44,15 @@ export default function Admin() {
   const [editMapUrl, setEditMapUrl] = useState("");
 
   // Edit Store Item Modal State
-  const [editStoreItemModalOpen, setEditStoreItemModalOpen] = useState(false);
+  const [isEditStoreItemModalOpen, setEditStoreItemModalOpen] = useState(false);
   const [selectedStoreItemToEdit, setSelectedStoreItemToEdit] = useState<any>(null);
   const [editStoreItemData, setEditStoreItemData] = useState({ name: "", description: "", cost: "", type: "title", value: "", image_url: "" });
+
+  const [isEditLocationModalOpen, setEditLocationModalOpen] = useState(false);
+  const [selectedLocationToEdit, setSelectedLocationToEdit] = useState<any>(null);
+  const [editLocName, setEditLocName] = useState("");
+  const [editLocMethods, setEditLocMethods] = useState("");
+  const [editLocMapUrl, setEditLocMapUrl] = useState("");
 
   // Fetch Users (Profiles)
   const { data: usersData, isLoading: usersLoading } = useQuery({
@@ -156,6 +162,20 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ["fishing-locations"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-data"] });
     },
+  });
+
+  // Edit Location Mutation
+  const editLocationMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string, data: any }) => {
+      await databases.updateDocument(DB_ID, LOCATIONS_ID, id, data);
+    },
+    onSuccess: () => {
+      toast.success("המיקום עודכן בהצלחה!");
+      queryClient.invalidateQueries({ queryKey: ["admin-locations"] });
+      queryClient.invalidateQueries({ queryKey: ["fishing-locations"] });
+      setEditLocationModalOpen(false);
+    },
+    onError: () => toast.error("שגיאה בעדכון המיקום"),
   });
 
   // Approve Location Mutation
@@ -842,7 +862,25 @@ export default function Admin() {
                               <Check className="w-4 h-4" /> אשר
                             </Button>
                           )}
-                          <Button size="sm" variant="destructive" onClick={() => deleteLocationMutation.mutate(loc.$id)}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-slate-100"
+                            onClick={() => {
+                              setSelectedLocationToEdit(loc);
+                              setEditLocName(loc.name || "");
+                              setEditLocMethods(loc.fishing_methods || "");
+                              setEditLocMapUrl(loc.map_url || "");
+                              setEditLocationModalOpen(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" /> ערוך
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => {
+                            if (window.confirm("האם למחוק מיקום זה?")) {
+                              deleteLocationMutation.mutate(loc.$id);
+                            }
+                          }}>
                             <Trash2 className="w-4 h-4" /> מחק
                           </Button>
                         </TableCell>
@@ -1710,7 +1748,7 @@ export default function Admin() {
       )}
 
       {/* Edit Store Item Modal */}
-      {editStoreItemModalOpen && selectedStoreItemToEdit && (
+      {isEditStoreItemModalOpen && selectedStoreItemToEdit && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl w-full max-w-sm shadow-xl relative animate-in zoom-in-95 duration-200">
             <button 
@@ -1939,6 +1977,47 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* Edit Location Dialog */}
+      <Dialog open={isEditLocationModalOpen} onOpenChange={setEditLocationModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>עריכת מיקום דייג</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>שם המיקום</Label>
+              <Input value={editLocName} onChange={e => setEditLocName(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label>שיטות דייג</Label>
+              <Input value={editLocMethods} onChange={e => setEditLocMethods(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label>קישור מפה</Label>
+              <Input value={editLocMapUrl} onChange={e => setEditLocMapUrl(e.target.value)} dir="ltr" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditLocationModalOpen(false)}>ביטול</Button>
+            <Button onClick={() => {
+              if (selectedLocationToEdit) {
+                editLocationMutation.mutate({
+                  id: selectedLocationToEdit.$id,
+                  data: {
+                    name: editLocName,
+                    fishing_methods: editLocMethods,
+                    map_url: editLocMapUrl
+                  }
+                });
+              }
+            }} disabled={editLocationMutation.isPending}>
+              {editLocationMutation.isPending ? "שומר..." : "שמור שינויים"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
