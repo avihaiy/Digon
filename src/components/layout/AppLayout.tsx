@@ -56,6 +56,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { needRefresh, updateServiceWorker } = usePWAUpdate();
   const isReelsPage = location.pathname.includes('/fishing/reels');
+  const isMapPage = location.pathname.includes('/fishing/radar');
+  const hideTopHeader = isReelsPage || isMapPage;
 
   useEffect(() => {
     if (prefs?.a11y_large_text) {
@@ -219,7 +221,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen w-full max-w-[100vw]">
         {/* Top header */}
-        {!isReelsPage && (
+        {!hideTopHeader && (
           <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 lg:px-6 flex items-center justify-between" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(3.5rem + env(safe-area-inset-top))' }}>
             <button
               onClick={() => { triggerHaptic(); setSidebarOpen(true); }}
@@ -326,12 +328,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
         )}
 
         {/* Page content */}
-        <main className={cn("flex-1", !isReelsPage ? "p-4 lg:p-6 pb-20 lg:pb-6" : "pb-16 lg:pb-0")}>
+        <main className={cn("flex-1", !hideTopHeader ? "p-4 lg:p-6 pb-20 lg:pb-6" : "pb-16 lg:pb-0")}>
           {children}
         </main>
 
         {/* Footer credit */}
-        {!isReelsPage && (
+        {!hideTopHeader && (
           <footer className="border-t border-border px-4 py-3 text-center">
             <p className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground">דיגון</span> - מערכת הדייג של ישראל
@@ -343,7 +345,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </footer>
         )}
 
-        {!isReelsPage && <AccessibilityWidget />}
+        {!hideTopHeader && <AccessibilityWidget />}
 
         {/* Mobile Navigation */}
         <BottomNavigation />

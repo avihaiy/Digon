@@ -154,7 +154,7 @@ export default function Radar() {
     <div className="absolute inset-0 z-10 bg-slate-900 pb-16 overflow-hidden">
       
       {/* Floating Header */}
-      <div className="absolute top-4 inset-x-4 z-[1000] flex items-center justify-between pointer-events-none">
+      <div className="absolute inset-x-4 z-[1000] flex items-center justify-between pointer-events-none" style={{ top: 'max(env(safe-area-inset-top, 1rem), 1rem)' }}>
         <Link to="/" className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center pointer-events-auto hover:bg-white/20 shadow-lg transition-colors text-white">
           <ChevronRight className="w-6 h-6" />
         </Link>
@@ -166,7 +166,7 @@ export default function Radar() {
       </div>
 
       {/* Floating Filters & Controls */}
-      <div className="absolute bottom-24 inset-x-4 z-[1000] flex flex-col gap-3 pointer-events-none">
+      <div className="absolute inset-x-4 z-[1000] flex flex-col gap-3 pointer-events-none" style={{ bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 0px) + 5rem)' }}>
         {/* Toggle Mode */}
         <div className="flex justify-end pointer-events-auto">
           <ToggleGroup type="single" value={viewMode} onValueChange={(val) => val && setViewMode(val as any)} dir="ltr" className="bg-slate-900/90 backdrop-blur-xl p-1 rounded-full border border-white/10 shadow-lg">
