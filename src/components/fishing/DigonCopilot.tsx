@@ -87,18 +87,23 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
       try {
         const result = await model.generateContent(prompt);
         text = result.response.text();
-      } catch (err) {
+      } catch (err: any) {
         console.warn("Primary model failed, trying fallback:", err);
-        const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
-        const result = await fallbackModel.generateContent(prompt);
-        text = result.response.text();
+        try {
+          // Fallback to older gemini-pro which is available on all keys
+          const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+          const result = await fallbackModel.generateContent(prompt);
+          text = result.response.text();
+        } catch (fallbackErr: any) {
+           throw new Error(`Primary: ${err?.message} || Fallback: ${fallbackErr?.message}`);
+        }
       }
 
       setMessages(prev => [...prev, { role: 'assistant', content: text.trim() }]);
     } catch (error: any) {
       console.error('Copilot error:', error);
-      toast.error('שגיאה בתקשורת עם Copilot');
-      setMessages(prev => [...prev, { role: 'assistant', content: `אופס, נתקלתי בבעיית תקשורת. (שגיאה: ${error?.message || 'לא ידועה'})` }]);
+      toast.error('שגיאה בתקשורת עם העוזר החכם');
+      setMessages(prev => [...prev, { role: 'assistant', content: `שגיאה מהשרת: ${error?.message || 'לא ידועה'}. אנא ודא שהמפתח שלך תומך במודל זה.` }]);
     } finally {
       setIsLoading(false);
     }
