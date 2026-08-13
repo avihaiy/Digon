@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 // Default to Tel Aviv coordinates if geolocation fails
 const DEFAULT_LAT = 32.0853;
 const DEFAULT_LON = 34.7818;
 
-interface MarineWeatherData {
+export interface MarineWeatherData {
   waveHeight: number | null; // in meters
   windSpeed: number | null; // in km/h
   windDirection: number | null; // in degrees
@@ -20,6 +20,7 @@ interface MarineWeatherData {
   isTurbid: boolean; // if max wave in past 48h > 1.5m
   waveDirection: number | null; // in degrees
   locationName: string;
+  fishingScore: number;
   hourlyForecast?: { time: string; waveHeight: number; temperature: number; windSpeed: number }[];
   dailyForecast?: { 
     date: Date; 
@@ -39,279 +40,204 @@ interface MarineWeatherData {
   }[];
 }
 
-export function useMarineWeather() {
-  const [data, setData] = useState<MarineWeatherData>({
-    waveHeight: null,
-    windSpeed: null,
-    windDirection: null,
-    windGusts: null,
-    cape: null,
-    oceanCurrentVelocity: null,
-    oceanCurrentDirection: null,
-    temperature: null,
-    surfacePressure: null,
-    wavePeriod: null,
-    cloudCover: null,
-    pressureTrend: null,
-    isTurbid: false,
-    waveDirection: null,
-    locationName: 'תל אביב (ברירת מחדל)',
-    hourlyForecast: [],
-    dailyForecast: [],
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-
-  const fetchWeatherData = async (lat: number, lon: number, locationName: string) => {
+const fetchWeatherData = async (lat: number, lon: number, locationName: string): Promise<MarineWeatherData> => {
+  let finalLocationName = locationName;
+  
+  if (locationName === 'המיקום שלך') {
     try {
-      setLoading(true);
-      setError(null);
-
-      let finalLocationName = locationName;
-      
-      // If it's a generic "Your location", try to find the actual city
-      if (locationName === 'המיקום שלך') {
-        try {
-          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=he`, {
-            headers: { 'User-Agent': 'Digon Fishing App' }
-          });
-          const geoJson = await geoRes.json();
-          const city = geoJson.address?.city || geoJson.address?.town || geoJson.address?.village || geoJson.address?.suburb;
-          if (city) {
-            finalLocationName = `המיקום שלך - ${city.replace('־', ' ').split('–')[0]}`; // Clean up "תל-אביב-יפו" -> "תל אביב"
-          }
-        } catch (e) {
-          console.warn('Geocoding failed', e);
-        }
-      }
-
-      // Fetch Weather (Wind, Temp, Pressure, Clouds - Current, Hourly, Daily)
-      const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&daily=sunrise,sunset,uv_index_max,precipitation_probability_max,temperature_2m_max,temperature_2m_min&past_hours=12&timezone=auto&models=best_match`
-      );
-      const weatherJson = await weatherRes.json();
-      
-      // Fetch Marine (Waves, Direction & Period with past 48h)
-      const marineRes = await fetch(
-        `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&hourly=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&past_hours=48&timezone=auto&models=best_match`
-      );
-      const marineJson = await marineRes.json();
-
-      let hourlyForecast = [];
-      let dailyForecastMap = new Map();
-
-      let isTurbid = false;
-      let pressureTrend = null;
-      let waveDirection = marineJson.current?.wave_direction ?? null;
-
-      if (marineJson.hourly?.time && weatherJson.hourly?.time) {
-        const marineStartIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date(new Date().setHours(0,0,0,0)));
-        const marineCurrentIndex = marineJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date());
-        
-        const weatherStartIndex = weatherJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date(new Date().setHours(0,0,0,0)));
-        const weatherCurrentIndex = weatherJson.hourly.time.findIndex((t: string) => new Date(t) >= new Date());
-
-        // Calculate Turbidity
-        if (marineCurrentIndex > -1) {
-          const pastWaves = marineJson.hourly.wave_height.slice(0, marineCurrentIndex);
-          const maxPastWave = Math.max(...pastWaves.filter((w: number) => w !== null));
-          if (maxPastWave >= 1.5) {
-            isTurbid = true;
-          }
-        }
-
-        // Calculate Pressure Trend
-        if (weatherCurrentIndex >= 12) {
-          const currentPressure = weatherJson.hourly.surface_pressure[weatherCurrentIndex];
-          const pastPressure = weatherJson.hourly.surface_pressure[weatherCurrentIndex - 12];
-          if (currentPressure !== null && pastPressure !== null) {
-            pressureTrend = currentPressure - pastPressure;
-          }
-        }
-
-        // Align arrays for forecast loop (using start index of each)
-        const endIndex = marineCurrentIndex > -1 ? marineCurrentIndex + 24 : 24;
-        
-        for (let i = 0; i < 24; i++) {
-           const mIdx = (marineCurrentIndex > -1 ? marineCurrentIndex : 0) + i;
-           const wIdx = (weatherCurrentIndex > -1 ? weatherCurrentIndex : 0) + i;
-           
-           if (mIdx < marineJson.hourly.time.length && wIdx < weatherJson.hourly.time.length) {
-             hourlyForecast.push({
-               time: new Date(marineJson.hourly.time[mIdx]).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
-               waveHeight: marineJson.hourly.wave_height[mIdx] || 0,
-               temperature: weatherJson.hourly.temperature_2m[wIdx] || 0,
-               windSpeed: weatherJson.hourly.wind_speed_10m[wIdx] || 0
-             });
-           }
-        }
-
-        // Compute Daily Forecast for 7 days
-        for (let i = 0; i < 7 * 24; i++) {
-          const mIdx = (marineStartIndex > -1 ? marineStartIndex : 0) + i;
-          const wIdx = (weatherStartIndex > -1 ? weatherStartIndex : 0) + i;
-
-          if (mIdx >= marineJson.hourly.time.length || wIdx >= weatherJson.hourly.time.length) break;
-
-          const dateStr = marineJson.hourly.time[mIdx];
-          const dateObj = new Date(dateStr);
-          const dayKey = dateObj.toLocaleDateString('he-IL');
-          
-          const wave = marineJson.hourly.wave_height[mIdx] || 0;
-          const period = marineJson.hourly.wave_period ? marineJson.hourly.wave_period[mIdx] || 0 : 0;
-          const wDir = marineJson.hourly.wave_direction ? marineJson.hourly.wave_direction[mIdx] || 0 : 0;
-          
-          const temp = weatherJson.hourly.temperature_2m[wIdx] || 0;
-          const wind = weatherJson.hourly.wind_speed_10m[wIdx] || 0;
-          const dir = weatherJson.hourly.wind_direction_10m[wIdx] || 0;
-          const pressure = weatherJson.hourly.surface_pressure ? weatherJson.hourly.surface_pressure[wIdx] || 0 : 0;
-          const clouds = weatherJson.hourly.cloud_cover ? weatherJson.hourly.cloud_cover[wIdx] || 0 : 0;
-          const gusts = weatherJson.hourly.wind_gusts_10m ? weatherJson.hourly.wind_gusts_10m[wIdx] || 0 : 0;
-          const cape = weatherJson.hourly.cape ? weatherJson.hourly.cape[wIdx] || 0 : 0;
-          const curVel = marineJson.hourly.ocean_current_velocity ? marineJson.hourly.ocean_current_velocity[mIdx] || 0 : 0;
-          const curDir = marineJson.hourly.ocean_current_direction ? marineJson.hourly.ocean_current_direction[mIdx] || 0 : 0;
-          
-          const hourData = {
-            time: dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
-            date: dateObj,
-            waveHeight: wave,
-            temperature: temp,
-            windSpeed: wind,
-            windDirection: dir,
-            wavePeriod: period,
-            surfacePressure: pressure,
-            cloudCover: clouds,
-            waveDirection: wDir,
-            windGusts: gusts,
-            cape: cape,
-            oceanCurrentVelocity: curVel,
-            oceanCurrentDirection: curDir
-          };
-
-          if (!dailyForecastMap.has(dayKey)) {
-            // Find index in daily array
-            const dailyIdx = weatherJson.daily?.time?.findIndex((t: string) => t === dateStr.split('T')[0]);
-            
-            let sunrise = "06:00";
-            let sunset = "19:30";
-            let uvIndexMax = 0;
-            let rainProbMax = 0;
-            let biteTimes: any[] = [];
-            
-            if (dailyIdx > -1 && weatherJson.daily) {
-              const srDate = new Date(weatherJson.daily.sunrise[dailyIdx]);
-              const ssDate = new Date(weatherJson.daily.sunset[dailyIdx]);
-              sunrise = srDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-              sunset = ssDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-              uvIndexMax = weatherJson.daily.uv_index_max[dailyIdx] || 0;
-              rainProbMax = weatherJson.daily.precipitation_probability_max[dailyIdx] || 0;
-              
-              // Calculate Bite Times (Golden Hours: 1 hour before to 1.5 hours after sunrise/sunset)
-              const srStart = new Date(srDate.getTime() - 60 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-              const srEnd = new Date(srDate.getTime() + 90 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-              const ssStart = new Date(ssDate.getTime() - 60 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-              const ssEnd = new Date(ssDate.getTime() + 90 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-              
-              biteTimes = [
-                { start: srStart, end: srEnd, rating: 'excellent' },
-                { start: ssStart, end: ssEnd, rating: 'good' }
-              ];
-            }
-
-            dailyForecastMap.set(dayKey, {
-              date: dateObj,
-              dayName: dateObj.toLocaleDateString('he-IL', { weekday: 'long' }),
-              waveHeightMax: wave,
-              tempMax: temp,
-              tempMin: temp,
-              windSpeedMax: wind,
-              windGustsMax: gusts,
-              capeMax: cape,
-              sunrise,
-              sunset,
-              uvIndexMax,
-              rainProbMax,
-              biteTimes,
-              hours: [hourData]
-            });
-          } else {
-            const current = dailyForecastMap.get(dayKey);
-            current.waveHeightMax = Math.max(current.waveHeightMax, wave);
-            current.tempMax = Math.max(current.tempMax, temp);
-            current.tempMin = Math.min(current.tempMin, temp);
-            current.windSpeedMax = Math.max(current.windSpeedMax, wind);
-            current.windGustsMax = Math.max(current.windGustsMax, gusts);
-            current.capeMax = Math.max(current.capeMax, cape);
-            current.hours.push(hourData);
-          }
-        }
-      }
-
-      const dailyForecast = Array.from(dailyForecastMap.values()).slice(0, 7);
-
-      setData({
-        waveHeight: marineJson.current?.wave_height ?? null,
-        windSpeed: weatherJson.current?.wind_speed_10m ?? null,
-        windDirection: weatherJson.current?.wind_direction_10m ?? null,
-        windGusts: weatherJson.current?.wind_gusts_10m ?? null,
-        cape: weatherJson.current?.cape ?? null,
-        oceanCurrentVelocity: marineJson.current?.ocean_current_velocity ?? null,
-        oceanCurrentDirection: marineJson.current?.ocean_current_direction ?? null,
-        temperature: weatherJson.current?.temperature_2m ?? null,
-        surfacePressure: weatherJson.current?.surface_pressure ?? null,
-        wavePeriod: marineJson.current?.wave_period ?? null,
-        cloudCover: weatherJson.current?.cloud_cover ?? null,
-        pressureTrend,
-        isTurbid,
-        waveDirection,
-        locationName: finalLocationName,
-        hourlyForecast,
-        dailyForecast,
+      const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=he`, {
+        headers: { 'User-Agent': 'Digon Fishing App' }
       });
-      setLastUpdated(new Date());
-    } catch (err) {
-      console.error('Failed to fetch weather data:', err);
-      setError('שגיאה בטעינת נתוני מזג האוויר');
-    } finally {
-      setLoading(false);
+      const geoJson = await geoRes.json();
+      const city = geoJson.address?.city || geoJson.address?.town || geoJson.address?.village || geoJson.address?.suburb;
+      if (city) {
+        finalLocationName = `המיקום שלך - ${city.replace('־', ' ').split('–')[0]}`;
+      }
+    } catch (e) {
+      console.warn('Geocoding failed', e);
     }
-  };
+  }
 
-  const refreshData = useCallback(() => {
-    setLoading(true);
+  const weatherRes = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&daily=sunrise,sunset,uv_index_max,precipitation_probability_max,temperature_2m_max,temperature_2m_min&past_hours=12&timezone=auto&models=best_match`
+  );
+  const weatherJson = await weatherRes.json();
+  
+  const marineRes = await fetch(
+    `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&hourly=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&past_hours=48&timezone=auto&models=best_match`
+  );
+  const marineJson = await marineRes.json();
+
+  let isTurbid = false;
+  if (marineJson.hourly?.wave_height) {
+    const past48hWaves = marineJson.hourly.wave_height.slice(0, 48);
+    const maxPastWave = Math.max(...past48hWaves.filter((v: number | null) => v !== null));
+    if (maxPastWave > 1.2) {
+      isTurbid = true;
+    }
+  }
+
+  let pressureTrend = 0;
+  if (weatherJson.hourly?.surface_pressure) {
+    const currentPressure = weatherJson.current.surface_pressure;
+    const pastPressure = weatherJson.hourly.surface_pressure[0];
+    if (currentPressure && pastPressure) {
+      pressureTrend = Number((currentPressure - pastPressure).toFixed(1));
+    }
+  }
+
+  const currentW = weatherJson.current || {};
+  const currentM = marineJson.current || {};
+  
+  let score = 100;
+  if (currentM.wave_height > 1.5) score -= 30;
+  else if (currentM.wave_height > 0.8) score -= 10;
+  if (currentW.wind_speed_10m > 25) score -= 25;
+  else if (currentW.wind_speed_10m > 15) score -= 10;
+  if (pressureTrend < -2) score -= 15;
+  else if (pressureTrend > 2) score += 5;
+  if (isTurbid) score -= 10;
+  score = Math.max(0, Math.min(100, score));
+
+  const dailyForecast: any[] = [];
+  const hourlyForecast: any[] = [];
+
+  const days = weatherJson.daily?.time || [];
+  for (let i = 0; i < days.length; i++) {
+    const date = new Date(days[i]);
+    const dayName = new Intl.DateTimeFormat('he-IL', { weekday: 'long' }).format(date);
+    
+    const dayHours = [];
+    if (weatherJson.hourly?.time) {
+      for (let j = 0; j < weatherJson.hourly.time.length; j++) {
+        const hourTime = new Date(weatherJson.hourly.time[j]);
+        if (hourTime.getDate() === date.getDate() && hourTime.getMonth() === date.getMonth()) {
+          const w = marineJson.hourly?.wave_height?.[j] || 0;
+          const wh = {
+            time: hourTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+            date: hourTime,
+            waveHeight: w,
+            temperature: weatherJson.hourly.temperature_2m[j],
+            windSpeed: weatherJson.hourly.wind_speed_10m[j],
+            windDirection: weatherJson.hourly.wind_direction_10m[j],
+            wavePeriod: marineJson.hourly?.wave_period?.[j] || 0,
+            surfacePressure: weatherJson.hourly.surface_pressure[j],
+            cloudCover: weatherJson.hourly.cloud_cover[j],
+            waveDirection: marineJson.hourly?.wave_direction?.[j] || 0,
+            windGusts: weatherJson.hourly.wind_gusts_10m[j],
+            cape: weatherJson.hourly.cape[j],
+            oceanCurrentVelocity: marineJson.hourly?.ocean_current_velocity?.[j] || 0,
+            oceanCurrentDirection: marineJson.hourly?.ocean_current_direction?.[j] || 0,
+          };
+          dayHours.push(wh);
+          
+          const now = new Date();
+          if (hourTime > now && hourlyForecast.length < 24) {
+            hourlyForecast.push({
+              time: wh.time,
+              waveHeight: wh.waveHeight,
+              temperature: wh.temperature,
+              windSpeed: wh.windSpeed
+            });
+          }
+        }
+      }
+    }
+
+    const biteTimes = [];
+    const sunrise = new Date(weatherJson.daily?.sunrise?.[i]);
+    const sunset = new Date(weatherJson.daily?.sunset?.[i]);
+    
+    if (!isNaN(sunrise.getTime())) {
+      const start = new Date(sunrise.getTime() - 60 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      const end = new Date(sunrise.getTime() + 60 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      biteTimes.push({ start, end, rating: 'excellent' as const });
+    }
+    
+    if (!isNaN(sunset.getTime())) {
+      const start = new Date(sunset.getTime() - 60 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      const end = new Date(sunset.getTime() + 60 * 60 * 1000).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      biteTimes.push({ start, end, rating: 'good' as const });
+    }
+
+    let waveHeightMax = 0;
+    if (marineJson.hourly?.wave_height) {
+      const startIndex = i * 24;
+      const endIndex = startIndex + 24;
+      const dayWaves = marineJson.hourly.wave_height.slice(startIndex, endIndex);
+      waveHeightMax = Math.max(...dayWaves.filter((v: number | null) => v !== null));
+    }
+
+    dailyForecast.push({
+      date,
+      dayName,
+      waveHeightMax,
+      tempMax: weatherJson.daily?.temperature_2m_max?.[i] || 0,
+      tempMin: weatherJson.daily?.temperature_2m_min?.[i] || 0,
+      sunrise: weatherJson.daily?.sunrise?.[i] || '',
+      sunset: weatherJson.daily?.sunset?.[i] || '',
+      uvIndexMax: weatherJson.daily?.uv_index_max?.[i] || 0,
+      rainProbMax: weatherJson.daily?.precipitation_probability_max?.[i] || 0,
+      windSpeedMax: Math.max(...dayHours.map(h => h.windSpeed)),
+      windGustsMax: Math.max(...dayHours.map(h => h.windGusts)),
+      capeMax: Math.max(...dayHours.map(h => h.cape)),
+      biteTimes,
+      hours: dayHours
+    });
+  }
+
+  return {
+    waveHeight: currentM.wave_height,
+    windSpeed: currentW.wind_speed_10m,
+    windDirection: currentW.wind_direction_10m,
+    windGusts: currentW.wind_gusts_10m,
+    cape: currentW.cape,
+    oceanCurrentVelocity: currentM.ocean_current_velocity,
+    oceanCurrentDirection: currentM.ocean_current_direction,
+    temperature: currentW.temperature_2m,
+    surfacePressure: currentW.surface_pressure,
+    wavePeriod: currentM.wave_period,
+    cloudCover: currentW.cloud_cover,
+    pressureTrend,
+    isTurbid,
+    waveDirection: currentM.wave_direction,
+    locationName: finalLocationName,
+    fishingScore: score,
+    hourlyForecast,
+    dailyForecast
+  };
+};
+
+const getPosition = (): Promise<{ lat: number; lon: number; locationName: string }> => {
+  return new Promise((resolve) => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          fetchWeatherData(
-            position.coords.latitude, 
-            position.coords.longitude, 
-            'המיקום שלך'
-          );
-        },
-        (error) => {
-          console.warn('Geolocation failed or denied, using default location', error);
-          fetchWeatherData(DEFAULT_LAT, DEFAULT_LON, 'תל אביב (ברירת מחדל)');
-        },
-        { timeout: 5000 }
+        (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude, locationName: 'המיקום שלך' }),
+        () => resolve({ lat: DEFAULT_LAT, lon: DEFAULT_LON, locationName: 'תל אביב (ברירת מחדל)' }),
+        { timeout: 5000, maximumAge: 1000 * 60 * 30 }
       );
     } else {
-      fetchWeatherData(DEFAULT_LAT, DEFAULT_LON, 'תל אביב (ברירת מחדל)');
+      resolve({ lat: DEFAULT_LAT, lon: DEFAULT_LON, locationName: 'תל אביב (ברירת מחדל)' });
     }
-  }, []);
+  });
+};
 
-  useEffect(() => {
-    refreshData();
-    
-    // Auto refresh every 30 minutes
-    const interval = setInterval(() => {
-      refreshData();
-    }, 30 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [refreshData]);
+export function useMarineWeather() {
+  const query = useQuery({
+    queryKey: ['marineWeather'],
+    queryFn: async () => {
+      const pos = await getPosition();
+      return fetchWeatherData(pos.lat, pos.lon, pos.locationName);
+    },
+  });
 
-  return { data, loading, error, refreshData, lastUpdated };
+  return {
+    data: query.data,
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refreshData: query.refetch,
+    lastUpdated: new Date()
+  };
 }
 
 // Helper to convert degrees to compass direction in Hebrew
@@ -322,5 +248,5 @@ export function getWindDirectionHebrew(degrees: number | null): string {
     "צפונית", "צפון-מזרחית", "מזרחית", "דרום-מזרחית", 
     "דרומית", "דרום-מערבית", "מערבית", "צפון-מערבית"
   ];
-  return arr[(val % 16) % 8]; // Open-Meteo uses standard degrees, mapped to 8 main points
+  return arr[(val % 16) % 8];
 }
