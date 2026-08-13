@@ -64,7 +64,7 @@ export function DigonCopilot() {
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
       // Build context
       const systemContext = `You are Digon Copilot, a professional, friendly fishing assistant in Israel. Answer in Hebrew. Keep answers short, direct, and helpful (max 3-4 sentences). 
@@ -90,8 +90,7 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
       } catch (err: any) {
         console.warn("Primary model failed, trying fallback:", err);
         try {
-          // Fallback to older gemini-pro which is available on all keys
-          const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+          const fallbackModel = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
           const result = await fallbackModel.generateContent(prompt);
           text = result.response.text();
         } catch (fallbackErr: any) {
@@ -103,7 +102,7 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
     } catch (error: any) {
       console.error('Copilot error:', error);
       toast.error('שגיאה בתקשורת עם העוזר החכם');
-      setMessages(prev => [...prev, { role: 'assistant', content: `שגיאה מהשרת: ${error?.message || 'לא ידועה'}. אנא ודא שהמפתח שלך תומך במודל זה.` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `שגיאה מהשרת: ${error?.message || 'לא ידועה'}.` }]);
     } finally {
       setIsLoading(false);
     }
