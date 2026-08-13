@@ -119,26 +119,6 @@ export default function Identify() {
     }
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
-      if (!apiKey) {
-        toast.info("מפתח API של Gemini לא נמצא, מציג תוצאה להדגמה.");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setResult({
-          name: "לוקוס לבן (דקר)",
-          confidence: 96,
-          kosher: true,
-          danger: null,
-          description: "דג טורף ממשפחת הדקריים, נחשב לאחד ממשובחי הדגים בים התיכון.",
-          tips: "מומלץ להשתמש בשיטת ז'רז'ור עם דמויים גדולים או פיתיון חי ליד סלעים.",
-          minSize: "45 ס״מ (חוק הגנת הדייג בישראל)",
-          bestBait: "סבידה / תמנון / דמוי שוקע 120 מ״מ"
-        });
-        return;
-      }
-
-      const genAI = new GoogleGenerativeAI(apiKey);
-      
       const mimeMatch = base64Str.match(/^data:(image\/[a-zA-Z0-9]+);base64,/);
       const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
       const base64Data = base64Str.split(",")[1];
@@ -166,22 +146,36 @@ export default function Identify() {
 
       let text = "";
       try {
-        // Try Pro first
-        const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
-        const aiResult = await model.generateContent([
-          prompt,
-          { inlineData: { data: base64Data, mimeType: mimeType } }
-        ]);
-        text = aiResult.response.text();
+        const response = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            prompt, 
+            base64Image: base64Data, 
+            mimeType, 
+            model: "gemini-3.6-flash" 
+          })
+        });
+        if (!response.ok) throw new Error(response.statusText);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        text = data.text;
       } catch (proError: any) {
         console.warn("Pro model failed, falling back to Flash:", proError);
-        // Fallback to Flash (handles rate limits or model availability issues)
-        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
-        const aiResult = await model.generateContent([
-          prompt,
-          { inlineData: { data: base64Data, mimeType: mimeType } }
-        ]);
-        text = aiResult.response.text();
+        const fallbackResponse = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            prompt, 
+            base64Image: base64Data, 
+            mimeType, 
+            model: "gemini-3.5-flash-lite" 
+          })
+        });
+        if (!fallbackResponse.ok) throw new Error(fallbackResponse.statusText);
+        const data = await fallbackResponse.json();
+        if (data.error) throw new Error(data.error);
+        text = data.text;
       }
       
       // Robust JSON extraction

@@ -70,15 +70,6 @@ export default function TackleBox() {
     setAiLoading(true);
     setAiAdvice(null);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        toast.error("מפתח API חסר");
-        setAiLoading(false);
-        return;
-      }
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
-      
       const gearListStr = gear.map(g => `${g.category}: ${g.brand} ${g.name} (${g.specs || 'ללא מפרט'})`).join('\n');
       
       const prompt = `
@@ -97,8 +88,17 @@ export default function TackleBox() {
       Reply in Hebrew. Be enthusiastic but professional. Suggest one specific combo (rod+reel+lure/bait) from their box that fits the weather, and explain briefly WHY it fits (e.g., "The waves are high, so use this heavy jig with your powerful rod"). Keep it under 4 sentences.
       `;
       
-      const result = await model.generateContent(prompt);
-      setAiAdvice(result.response.text());
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, model: "gemini-3.5-flash-lite" })
+      });
+      
+      if (!response.ok) throw new Error(response.statusText);
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      
+      setAiAdvice(data.text);
     } catch (e) {
       console.error(e);
       setAiAdvice("התרחשה שגיאה בהתייעצות עם המומחה. נסה שוב.");

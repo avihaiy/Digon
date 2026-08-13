@@ -76,23 +76,6 @@ export function DigonCopilot() {
     setIsLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
-      // Fallback for missing API Key
-      if (!apiKey) {
-        setTimeout(() => {
-          setMessages(prev => [...prev, { 
-            role: 'assistant', 
-            content: 'חסר מפתח API של Gemini. זוהי הודעת בדיקה: הים כרגע נראה מצוין לדיג באזור שלך! 🎣' 
-          }]);
-          setIsLoading(false);
-        }, 1500);
-        return;
-      }
-
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
-
       // Build context
       const systemContext = `You are Digon Copilot, a professional, friendly fishing assistant in Israel. Answer in Hebrew. Keep answers short, direct, and helpful (max 3-4 sentences). 
 Current user context:
@@ -112,14 +95,35 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
 
       let text = "";
       try {
-        const result = await model.generateContent(prompt);
-        text = result.response.text();
+        const response = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, model: "gemini-3.6-flash" })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        text = data.text || "";
       } catch (err: any) {
-        console.warn("Primary model failed, trying fallback:", err);
+        console.warn("Primary model failed, trying fallback via API:", err);
         try {
-          const fallbackModel = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
-          const result = await fallbackModel.generateContent(prompt);
-          text = result.response.text();
+          const fallbackResponse = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, model: "gemini-3.5-flash-lite" })
+          });
+          
+          if (!fallbackResponse.ok) {
+            throw new Error(`Fallback server error: ${fallbackResponse.statusText}`);
+          }
+          
+          const fallbackData = await fallbackResponse.json();
+          if (fallbackData.error) throw new Error(fallbackData.error);
+          text = fallbackData.text || "";
         } catch (fallbackErr: any) {
            throw new Error(`Primary: ${err?.message} || Fallback: ${fallbackErr?.message}`);
         }
