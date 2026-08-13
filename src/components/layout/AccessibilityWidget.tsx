@@ -47,7 +47,7 @@ export function AccessibilityWidget() {
   };
 
   return (
-    <div className="fixed bottom-32 left-4 z-[100]">
+    <div className="fixed bottom-40 left-4 z-[100]">
       <AnimatePresence>
         {isOpen && (
           <motion.div
