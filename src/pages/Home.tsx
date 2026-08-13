@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,22 @@ export default function Home() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const { data: marineData, loading: marineLoading, refreshData, lastUpdated } = useMarineWeather();
-  const { catches, isLoading: catchesLoading } = useCatches();
+  const { catches, isLoading: catchesLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCatches();
+  
+  // Intersection Observer for Infinite Scroll
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastCatchElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (catchesLoading || isFetchingNextPage) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [catchesLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
   const { activeTournaments } = useTournaments();
   
   useEffect(() => {
@@ -340,9 +355,25 @@ export default function Home() {
               <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
             </div>
           ) : catches && catches.length > 0 ? (
-            catches.map((report) => (
-              <SocialCatchCard key={report.$id} report={report} />
-            ))
+            <div className="flex flex-col gap-4">
+              {catches.map((report, index) => {
+                if (catches.length === index + 1) {
+                  return (
+                    <div ref={lastCatchElementRef} key={report.$id}>
+                      <SocialCatchCard report={report} />
+                    </div>
+                  );
+                } else {
+                  return <SocialCatchCard key={report.$id} report={report} />;
+                }
+              })}
+              
+              {isFetchingNextPage && (
+                <div className="flex justify-center p-4">
+                  <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+                </div>
+              )}
+            </div>
           ) : (
             <div className="text-center p-8 bg-muted/20 rounded-xl border border-dashed">
               <p className="text-sm text-muted-foreground">עדיין אין תפיסות היום.</p>

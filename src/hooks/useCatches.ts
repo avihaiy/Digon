@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { client, databases, storage, APPWRITE_DB_ID, APPWRITE_CATCHES_ID, APPWRITE_PROFILES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 import { toast } from "@/hooks/use-toast";
@@ -29,23 +29,42 @@ export function useCatches() {
   const { user, refreshProfile, updateLocalPoints, prefs, updateUserPrefs } = useAuth();
   const { playSuccessChime, triggerHaptic } = useSoundEffects();
 
-  // Fetch Catches
-  const { data: catches, isLoading } = useQuery({
+  // Fetch Catches with Infinite Scroll
+  const { 
+    data: catchesData, 
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery({
     queryKey: ["catches"],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = null }) => {
       try {
-        const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, [
+        const queries = [
           Query.orderDesc("$createdAt"),
-          Query.limit(50)
-        ]);
+          Query.limit(10)
+        ];
+        
+        if (pageParam) {
+          queries.push(Query.cursorAfter(pageParam));
+        }
+        
+        const res = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_CATCHES_ID, queries);
         // Only show approved catches (or old catches without status) in the community feed
         return res.documents.filter((doc: any) => doc.status === 'approved' || !doc.status) as unknown as CatchReport[];
       } catch (error) {
         console.error("Failed to fetch catches (Appwrite collection might not exist yet):", error);
-        return []; // Return empty gracefully if collection doesn't exist yet
+        return [];
       }
     },
+    getNextPageParam: (lastPage) => {
+      if (!lastPage || lastPage.length < 10) return undefined;
+      return lastPage[lastPage.length - 1].$id;
+    },
+    initialPageParam: null as string | null
   });
+
+  const catches = catchesData?.pages.flat() || [];
 
   // Appwrite Realtime Subscription for Live Feed
   useEffect(() => {
@@ -290,6 +309,9 @@ export function useCatches() {
   return {
     catches,
     isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     reportCatch: reportCatchMutation.mutateAsync,
     isReporting: reportCatchMutation.isPending,
   };
