@@ -50,8 +50,17 @@ export function DigonCopilot() {
 
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      
+      // Fallback for missing API Key
       if (!apiKey) {
-        throw new Error('חסר מפתח API של Gemini');
+        setTimeout(() => {
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: 'חסר מפתח API של Gemini. זוהי הודעת בדיקה: הים כרגע נראה מצוין לדיג באזור שלך! 🎣' 
+          }]);
+          setIsLoading(false);
+        }, 1500);
+        return;
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
@@ -74,14 +83,22 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
 
       const prompt = `${systemContext}\n\nChat History:\n${chatHistory}\n\nUser: ${userMessage}\nAssistant:`;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      let text = "";
+      try {
+        const result = await model.generateContent(prompt);
+        text = result.response.text();
+      } catch (err) {
+        console.warn("Primary model failed, trying fallback:", err);
+        const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" });
+        const result = await fallbackModel.generateContent(prompt);
+        text = result.response.text();
+      }
 
       setMessages(prev => [...prev, { role: 'assistant', content: text.trim() }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Copilot error:', error);
       toast.error('שגיאה בתקשורת עם Copilot');
-      setMessages(prev => [...prev, { role: 'assistant', content: 'אופס, נתקלתי בבעיית תקשורת. נסה שוב מאוחר יותר.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `אופס, נתקלתי בבעיית תקשורת. (שגיאה: ${error?.message || 'לא ידועה'})` }]);
     } finally {
       setIsLoading(false);
     }
