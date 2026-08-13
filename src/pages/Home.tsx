@@ -17,6 +17,8 @@ import { useAppSettings } from '@/hooks/useAppSettings';
 import { AlertCircle } from 'lucide-react';
 import { useDailyLogin } from '@/hooks/useDailyLogin';
 import { DailyLoginModal } from '@/components/home/DailyLoginModal';
+import { useNotifications } from '@/hooks/useNotifications';
+import { BellRing } from 'lucide-react';
 
 export default function Home() {
   const { user } = useAuth();
@@ -40,6 +42,7 @@ export default function Home() {
   const showBanner = appSettings?.global_announcement_active === 'true' && !!appSettings?.global_announcement;
 
   const { reward, canClaimDaily, potentialReward, claimDaily, clearReward } = useDailyLogin();
+  const { permission, requestPermission } = useNotifications();
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-lg mx-auto">
@@ -67,12 +70,33 @@ export default function Home() {
             </div>
             <div className="relative z-10">
               <h4 className="font-bold text-sm mb-0.5">הודעת מערכת</h4>
-              <p className="text-xs opacity-90 leading-snug">{appSettings.global_announcement}</p>
+              <p className="text-sm font-medium leading-tight">{appSettings.global_announcement}</p>
             </div>
           </div>
         </div>
       )}
 
+      {/* Push Notifications Banner */}
+      {permission === 'default' && (
+        <div className="px-4">
+          <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl flex items-center justify-between gap-3 animate-in fade-in zoom-in duration-500">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
+                <BellRing className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm">התראות דיג</h3>
+                <p className="text-xs text-muted-foreground">קבל התראה כששעת הזהב מתקרבת</p>
+              </div>
+            </div>
+            <Button onClick={requestPermission} size="sm" className="rounded-full text-xs h-8">
+              הפעל
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Actions Grid */}
       {/* Daily Bonus Button */}
       {canClaimDaily && potentialReward && (
         <div className="px-4">

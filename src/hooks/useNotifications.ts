@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_NOTIFICATIONS_ID } from "@/lib/appwrite";
 import { Query, ID } from "appwrite";
 import { useAuth } from "./useAuth";
+import { useMarineWeather } from "./useMarineWeather";
 import { useEffect, useState } from "react";
 
 export interface Notification {
@@ -19,6 +20,7 @@ export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [notifiedIds, setNotifiedIds] = useState<Set<string>>(new Set());
+  const { data: marineData } = useMarineWeather();
   const [permission, setPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "default"
   );
@@ -86,6 +88,48 @@ export function useNotifications() {
       setNotifiedIds(newNotifiedIds);
     }
   }, [notifications, permission, notifiedIds]);
+
+  // Golden Hour Local Notifications Check
+  useEffect(() => {
+    if (permission !== "granted" || !marineData?.dailyForecast?.[0]?.biteTimes) return;
+
+    const checkGoldenHours = () => {
+      const now = new Date();
+      const todayDateStr = now.toISOString().split('T')[0];
+      const todayBiteTimes = marineData.dailyForecast![0].biteTimes;
+
+      todayBiteTimes.forEach((bt, index) => {
+        const [startHour, startMin] = bt.start.split(':').map(Number);
+        
+        const startTime = new Date();
+        startTime.setHours(startHour, startMin, 0, 0);
+        
+        // Notify 60 minutes before
+        const notifyTime = new Date(startTime.getTime() - 60 * 60 * 1000);
+        
+        const diffMs = Math.abs(now.getTime() - notifyTime.getTime());
+        // If current time is within a 5-minute window of the notify time
+        if (diffMs <= 5 * 60 * 1000) {
+          const notifiedKey = `notified_gh_${todayDateStr}_${index}`;
+          if (!localStorage.getItem(notifiedKey)) {
+            try {
+              new Notification('🎣 שעת הזהב מתקרבת!', {
+                body: `תנאי הים ב${marineData.locationName} מתאימים לדיג. זמן האכילות (שעת הזהב) יתחיל ב-${bt.start}.`,
+                icon: '/icon-192x192.png'
+              });
+              localStorage.setItem(notifiedKey, 'true');
+            } catch (e) {
+              console.error("Failed to show golden hour notification", e);
+            }
+          }
+        }
+      });
+    };
+
+    checkGoldenHours();
+    const interval = setInterval(checkGoldenHours, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [permission, marineData]);
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {

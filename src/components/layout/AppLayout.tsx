@@ -27,9 +27,11 @@ import {
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { usePWAUpdate } from '@/hooks/usePWAUpdate';
+import { syncOfflineCatches } from '@/lib/offlineSync';
 import BottomNavigation from './BottomNavigation';
 import { AccessibilityWidget } from './AccessibilityWidget';
 import { AutoNightMode } from '@/components/AutoNightMode';
+import { DigonCopilot } from '@/components/fishing/DigonCopilot';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -79,6 +81,32 @@ export default function AppLayout({ children }: AppLayoutProps) {
       navigator.vibrate(10);
     }
   };
+
+  // Handle Offline Auto-Sync
+  useEffect(() => {
+    const handleOnline = async () => {
+      try {
+        const res = await syncOfflineCatches();
+        if (res.success) {
+          toast({
+            title: "סנכרון חזר! 📡",
+            description: res.message,
+          });
+        }
+      } catch (e) {
+        console.error('Auto-sync failed:', e);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    
+    // Check once on mount just in case we were offline and refreshed, and now are online
+    if (navigator.onLine && user) {
+      handleOnline();
+    }
+    
+    return () => window.removeEventListener('online', handleOnline);
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -346,6 +374,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         )}
 
         {!hideTopHeader && <AccessibilityWidget />}
+        {!hideTopHeader && <DigonCopilot />}
 
         {/* Mobile Navigation */}
         <BottomNavigation />

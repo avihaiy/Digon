@@ -14,13 +14,13 @@ self.addEventListener('activate', () => self.clients.claim());
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Network First for Supabase API
+// Network First for Appwrite & Open-Meteo API
 registerRoute(
-  ({ url }) => url.hostname.endsWith('supabase.co'),
+  ({ url }) => url.hostname.includes('appwrite.io') || url.hostname.includes('open-meteo.com'),
   new NetworkFirst({
     cacheName: 'api-cache',
     networkTimeoutSeconds: 5,
-    plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 5 })],
+    plugins: [new ExpirationPlugin({ maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 })], // Cache for 24h
   })
 );
 
