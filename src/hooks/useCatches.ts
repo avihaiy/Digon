@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { databases, storage, APPWRITE_DB_ID, APPWRITE_CATCHES_ID, APPWRITE_PROFILES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
+import { client, databases, storage, APPWRITE_DB_ID, APPWRITE_CATCHES_ID, APPWRITE_PROFILES_ID, APPWRITE_CATCH_IMAGES_BUCKET_ID } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +46,23 @@ export function useCatches() {
       }
     },
   });
+
+  // Appwrite Realtime Subscription for Live Feed
+  useEffect(() => {
+    if (!APPWRITE_DB_ID || !APPWRITE_CATCHES_ID) return;
+
+    const unsubscribe = client.subscribe(
+      `databases.${APPWRITE_DB_ID}.collections.${APPWRITE_CATCHES_ID}.documents`,
+      (response) => {
+        // Only react to new creations to prevent infinite loops on updates
+        if (response.events.includes(`databases.${APPWRITE_DB_ID}.collections.${APPWRITE_CATCHES_ID}.documents.*.create`)) {
+          queryClient.invalidateQueries({ queryKey: ["catches"] });
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, [queryClient]);
 
   // Report Catch Mutation
   const reportCatchMutation = useMutation({
