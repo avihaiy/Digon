@@ -166,17 +166,17 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="שאל על מצב הים, דמויים, או חופים..."
-              className="pr-10 rounded-full bg-slate-50 dark:bg-slate-900 border-none h-11"
+              placeholder="הקלד הודעה..."
+              className="pl-12 rounded-full bg-slate-50 dark:bg-slate-900 border-none h-11"
               dir="rtl"
             />
             <Button 
               size="icon"
-              className="absolute right-1 w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700"
+              className="absolute left-1 w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700"
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
             >
-              <Send className="w-4 h-4 -mr-1" />
+              <Send className="w-4 h-4 rtl:-scale-x-100" />
             </Button>
           </div>
         </div>
