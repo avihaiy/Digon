@@ -13,6 +13,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import Login from "@/pages/Login";
 import { PWAUpdateProvider } from "@/hooks/usePWAUpdate";
 import { OfflineSyncManager } from "@/hooks/useOfflineSync";
+import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 
 // Lazy-loaded routes for maximum initial page load speed
 const Home = lazy(() => import("@/pages/Home"));
@@ -179,14 +180,16 @@ const App = () => {
         <DirectionProvider dir="rtl">
           <AuthProvider>
             <PWAUpdateProvider>
-              <TooltipProvider>
-                <OfflineSyncManager />
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <AnimatedRoutes />
-                </BrowserRouter>
-              </TooltipProvider>
+              <GlobalErrorBoundary>
+                <TooltipProvider>
+                  <OfflineSyncManager />
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <AnimatedRoutes />
+                  </BrowserRouter>
+                </TooltipProvider>
+              </GlobalErrorBoundary>
             </PWAUpdateProvider>
           </AuthProvider>
         </DirectionProvider>
