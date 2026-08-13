@@ -232,7 +232,26 @@ export function useMarineWeather() {
   });
 
   return {
-    data: query.data,
+    data: query.data || {
+      waveHeight: null,
+      windSpeed: null,
+      windDirection: null,
+      windGusts: null,
+      cape: null,
+      oceanCurrentVelocity: null,
+      oceanCurrentDirection: null,
+      temperature: null,
+      surfacePressure: null,
+      wavePeriod: null,
+      cloudCover: null,
+      pressureTrend: null,
+      isTurbid: false,
+      waveDirection: null,
+      locationName: 'טוען נתוני ים...',
+      fishingScore: 100,
+      hourlyForecast: [],
+      dailyForecast: []
+    },
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message : null,
     refreshData: query.refetch,
