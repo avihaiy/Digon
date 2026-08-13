@@ -70,7 +70,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      let email = loginIdentifier;
+      let email = loginIdentifier.trim();
       
       if (!email.includes('@')) {
         toast.error('שגיאה', { description: 'אנא הזן כתובת אימייל חוקית' });
