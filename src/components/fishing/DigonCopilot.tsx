@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMarineWeather } from '@/hooks/useMarineWeather';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -14,12 +14,25 @@ interface ChatMessage {
 }
 
 export function DigonCopilot() {
+  const { user } = useAuth();
+  const STORAGE_KEY = user?.$id ? `digon_copilot_chat_${user.$id}` : 'digon_copilot_chat';
+
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error("Failed to load chat history", e);
+    }
+    return [];
+  });
+  
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { user } = useAuth();
   const { data: marineData } = useMarineWeather();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +41,14 @@ export function DigonCopilot() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Initial greeting
+  // Persist messages to localStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
+  }, [messages, STORAGE_KEY]);
+
+  // Initial greeting if empty
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       setMessages([
@@ -39,6 +59,13 @@ export function DigonCopilot() {
       ]);
     }
   }, [isOpen, messages.length, user?.name, marineData?.locationName]);
+
+  const clearHistory = () => {
+    if (window.confirm('האם אתה בטוח שברצונך למחוק את היסטוריית השיחה?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      setMessages([]);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -133,24 +160,36 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
       {/* Chat Window */}
       <div 
         className={cn(
-          "fixed bottom-20 left-4 z-[100] w-[340px] max-w-[calc(100vw-32px)] h-[500px] max-h-[70vh] bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden transition-all duration-300 origin-bottom-left",
-          isOpen ? "scale-100 opacity-100 translate-y-0" : "scale-0 opacity-0 translate-y-10 pointer-events-none"
+          "fixed bottom-24 left-4 z-[100] w-[350px] max-w-[90vw] h-[500px] max-h-[70vh] bg-background border rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300",
+          isOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 translate-y-10 pointer-events-none"
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-blue-600/10">
+        <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-              <Bot className="w-6 h-6 text-white" />
+            <div className="bg-white/20 p-2 rounded-full">
+              <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Digon Copilot</h3>
-              <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">עוזר דיג חכם (מחובר למכ"ם)</p>
+              <h3 className="font-bold">Digon Copilot</h3>
+              <p className="text-xs text-blue-100">עוזר דיג חכם (מחובר למכ"ם)</p>
             </div>
           </div>
-          <button onClick={() => setIsOpen(false)} className="p-2 text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={clearHistory}
+              className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+              title="נקה היסטוריית שיחה"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
