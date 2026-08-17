@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <title>דיגון - פאנל ניהול</title>
+    <meta name="description" content="מערכת הניהול של אפליקציית דיגון - דייג בישראל" />
+    <meta name="author" content="Digon App" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="דיגון - דייג ישראלי" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=David+Libre:wght@400;500;700&family=Heebo:wght@400;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+      (function() {
+        var isDisplay = /^\/display/.test(window.location.pathname);
+        var isMy = /^\/my\//.test(window.location.pathname);
+        
+        var icon192 = "/digon-logo.jpg";
+        var icon512 = "/digon-logo.jpg";
+        
+        // Write icons
+        document.write('<link rel="icon" href="' + icon192 + '" type="image/jpeg" />');
+        document.write('<link rel="apple-touch-icon" href="' + icon192 + '" />');
+        document.write('<link rel="apple-touch-icon" sizes="180x180" href="' + icon192 + '" />');
+        document.write('<link rel="mask-icon" href="' + icon192 + '" color="#1a1a2e" />');
+        
+        // Write Open Graph
+        document.write('<meta property="og:title" content="דיגון - פאנל ניהול" />');
+        document.write('<meta property="og:image" content="' + icon512 + '" />');
+        
+        if (isMy) {
+          document.write('<meta name="apple-mobile-web-app-title" content="איזור אישי" />');
+        } else {
+          document.write('<meta name="apple-mobile-web-app-title" content="דיגון - דייג ישראלי" />');
+        }
+
+        if (isMy) {
+          // Do nothing. React's useManifestSwitcher will inject a dynamic blob manifest.
+        } else if (!isDisplay) {
+          document.write('<link rel="manifest" href="/manifest-admin.json" id="app-manifest" />');
+        } else {
+          // Check localStorage cache for rotation (set by the app)
+          var rotation = localStorage.getItem('display_rotation') || '0';
+          var isPortrait = rotation === '90' || rotation === '270';
+          document.write('<link rel="manifest" href="' + (isPortrait ? '/manifest-display-portrait.json' : '/manifest-display.json') + '" id="app-manifest" />');
+        }
+      })();
+    </script>
+    
+    <meta property="og:description" content="מערכת לניהול דייגים ומיקומים" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="he_IL" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="דיגון" />
+    <meta name="twitter:description" content="מערכת לניהול דייגים ומיקומים" />
+    <style>
+      #splash-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(160deg, #1a1a2e 0%, #2d1b3d 50%, #1a1a2e 100%);
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      #splash-screen.display-mode {
+        background: #000;
+      }
+      #splash-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      #splash-logo {
+        width: 100px;
+        height: 100px;
+        border-radius: 24px;
+        -o-object-fit: cover;
+           object-fit: cover;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 60px rgba(212,175,55,0.15);
+        animation: splash-pulse 2s ease-in-out infinite;
+      }
+      .display-mode #splash-logo {
+        width: 140px;
+        height: 140px;
+        border-radius: 28px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      }
+      #splash-title, #splash-subtitle, #splash-loader {
+        transition: opacity 0.3s;
+      }
+      #splash-title {
+        margin-top: 24px;
+        font-family: 'Heebo', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #f5f0e8;
+        letter-spacing: 0.5px;
+      }
+      #splash-subtitle {
+        margin-top: 8px;
+        font-family: 'Heebo', sans-serif;
+        font-size: 0.875rem;
+        color: rgba(245,240,232,0.6);
+      }
+      #splash-loader {
+        margin-top: 32px;
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(212,175,55,0.2);
+        border-top-color: #d4af37;
+        border-radius: 50%;
+        animation: splash-spin 0.8s linear infinite;
+      }
+      .display-mode #splash-loader {
+        border-color: rgba(255,255,255,0.15);
+        border-top-color: rgba(255,255,255,0.6);
+      }
+      @keyframes splash-pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      @keyframes splash-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    <script>
+      (function() {
+        var isDisplay = /^\/display/.test(window.location.pathname);
+        if (isDisplay) {
+          document.addEventListener('DOMContentLoaded', function() {
+            var splash = document.getElementById('splash-screen');
+            if (splash) {
+              splash.classList.add('display-mode');
+              var title = document.getElementById('splash-title');
+              var subtitle = document.getElementById('splash-subtitle');
+              if (title) title.style.display = 'none';
+              if (subtitle) subtitle.style.display = 'none';
+            }
+          });
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-D0kbGWUK.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-DmYDLj4H.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-CI8CLtri.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-appwrite-CRxuVgED.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DlIUU_Pb.css">
+  </head>
+
+  <body>
+    <div id="splash-screen">
+      <img id="splash-logo" src="/digon-logo.jpg" alt="לוגו" />
+      <div id="splash-title">דיגון</div>
+      <div id="splash-subtitle">מערכת הדייג של ישראל</div>
+      <div id="splash-loader"></div>
+    </div>
+    <div id="root"></div>
+  </body>
+</html>

@@ -1,7 +1,4 @@
-export const config = {
-  runtime: 'edge',
-};
-
+// Switch to default Node.js Serverless runtime to resolve environment variable availability issues
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
