@@ -145,10 +145,67 @@ export default function TackleBox() {
         // Compress heavily to save localStorage space (0.6 quality WebP)
         const compressedBase64 = canvas.toDataURL("image/webp", 0.6);
         setImagePreview(compressedBase64);
+        scanGearWithAI(compressedBase64);
       };
       img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
+  };
+
+  const [isScanningGear, setIsScanningGear] = useState(false);
+
+  const scanGearWithAI = async (base64Str: string) => {
+    setIsScanningGear(true);
+    try {
+      const mimeMatch = base64Str.match(/^data:(image\/[a-zA-Z0-9]+);base64,/);
+      const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+      const base64Data = base64Str.split(",")[1];
+
+      const prompt = `
+        You are an expert fisherman in Israel.
+        Identify the fishing gear/lure in this image.
+        Respond in pure JSON format (without markdown blocks) with the following structure:
+        {
+          "name": "Hebrew name/type of the gear",
+          "category": "one of: rod, reel, lure, line, accessory",
+          "brand": "Brand name if identified, else empty string",
+          "specs": "Estimated specs like weight, size, etc."
+        }
+      `;
+
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, base64Image: base64Data, mimeType, model: "gemini-3.6-flash" })
+      });
+      if (!response.ok) throw new Error(response.statusText);
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      let cleanedText = data.text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const firstBrace = cleanedText.indexOf('{');
+      const lastBrace = cleanedText.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+      }
+      
+      const parsed = JSON.parse(cleanedText);
+      
+      if (parsed.brand) setBrand(parsed.brand);
+      if (parsed.name) setName(parsed.name);
+      if (parsed.category) {
+        const catMap: Record<string, string> = { 'rod': 'rod', 'reel': 'reel', 'lure': 'lure', 'line': 'line', 'accessory': 'accessory' };
+        if (catMap[parsed.category]) setCategory(catMap[parsed.category]);
+      }
+      if (parsed.specs) setSpecs(parsed.specs);
+      
+      toast.success("זיהוי אוטומטי הושלם! בדוק את השדות.");
+    } catch (error: any) {
+      console.error(error);
+      toast.error("זיהוי AI נכשל, אנא הזן ידנית.");
+    } finally {
+      setIsScanningGear(false);
+    }
   };
 
   const [specs, setSpecs] = useState("");
@@ -264,22 +321,30 @@ export default function TackleBox() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-700 dark:text-slate-300 font-bold">תמונה (אופציונלי)</Label>
+                <Label className="text-slate-700 dark:text-slate-300 font-bold">סריקה חכמה / תמונה</Label>
                 <div className="flex gap-2">
                   {imagePreview ? (
-                    <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                    <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">
                       <img src={imagePreview} className="w-full h-full object-cover" />
                       <button type="button" onClick={() => setImagePreview(null)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+                      {isScanningGear && (
+                         <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
+                            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mb-1"></div>
+                            <span className="text-[10px] text-white font-bold">מזהה...</span>
+                         </div>
+                      )}
                     </div>
                   ) : (
                     <>
-                      <Button type="button" variant="outline" className="flex-1 h-14 rounded-2xl border-slate-200 dark:border-slate-700 text-slate-500" onClick={() => cameraInputRef.current?.click()}>
-                        <Camera className="w-5 h-5 ml-2" /> צלם
+                      <Button type="button" variant="outline" className="flex-1 h-14 rounded-2xl border-cyan-200 dark:border-cyan-900 text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/30 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 relative overflow-hidden group" onClick={() => cameraInputRef.current?.click()}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                        <BrainCircuit className="w-5 h-5 ml-2 animate-pulse" /> מילוי אוטומטי (צילום)
                       </Button>
                       <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} className="hidden" onChange={handleFileChange} />
                     </>
                   )}
                 </div>
+                {!imagePreview && <p className="text-xs text-muted-foreground mt-1">צלם את הפריט וה-AI ימלא את כל הפרטים עבורך!</p>}
               </div>
 
               <div className="space-y-2">

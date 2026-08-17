@@ -13,12 +13,18 @@ import { applyDigonFilter } from "@/lib/imageFilter";
 interface ScanResult {
   name: string;
   confidence: number;
-  kosher: boolean;
-  danger: string | null;
   description: string;
   tips: string;
+  // Fish specific
+  kosher?: boolean;
+  danger?: string | null;
   minSize?: string;
   bestBait?: string;
+  // Gear specific
+  category?: string;
+  brand?: string;
+  targetFish?: string;
+  bestConditions?: string;
 }
 
 export default function Identify() {
@@ -27,6 +33,7 @@ export default function Identify() {
   const [image, setImage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [scanType, setScanType] = useState<'fish' | 'gear'>('fish');
   const [isEditingName, setIsEditingName] = useState(false);
   const [manualName, setManualName] = useState("");
   const [isSharing, setIsSharing] = useState(false);
@@ -123,26 +130,46 @@ export default function Identify() {
       const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
       const base64Data = base64Str.split(",")[1];
       
-      const prompt = `
+      const fishPrompt = `
         You are an expert marine biologist and fisherman in Israel (Mediterranean Sea, Red Sea, Sea of Galilee / Kinneret, and Jordan River).
         Identify the fish in this image with maximum accuracy.
         First, analyze the shape, fins, scales, color patterns, and mouth.
         Consider common Israeli sea fish: דניס, ברמונדי, לוקוס, פרידה, אנטיאס, פלמידה, גומבר, בורי, אראס, אבו נפחא, מרמיר, סרגוס, טרכון.
-        Consider common Israeli freshwater fish (Kinneret & Rivers): מושט (אמנון), קרפיון, שפמנון, בינית, כסיף, בורי מים מתוקים.
-        If it's an invasive species from the Red Sea (Lessepsian migration), note it.
+        Consider common Israeli freshwater fish: מושט (אמנון), קרפיון, שפמנון, בינית, כסיף, בורי מים מתוקים.
         If the image DOES NOT contain a fish or marine creature, return "לא זוהה דג בתמונה" for the name, 0 for confidence, and explain what you see in the description.
         Respond in pure JSON format (without markdown blocks) with the following structure:
         {
           "name": "Hebrew name of the fish (and common nickname)",
           "confidence": number between 0-100,
           "kosher": boolean,
-          "danger": "string warning if it's venomous/poisonous (like Aras or Abu Nafha), otherwise null",
+          "danger": "string warning if it's venomous/poisonous, otherwise null",
           "description": "Short description in Hebrew",
           "tips": "One short fishing tip or culinary tip in Hebrew",
-          "minSize": "Minimum legal catch size in Israel (e.g. 45 ס״מ) or 'אין הגבלה'",
+          "minSize": "Minimum legal catch size in Israel or 'אין הגבלה'",
           "bestBait": "Recommended bait in Hebrew"
         }
       `;
+
+      const gearPrompt = `
+        You are an expert fisherman in Israel.
+        Identify the fishing gear/lure in this image. 
+        Identify if it is a lure, jig, silicon, popper, minnow, reel, rod, line, or accessory.
+        Try to identify the brand if visible.
+        If the image DOES NOT contain fishing gear, return "לא זוהה ציוד דיג" for the name, 0 for confidence, and explain what you see in the description.
+        Respond in pure JSON format (without markdown blocks) with the following structure:
+        {
+          "name": "Hebrew name/type of the gear (e.g. דמוי פופר, ג'יג כבד)",
+          "confidence": number between 0-100,
+          "category": "one of: חכה, רולר, פיתיון/דמוי, חוט, ציוד עזר",
+          "brand": "Brand name if identified, else null",
+          "description": "Short description of what it does and how it works (Hebrew)",
+          "tips": "One tip on how to use it best (Hebrew)",
+          "targetFish": "Which fish this is usually for in Israel (Hebrew)",
+          "bestConditions": "What sea conditions this is best for (e.g. ים רוגש, מים צלולים)"
+        }
+      `;
+
+      const prompt = scanType === 'fish' ? fishPrompt : gearPrompt;
 
       let text = "";
       try {
@@ -235,14 +262,32 @@ export default function Identify() {
       {/* Header */}
       <div className="flex flex-col px-4 mt-6">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-          זיהוי דגים חכם <ScanSearch className="w-6 h-6 text-blue-500" />
+          זיהוי חכם מבוסס AI <ScanSearch className="w-6 h-6 text-blue-500" />
         </h1>
         <p className="text-sm text-muted-foreground mt-1 mb-2">
-          צלם או העלה תמונה, וה-AI שלנו יזהה את הדג
+          {scanType === 'fish' ? 'צלם או העלה תמונה, וה-AI שלנו יזהה את הדג' : 'צלם ציוד דיג או דמוי לקבלת המלצות ושימוש'}
         </p>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 text-indigo-600 rounded-full text-xs font-bold border border-indigo-500/20 w-fit">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 text-indigo-600 rounded-full text-xs font-bold border border-indigo-500/20 w-fit mb-4">
           <ScanSearch className="w-3.5 h-3.5" /> נשארו לך {aiCredits} סריקות AI
         </div>
+        
+        {/* Toggle Fish/Gear */}
+        {!image && (
+          <div className="flex bg-muted/50 p-1 rounded-xl w-full mb-2">
+            <button
+              onClick={() => setScanType('fish')}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${scanType === 'fish' ? 'bg-white dark:bg-slate-800 shadow-sm text-blue-600' : 'text-muted-foreground'}`}
+            >
+              🐟 דגים
+            </button>
+            <button
+              onClick={() => setScanType('gear')}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${scanType === 'gear' ? 'bg-white dark:bg-slate-800 shadow-sm text-orange-500' : 'text-muted-foreground'}`}
+            >
+              🪝 ציוד ודמויים
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 px-4 flex flex-col">
@@ -338,19 +383,34 @@ export default function Identify() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 mb-4">
-                      {result.kosher ? (
-                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold px-3 py-1 text-sm flex gap-1">
-                          <CheckCircle className="w-4 h-4" /> כשר
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-rose-500/10 text-rose-600 border-rose-500/20 font-bold px-3 py-1 text-sm flex gap-1">
-                          <AlertTriangle className="w-4 h-4" /> לא כשר
-                        </Badge>
-                      )}
-                    </div>
+                    {scanType === 'fish' && (
+                      <div className="flex gap-2 mb-4">
+                        {result.kosher ? (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold px-3 py-1 text-sm flex gap-1">
+                            <CheckCircle className="w-4 h-4" /> כשר
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-rose-500/10 text-rose-600 border-rose-500/20 font-bold px-3 py-1 text-sm flex gap-1">
+                            <AlertTriangle className="w-4 h-4" /> לא כשר
+                          </Badge>
+                        )}
+                      </div>
+                    )}
 
-                    {result.danger && (
+                    {scanType === 'gear' && result.category && (
+                      <div className="flex gap-2 mb-4">
+                        <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/20 font-bold px-3 py-1 text-sm">
+                          סוג: {result.category}
+                        </Badge>
+                        {result.brand && (
+                          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20 font-bold px-3 py-1 text-sm">
+                            מותג: {result.brand}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
+                    {scanType === 'fish' && result.danger && (
                       <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl mb-4 flex gap-3 items-start">
                         <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                         <div>
@@ -367,12 +427,12 @@ export default function Identify() {
                     <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl flex gap-3 items-start mb-3">
                       <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="font-bold text-blue-600 text-sm">טיפ לדייג</h4>
+                        <h4 className="font-bold text-blue-600 text-sm">{scanType === 'fish' ? 'טיפ לדייג' : 'טיפ שימוש'}</h4>
                         <p className="text-xs text-blue-600/80 mt-1">{result.tips}</p>
                       </div>
                     </div>
 
-                    {(result.minSize || result.bestBait) && (
+                    {scanType === 'fish' && (result.minSize || result.bestBait) && (
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         {result.minSize && (
                           <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-xl">
@@ -384,6 +444,23 @@ export default function Identify() {
                           <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-xl">
                             <span className="text-muted-foreground block font-medium mb-0.5">פיתיון מומלץ:</span>
                             <span className="font-bold text-slate-900 dark:text-slate-100">{result.bestBait}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {scanType === 'gear' && (result.targetFish || result.bestConditions) && (
+                      <div className="grid grid-cols-2 gap-2 text-xs mt-3">
+                        {result.targetFish && (
+                          <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-xl">
+                            <span className="text-muted-foreground block font-medium mb-0.5">דגי מטרה:</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-100">{result.targetFish}</span>
+                          </div>
+                        )}
+                        {result.bestConditions && (
+                          <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-xl">
+                            <span className="text-muted-foreground block font-medium mb-0.5">תנאים אופטימליים:</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-100">{result.bestConditions}</span>
                           </div>
                         )}
                       </div>
