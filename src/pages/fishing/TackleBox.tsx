@@ -91,7 +91,7 @@ export default function TackleBox() {
       const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model: "gemini-1.5-flash-8b" })
+        body: JSON.stringify({ prompt, model: "gemini-flash-latest" })
       });
       
       if (!response.ok) throw new Error(response.statusText);
@@ -176,7 +176,7 @@ export default function TackleBox() {
       const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, base64Image: base64Data, mimeType, model: "gemini-1.5-flash" })
+        body: JSON.stringify({ prompt, model: "gemini-flash-latest" })
       });
       if (!response.ok) throw new Error(response.statusText);
       const data = await response.json();
