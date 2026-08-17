@@ -176,7 +176,7 @@ export default function TackleBox() {
       const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model: "gemini-flash-latest" })
+        body: JSON.stringify({ prompt, model: "gemini-pro-latest" })
       });
       if (!response.ok) throw new Error(response.statusText);
       const data = await response.json();

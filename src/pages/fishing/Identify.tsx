@@ -212,7 +212,7 @@ export default function Identify() {
       });
 
       try {
-        const payload = buildPayload("gemini-flash-latest");
+        const payload = buildPayload("gemini-pro-latest");
         const response = await fetchWithTimeout(payload.url, payload.options, 45000); // 45 sec timeout for slow mobile uploads
         
         const data = await response.json();

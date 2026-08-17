@@ -98,7 +98,7 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
         const response = await fetch('/api/gemini', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, model: "gemini-flash-latest" })
+          body: JSON.stringify({ prompt, model: "gemini-pro-latest" })
         });
         
         if (!response.ok) {
@@ -114,7 +114,7 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
           const fallbackResponse = await fetch('/api/gemini', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, model: "gemini-flash-latest" })
+            body: JSON.stringify({ prompt, model: "gemini-pro-latest" })
           });
           
           if (!fallbackResponse.ok) {
