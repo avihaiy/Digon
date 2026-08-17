@@ -119,11 +119,14 @@ export default function Identify() {
     setIsScanning(true);
     setResult(null);
     
-    // Deduct credit
+    // Deduct credit with timeout (max 5 seconds)
     try {
-      await updateProfileField('ai_credits', aiCredits - 1);
+      await Promise.race([
+        updateProfileField('ai_credits', aiCredits - 1),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout updateProfile")), 5000))
+      ]);
     } catch (e) {
-      // Ignore
+      console.warn("Could not deduct credit in time, continuing anyway", e);
     }
 
     try {
@@ -173,8 +176,22 @@ export default function Identify() {
       const prompt = scanType === 'fish' ? fishPrompt : gearPrompt;
 
       let text = "";
+      
+      const fetchWithTimeout = async (url: string, options: any, timeout = 25000) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        try {
+          const response = await fetch(url, { ...options, signal: controller.signal });
+          clearTimeout(id);
+          return response;
+        } catch (error) {
+          clearTimeout(id);
+          throw error;
+        }
+      };
+
       try {
-        const response = await fetch('/api/gemini', {
+        const response = await fetchWithTimeout('/api/gemini', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -183,7 +200,7 @@ export default function Identify() {
             mimeType, 
             model: "gemini-1.5-flash" 
           })
-        });
+        }, 20000); // 20 sec timeout
         
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || response.statusText);
@@ -191,7 +208,7 @@ export default function Identify() {
         text = data.text;
       } catch (proError: any) {
         console.warn("Pro model failed, falling back to Flash:", proError);
-        const fallbackResponse = await fetch('/api/gemini', {
+        const fallbackResponse = await fetchWithTimeout('/api/gemini', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -200,7 +217,7 @@ export default function Identify() {
             mimeType, 
             model: "gemini-1.5-flash-8b" 
           })
-        });
+        }, 20000);
         
         const fallbackData = await fallbackResponse.json();
         if (!fallbackResponse.ok) throw new Error(fallbackData.error || fallbackResponse.statusText);
@@ -216,7 +233,7 @@ export default function Identify() {
         cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
       }
       
-            try {
+      try {
         const parsedResult = JSON.parse(cleanedText);
         setResult(parsedResult);
       } catch (parseError) {
@@ -227,7 +244,7 @@ export default function Identify() {
           kosher: false,
           danger: null,
           description: text || "הבינה המלאכותית לא הצליחה לזהות בוודאות. נסה לצלם מזווית אחרת או קרוב יותר.",
-          tips: "וודא שהדג מואר היטב ושלם.",
+          tips: "וודא שהציוד מואר היטב ושלם.",
           minSize: "",
           bestBait: ""
         });
@@ -235,13 +252,14 @@ export default function Identify() {
       
     } catch (error: any) {
       console.error("AI Error:", error);
-      toast.error(`שגיאה בזיהוי התמונה: ${error.message || 'נסה שוב'}`);
+      const errorMessage = error.name === 'AbortError' ? 'הזמן קצוב חלף (Timeout). השרת לא עונה.' : error.message;
+      toast.error(`שגיאה בזיהוי התמונה: ${errorMessage || 'נסה שוב'}`);
       setResult({
         name: "שגיאת תקשורת / שרת",
         confidence: 0,
         kosher: false,
         danger: null,
-        description: error.message || "החיבור לשרת נכשל. בדוק את החיבור לאינטרנט ונסה שוב.",
+        description: errorMessage || "החיבור לשרת נכשל. בדוק את החיבור לאינטרנט ונסה שוב.",
         tips: "",
         minSize: "",
         bestBait: ""
