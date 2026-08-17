@@ -220,7 +220,18 @@ export default function Identify() {
         if (data.error) throw new Error(data.error.message || "Unknown API error");
         text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       } catch (proError: any) {
-        throw proError; // Throw directly so the user sees the real error instead of masking it
+        console.warn("Flash model failed (maybe overloaded), falling back to Flash Lite:", proError);
+        try {
+          const fallbackPayload = buildPayload("gemini-flash-lite-latest");
+          const fallbackResponse = await fetchWithTimeout(fallbackPayload.url, fallbackPayload.options, 45000);
+          
+          const fallbackData = await fallbackResponse.json();
+          if (!fallbackResponse.ok) throw new Error(fallbackData.error?.message || fallbackResponse.statusText);
+          if (fallbackData.error) throw new Error(fallbackData.error.message || "Unknown API error");
+          text = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        } catch (liteError: any) {
+          throw liteError; // Throw directly so the user sees the real error instead of masking it
+        }
       }
       
       // Robust JSON extraction
