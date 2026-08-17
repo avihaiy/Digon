@@ -152,7 +152,7 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "fixed bottom-20 left-4 z-[100] p-4 rounded-full shadow-2xl transition-all duration-300 flex items-center justify-center",
+          "fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] lg:bottom-6 left-4 z-[45] p-4 rounded-full shadow-2xl transition-all duration-300 flex items-center justify-center",
           "bg-blue-600 hover:bg-blue-700 text-white",
           isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100 hover:scale-110"
         )}
@@ -164,7 +164,7 @@ If they ask about the sea or if it's good to fish, use this live data to answer 
       {/* Chat Window */}
       <div 
         className={cn(
-          "fixed bottom-24 left-4 z-[100] w-[350px] max-w-[90vw] h-[500px] max-h-[70vh] bg-background border rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300",
+          "fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] lg:bottom-24 left-4 z-[50] w-[350px] max-w-[90vw] h-[500px] max-h-[70vh] bg-background border rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300",
           isOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 translate-y-10 pointer-events-none"
         )}
       >
