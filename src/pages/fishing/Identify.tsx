@@ -184,8 +184,9 @@ export default function Identify() {
             model: "gemini-1.5-flash" 
           })
         });
-        if (!response.ok) throw new Error(response.statusText);
+        
         const data = await response.json();
+        if (!response.ok) throw new Error(data.error || response.statusText);
         if (data.error) throw new Error(data.error);
         text = data.text;
       } catch (proError: any) {
@@ -200,10 +201,11 @@ export default function Identify() {
             model: "gemini-1.5-flash-8b" 
           })
         });
-        if (!fallbackResponse.ok) throw new Error(fallbackResponse.statusText);
-        const data = await fallbackResponse.json();
-        if (data.error) throw new Error(data.error);
-        text = data.text;
+        
+        const fallbackData = await fallbackResponse.json();
+        if (!fallbackResponse.ok) throw new Error(fallbackData.error || fallbackResponse.statusText);
+        if (fallbackData.error) throw new Error(fallbackData.error);
+        text = fallbackData.text;
       }
       
       // Robust JSON extraction
