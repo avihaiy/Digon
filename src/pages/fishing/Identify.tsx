@@ -213,21 +213,14 @@ export default function Identify() {
 
       try {
         const payload = buildPayload("gemini-1.5-flash");
-        const response = await fetchWithTimeout(payload.url, payload.options, 20000);
+        const response = await fetchWithTimeout(payload.url, payload.options, 45000); // 45 sec timeout for slow mobile uploads
         
         const data = await response.json();
         if (!response.ok) throw new Error(data.error?.message || response.statusText);
         if (data.error) throw new Error(data.error.message || "Unknown API error");
         text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       } catch (proError: any) {
-        console.warn("Flash model failed, falling back to 8b:", proError);
-        const fallbackPayload = buildPayload("gemini-1.5-flash-8b");
-        const fallbackResponse = await fetchWithTimeout(fallbackPayload.url, fallbackPayload.options, 20000);
-        
-        const fallbackData = await fallbackResponse.json();
-        if (!fallbackResponse.ok) throw new Error(fallbackData.error?.message || fallbackResponse.statusText);
-        if (fallbackData.error) throw new Error(fallbackData.error.message || "Unknown API error");
-        text = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        throw proError; // Throw directly so the user sees the real error instead of masking it
       }
       
       // Robust JSON extraction
