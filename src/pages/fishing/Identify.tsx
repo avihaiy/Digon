@@ -190,39 +190,44 @@ export default function Identify() {
         }
       };
 
-      try {
-        const response = await fetchWithTimeout('/api/gemini', {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("Missing Gemini API Key. Please add VITE_GEMINI_API_KEY to your .env file.");
+      }
+
+      const buildPayload = (model: string) => ({
+        url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        options: {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            prompt, 
-            base64Image: base64Data, 
-            mimeType, 
-            model: "gemini-1.5-flash" 
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { inlineData: { data: base64Data, mimeType } },
+                { text: prompt }
+              ]
+            }]
           })
-        }, 20000); // 20 sec timeout
+        }
+      });
+
+      try {
+        const payload = buildPayload("gemini-1.5-flash");
+        const response = await fetchWithTimeout(payload.url, payload.options, 20000);
         
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || response.statusText);
-        if (data.error) throw new Error(data.error);
-        text = data.text;
+        if (!response.ok) throw new Error(data.error?.message || response.statusText);
+        if (data.error) throw new Error(data.error.message || "Unknown API error");
+        text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       } catch (proError: any) {
-        console.warn("Pro model failed, falling back to Flash:", proError);
-        const fallbackResponse = await fetchWithTimeout('/api/gemini', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            prompt, 
-            base64Image: base64Data, 
-            mimeType, 
-            model: "gemini-1.5-flash-8b" 
-          })
-        }, 20000);
+        console.warn("Flash model failed, falling back to 8b:", proError);
+        const fallbackPayload = buildPayload("gemini-1.5-flash-8b");
+        const fallbackResponse = await fetchWithTimeout(fallbackPayload.url, fallbackPayload.options, 20000);
         
         const fallbackData = await fallbackResponse.json();
-        if (!fallbackResponse.ok) throw new Error(fallbackData.error || fallbackResponse.statusText);
-        if (fallbackData.error) throw new Error(fallbackData.error);
-        text = fallbackData.text;
+        if (!fallbackResponse.ok) throw new Error(fallbackData.error?.message || fallbackResponse.statusText);
+        if (fallbackData.error) throw new Error(fallbackData.error.message || "Unknown API error");
+        text = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || "";
       }
       
       // Robust JSON extraction
