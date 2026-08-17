@@ -16,10 +16,7 @@ export default async function handler(req: Request) {
     const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
     if (!apiKey) {
-      return new Response(JSON.stringify({ 
-        error: "Missing Gemini API Key in server environment.",
-        envKeys: Object.keys(process.env)
-      }), {
+      return new Response(JSON.stringify({ error: "Missing Gemini API Key in server environment." }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
