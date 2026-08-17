@@ -39,6 +39,7 @@ export default function Identify() {
   const [isSharing, setIsSharing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -254,6 +255,9 @@ export default function Identify() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = '';
+    }
   };
 
   return (
@@ -292,12 +296,22 @@ export default function Identify() {
 
       <div className="flex-1 px-4 flex flex-col">
         
+        {/* Camera Input */}
         <input 
           type="file" 
           accept="image/*" 
           capture="environment"
           className="hidden" 
           ref={fileInputRef}
+          onChange={handleFileChange}
+        />
+
+        {/* Gallery Input */}
+        <input 
+          type="file" 
+          accept="image/*" 
+          className="hidden" 
+          ref={galleryInputRef}
           onChange={handleFileChange}
         />
 
@@ -329,7 +343,7 @@ export default function Identify() {
                   variant="outline" 
                   size="lg" 
                   className="w-full h-14 text-base rounded-2xl gap-2 bg-background shadow-sm"
-                  onClick={() => fileInputRef.current?.click()} // Can also be specific to gallery
+                  onClick={() => galleryInputRef.current?.click()}
                 >
                   <UploadCloud className="w-5 h-5 text-blue-500" />
                   העלה מהגלריה
