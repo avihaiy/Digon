@@ -9,7 +9,7 @@ export default async function handler(req: Request) {
 
   try {
     const body = await req.json();
-    const { prompt, base64Image, mimeType, model = "gemini-3.6-flash" } = body;
+    const { prompt, base64Image, mimeType, model = "gemini-1.5-flash" } = body;
 
     // We use the raw API key from environment, without the VITE_ prefix.
     // Ensure you set GEMINI_API_KEY in your Vercel project settings.

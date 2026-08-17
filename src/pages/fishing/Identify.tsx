@@ -181,7 +181,7 @@ export default function Identify() {
             prompt, 
             base64Image: base64Data, 
             mimeType, 
-            model: "gemini-3.6-flash" 
+            model: "gemini-1.5-flash" 
           })
         });
         if (!response.ok) throw new Error(response.statusText);
@@ -197,7 +197,7 @@ export default function Identify() {
             prompt, 
             base64Image: base64Data, 
             mimeType, 
-            model: "gemini-3.5-flash-lite" 
+            model: "gemini-1.5-flash-8b" 
           })
         });
         if (!fallbackResponse.ok) throw new Error(fallbackResponse.statusText);
