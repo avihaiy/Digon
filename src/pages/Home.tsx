@@ -276,7 +276,7 @@ export default function Home() {
 
       {/* Useful Tools */}
       <section className="pt-2 pl-0 pr-4">
-        <div className="flex items-center justify-between mb-3 pl-4">
+        <div className="flex items-center gap-3 mb-3 pl-4">
           <h2 className="text-sm font-bold tracking-tight text-muted-foreground">כלים שימושיים</h2>
           <div className="text-[10px] font-bold text-primary flex items-center gap-1 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full shadow-sm animate-pulse">
             <span>החלק לצדדים</span>
