@@ -29,11 +29,16 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     if (
       error.message.includes("Failed to fetch dynamically imported module") || 
       error.message.includes("Importing a module script failed") ||
-      error.name === "ChunkLoadError"
+      error.name === "ChunkLoadError" ||
+      error.message.includes("dynamically imported module")
     ) {
-      const isReloaded = sessionStorage.getItem('chunk_failed_reload');
-      if (!isReloaded) {
-        sessionStorage.setItem('chunk_failed_reload', 'true');
+      const lastReloadStr = sessionStorage.getItem('chunk_failed_reload_time');
+      const lastReload = lastReloadStr ? parseInt(lastReloadStr, 10) : 0;
+      const now = Date.now();
+      
+      // Allow a reload at most once every 10 seconds to prevent infinite loops
+      if (now - lastReload > 10000) {
+        sessionStorage.setItem('chunk_failed_reload_time', now.toString());
         window.location.reload();
       }
     }
