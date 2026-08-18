@@ -353,10 +353,9 @@ export default function Home() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold tracking-tight">תפיסות אחרונות בשטח</h2>
           <Button 
-            onClick={() => navigate('/fishing/community')}
-            className="text-[10px] font-bold bg-blue-500 text-white px-3 py-1 h-auto rounded-full shadow-md hover:bg-blue-600 transition-colors"
+            className="text-[10px] font-bold bg-blue-500 text-white px-3 py-1 h-auto rounded-full shadow-md hover:bg-blue-600 transition-colors cursor-default"
           >
-            צפה בהכל
+            גולל למטה ⬇️
           </Button>
         </div>
         
