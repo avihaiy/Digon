@@ -55,13 +55,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentPoints = docs.documents[0].points || 0;
       } else {
         // Failsafe: Auto-create missing profile for older users
+        let regAiCredits = 10;
         try {
-          await databases.createDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, 'unique()', {
+          const settingsRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_SETTINGS_ID, [Query.limit(10)]);
+          const aiSetting = settingsRes.documents.find(s => s.key === 'registration_ai_credits');
+          if (aiSetting) {
+            regAiCredits = aiSetting.value;
+          }
+        } catch (e) {
+          // ignore
+        }
+        
+        try {
+          await databases.createDocument(APPWRITE_DB_ID, APPWRITE_PROFILES_ID, currentUser.$id, {
             user_id: currentUser.$id,
             full_name: currentUser.name || currentUser.email || 'משתמש',
             role: 'USER',
             points: 0,
-            ai_credits: 10
+            ai_credits: regAiCredits
           });
         } catch (createErr) {
           console.error("Failed to auto-create missing profile:", createErr);
@@ -110,16 +121,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Auto login
       await account.createEmailPasswordSession(email, password);
       
-      // Fetch dynamic registration points from settings
+      // Fetch dynamic registration points and AI credits from settings
       let regPoints = 0;
+      let regAiCredits = 10;
       try {
         const settingsRes = await databases.listDocuments(APPWRITE_DB_ID, APPWRITE_SETTINGS_ID, [Query.limit(10)]);
         const pSetting = settingsRes.documents.find(s => s.key === 'registration_points');
         if (pSetting) {
           regPoints = pSetting.value;
         }
+        const aiSetting = settingsRes.documents.find(s => s.key === 'registration_ai_credits');
+        if (aiSetting) {
+          regAiCredits = aiSetting.value;
+        }
       } catch (e) {
-        // Settings table might not exist yet, default to 0
+        // Settings table might not exist yet, default to 0/10
       }
 
       // Create profile
@@ -128,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         full_name: fullName,
         role: 'USER',
         points: regPoints,
-        ai_credits: 10
+        ai_credits: regAiCredits
       });
       await fetchUserAndRole();
       return { error: null };

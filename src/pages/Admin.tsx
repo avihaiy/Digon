@@ -36,6 +36,7 @@ export default function Admin() {
   const [selectedUserForPoints, setSelectedUserForPoints] = useState<any>(null);
   const [pointsAmount, setPointsAmount] = useState<string>("0");
   const [pointsOperation, setPointsOperation] = useState<"add" | "remove">("add");
+  const [pointsType, setPointsType] = useState<"points" | "ai_credits">("points");
 
   // Edit Catch Modal State
   const [editCatchModalOpen, setEditCatchModalOpen] = useState(false);
@@ -1834,7 +1835,7 @@ export default function Admin() {
               <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-3">
                 <Coins className="w-8 h-8 text-blue-500" />
               </div>
-              <h2 className="text-xl font-bold text-center">ניהול נקודות</h2>
+              <h2 className="text-xl font-bold text-center">{pointsType === 'points' ? 'ניהול נקודות' : 'ניהול סריקות AI'}</h2>
               <p className="text-sm text-center text-muted-foreground mt-1">
                 עבור {selectedUserForPoints.full_name || 'אנונימי'}
               </p>
