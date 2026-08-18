@@ -60,7 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user_id: currentUser.$id,
             full_name: currentUser.name || currentUser.email || 'משתמש',
             role: 'USER',
-            points: 0
+            points: 0,
+            ai_credits: 10
           });
         } catch (createErr) {
           console.error("Failed to auto-create missing profile:", createErr);
@@ -126,7 +127,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user_id: u.$id,
         full_name: fullName,
         role: 'USER',
-        points: regPoints
+        points: regPoints,
+        ai_credits: 10
       });
       await fetchUserAndRole();
       return { error: null };
