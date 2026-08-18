@@ -46,6 +46,7 @@ const TackleBox = lazy(() => import("@/pages/fishing/TackleBox"));
 const Store = lazy(() => import("@/pages/fishing/Store"));
 const Analytics = lazy(() => import("@/pages/fishing/Analytics"));
 const Tournaments = lazy(() => import("@/pages/fishing/Tournaments"));
+const CatchesFeed = lazy(() => import("@/pages/fishing/CatchesFeed"));
 const SecretAnalyzer = lazy(() => import("@/pages/fishing/SecretAnalyzer"));
 const Reels = lazy(() => import("@/pages/fishing/Reels"));
 
@@ -139,6 +140,7 @@ const AnimatedRoutes = () => {
         <Route path="/fishing/forecast" element={<ProtectedRoute><PageTransition><Forecast /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/cams" element={<ProtectedRoute><PageTransition><LiveCamsPage /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/locations" element={<ProtectedRoute><PageTransition><Locations /></PageTransition></ProtectedRoute>} />
+        <Route path="/fishing/catches" element={<ProtectedRoute><PageTransition><CatchesFeed /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/identify" element={<ProtectedRoute><PageTransition><Identify /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/wiki" element={<ProtectedRoute><PageTransition><Wiki /></PageTransition></ProtectedRoute>} />
         <Route path="/fishing/knots" element={<ProtectedRoute><PageTransition><Knots /></PageTransition></ProtectedRoute>} />

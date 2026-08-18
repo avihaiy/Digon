@@ -24,24 +24,10 @@ export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAllCatches, setShowAllCatches] = useState(false);
   const { data: marineData, loading: marineLoading, refreshData, lastUpdated } = useMarineWeather();
   const { catches, isLoading: catchesLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCatches();
   
-  // Intersection Observer for Infinite Scroll
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastCatchElementRef = useCallback((node: HTMLDivElement | null) => {
-    if (catchesLoading || isFetchingNextPage) return;
-    if (observer.current) observer.current.disconnect();
-    
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasNextPage) {
-        fetchNextPage();
-      }
-    });
-    
-    if (node) observer.current.observe(node);
-  }, [catchesLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
+
   const { activeTournaments } = useTournaments();
   
   useEffect(() => {
@@ -353,9 +339,9 @@ export default function Home() {
       <section className="pt-2 px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold tracking-tight">תפיסות אחרונות בשטח</h2>
-          {!showAllCatches && catches && catches.length > 0 && (
+          {catches && catches.length > 0 && (
             <Button 
-              onClick={() => setShowAllCatches(true)}
+              onClick={() => navigate('/fishing/catches')}
               className="text-[10px] font-bold bg-blue-500 text-white px-3 py-1 h-auto rounded-full shadow-md hover:bg-blue-600 transition-colors"
             >
               צפה בהכל
@@ -370,23 +356,9 @@ export default function Home() {
             </div>
           ) : catches && catches.length > 0 ? (
             <div className="flex flex-col gap-4">
-              {(showAllCatches ? catches : catches.slice(0, 3)).map((report, index, arr) => {
-                if (showAllCatches && arr.length === index + 1) {
-                  return (
-                    <div ref={lastCatchElementRef} key={report.$id}>
-                      <SocialCatchCard report={report} />
-                    </div>
-                  );
-                } else {
-                  return <SocialCatchCard key={report.$id} report={report} />;
-                }
-              })}
-              
-              {showAllCatches && isFetchingNextPage && (
-                <div className="flex justify-center p-4">
-                  <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
-                </div>
-              )}
+              {catches.slice(0, 3).map((report) => (
+                <SocialCatchCard key={report.$id} report={report} />
+              ))}
             </div>
           ) : (
             <div className="text-center p-8 bg-muted/20 rounded-xl border border-dashed">
