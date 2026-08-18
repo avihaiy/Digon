@@ -1354,6 +1354,27 @@ export default function Admin() {
 
                 <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
                   <div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">סריקות AI בהרשמה 🤖</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
+                      כמות סריקות ה-AI שמשתמש מקבל באופן אוטומטי מיד לאחר יצירת החשבון.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Input 
+                      type="number" 
+                      className="w-24 text-center font-bold text-lg"
+                      defaultValue={settingsData?.find((s:any) => s.key === 'registration_ai_credits')?.value ?? 10}
+                      id="input_registration_ai_credits"
+                    />
+                    <Button onClick={() => {
+                      const val = parseInt((document.getElementById('input_registration_ai_credits') as HTMLInputElement).value) || 0;
+                      saveSettingsMutation.mutate({ key: 'registration_ai_credits', value: val });
+                    }} disabled={saveSettingsMutation.isPending}>שמור</Button>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div>
                     <h3 className="font-bold text-lg text-slate-900 dark:text-white">נקודות אישור תפיסה 🐟</h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-md">
                       כמות הנקודות שהדייג מקבל כשהמנהל מאשר את התפיסה שלו בעמוד התפיסות.
