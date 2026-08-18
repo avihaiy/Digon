@@ -24,6 +24,7 @@ export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAllCatches, setShowAllCatches] = useState(false);
   const { data: marineData, loading: marineLoading, refreshData, lastUpdated } = useMarineWeather();
   const { catches, isLoading: catchesLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCatches();
   
@@ -352,11 +353,14 @@ export default function Home() {
       <section className="pt-2 px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold tracking-tight">תפיסות אחרונות בשטח</h2>
-          <Button 
-            className="text-[10px] font-bold bg-blue-500 text-white px-3 py-1 h-auto rounded-full shadow-md hover:bg-blue-600 transition-colors cursor-default"
-          >
-            גולל למטה ⬇️
-          </Button>
+          {!showAllCatches && catches && catches.length > 3 && (
+            <Button 
+              onClick={() => setShowAllCatches(true)}
+              className="text-[10px] font-bold bg-blue-500 text-white px-3 py-1 h-auto rounded-full shadow-md hover:bg-blue-600 transition-colors"
+            >
+              צפה בהכל
+            </Button>
+          )}
         </div>
         
         <div className="space-y-4">
@@ -366,8 +370,8 @@ export default function Home() {
             </div>
           ) : catches && catches.length > 0 ? (
             <div className="flex flex-col gap-4">
-              {catches.map((report, index) => {
-                if (catches.length === index + 1) {
+              {(showAllCatches ? catches : catches.slice(0, 3)).map((report, index, arr) => {
+                if (showAllCatches && arr.length === index + 1) {
                   return (
                     <div ref={lastCatchElementRef} key={report.$id}>
                       <SocialCatchCard report={report} />
@@ -378,7 +382,7 @@ export default function Home() {
                 }
               })}
               
-              {isFetchingNextPage && (
+              {showAllCatches && isFetchingNextPage && (
                 <div className="flex justify-center p-4">
                   <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
                 </div>
