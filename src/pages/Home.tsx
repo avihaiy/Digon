@@ -278,9 +278,9 @@ export default function Home() {
       <section className="pt-2 pl-0 pr-4">
         <div className="flex items-center justify-between mb-3 pl-4">
           <h2 className="text-sm font-bold tracking-tight text-muted-foreground">כלים שימושיים</h2>
-          <div className="text-[10px] text-muted-foreground/70 flex items-center gap-1 bg-slate-100 dark:bg-slate-800/50 px-2 py-0.5 rounded-full animate-pulse">
+          <div className="text-[10px] font-bold text-primary flex items-center gap-1 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full shadow-sm animate-pulse">
             <span>החלק לצדדים</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-move-horizontal"><polyline points="18 8 22 12 18 16"/><polyline points="6 8 2 12 6 16"/><line x1="2" x2="22" y1="12" y2="12"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-move-horizontal"><polyline points="18 8 22 12 18 16"/><polyline points="6 8 2 12 6 16"/><line x1="2" x2="22" y1="12" y2="12"/></svg>
           </div>
         </div>
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 pr-0 pl-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
