@@ -24,6 +24,19 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught runtime error:", error, errorInfo);
+
+    // Auto-reload on chunk load failure (e.g. after a new deployment)
+    if (
+      error.message.includes("Failed to fetch dynamically imported module") || 
+      error.message.includes("Importing a module script failed") ||
+      error.name === "ChunkLoadError"
+    ) {
+      const isReloaded = sessionStorage.getItem('chunk_failed_reload');
+      if (!isReloaded) {
+        sessionStorage.setItem('chunk_failed_reload', 'true');
+        window.location.reload();
+      }
+    }
   }
 
   private handleReload = () => {
