@@ -47,7 +47,10 @@ export function AccessibilityWidget() {
   };
 
   return (
-    <div className="fixed bottom-40 left-4 z-[100]">
+    <div 
+      style={{ bottom: 'calc(11rem + env(safe-area-inset-bottom, 20px))' }}
+      className="fixed left-4 z-[100]"
+    >
       <AnimatePresence>
         {isOpen && (
           <motion.div
