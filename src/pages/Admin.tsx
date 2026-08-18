@@ -524,20 +524,21 @@ export default function Admin() {
     }
   });
 
-  // Send Points Mutation
-  const sendPointsMutation = useMutation({
-    mutationFn: async ({ userId, pointsToAdd, currentPoints }: { userId: string; pointsToAdd: number; currentPoints: number }) => {
-      const finalPoints = Math.max(0, currentPoints + pointsToAdd);
-      await databases.updateDocument(DB_ID, APPWRITE_PROFILES_ID, userId, { points: finalPoints });
-      return { userId, finalPoints };
+  // Manage Resource Mutation (Points or AI Credits)
+  const manageResourceMutation = useMutation({
+    mutationFn: async ({ userId, amountToAdd, currentValue, type }: { userId: string; amountToAdd: number; currentValue: number; type: "points" | "ai_credits" }) => {
+      const finalValue = Math.max(0, currentValue + amountToAdd);
+      const updateData = type === "points" ? { points: finalValue } : { ai_credits: finalValue };
+      await databases.updateDocument(DB_ID, APPWRITE_PROFILES_ID, userId, updateData);
+      return { userId, finalValue, type };
     },
-    onSuccess: ({ userId, finalPoints }) => {
-      toast.success("הנקודות עודכנו בהצלחה!");
+    onSuccess: ({ userId, finalValue, type }) => {
+      toast.success(type === "points" ? "הנקודות עודכנו בהצלחה!" : "סריקות ה-AI עודכנו בהצלחה!");
       // Optimistic cache update
       queryClient.setQueryData(["admin-users"], (old: any) => {
         if (!old) return old;
         return old.map((u: any) => 
-          u.$id === userId ? { ...u, points: finalPoints } : u
+          u.$id === userId ? { ...u, [type]: finalValue } : u
         );
       });
       // Invalidate to ensure consistency
@@ -545,7 +546,7 @@ export default function Admin() {
       setPointsModalOpen(false);
     },
     onError: (err: any) => {
-      toast.error("שגיאה בעדכון הנקודות: " + err.message);
+      toast.error("שגיאה בעדכון: " + err.message);
     }
   });
 
@@ -723,19 +724,36 @@ export default function Admin() {
                         <TableCell className="font-bold text-yellow-600">{u.points || 0} נק׳</TableCell>
                         <TableCell className="font-bold text-blue-600">{u.ai_credits || 0} סריקות</TableCell>
                         <TableCell>
-                          <Button 
-                            size="sm"
-                            variant="outline"
-                            className="bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white border-blue-200"
-                            onClick={() => {
-                              setSelectedUserForPoints(u);
-                              setPointsAmount("0");
-                              setPointsOperation("add");
-                              setPointsModalOpen(true);
-                            }}
-                          >
-                            <Coins className="w-4 h-4 ml-1" /> נהל נקודות
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm"
+                              variant="outline"
+                              className="bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white border-blue-200"
+                              onClick={() => {
+                                setSelectedUserForPoints(u);
+                                setPointsAmount("0");
+                                setPointsOperation("add");
+                                setPointsType("points");
+                                setPointsModalOpen(true);
+                              }}
+                            >
+                              <Coins className="w-4 h-4 ml-1" /> נהל נקודות
+                            </Button>
+                            <Button 
+                              size="sm"
+                              variant="outline"
+                              className="bg-purple-500/10 text-purple-600 hover:bg-purple-500 hover:text-white border-purple-200"
+                              onClick={() => {
+                                setSelectedUserForPoints(u);
+                                setPointsAmount("0");
+                                setPointsOperation("add");
+                                setPointsType("ai_credits");
+                                setPointsModalOpen(true);
+                              }}
+                            >
+                              🤖 שים סריקות
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1861,7 +1879,7 @@ export default function Admin() {
                 עבור {selectedUserForPoints.full_name || 'אנונימי'}
               </p>
               <div className="mt-2 text-sm bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium">
-                יתרה נוכחית: <span className="font-bold text-blue-600 dark:text-blue-400">{selectedUserForPoints.points || 0} נק׳</span>
+                יתרה נוכחית: <span className="font-bold text-blue-600 dark:text-blue-400">{pointsType === 'points' ? selectedUserForPoints.points || 0 : selectedUserForPoints.ai_credits || 0} {pointsType === 'points' ? 'נק׳' : 'סריקות'}</span>
               </div>
             </div>
 
@@ -1872,20 +1890,20 @@ export default function Admin() {
                   className={`flex-1 ${pointsOperation === "add" ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
                   onClick={() => setPointsOperation("add")}
                 >
-                  הענק נקודות (+)
+                  הענק {pointsType === 'points' ? 'נקודות' : 'סריקות'} (+)
                 </Button>
                 <Button 
                   variant={pointsOperation === "remove" ? "default" : "outline"} 
                   className={`flex-1 ${pointsOperation === "remove" ? "bg-rose-500 hover:bg-rose-600 text-white" : ""}`}
                   onClick={() => setPointsOperation("remove")}
                 >
-                  הורד נקודות (-)
+                  הורד {pointsType === 'points' ? 'נקודות' : 'סריקות'} (-)
                 </Button>
               </div>
 
               <div>
                 <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block mb-2">
-                  כמות נקודות {pointsOperation === 'add' ? 'להוספה' : 'להורדה'}
+                  כמות {pointsType === 'points' ? 'נקודות' : 'סריקות'} {pointsOperation === 'add' ? 'להוספה' : 'להורדה'}
                 </label>
                 <Input 
                   type="number"
@@ -1899,18 +1917,19 @@ export default function Admin() {
 
               <Button 
                 className="w-full h-12 text-lg font-bold mt-4" 
-                disabled={!pointsAmount || parseInt(pointsAmount) <= 0 || sendPointsMutation.isPending}
+                disabled={!pointsAmount || parseInt(pointsAmount) <= 0 || manageResourceMutation.isPending}
                 onClick={() => {
                   let amount = parseInt(pointsAmount) || 0;
                   if (pointsOperation === "remove") amount = -amount;
-                  sendPointsMutation.mutate({ 
+                  manageResourceMutation.mutate({ 
                     userId: selectedUserForPoints.$id, 
-                    pointsToAdd: amount,
-                    currentPoints: selectedUserForPoints.points || 0
+                    amountToAdd: amount,
+                    currentValue: pointsType === 'points' ? (selectedUserForPoints.points || 0) : (selectedUserForPoints.ai_credits || 0),
+                    type: pointsType
                   });
                 }}
               >
-                בצע עדכון
+                {manageResourceMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "בצע עדכון"}
               </Button>
             </div>
           </div>
