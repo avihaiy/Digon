@@ -166,7 +166,7 @@ export default function Home() {
               <RefreshCw className={cn("w-3 h-3", marineLoading && "animate-spin")} />
               {marineLoading ? 'מעדכן...' : `עודכן ב-${lastUpdated.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`}
             </button>
-            <Link to="/fishing/forecast" className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full hover:bg-primary/20 transition-colors">
+            <Link to="/fishing/forecast" className="text-[10px] font-bold bg-blue-500 text-white px-2.5 py-1 rounded-full shadow-md hover:bg-blue-600 transition-colors">
               תחזית מלאה &larr;
             </Link>
           </div>
@@ -352,7 +352,12 @@ export default function Home() {
       <section className="pt-2 px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold tracking-tight">תפיסות אחרונות בשטח</h2>
-          <Button variant="link" className="text-xs h-auto p-0 text-primary">צפה בהכל</Button>
+          <Button 
+            onClick={() => navigate('/fishing/community')}
+            className="text-[10px] font-bold bg-blue-500 text-white px-3 py-1 h-auto rounded-full shadow-md hover:bg-blue-600 transition-colors"
+          >
+            צפה בהכל
+          </Button>
         </div>
         
         <div className="space-y-4">
