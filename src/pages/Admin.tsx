@@ -710,6 +710,7 @@ export default function Admin() {
                       <TableHead>שם / אימייל</TableHead>
                       <TableHead>תפקיד</TableHead>
                       <TableHead>נקודות במערכת</TableHead>
+                      <TableHead>סריקות AI</TableHead>
                       <TableHead>פעולות</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -719,6 +720,7 @@ export default function Admin() {
                         <TableCell>{u.full_name || 'ללא שם'}</TableCell>
                         <TableCell>{u.role === 'ADMIN' ? 'מנהל' : 'משתמש רגיל'}</TableCell>
                         <TableCell className="font-bold text-yellow-600">{u.points || 0} נק׳</TableCell>
+                        <TableCell className="font-bold text-blue-600">{u.ai_credits || 0} סריקות</TableCell>
                         <TableCell>
                           <Button 
                             size="sm"
