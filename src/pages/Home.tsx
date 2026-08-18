@@ -278,7 +278,7 @@ export default function Home() {
       <section className="pt-2 pl-0 pr-4">
         <div className="flex items-center gap-3 mb-3 pl-4">
           <h2 className="text-sm font-bold tracking-tight text-muted-foreground">כלים שימושיים</h2>
-          <div className="text-[10px] font-bold text-primary flex items-center gap-1 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full shadow-sm animate-pulse">
+          <div className="text-[10px] font-bold text-white flex items-center gap-1 bg-blue-500 px-2.5 py-1 rounded-full shadow-md animate-pulse">
             <span>החלק לצדדים</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-move-horizontal"><polyline points="18 8 22 12 18 16"/><polyline points="6 8 2 12 6 16"/><line x1="2" x2="22" y1="12" y2="12"/></svg>
           </div>
