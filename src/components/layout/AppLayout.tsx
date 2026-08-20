@@ -87,7 +87,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     const handleOnline = async () => {
       try {
         const res = await syncOfflineCatches();
-        if (res.success) {
+        if (res.success && res.count > 0) {
           toast({
             title: "סנכרון חזר! 📡",
             description: res.message,
