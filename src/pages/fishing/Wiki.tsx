@@ -457,7 +457,7 @@ export default function Wiki() {
       </div>
 
       <div className="px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 items-start">
           <AnimatePresence>
             {filteredFish.map((fish, i) => (
               <motion.div 
@@ -468,9 +468,9 @@ export default function Wiki() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="h-full overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 relative bg-white dark:bg-slate-900 rounded-3xl group flex flex-col p-6">
+                <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 relative bg-white dark:bg-slate-900 rounded-3xl group flex flex-col p-6">
                   <div className="flex justify-between items-start mb-5">
-                    <div className="pr-2">
+                    <div className="pl-2">
                       <h3 className="font-black text-2xl text-slate-800 dark:text-slate-100 mb-1 leading-tight">
                         {fish.name}
                       </h3>
@@ -548,13 +548,13 @@ export default function Wiki() {
                     <div>
                       <div className="text-xs font-black text-cyan-600 dark:text-cyan-500 mb-2 uppercase tracking-wide">שיטות דיג</div>
                       <ul className="text-sm space-y-1.5 font-bold text-slate-700 dark:text-slate-300">
-                        {fish.methods.map((m, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-cyan-500 mt-0.5">•</span> <button onClick={() => setSearchQuery(m)} className="hover:text-cyan-600 dark:hover:text-cyan-400 text-right text-balance transition-colors underline-offset-4 hover:underline text-right outline-none text-left">{m}</button></li>)}
+                        {fish.methods.map((m, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-cyan-500 mt-0.5">•</span> <button onClick={() => setSearchQuery(m)} className="hover:text-cyan-600 dark:hover:text-cyan-400 text-right transition-colors underline-offset-4 hover:underline outline-none">{m}</button></li>)}
                       </ul>
                     </div>
                     <div>
                       <div className="text-xs font-black text-amber-600 dark:text-amber-500 mb-2 uppercase tracking-wide">פיתיון מועדף</div>
                       <ul className="text-sm space-y-1.5 font-bold text-slate-700 dark:text-slate-300">
-                        {fish.baits.map((b, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-amber-500 mt-0.5">•</span> <button onClick={() => setSearchQuery(b)} className="hover:text-amber-600 dark:hover:text-amber-400 text-right text-balance transition-colors underline-offset-4 hover:underline outline-none">{b}</button></li>)}
+                        {fish.baits.map((b, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-amber-500 mt-0.5">•</span> <button onClick={() => setSearchQuery(b)} className="hover:text-amber-600 dark:hover:text-amber-400 text-right transition-colors underline-offset-4 hover:underline outline-none">{b}</button></li>)}
                       </ul>
                     </div>
                   </div>
@@ -586,7 +586,7 @@ export default function Wiki() {
           </AnimatePresence>
           
           {filteredFish.length === 0 && (
-            <div className="col-span-1 md:col-span-2 text-center p-12 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 mt-4">
+            <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 text-center p-12 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 mt-4">
               <Search className="w-12 h-12 text-slate-300 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">לא נמצא דג מתאים</h3>
               <p className="text-slate-500">נסה לחפש בשם אחר או לשנות את הסינון למעלה.</p>
@@ -594,6 +594,21 @@ export default function Wiki() {
           )}
         </div>
       </div>
+      
+      {/* Scroll to Top FAB */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            onClick={scrollToTop}
+            className="fixed bottom-24 right-6 p-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all z-50 flex items-center justify-center"
+          >
+            <ArrowUp className="w-6 h-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
