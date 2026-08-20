@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Fish, AlertTriangle, CheckCircle, Search, Waves, Droplet, Skull } from "lucide-react";
+import { BookOpen, Fish, AlertTriangle, CheckCircle, Search, Waves, Droplet, Skull, Star, Camera, ArrowUp } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -354,12 +356,34 @@ const FISH_DB: FishData[] = [
 
 export default function Wiki() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "sea" | "freshwater" | "danger" | "kosher">("all");
+  const [filter, setFilter] = useState<"all" | "favorites" | "sea" | "freshwater" | "danger" | "kosher">("all");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    return JSON.parse(localStorage.getItem('wiki_favorites') || '[]');
+  });
+
+  const toggleFavorite = (id: string) => {
+    const newFavs = favorites.includes(id) ? favorites.filter(f => f !== id) : [...favorites, id];
+    setFavorites(newFavs);
+    localStorage.setItem('wiki_favorites', JSON.stringify(newFavs));
+  };
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 300);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const filteredFish = useMemo(() => {
     return FISH_DB.filter(f => {
       const matchesSearch = f.name.includes(searchQuery) || f.desc.includes(searchQuery);
       let matchesFilter = true;
+      if (filter === "favorites") matchesFilter = favorites.includes(f.id);
       if (filter === "sea") matchesFilter = f.habitat === "sea";
       if (filter === "freshwater") matchesFilter = f.habitat === "freshwater";
       if (filter === "danger") matchesFilter = f.danger !== null;
@@ -395,6 +419,9 @@ export default function Wiki() {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <button onClick={() => setFilter("favorites")} className={`whitespace-nowrap flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all ${filter === "favorites" ? "bg-yellow-500 text-white shadow-[0_0_15px_rgba(234,179,8,0.4)]" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
+            <Star className="w-4 h-4" /> מועדפים
+          </button>
           <button onClick={() => setFilter("all")} className={`whitespace-nowrap px-4 py-2.5 rounded-2xl text-sm font-bold transition-all \${filter === "all" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md" : "bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
             הכל
           </button>
@@ -413,8 +440,24 @@ export default function Wiki() {
         </div>
       </div>
 
+      
+      <div className="px-4 mb-2">
+        <Link to="/fishing/identify" className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-3xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all w-full group border border-indigo-400/30">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2.5 rounded-2xl"><Camera className="w-6 h-6" /></div>
+            <div className="text-right">
+              <div className="font-black text-lg">לא מצאת את הדג?</div>
+              <div className="text-sm font-medium text-white/90">סרוק תמונה בעזרת ה-AI שלנו</div>
+            </div>
+          </div>
+          <div className="bg-white/10 p-2.5 rounded-full group-hover:bg-white/20 transition-colors">
+            <Search className="w-5 h-5" />
+          </div>
+        </Link>
+      </div>
+
       <div className="px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           <AnimatePresence>
             {filteredFish.map((fish, i) => (
               <motion.div 
@@ -442,8 +485,13 @@ export default function Wiki() {
                         )}
                       </div>
                     </div>
-                    <div className="bg-cyan-50 dark:bg-cyan-900/30 p-3.5 rounded-2xl shrink-0">
-                       <Fish className="w-7 h-7 text-cyan-600 dark:text-cyan-400" />
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <div className="bg-cyan-50 dark:bg-cyan-900/30 p-3.5 rounded-2xl shrink-0 flex items-center justify-center">
+                         <Fish className="w-7 h-7 text-cyan-600 dark:text-cyan-400" />
+                      </div>
+                      <button onClick={() => toggleFavorite(fish.id)} className="p-2 bg-slate-50 dark:bg-slate-800/50 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center">
+                        <Star className={`w-5 h-5 ${favorites.includes(fish.id) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-400'}`} />
+                      </button>
                     </div>
                   </div>
                   
@@ -500,13 +548,13 @@ export default function Wiki() {
                     <div>
                       <div className="text-xs font-black text-cyan-600 dark:text-cyan-500 mb-2 uppercase tracking-wide">שיטות דיג</div>
                       <ul className="text-sm space-y-1.5 font-bold text-slate-700 dark:text-slate-300">
-                        {fish.methods.map((m, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-cyan-500 mt-0.5">•</span> {m}</li>)}
+                        {fish.methods.map((m, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-cyan-500 mt-0.5">•</span> <button onClick={() => setSearchQuery(m)} className="hover:text-cyan-600 dark:hover:text-cyan-400 text-right text-balance transition-colors underline-offset-4 hover:underline text-right outline-none text-left">{m}</button></li>)}
                       </ul>
                     </div>
                     <div>
                       <div className="text-xs font-black text-amber-600 dark:text-amber-500 mb-2 uppercase tracking-wide">פיתיון מועדף</div>
                       <ul className="text-sm space-y-1.5 font-bold text-slate-700 dark:text-slate-300">
-                        {fish.baits.map((b, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-amber-500 mt-0.5">•</span> {b}</li>)}
+                        {fish.baits.map((b, idx) => <li key={idx} className="flex items-start gap-1.5"><span className="text-amber-500 mt-0.5">•</span> <button onClick={() => setSearchQuery(b)} className="hover:text-amber-600 dark:hover:text-amber-400 text-right text-balance transition-colors underline-offset-4 hover:underline outline-none">{b}</button></li>)}
                       </ul>
                     </div>
                   </div>
