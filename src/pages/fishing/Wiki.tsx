@@ -18,6 +18,12 @@ export interface FishData {
   danger: string | null;
   desc: string;
   habitat: Habitat;
+  legalSize?: string;
+  recommendedGear?: {
+    hookSize?: string;
+    lineTest?: string;
+  };
+  activeHours?: string;
 }
 
 const FISH_DB: FishData[] = [
@@ -26,10 +32,13 @@ const FISH_DB: FishData[] = [
     id: "locus",
     name: "לוקוס לבן (דקר)",
     season: "אביב - קיץ",
+    activeHours: "יום וזריחה",
     methods: ["ז'רז'ור", "פיתיון", "סירה"],
     baits: ["קלמארי", "סבידה", "דגים חיים"],
     kosher: true,
     danger: null,
+    legalSize: "40 ס\"מ מינימום",
+    recommendedGear: { hookSize: "#1/0 - #4/0", lineTest: "30lb - 50lb" },
     desc: "דג טורף הנחשב לאחד ממשובחי הים התיכון. נמצא לרוב בקרבת סלעים ושוברי גלים.",
     habitat: "sea"
   },
@@ -37,10 +46,13 @@ const FISH_DB: FishData[] = [
     id: "denis",
     name: "דניס (צ'יפורה)",
     season: "סתיו - חורף",
+    activeHours: "כל היום, עדיפות לבוקר",
     methods: ["פיתיון חוף", "בוס"],
     baits: ["תולעים", "גמברי", "בצק מסריח"],
     kosher: true,
     danger: null,
+    legalSize: "20 ס\"מ מינימום",
+    recommendedGear: { hookSize: "#4 - #8", lineTest: "12lb - 20lb" },
     desc: "דג פופולרי מאוד, פעיל בעיקר בקרקע חולית או מעורבת. נלחם יפה בחכה.",
     habitat: "sea"
   },
@@ -48,10 +60,12 @@ const FISH_DB: FishData[] = [
     id: "sargus",
     name: "סרגוס (ספרוס)",
     season: "כל השנה (במיוחד חורף)",
+    activeHours: "לילה וזריחה",
     methods: ["בוס", "פיתיון חוף"],
     baits: ["בצק", "גמברי", "תולעים"],
     kosher: true,
     danger: null,
+    recommendedGear: { hookSize: "#6 - #10", lineTest: "10lb - 15lb" },
     desc: "דג חוף טיפוסי שאוהב ים גלי. מסתובב בלהקות ונמצא כמעט בכל נקודה סלעית.",
     habitat: "sea"
   },
@@ -59,10 +73,12 @@ const FISH_DB: FishData[] = [
     id: "aras",
     name: "ארס (סיכן)",
     season: "קיץ - סתיו",
+    activeHours: "יום",
     methods: ["בוס"],
     baits: ["בצק", "אצות"],
     kosher: true,
     danger: "קוצים ארסיים סנפיר גב - עקיצה כואבת מאוד!",
+    recommendedGear: { hookSize: "#10 - #12", lineTest: "8lb - 12lb" },
     desc: "פולש מים סוף. דג צמחוני וטעים מאוד, אך דורש זהירות רבה בניקוי בשל הקוצים הארסיים שלו.",
     habitat: "sea"
   },
@@ -70,6 +86,7 @@ const FISH_DB: FishData[] = [
     id: "avo-nafha",
     name: "אבו נפחא (לגינון)",
     season: "כל השנה",
+    activeHours: "כל היום",
     methods: ["נתפס בטעות בכל השיטות"],
     baits: ["הכל"],
     kosher: false,
@@ -81,10 +98,13 @@ const FISH_DB: FishData[] = [
     id: "intias",
     name: "אנטיאס (שולה)",
     season: "סתיו - חורף",
+    activeHours: "זריחה, שקיעה ולילה",
     methods: ["ז'רז'ור כבד", "פיתיון חי", "סירה"],
     baits: ["סבידה חיה", "בורי חי", "דמויים גדולים"],
     kosher: true,
     danger: null,
+    legalSize: "אין, מומלץ לשחרר מתחת ל-2 ק\"ג",
+    recommendedGear: { hookSize: "#3/0 - #8/0", lineTest: "50lb - 80lb" },
     desc: "מלך הים התיכון. דג חזק מאוד המגיע למשקלים של עשרות קילוגרמים. נותן פייט בלתי נשכח.",
     habitat: "sea"
   },
@@ -92,10 +112,12 @@ const FISH_DB: FishData[] = [
     id: "palamida",
     name: "פלמידה (טונית אטלנטית)",
     season: "אביב - קיץ",
+    activeHours: "שעות היום המוקדמות",
     methods: ["ז'רז'ור", "טרולינג (סירה)"],
     baits: ["ג'יגים", "דמויים", "ניקלים"],
     kosher: true,
     danger: null,
+    recommendedGear: { hookSize: "#1 - #3/0", lineTest: "20lb - 40lb" },
     desc: "דג מהיר מאוד שזז בלהקות. בשרו כהה ומתאים מאוד לסשימי או בישול. נלחם בעוצמה רבה.",
     habitat: "sea"
   },
@@ -103,10 +125,12 @@ const FISH_DB: FishData[] = [
     id: "marmir",
     name: "מרמיר (שישן)",
     season: "קיץ - סתיו",
+    activeHours: "לילה",
     methods: ["פיתיון חוף"],
     baits: ["תולעים", "שניצל", "גמברי"],
     kosher: true,
     danger: null,
+    recommendedGear: { hookSize: "#6 - #10", lineTest: "10lb - 15lb" },
     desc: "דג חוף קלאסי שאוהב קרקע חולית. מאופיין בפסים לאורך גופו, נתפס הרבה בדיג פיתיונות קל.",
     habitat: "sea"
   },
@@ -114,10 +138,12 @@ const FISH_DB: FishData[] = [
     id: "gombar",
     name: "גומבר (Bluefish)",
     season: "קיץ - סתיו",
+    activeHours: "זריחה ושקיעה",
     methods: ["ז'רז'ור", "פיתיון חי"],
     baits: ["טופ-ווטר", "פופרים", "בורי חי"],
     kosher: true,
     danger: "שיניים חדות כתער! יכול לכרות אצבע. חובה להשתמש בפלאייר.",
+    recommendedGear: { hookSize: "#1/0 - #4/0 (חובה תיל מתכת)", lineTest: "20lb - 40lb" },
     desc: "מכונת רצח אכזרית! טורף תוקפני במיוחד שלרוב קורע חוטים רגילים. אוהב לרדוף אחרי פיתיונות קופצים על פני המים.",
     habitat: "sea"
   },
@@ -125,10 +151,12 @@ const FISH_DB: FishData[] = [
     id: "barracuda",
     name: "מליטה (ברקודה)",
     season: "סתיו - חורף",
+    activeHours: "לילה וזריחה",
     methods: ["ז'רז'ור", "פיתיון חי"],
     baits: ["דמויי מינו (Minnow)", "דגים קטנים"],
     kosher: true,
     danger: "שיניים חדות.",
+    recommendedGear: { hookSize: "#1 - #2/0", lineTest: "15lb - 30lb" },
     desc: "טורף בעל מבנה גוף דמוי טורפדו שמסתובב בלהקות, לרוב בשעות הלילה ומוקדם בבוקר ליד שוברי גלים.",
     habitat: "sea"
   },
@@ -136,10 +164,12 @@ const FISH_DB: FishData[] = [
     id: "tarchon",
     name: "טרכון (Trevally)",
     season: "אביב - סתיו",
+    activeHours: "זריחה ובוקר",
     methods: ["ז'רז'ור", "סירה"],
     baits: ["ג'יגים קטנים", "סיליקונים"],
     kosher: true,
     danger: null,
+    recommendedGear: { hookSize: "#2 - #1/0", lineTest: "12lb - 25lb" },
     desc: "לוחם מדהים ביחס לגודלו. שייך למשפחת הטרוליים וחי באזורי זרמים ושוברי גלים. מעולה לז'רז'ור קל.",
     habitat: "sea"
   },
@@ -147,10 +177,12 @@ const FISH_DB: FishData[] = [
     id: "labrak",
     name: "לברק (Sea Bass)",
     season: "חורף",
+    activeHours: "זריחה וים גלי",
     methods: ["ז'רז'ור", "פיתיון חי"],
     baits: ["סיליקונים", "דמויים קטנים", "בורי קטן"],
     kosher: true,
     danger: null,
+    recommendedGear: { hookSize: "#1 - #2/0", lineTest: "15lb - 20lb" },
     desc: "טורף כסוף ואלגנטי שאוהב מים גליים ומוקצפים. נחשב לדג איכותי מאוד למאכל.",
     habitat: "sea"
   },
@@ -158,10 +190,13 @@ const FISH_DB: FishData[] = [
     id: "musar",
     name: "מוסר (Meagre)",
     season: "כל השנה",
+    activeHours: "זריחה וערב",
     methods: ["ז'רז'ור כבד", "סירה"],
     baits: ["ג'יגים", "דמויים גדולים", "פיתיון חי"],
     kosher: true,
     danger: null,
+    legalSize: "30 ס\"מ מינימום",
+    recommendedGear: { hookSize: "#2/0 - #5/0", lineTest: "30lb - 50lb" },
     desc: "דג ענק וכסוף ממשפחת המסריים. יכול להגיע למשקלים של מעל 20 קילו. חי באזורים עמוקים.",
     habitat: "sea"
   },
@@ -169,10 +204,13 @@ const FISH_DB: FishData[] = [
     id: "farida",
     name: "פרידה (Pagrus)",
     season: "כל השנה",
+    activeHours: "כל היום",
     methods: ["סירה", "ג'יגינג"],
     baits: ["קלמארי", "ג'יגים איטיים"],
     kosher: true,
     danger: null,
+    legalSize: "25 ס\"מ מינימום",
+    recommendedGear: { hookSize: "#1/0 - #3/0", lineTest: "20lb - 40lb" },
     desc: "דג אדמדם וחזק שחי בעומק. פייט מצוין ובשר משובח מאוד.",
     habitat: "sea"
   },
@@ -180,10 +218,11 @@ const FISH_DB: FishData[] = [
     id: "safmit",
     name: "שפמית ארסית (דג נחש)",
     season: "קיץ",
+    activeHours: "כל היום והלילה",
     methods: ["נתפס בטעות בפיתיונות"],
     baits: ["בשר", "תולעים"],
     kosher: false,
-    danger: "סכנת חיים! עקיצה רעילה ביותר שגורמת לכאב משתק, נפיחות ומחייבת מיון. אין לגעת בשום אופן!",
+    danger: "סכנת חיים! עקיצה רעילה ביותר שגורמת לכאב משתק, נפיחות ומחייבת מיון.",
     desc: "דג פולש קטן דמוי נחש עם פסים לאורך גופו. הטורף הארסי ביותר בים התיכון. חותכים את החוט וזורקים.",
     habitat: "sea"
   },
@@ -191,261 +230,126 @@ const FISH_DB: FishData[] = [
     id: "calamari",
     name: "קלמארי / סבידה",
     season: "חורף - אביב",
+    activeHours: "לילה (או יום עם בובות)",
     methods: ["ז'רז'ור מיוחד (Eging)"],
     baits: ["בובות קלמארי (Egi)"],
     kosher: false,
     danger: "דיו שחור שמלכלך בגדים לנצח.",
+    recommendedGear: { hookSize: "בובת EGI", lineTest: "PE 0.6 - 1.0" },
     desc: "רכיכות חכמות שמגיעות לחוף בחורף. משמשות גם למאכל וגם כפיתיון הכי טוב לטורפים אחרים.",
     habitat: "sea"
   },
+  // New Sea Fish
   {
-    id: "zaharon",
-    name: "זהרון (Lionfish)",
-    season: "כל השנה",
-    methods: ["צלילה", "פיתיון"],
-    baits: ["דגים קטנים"],
-    kosher: true,
-    danger: "קוצים ארסיים ביותר בכל הסנפירים - עקיצה כואבת ברמות קיצוניות.",
-    desc: "דג יפהפה אך פולש מסוכן מאוד. משמיד אוכלוסיות שלמות של דגים קטנים בשונית.",
-    habitat: "sea"
-  },
-
-  // Freshwater Fish
-  {
-    id: "buri",
-    name: "בורי (קיפון)",
-    season: "כל השנה",
-    methods: ["בוס", "רשת"],
-    baits: ["בצק מסריח", "פיתה"],
-    kosher: true,
-    danger: null,
-    desc: "דג צמחוני הנמצא גם בים וגם בנחלים גדולים (כמו נחל אלכסנדר והירקון).",
-    habitat: "freshwater"
-  },
-  {
-    id: "musht",
-    name: "מושט / אמנון (Tilapia)",
+    id: "tuna-blackfin",
+    name: "טונה שחורת סנפיר (אלבקור)",
     season: "אביב - קיץ",
-    methods: ["בוס", "ז'רז'ור קל"],
-    baits: ["תירס", "בצק", "תולעים", "ספינרים קטנים"],
-    kosher: true,
-    danger: "סנפיר גב קוצני - יש לאחוז בזהירות.",
-    desc: "הדג המוכר ביותר בכנרת! חי בלהקות באזורי חוף וצמחיה. דג תוקפני שמספק פייט מהנה.",
-    habitat: "freshwater"
-  },
-  {
-    id: "karpion",
-    name: "קרפיון (Carp)",
-    season: "אביב - סתיו",
-    methods: ["פיתיון (Carp Fishing)"],
-    baits: ["בויליס", "בצק", "תירס"],
+    activeHours: "בוקר וצהריים",
+    methods: ["טרולינג", "ז'רז'ור כבד"],
+    baits: ["דמויים גדולים", "פיתיונות חיים", "נוצות"],
     kosher: true,
     danger: null,
-    desc: "מלך המים המתוקים ולרוב הגדול מכולם. דורש סבלנות רבה וציוד ייעודי. נמצא בכנרת ובאגמים.",
-    habitat: "freshwater"
-  },
-  {
-    id: "barbus",
-    name: "בינית / שרבוט (Barbus)",
-    season: "אביב - קיץ",
-    methods: ["בוס", "ז'רז'ור"],
-    baits: ["תירס", "כפיות (Spoons)"],
-    kosher: true,
-    danger: null,
-    desc: "דג חזק ומהיר החי בנחלים זורמים ובכנרת. תוקף פיתיונות מלאכותיים.",
-    habitat: "freshwater"
-  },
-  {
-    id: "catfish",
-    name: "שפמנון (Catfish)",
-    season: "קיץ (במיוחד בלילה)",
-    methods: ["פיתיון בשרי"],
-    baits: ["חלקי עוף", "נקניקייה", "דגים קטנים"],
-    kosher: false,
-    danger: "ריר חלקלק מאוד, ללא קשקשים.",
-    desc: "טורף קרקעית המגיע לגדלים מפלצתיים במים העכורים של הכנרת ונחלים. אינו כשר למאכל.",
-    habitat: "freshwater"
-  },
-  {
-    id: "silver-carp",
-    name: "כסיף (Silver Carp)",
-    season: "קיץ",
-    methods: ["פיתיון צף"],
-    baits: ["לחם צף", "בצק מיוחד"],
-    kosher: true,
-    danger: null,
-    desc: "דג עצום המסנן פלנקטון מהמים. לעתים קופץ מעל המים כשהוא נבהל מסירות.",
-    habitat: "freshwater"
-  },
-  {
-    id: "tzelofach",
-    name: "צלופח אירופי (Eel)",
-    season: "כל השנה",
-    methods: ["פיתיון קרקעית"],
-    baits: ["תולעים", "בשר"],
-    kosher: false,
-    danger: "חלקלק מאוד וקשה לתפיסה בידיים.",
-    desc: "דג נדיר יחסית שחי בנחלי חוף (כמו הירקון והקישון). נודד לים כדי להתרבות.",
-    habitat: "freshwater"
-  },
-  {
-    id: "trout",
-    name: "פורל / טרוטה (Trout)",
-    season: "חורף - אביב",
-    methods: ["ז'רז'ור קל", "Fly Fishing"],
-    baits: ["ספינרים קטנים", "זבובי דיג"],
-    kosher: true,
-    danger: null,
-    desc: "חי רק במים קרים וזורמים במיוחד, נפוץ בישראל באזור נחל הדן ובריכות גידול מיוחדות.",
-    habitat: "freshwater"
-  },
-  // תוספות דגי ים
-  {
-    id: "televizia",
-    name: "טלוויזיה (Whiting)",
-    season: "קיץ - סתיו",
-    methods: ["פיתיון חוף חלבי/קליל"],
-    baits: ["תולעים", "שניצל", "גמברי קטן"],
-    kosher: true,
-    danger: null,
-    desc: "דג חוף קטן וכסוף-שקוף שאוהב קרקע חולית ומים רדודים. נתפס בהמוניו בקיץ ונחשב למעדן אמיתי כשהוא מטוגן.",
-    habitat: "sea"
-  },
-  {
-    id: "plamida-lavana",
-    name: "פלמידה לבנה (Spanish Mackerel)",
-    season: "סתיו - חורף",
-    methods: ["ז'רז'ור", "טרולינג", "פיתיון חי"],
-    baits: ["ג'יגים מהירים", "דמויי מינו", "בורי חי"],
-    kosher: true,
-    danger: "שיניים חדות כתער! יש להשתמש בפלאייר להוצאת הקרס.",
-    desc: "טורף ארוך, כסוף ומהיר להחריד. חותך חוטים אם לא משתמשים בכבל תיל. פייטן אדיר וטעים מאוד למאכל או סשימי.",
-    habitat: "sea"
-  },
-  {
-    id: "tona-shchora",
-    name: "טונה שחורה (Little Tunny)",
-    season: "אביב - קיץ",
-    methods: ["ז'רז'ור כבד", "סירה", "קיאק"],
-    baits: ["ג'יגים", "דמויי משקולת (Casting Jigs)"],
-    kosher: true,
-    danger: null,
-    desc: "מכונת שרירים פלגית! שוחה בלהקות גדולות ונותנת פייט שמוציא עשן מהרולר. דורש ציוד חזק וכושר גופני.",
-    habitat: "sea"
-  },
-  {
-    id: "tamnun",
-    name: "תמנון (Octopus)",
-    season: "חורף",
-    methods: ["ז'רז'ור אגינג (Eging)", "פיתיון מקרקעית"],
-    baits: ["בובות קלמארי גדולות", "סרטנים"],
-    kosher: false,
-    danger: "מקור חזק מאוד במרכז הזרועות, נצמד בחוזקה ולעתים מתיז דיו.",
-    desc: "יצור חכם מאוד שחי בין סלעים בקרקעית הים. יכול להיצמד לסלע ולגרום לקרע של החוט. לא כשר למאכל.",
-    habitat: "sea"
-  },
-  {
-    id: "salpa",
-    name: "סולבי / סלפה (Salema)",
-    season: "אביב - קיץ",
-    methods: ["בוס", "פיתיון חוף"],
-    baits: ["בצק מסריח", "אצות"],
-    kosher: true,
-    danger: null,
-    desc: "דג צמחוני עם פסים צהובים לאורך גופו שניזון מאצות. נתפס הרבה כשמנסים לדוג בורי, אך בשרו פחות פופולרי בגלל תזונתו.",
-    habitat: "sea"
-  },
-  {
-    id: "lavnun",
-    name: "לבנון הכנרת (Sardine)",
-    season: "כל השנה",
-    methods: ["בוס", "רשת (מסחרי)"],
-    baits: ["בצק", "תולעים"],
-    kosher: true,
-    danger: null,
-    desc: "דג היסטורי וסמל של הכנרת (הנקרא גם סרדין הכנרת). דג קטן החי בלהקות ענק. מעולה כפיתיון חי לדגים גדולים יותר או לטיגון עמוק.",
-    habitat: "freshwater"
-  },
-  // 3 האחרונים למדריך השלם
-  {
-    id: "kachlon",
-    name: "כחלון קוצני (Lichia)",
-    season: "קיץ - סתיו",
-    methods: ["ז'רז'ור אולטרה-לייט", "פיתיון חוף"],
-    baits: ["ג'יגים קטנטנים", "תולעים"],
-    kosher: true,
-    danger: null,
-    desc: "דג כסוף, יפהפה ושטוח שחי ממש על קו שבירת הגלים בחוף החולי. פייטן מעולה לציוד קל וטעים מאוד.",
+    legalSize: "אלבקור מותר, מוגן כחולת סנפיר",
+    recommendedGear: { hookSize: "#5/0 - #9/0", lineTest: "60lb - 100lb" },
+    desc: "מהירה כמו טורפדו! דורשת ציוד פלאגי סופר-כבד. לרוב נתפסת מדיג בסירה רחוק מהחוף.",
     habitat: "sea"
   },
   {
     id: "dorado",
-    name: "דוראדו / רעמתן (Mahi-Mahi)",
+    name: "דוראדו (מהי-מהי)",
     season: "קיץ - סתיו",
-    methods: ["ז'רז'ור סירה / קיאק", "טרולינג"],
-    baits: ["דמויים טרופיים", "פיתיון חי (בורי/סבידה)"],
+    activeHours: "שעות היום",
+    methods: ["טרולינג", "ז'רז'ור"],
+    baits: ["קלמארי", "דמויים צפים"],
     kosher: true,
     danger: null,
-    desc: "דג פלאגי עוצר נשימה בצבעי ירוק-צהוב זוהרים. שוחה בעומק הים קרוב לפני המים ולרוב קופץ באוויר כשנתפס.",
+    recommendedGear: { hookSize: "#2/0 - #5/0", lineTest: "30lb - 50lb" },
+    desc: "אחד הדגים היפים בים! מחליף צבעים כשנתפס, קופץ באוויר ונותן מלחמה אקרובטית מטורפת.",
     habitat: "sea"
   },
   {
-    id: "halilon",
-    name: "חלילון (Cornetfish)",
-    season: "קיץ - סתיו",
-    methods: ["ז'רז'ור"],
-    baits: ["דמויי מינו", "סיליקונים"],
+    id: "shark",
+    name: "כרישים",
+    season: "סתיו - חורף",
+    activeHours: "כל היום",
+    methods: ["תפיסה ושחרור בלבד!"],
+    baits: ["פיתיון בשר", "דג שלם"],
     kosher: false,
+    danger: "מסוכן. כל הכרישים מוגנים לפי חוק!",
+    legalSize: "מוגן לחלוטין (חובה לשחרר)",
+    recommendedGear: { hookSize: "#10/0 Circle", lineTest: "100lb+" },
+    desc: "מין מוגן בישראל! מגיעים בחורף למים החמים. חובה לשחרר מיד ללא פגיעה.",
+    habitat: "sea"
+  },
+  // Freshwater Fish
+  {
+    id: "karp",
+    name: "קרפיון",
+    season: "אביב - קיץ",
+    activeHours: "לילה ובוקר מוקדם",
+    methods: ["דיג פיתיונות", "Hair Rig"],
+    baits: ["בוילים (Boilies)", "תירס", "בצק מתוק"],
+    kosher: true,
     danger: null,
-    desc: "דג פולש מים סוף שנראה כמו מקל ארוך עם חוט בזנב. תוקפני מאוד ונתפס המון בז'רז'ור למרות שאין בו הרבה בשר.",
-    habitat: "sea"
-  },
-  // תוספות אחרונות בהחלט - דגי לוואי וסכנות נפוצות בים התיכון
-  {
-    id: "stingray",
-    name: "חתול ים (טריגון / Stingray)",
-    season: "קיץ - סתיו",
-    methods: ["פיתיון חוף", "סירה"],
-    baits: ["קלמארי", "דגים שלמים", "תולעים"],
-    kosher: false,
-    danger: "סכנת חיים! קוץ ארסי ומשונן בבסיס הזנב. חובה לחתוך חוט או להשתמש בציוד מגן.",
-    desc: "דג סחוס שטוח החי על קרקעית חולית לאורך חופי ישראל. נתפס המון בטעות בזרזור או פיתיונות מהחוף.",
-    habitat: "sea"
+    legalSize: "30 ס\"מ מינימום",
+    recommendedGear: { hookSize: "#4 - #8", lineTest: "15lb - 30lb" },
+    desc: "דג חזק וזהיר מאוד. ענף ספורטיבי שלם (Carp Fishing) הדורש סבלנות וציוד ייעודי.",
+    habitat: "freshwater"
   },
   {
-    id: "moray",
-    name: "מורנה (Moray Eel)",
+    id: "amnon",
+    name: "מושט (אמנון)",
     season: "כל השנה",
-    methods: ["פיתיון מהסלעים"],
-    baits: ["בשר דגים", "קלמארי", "סרטנים"],
-    kosher: false,
-    danger: "נשיכה חזקה מאוד מזוג מלתעות כפולות! הדג אגרסיבי גם מחוץ למים ונוטה להסתבך בחוט.",
-    desc: "צלופח אימתני בצבע חום-מנומר החי בנקיקי סלעים בים התיכון ובאילת. לרוב נחתך החוט בגלל שיניו החדות.",
-    habitat: "sea"
+    activeHours: "שעות היום",
+    methods: ["בוס", "ז'רז'ור אולטרה לייט"],
+    baits: ["תירס", "בצק", "ספינרים קטנים"],
+    kosher: true,
+    danger: "קוצים חדים בסנפיר הגב.",
+    legalSize: "15 ס\"מ מינימום",
+    recommendedGear: { hookSize: "#8 - #12", lineTest: "4lb - 8lb" },
+    desc: "הדג הנפוץ ביותר בכנרת ובנחלים. נלחם יפה על ציוד קל, ומהווה מטרה מעולה למתחילים.",
+    habitat: "freshwater"
   },
   {
-    id: "bogue",
-    name: "בננה (Boops boops)",
-    season: "חורף - אביב",
-    methods: ["בוס", "פיתיון קל"],
-    baits: ["בצק", "תולעים", "חלבי"],
+    id: "catfish",
+    name: "שפמנון",
+    season: "קיץ",
+    activeHours: "לילה וזריחה",
+    methods: ["פיתיון חי/בשרי", "בוס כבד"],
+    baits: ["כבד עוף", "נקניקיה", "דג"],
+    kosher: false,
+    danger: "קוצים עוקצניים בשולי הסנפירים.",
+    recommendedGear: { hookSize: "#1 - #4/0", lineTest: "20lb - 50lb" },
+    desc: "טורף גדול ללא קשקשים (לא כשר). נמשך לריחות בשריים, ויכול להגיע לממדי ענק.",
+    habitat: "freshwater"
+  },
+  {
+    id: "trout",
+    name: "פורל (שמך)",
+    season: "חורף",
+    activeHours: "יום",
+    methods: ["ז'רז'ור אולטרה לייט", "דיג זבובים (Fly)"],
+    baits: ["כפיות זעירות", "סיליקונים", "זבובים"],
     kosher: true,
     danger: null,
-    desc: "דג ים כסוף וקטן עם עיניים גדולות (ים תיכון). נתפס בהמוניו ומשמש בעיקר כפיתיון חי מצוין לאינטיאס וטורפים אחרים.",
-    habitat: "sea"
+    recommendedGear: { hookSize: "#10 - #14", lineTest: "2lb - 6lb" },
+    desc: "דג מים קרים, נדיר מאוד בישראל מחוץ לחוות גידול ובנחל הדן. אקרובט מדהים וחזק.",
+    habitat: "freshwater"
   },
   {
-    id: "squirrelfish",
-    name: "ברקן אדום (קומוניסט)",
-    season: "קיץ - סתיו",
-    methods: ["פיתיון מהסלעים (בלילה)"],
-    baits: ["גמברי", "תולעים", "בצק"],
+    id: "buri",
+    name: "בורי (קיפון)",
+    season: "כל השנה",
+    activeHours: "שעות היום המוארות",
+    methods: ["בוס", "פיתיון (קפיץ/פיתה)"],
+    baits: ["בצק נוזלי/מסטיק", "פיתה"],
     kosher: true,
-    danger: "קוצים דוקרים מאוד בסנפירי הגב והזימים שיכולים לגרום לכאב וצריבה.",
-    desc: "דג אדום קטן בעל עיניים גדולות החי בין הסלעים בים התיכון. פעיל בעיקר בלילה ונוטה 'לגנוב' פיתיונות.",
-    habitat: "sea"
+    danger: null,
+    legalSize: "20 ס\"מ (בכנרת)",
+    recommendedGear: { hookSize: "#10 - #14", lineTest: "8lb - 12lb" },
+    desc: "נמצא בים ובמים מתוקים. ניזון מרפש, דורש פיתיון רך מאוד וראייה חדה לזיהוי האכילות העדינות.",
+    habitat: "freshwater"
   }
-
 ];
 
 export default function Wiki() {
@@ -527,14 +431,30 @@ export default function Wiki() {
                       <h3 className="font-black text-2xl text-slate-800 dark:text-slate-100 mb-1 leading-tight">
                         {fish.name}
                       </h3>
-                      <p className="text-sm text-slate-500 font-bold bg-slate-100 dark:bg-slate-800 inline-block px-3 py-1 rounded-full">
-                        ⏱️ {fish.season}
-                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 inline-block px-3 py-1 rounded-full">
+                          📅 {fish.season}
+                        </p>
+                        {fish.activeHours && (
+                          <p className="text-sm text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-900/30 inline-block px-3 py-1 rounded-full">
+                            ⏰ {fish.activeHours}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-cyan-50 dark:bg-cyan-900/30 p-3.5 rounded-2xl shrink-0">
                        <Fish className="w-7 h-7 text-cyan-600 dark:text-cyan-400" />
                     </div>
                   </div>
+                  
+                  {fish.legalSize && (
+                    <div className="mb-4 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/30 p-3 rounded-xl flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0" />
+                      <span className="text-sm font-bold text-orange-700 dark:text-orange-400">
+                        גודל חוקי: {fish.legalSize}
+                      </span>
+                    </div>
+                  )}
                   
                   <div className="flex flex-wrap gap-2 mb-5">
                     {fish.habitat === 'freshwater' && !fish.danger && (
@@ -590,6 +510,28 @@ export default function Wiki() {
                       </ul>
                     </div>
                   </div>
+
+                  {fish.recommendedGear && (
+                    <div className="mt-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <div className="text-xs font-black text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                        ציוד מומלץ 🎣
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                        {fish.recommendedGear.hookSize && (
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 text-xs block mb-0.5">מידת קרס</span>
+                            {fish.recommendedGear.hookSize}
+                          </div>
+                        )}
+                        {fish.recommendedGear.lineTest && (
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 text-xs block mb-0.5">טסט חוט (LB)</span>
+                            {fish.recommendedGear.lineTest}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </Card>
               </motion.div>
             ))}
