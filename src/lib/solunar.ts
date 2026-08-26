@@ -323,7 +323,7 @@ export function getSmartTargetSpecies(
 
   // SCENARIO 1: Flat Sea (ים פלטה)
   if (w < 0.4) {
-    if (fishingStyle === 'ultralight' || fishingStyle === 'kayak') {
+    if (fishingStyle === 'kayak') {
       return {
         species: isWinter ? ["קלמרי", "סבידה", "טרחון קטן"] : ["טרחון", "פלמידה", "טונה שחורה"],
         bestMethod: "ז'רז'ור קלמרים / פופרים קטנים",
@@ -331,7 +331,15 @@ export function getSmartTargetSpecies(
         iconType: isWinter ? 'squid' : 'lure',
         recommendedGear: isWinter ? "בובות סבידה (Egi) צבע ורוד או כחול." : "כלבים עדינים 5-9 גרם ומיקרו ג'יגים 3-7 גרם."
       };
-    } else if (fishingStyle === 'bait') {
+    } else if (fishingStyle === 'ultralight' || fishingStyle === 'lure') {
+      return {
+        species: ["טרחון", "טלוויזיות", "לברק קטן"],
+        bestMethod: "ז'רז'ור קל עד אולטרה-לייט",
+        reasoning: "ים פלטה דורש עבודה עדינה ודמויים קטנים, הדגים יראו כל תנועה לא טבעית.",
+        iconType: 'lure',
+        recommendedGear: "פופרים קטנים (עד 7 ס'מ), סיליקונים עם משקולות קלות מאוד (עד 5 גרם)."
+      };
+    } else { // bait
       return {
         species: ["דניס", "מרמיר", "בורי"],
         bestMethod: "פיתיונות על רגש (בוס או חוף עדין)",
@@ -352,16 +360,25 @@ export function getSmartTargetSpecies(
         iconType: 'lure',
         recommendedGear: "מינואו 140-175 מ'מ עמוקים ומהירים (למשל Rapala X-Rap)."
       };
-    }
-    if (c > 50 && fishingStyle === 'lure') {
-      return {
-        species: ["לברק!", "גומבר", "לוקוס"],
-        bestMethod: "ז'רז'ור (כלבים / מינואו)",
-        reasoning: "ים עובד + עננות = זמן לברקים! טורפים יוצאים לאכול בקצף.",
-        iconType: 'lure',
-        recommendedGear: "סיליקונים ארוכים לבנים (Black Minnow 120), וכלבים גדולים לקצף."
-      };
-    } else {
+    } else if (fishingStyle === 'lure' || fishingStyle === 'ultralight') {
+      if (c > 50) {
+        return {
+          species: ["לברק!", "גומבר", "לוקוס"],
+          bestMethod: "ז'רז'ור בקצף הגלים",
+          reasoning: "ים עובד + עננות = זמן לברקים! טורפים יוצאים לאכול בקצף.",
+          iconType: 'lure',
+          recommendedGear: "סיליקונים ארוכים לבנים (Black Minnow 120), וכלבים גדולים לקצף."
+        };
+      } else {
+        return {
+          species: ["גומבר", "ברקודה", "טרחון"],
+          bestMethod: "ז'רז'ור מהיר",
+          reasoning: "ים עובד ושמשי מושלם לדמויים מהירים ונוצצים בתוך הגלים.",
+          iconType: 'lure',
+          recommendedGear: "ג'יגים 15-40 גרם (כסף/זהב) או דמויי מינואו צוללים."
+        };
+      }
+    } else { // bait
       return {
         species: ["סרגוס", "לוקוס", "דניס"],
         bestMethod: "דייג פיתיונות או בוס",
@@ -379,10 +396,10 @@ export function getSmartTargetSpecies(
         species: [],
         bestMethod: "להישאר בבית",
         reasoning: "הים סוער מדי לקיאק. סכנת חיים.",
-        iconType: 'lure'
+        iconType: 'lure',
+        recommendedGear: "הישאר על החוף."
       };
-    }
-    if (fishingStyle === 'lure') {
+    } else if (fishingStyle === 'lure' || fishingStyle === 'ultralight') {
       return {
         species: ["לברק", "לוקוס מפלצת", "ברקודה"],
         bestMethod: "ז'רז'ור כבד מהסלעים או מזחים גבוהים",
@@ -390,14 +407,15 @@ export function getSmartTargetSpecies(
         iconType: 'lure',
         recommendedGear: "ג'יגים כבדים 30-40 גרם, פופרים ענקיים ומינואו עמיד לזרם חזק."
       }
+    } else { // bait
+      return {
+        species: ["סרגוס גדול", "לבט (שישן)", "לוקוס מפלצת"],
+        bestMethod: "דייג פיתיונות כבד מהחוף/סלעים",
+        reasoning: "הים גועש. טורפי ז'רז'ור קל יתרחקו, אבל דגי הקרקעית (סרגוסים) חוגגים בזרמים.",
+        iconType: 'bait',
+        recommendedGear: "קרס 1/0 ומעלה, חוט ראשי לפחות 0.40, משקולות עוגן כבדות. סבידה או קלמארי שלם תפור."
+      };
     }
-    return {
-      species: ["סרגוס גדול", "לבט (שישן)", "לוקוס מפלצת"],
-      bestMethod: "דייג פיתיונות כבד מהחוף/סלעים",
-      reasoning: "הים גועש. טורפי ז'רז'ור קל יתרחקו, אבל דגי הקרקעית (סרגוסים) חוגגים בזרמים.",
-      iconType: 'bait',
-      recommendedGear: "קרס 1/0 ומעלה, חוט ראשי לפחות 0.40, משקולות עוגן כבדות. סבידה או קלמארי שלם תפור."
-    };
   }
 
   // Generic fallback
