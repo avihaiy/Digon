@@ -1129,4 +1129,7 @@ div[style*="lovable-editor"] {
   --primary: 60 100% 50% !important; /* Yellow for high contrast */
   --primary-foreground: 0 0% 0% !important;
   --border: 0 0% 100% !important;
-}
+}
+/* Hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
