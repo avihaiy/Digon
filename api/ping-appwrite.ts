@@ -1,6 +1,6 @@
-export default async function handler(req: Request) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
-    return new Response('Method Not Allowed', { status: 405 });
+    return res.status(405).send('Method Not Allowed');
   }
 
   const endpoint = process.env.VITE_APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
@@ -8,16 +8,13 @@ export default async function handler(req: Request) {
   const dbId = process.env.VITE_APPWRITE_DATABASE_ID;
 
   if (!projectId || !dbId) {
-    return new Response(JSON.stringify({ error: "Missing Appwrite Env Vars" }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return res.status(500).json({ error: "Missing Appwrite Env Vars" });
   }
 
   try {
     const fetchUrl = `${endpoint}/databases/${dbId}/collections/locations/documents?queries[]=limit(1)`;
     
-    const res = await fetch(fetchUrl, {
+    const appwriteRes = await fetch(fetchUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -25,21 +22,14 @@ export default async function handler(req: Request) {
       }
     });
 
-    const data = await res.json();
-
-    return new Response(JSON.stringify({ 
+    // We don't even need to parse the json, just hitting it is enough to register activity.
+    return res.status(200).json({ 
       success: true, 
       message: "Appwrite Pinged Successfully!",
-      status: res.status 
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      status: appwriteRes.status 
     });
 
-  } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 }
