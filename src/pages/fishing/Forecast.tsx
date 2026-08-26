@@ -257,6 +257,13 @@ export default function Forecast() {
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-tight">
                   <span className="font-bold text-slate-700 dark:text-slate-200">למה?</span> {aiRecommendation.reasoning}
                 </p>
+                {aiRecommendation.recommendedGear && (
+                  <div className="mt-2 pt-2 border-t border-slate-300 dark:border-slate-600">
+                    <p className="text-sm text-slate-700 dark:text-slate-200 leading-tight">
+                      <span className="font-bold text-slate-900 dark:text-white">ציוד מומלץ: </span> {aiRecommendation.recommendedGear}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
