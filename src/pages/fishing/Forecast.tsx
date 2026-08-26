@@ -149,12 +149,20 @@ export default function Forecast() {
 
       
       {/* Fishing Style Selector */}
-      <div className="mx-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
-        <button onClick={() => setFishingStyle('lure')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'lure' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🎣 ז'רז'ור</button>
-        <button onClick={() => setFishingStyle('bait')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'bait' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🪱 פיתיונות</button>
-        <button onClick={() => setFishingStyle('kayak')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'kayak' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🛶 קיאק/סירה</button>
-        <button onClick={() => setFishingStyle('ultralight')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'ultralight' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🪶 אולטרה-לייט</button>
-        <button onClick={() => setFishingStyle('float')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'float' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🎋 בוס / מצוף</button>
+      <div className="relative mx-4">
+        <button onClick={() => scrollStyles('right')} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 bg-white/80 dark:bg-slate-800/80 p-1 rounded-full shadow-md backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 opacity-90">
+          <ChevronRight className="w-5 h-5" />
+        </button>
+        <div ref={stylesRef} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x relative px-2">
+          <button onClick={() => setFishingStyle('lure')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'lure' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🎣 ז'רז'ור</button>
+          <button onClick={() => setFishingStyle('bait')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'bait' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🪱 פיתיונות</button>
+          <button onClick={() => setFishingStyle('kayak')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'kayak' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🛶 קיאק/סירה</button>
+          <button onClick={() => setFishingStyle('ultralight')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'ultralight' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🪶 אולטרה-לייט</button>
+          <button onClick={() => setFishingStyle('float')} className={cn("snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap", fishingStyle === 'float' ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50")}>🎋 בוס / מצוף</button>
+        </div>
+        <button onClick={() => scrollStyles('left')} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 bg-white/80 dark:bg-slate-800/80 p-1 rounded-full shadow-md backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 opacity-90">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Pro Metrics (Turbidity, Pressure Trend) */}
@@ -228,21 +236,29 @@ export default function Forecast() {
 
       {/* Multi-Day Selector */}
       {marineData.dailyForecast && marineData.dailyForecast.length > 0 && (
-        <div className="mx-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x">
-          {marineData.dailyForecast.map((day, idx) => (
-            <button
-              key={idx}
-              onClick={() => setSelectedDayIndex(idx)}
-              className={cn(
-                "snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap",
-                selectedDayIndex === idx 
-                  ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" 
-                  : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50"
-              )}
-            >
-              {idx === 0 ? "היום" : idx === 1 ? "מחר" : day.dayName}
-            </button>
-          ))}
+        <div className="relative mx-4 mt-2">
+          <button onClick={() => scrollDays('right')} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 bg-white/80 dark:bg-slate-800/80 p-1 rounded-full shadow-md backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 opacity-90">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+          <div ref={daysRef} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x px-2">
+            {marineData.dailyForecast.map((day, idx) => (
+              <button
+                key={idx}
+                onClick={() => setSelectedDayIndex(idx)}
+                className={cn(
+                  "snap-center shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition-all whitespace-nowrap",
+                  selectedDayIndex === idx 
+                    ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" 
+                    : "bg-white dark:bg-slate-800 border-border text-muted-foreground hover:bg-slate-50"
+                )}
+              >
+                {idx === 0 ? "היום" : idx === 1 ? "מחר" : day.dayName}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => scrollDays('left')} className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 bg-white/80 dark:bg-slate-800/80 p-1 rounded-full shadow-md backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 opacity-90">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
         </div>
       )}
 
