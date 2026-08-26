@@ -282,6 +282,7 @@ export interface FishRecommendation {
   bestMethod: string;
   reasoning: string;
   iconType: 'lure' | 'bait' | 'squid';
+  recommendedGear?: string;
 }
 
 /**
@@ -306,14 +307,16 @@ export function getSmartTargetSpecies(
         species: ["לוקוס (על הריפים)", "ברקודה"],
         bestMethod: "דמויים בצבעים זוהרים/רועשים (Rattling)",
         reasoning: "המים עכורים ולכן דגים מתקשים לראות. השתמש בדמויים שעושים ויברציות.",
-        iconType: 'lure'
+        iconType: 'lure',
+        recommendedGear: "דמויי מינואו צוללים בצבעי אש/צהוב זרחני או ג'יג-הד רועש."
       };
     } else {
       return {
         species: ["סרגוס", "לבט", "לוקוס"],
         bestMethod: "פיתיונות מסריחים (סבידה/גמברי)",
         reasoning: "מים עכורים מביאים את הסרגוסים לחפש אוכל בעזרת חוש הריח! זמן פצצה.",
-        iconType: 'bait'
+        iconType: 'bait',
+        recommendedGear: "סבידה מיושנת, קלמארי, או גמברי קריסטל שלם (לא קלוף)."
       };
     }
   }
@@ -325,14 +328,16 @@ export function getSmartTargetSpecies(
         species: isWinter ? ["קלמרי", "סבידה", "טרחון קטן"] : ["טרחון", "פלמידה", "טונה שחורה"],
         bestMethod: "ז'רז'ור קלמרים / פופרים קטנים",
         reasoning: "ים שטוח לגמרי מושלם לסגנון שלך. חפש רתיחות!",
-        iconType: isWinter ? 'squid' : 'lure'
+        iconType: isWinter ? 'squid' : 'lure',
+        recommendedGear: isWinter ? "בובות סבידה (Egi) צבע ורוד או כחול." : "כלבים עדינים 5-9 גרם ומיקרו ג'יגים 3-7 גרם."
       };
     } else if (fishingStyle === 'bait') {
       return {
         species: ["דניס", "מרמיר", "בורי"],
         bestMethod: "פיתיונות על רגש (בוס או חוף עדין)",
         reasoning: "המים צלולים והדגים חשדניים. השתמש בחוטים דקים ופיתיון טבעי.",
-        iconType: 'bait'
+        iconType: 'bait',
+        recommendedGear: "בצק מסטיק למלכודות, או תולעים טריות עם חוט תלאי 0.16 מ'מ פלורוקרבון."
       };
     }
   }
@@ -344,22 +349,25 @@ export function getSmartTargetSpecies(
         species: ["פלמידה", "אינטיאס", "דוראדו"],
         bestMethod: "טרולינג זהיר",
         reasoning: "הים קצת גלי, סע בזהירות וחפש את הטורפים בקווי העומק.",
-        iconType: 'lure'
+        iconType: 'lure',
+        recommendedGear: "מינואו 140-175 מ'מ עמוקים ומהירים (למשל Rapala X-Rap)."
       };
     }
-    if (c > 50) {
+    if (c > 50 && fishingStyle === 'lure') {
       return {
         species: ["לברק!", "גומבר", "לוקוס"],
         bestMethod: "ז'רז'ור (כלבים / מינואו)",
         reasoning: "ים עובד + עננות = זמן לברקים! טורפים יוצאים לאכול בקצף.",
-        iconType: 'lure'
+        iconType: 'lure',
+        recommendedGear: "סיליקונים ארוכים לבנים (Black Minnow 120), וכלבים גדולים לקצף."
       };
     } else {
       return {
         species: ["סרגוס", "לוקוס", "דניס"],
         bestMethod: "דייג פיתיונות או בוס",
         reasoning: "מים עובדים עוזרים לדגים ביישנים לצאת לאכול.",
-        iconType: 'bait'
+        iconType: 'bait',
+        recommendedGear: "רצועות שניצל, תולעים שניות (שלמות), חתיכות סרדין כפותות בחוט אלסטי."
       };
     }
   }
@@ -374,11 +382,21 @@ export function getSmartTargetSpecies(
         iconType: 'lure'
       };
     }
+    if (fishingStyle === 'lure') {
+      return {
+        species: ["לברק", "לוקוס מפלצת", "ברקודה"],
+        bestMethod: "ז'רז'ור כבד מהסלעים או מזחים גבוהים",
+        reasoning: "הים גועש מאוד. טורפים באים לקצות שוברי גלים. היזהרו ממשברי גלים פתאומיים!",
+        iconType: 'lure',
+        recommendedGear: "ג'יגים כבדים 30-40 גרם, פופרים ענקיים ומינואו עמיד לזרם חזק."
+      }
+    }
     return {
       species: ["סרגוס גדול", "לבט (שישן)", "לוקוס מפלצת"],
       bestMethod: "דייג פיתיונות כבד מהחוף/סלעים",
-      reasoning: "הים גועש. טורפי ז'רז'ור יתרחקו, אבל דגי הקרקעית (סרגוסים) חוגגים בזרמים.",
-      iconType: 'bait'
+      reasoning: "הים גועש. טורפי ז'רז'ור קל יתרחקו, אבל דגי הקרקעית (סרגוסים) חוגגים בזרמים.",
+      iconType: 'bait',
+      recommendedGear: "קרס 1/0 ומעלה, חוט ראשי לפחות 0.40, משקולות עוגן כבדות. סבידה או קלמארי שלם תפור."
     };
   }
 
@@ -387,9 +405,11 @@ export function getSmartTargetSpecies(
     species: ["סרגוס", "טרחון"],
     bestMethod: "פיתיונות או ז'רז'ור קל",
     reasoning: "תנאים רגילים, הכל אפשרי.",
-    iconType: 'lure'
+    iconType: 'lure',
+    recommendedGear: "ג'יגים קטנים לחיפוש טורפים, או פיתיון גמברי פשוט לסרגוסים."
   };
 }
+
 export interface GoldWindow {
   type: 'major' | 'minor';
   startHour: number;
