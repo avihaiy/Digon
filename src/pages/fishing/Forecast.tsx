@@ -1,7 +1,7 @@
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info, Droplets, MapPin, Cloud, Activity, Zap, Navigation, CloudRain, Moon, Video } from "lucide-react";
+import { Waves, Wind, Sun, Clock, Fish, Compass, ThermometerSun, AlertTriangle, Info, Droplets, MapPin, Cloud, Activity, Zap, Navigation, CloudRain, Moon, Video, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -10,7 +10,7 @@ import { CalendarDays } from "lucide-react";
 
 import { getSolunarData, getSmartTargetSpecies, getDynamicGoldWindows, GoldWindow, FishingStyle, getSunlightTimes } from '@/lib/solunar';
 import { getMediterraneanTides } from '@/lib/tides';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 
 // Generate realistic mock tide data for Mediterranean (semi-diurnal, 2 highs 2 lows per 24h)
 const generateTideData = () => {
@@ -39,6 +39,22 @@ const generateTideData = () => {
 export default function Forecast() {
   const { data: marineData, loading: marineLoading, lastUpdated } = useMarineWeather();
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+    const stylesRef = useRef<HTMLDivElement>(null);
+  const daysRef = useRef<HTMLDivElement>(null);
+
+  const scrollStyles = (dir: 'left' | 'right') => {
+    if (stylesRef.current) {
+      // RTL: right means negative left, left means positive left
+      stylesRef.current.scrollBy({ left: dir === 'right' ? -150 : 150, behavior: 'smooth' });
+    }
+  };
+
+  const scrollDays = (dir: 'left' | 'right') => {
+    if (daysRef.current) {
+      daysRef.current.scrollBy({ left: dir === 'right' ? -150 : 150, behavior: 'smooth' });
+    }
+  };
+
   const [fishingStyle, setFishingStyle] = useState<FishingStyle>('lure');
 
   // Compute solunar based on selected day
