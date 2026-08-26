@@ -278,11 +278,11 @@ export default function Home() {
           </div>
         </div>
         <div className="relative group/actions">
-          <button onClick={() => scrollQuickActions('right')} className="absolute -right-2 top-1/2 -translate-y-[60%] z-10 bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 p-1.5 rounded-full text-slate-700 dark:text-slate-300 transition-all hover:scale-110 active:scale-95 opacity-90 hover:opacity-100 flex">
+          <button onClick={() => scrollQuickActions('right')} className="absolute -right-2 top-1/2 -translate-y-[60%] z-10 bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 p-1.5 rounded-full text-blue-600 dark:text-blue-400 transition-all hover:scale-110 active:scale-95 opacity-90 hover:opacity-100 flex">
             <ChevronRight className="w-5 h-5" />
           </button>
           
-          <button onClick={() => scrollQuickActions('left')} className="absolute left-0 top-1/2 -translate-y-[60%] z-10 bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 p-1.5 rounded-full text-slate-700 dark:text-slate-300 transition-all hover:scale-110 active:scale-95 opacity-90 hover:opacity-100 flex">
+          <button onClick={() => scrollQuickActions('left')} className="absolute left-0 top-1/2 -translate-y-[60%] z-10 bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 p-1.5 rounded-full text-blue-600 dark:text-blue-400 transition-all hover:scale-110 active:scale-95 opacity-90 hover:opacity-100 flex">
             <ChevronLeft className="w-5 h-5" />
           </button>
 
