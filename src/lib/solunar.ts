@@ -8,7 +8,7 @@ const LON = 34.7818;
  * Get Moon phase and fishing score for a given date
  * @returns { score: number, rating: string, message: string, phaseName: string }
  */
-export type FishingStyle = 'lure' | 'bait' | 'kayak' | 'ultralight';
+export type FishingStyle = 'lure' | 'bait' | 'kayak' | 'ultralight' | 'float';
 
 
 export interface SunlightTimes {
@@ -339,6 +339,14 @@ export function getSmartTargetSpecies(
         iconType: 'lure',
         recommendedGear: "פופרים קטנים (עד 7 ס'מ), סיליקונים עם משקולות קלות מאוד (עד 5 גרם)."
       };
+    } else if (fishingStyle === 'float') {
+      return {
+        species: ["בורי", "אראס", "סרגוס קטן"],
+        bestMethod: "בוס / פולו (מצוף עדין)",
+        reasoning: "ים פלטה מושלם לזיהוי אכילות עדינות של בורי או אראסים.",
+        iconType: 'bait',
+        recommendedGear: "מצוף 1-2 גרם, קרסים 10-12, בצק מסטיק או פיתה."
+      };
     } else { // bait
       return {
         species: ["דניס", "מרמיר", "בורי"],
@@ -378,6 +386,14 @@ export function getSmartTargetSpecies(
           recommendedGear: "ג'יגים 15-40 גרם (כסף/זהב) או דמויי מינואו צוללים."
         };
       }
+    } else if (fishingStyle === 'float') {
+      return {
+        species: ["סרגוס", "כחילון", "בורי ענק"],
+        bestMethod: "בוס בקצף (בורות וזרמים)",
+        reasoning: "ים עובד מושלם לסרגוסים! חפש את המים הלבנים (קצף).",
+        iconType: 'bait',
+        recommendedGear: "מצוף קריצה או מצוף זרם 3-5 גרם, תולעים טריות או בצק סריח."
+      };
     } else { // bait
       return {
         species: ["סרגוס", "לוקוס", "דניס"],
@@ -407,6 +423,14 @@ export function getSmartTargetSpecies(
         iconType: 'lure',
         recommendedGear: "ג'יגים כבדים 30-40 גרם, פופרים ענקיים ומינואו עמיד לזרם חזק."
       }
+    } else if (fishingStyle === 'float') {
+      return {
+        species: [],
+        bestMethod: "לא מתאים",
+        reasoning: "הים סוער מדי. מצוף רגיל יעוף ברוח ולא יחזיק בזרמים חזקים.",
+        iconType: 'bait',
+        recommendedGear: "עדיף לעבור לדייג פיתיונות עם משקולת (סרף/חי)"
+      };
     } else { // bait
       return {
         species: ["סרגוס גדול", "לבט (שישן)", "לוקוס מפלצת"],
