@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon, Video, ShoppingCart } from 'lucide-react';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, ChevronRight, ChevronLeft, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon, Video, ShoppingCart } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { useTournaments } from '@/hooks/useTournaments';
@@ -29,6 +29,20 @@ export default function Home() {
   
 
   const { activeTournaments } = useTournaments();
+  
+  const quickActionsRef = useRef<HTMLDivElement>(null);
+  const scrollQuickActions = (direction) => {
+    if (quickActionsRef.current) {
+      quickActionsRef.current.scrollBy({ left: direction === 'left' ? -200 : 200, behavior: 'smooth' });
+    }
+  };
+  
+  const quickActionsRef = useRef<HTMLDivElement>(null);
+  const scrollQuickActions = (direction) => {
+    if (quickActionsRef.current) {
+      quickActionsRef.current.scrollBy({ left: direction === 'left' ? -200 : 200, behavior: 'smooth' });
+    }
+  };
   
   useEffect(() => {
     // Check for onboarding
@@ -266,11 +280,20 @@ export default function Home() {
         <div className="flex items-center gap-3 mb-3 pl-4">
           <h2 className="text-sm font-bold tracking-tight text-muted-foreground">כלים שימושיים</h2>
           <div className="text-[10px] font-bold text-white flex items-center gap-1 bg-blue-500 px-2.5 py-1 rounded-full shadow-md animate-pulse">
-            <span>החלק לצדדים</span>
+            <span>החלק או לחץ על החצים</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-move-horizontal"><polyline points="18 8 22 12 18 16"/><polyline points="6 8 2 12 6 16"/><line x1="2" x2="22" y1="12" y2="12"/></svg>
           </div>
         </div>
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 pr-0 pl-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="relative group/actions">
+          <button onClick={() => scrollQuickActions('right')} className="absolute -right-2 top-1/2 -translate-y-[60%] z-10 bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 p-1.5 rounded-full text-slate-700 dark:text-slate-300 transition-all hover:scale-110 active:scale-95 opacity-90 hover:opacity-100 hidden md:flex">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+          
+          <button onClick={() => scrollQuickActions('left')} className="absolute left-0 top-1/2 -translate-y-[60%] z-10 bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700 p-1.5 rounded-full text-slate-700 dark:text-slate-300 transition-all hover:scale-110 active:scale-95 opacity-90 hover:opacity-100 hidden md:flex">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+        <div ref={quickActionsRef} className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-4 pr-0 pl-4 hide-scroll" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <style>{`.hide-scroll::-webkit-scrollbar { display: none; }`}</style>
           <Link to="/fishing/cams" className="bg-card border border-border shadow-sm rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors shrink-0 w-20 min-w-[5rem] snap-start">
             <div className="bg-red-500/10 p-2.5 rounded-full mb-2">
@@ -332,6 +355,7 @@ export default function Home() {
             </div>
             <span className="font-bold text-[11px] leading-tight">מחשבון</span>
           </Link>
+        </div>
         </div>
       </section>
 
