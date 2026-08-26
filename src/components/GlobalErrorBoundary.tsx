@@ -39,13 +39,34 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       // Allow a reload at most once every 10 seconds to prevent infinite loops
       if (now - lastReload > 10000) {
         sessionStorage.setItem('chunk_failed_reload_time', now.toString());
-        window.location.reload();
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            for (const r of regs) r.unregister();
+          });
+        }
+        window.location.href = window.location.origin + '/?refresh=' + Date.now();
       }
     }
   }
 
-  private handleReload = () => {
-    window.location.reload();
+  private handleReload = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) {
+          await r.unregister();
+        }
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (const k of keys) {
+          await caches.delete(k);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    window.location.href = window.location.origin + '/?refresh=' + Date.now();
   };
 
   public render() {
