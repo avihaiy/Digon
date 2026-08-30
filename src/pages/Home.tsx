@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, ChevronRight, ChevronLeft, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon, Video, ShoppingCart } from 'lucide-react';
+import { Fish, MapPin, Wind, Waves, Camera, Plus, Clock, ChevronRight, ChevronLeft, RefreshCw, Activity, Link2, Settings2, Scale, Radar as RadarIcon, Package, Store as StoreIcon, Video, ShoppingCart, AlertTriangle } from 'lucide-react';
 import { useMarineWeather, getWindDirectionHebrew } from '@/hooks/useMarineWeather';
 import { useCatches, getImageUrl } from '@/hooks/useCatches';
 import { useTournaments } from '@/hooks/useTournaments';
