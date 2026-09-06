@@ -313,8 +313,8 @@ export function getSmartTargetSpecies(
     } else {
       return {
         species: ["סרגוס", "לבט", "לוקוס"],
-        bestMethod: "פיתיונות מסריחים (סבידה/גמברי)",
-        reasoning: "מים עכורים מביאים את הסרגוסים לחפש אוכל בעזרת חוש הריח! זמן פצצה.",
+        bestMethod: "פיתיונות בעלי ריח חזק (סבידה/גמברי)",
+        reasoning: "מים עכורים גורמים לדגים להסתמך על חוש הריח במקום הראייה, זמן מצוין לדיג פיתיונות.",
         iconType: 'bait',
         recommendedGear: "סבידה מיושנת, קלמארי, או גמברי קריסטל שלם (לא קלוף)."
       };
@@ -329,7 +329,7 @@ export function getSmartTargetSpecies(
         bestMethod: "ז'רז'ור קלמרים / פופרים קטנים",
         reasoning: "ים שטוח לגמרי מושלם לסגנון שלך. חפש רתיחות!",
         iconType: isWinter ? 'squid' : 'lure',
-        recommendedGear: isWinter ? "בובות סבידה (Egi) צבע ורוד או כחול." : "כלבים עדינים 5-9 גרם ומיקרו ג'יגים 3-7 גרם."
+        recommendedGear: isWinter ? "בובות סבידה (Egi) צבע ורוד או כחול." : "דמויי טופ-ווטר (Top-Water) עדינים 5-9 גרם ומיקרו ג'יגים 3-7 גרם."
       };
     } else if (fishingStyle === 'ultralight' || fishingStyle === 'lure') {
       return {
@@ -353,7 +353,7 @@ export function getSmartTargetSpecies(
         bestMethod: "פיתיונות על רגש (בוס או חוף עדין)",
         reasoning: "המים צלולים והדגים חשדניים. השתמש בחוטים דקים ופיתיון טבעי.",
         iconType: 'bait',
-        recommendedGear: "בצק מסטיק למלכודות, או תולעים טריות עם חוט תלאי 0.16 מ'מ פלורוקרבון."
+        recommendedGear: "בצק מסטיק למלכודות, או תולעים טריות עם חוט תלאי 0.16 מ״מ פלורוקרבון."
       };
     }
   }
@@ -366,7 +366,7 @@ export function getSmartTargetSpecies(
         bestMethod: "טרולינג זהיר",
         reasoning: "הים קצת גלי, סע בזהירות וחפש את הטורפים בקווי העומק.",
         iconType: 'lure',
-        recommendedGear: "מינואו 140-175 מ'מ עמוקים ומהירים (למשל Rapala X-Rap)."
+        recommendedGear: "מינואו 140-175 מ״מ עמוקים ומהירים (למשל Rapala X-Rap)."
       };
     } else if (fishingStyle === 'lure' || fishingStyle === 'ultralight') {
       if (c > 50) {
@@ -392,7 +392,7 @@ export function getSmartTargetSpecies(
         bestMethod: "בוס בקצף (בורות וזרמים)",
         reasoning: "ים עובד מושלם לסרגוסים! חפש את המים הלבנים (קצף).",
         iconType: 'bait',
-        recommendedGear: "מצוף קריצה או מצוף זרם 3-5 גרם, תולעים טריות או בצק סריח."
+        recommendedGear: "מצוף קריצה או מצוף זרם 3-5 גרם, תולעים טריות או בצק מסריח (על בסיס גבינה/סרדינים)."
       };
     } else { // bait
       return {
@@ -400,7 +400,7 @@ export function getSmartTargetSpecies(
         bestMethod: "דייג פיתיונות או בוס",
         reasoning: "מים עובדים עוזרים לדגים ביישנים לצאת לאכול.",
         iconType: 'bait',
-        recommendedGear: "רצועות שניצל, תולעים שניות (שלמות), חתיכות סרדין כפותות בחוט אלסטי."
+        recommendedGear: "רצועות שניצל, תולעים שלמות, חתיכות סרדין כפותות בחוט אלסטי."
       };
     }
   }
