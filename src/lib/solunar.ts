@@ -375,7 +375,7 @@ export function getSmartTargetSpecies(
           bestMethod: "ז'רז'ור בקצף הגלים",
           reasoning: "ים עובד + עננות = זמן לברקים! טורפים יוצאים לאכול בקצף.",
           iconType: 'lure',
-          recommendedGear: "סיליקונים ארוכים לבנים (Black Minnow 120), וכלבים גדולים לקצף."
+          recommendedGear: "סיליקונים ארוכים לבנים (Black Minnow 120), ודמויי טופ-ווטר (Top-Water) או פנסילים גדולים לקצף."
         };
       } else {
         return {
