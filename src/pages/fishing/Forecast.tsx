@@ -140,7 +140,7 @@ export default function Forecast() {
             </p>
             {marineData.dailyForecast?.[0] && (
               <span className="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Droplets className="w-3 h-3" /> ים {marineData.dailyForecast[0].tempMax}°
+                <Droplets className="w-3 h-3" /> {waterType === 'saltwater' ? 'ים' : 'מים'} {marineData.dailyForecast[0].tempMax}°
               </span>
             )}
           </div>
