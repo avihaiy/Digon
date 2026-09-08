@@ -201,6 +201,15 @@ export default function Forecast() {
                <span className="text-sm font-bold text-teal-800 dark:text-teal-300">{marineData.waterClarity || 'לא ידוע'}</span>
              </div>
           </div>
+          {marineData.dailyForecast?.[0]?.rainProbMax > 20 && waterType === 'freshwater' && (
+             <div className="flex-1 min-w-[140px] w-full bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-3 flex items-center gap-2">
+               <CloudRain className="w-5 h-5 text-orange-500" />
+               <div className="flex flex-col">
+                 <span className="text-sm font-bold text-orange-700 dark:text-orange-400">סכנת עכירות מים 🌧️</span>
+                 <span className="text-xs text-orange-600 dark:text-orange-300">בגלל הגשמים ייתכן ויהיה בוץ וזרימה חזקה. עדיף לדוג עם פיתיונות בעלי ריח חזק על הקרקעית!</span>
+               </div>
+             </div>
+          )}
           {marineData.isTurbid && waterType === 'saltwater' && (
              <div className="flex-1 min-w-[140px] bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-3 flex items-center gap-2">
                <Droplets className="w-5 h-5 text-orange-500" />

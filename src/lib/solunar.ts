@@ -303,13 +303,22 @@ export function getSmartTargetSpecies(
   const isWinter = t < 20;
 
   if (waterType === 'freshwater') {
+    let cloudAdvice = "";
+    if (c !== null) {
+      if (c < 30) {
+        cloudAdvice = " ☀️ יום שמשי - דגים מרגישים מאוימים מציפורים, ולכן יסתתרו מתחת לצמחייה וקנים. זרוק קרוב לסבך!";
+      } else if (c > 60) {
+        cloudAdvice = " ☁️ יום מעונן - הדגים מרגישים בטוחים יותר ויוצאים החוצה מהמסתור, שווה לחפש אותם גם במרכז המים.";
+      }
+    }
+
     if (isTurbid) {
        return {
          species: ["שפמנון", "קרפיון גדול"],
          bestMethod: "פיתיונות ריחניים על הקרקעית",
-         reasoning: "במים מתוקים עכורים (אחרי גשם או זרימה חזקה), דגי קרקעית כמו שפמנון חוגגים כי הם מסתמכים על חוש הריח.",
+         reasoning: "במים מתוקים עכורים (אחרי גשם או זרימה חזקה), דגי קרקעית מסתמכים על חוש הריח." + cloudAdvice,
          iconType: 'bait',
-         recommendedGear: "כבד עוף, בצק ריחני, משקולת כבדה שיושבת על הקרקעית."
+         recommendedGear: "כבד עוף, בצק ריחני, משקולת כבדה על הקרקעית."
        };
     }
     
@@ -317,15 +326,15 @@ export function getSmartTargetSpecies(
        return {
          species: ["בינית", "מושט (אמנון גדול)", "פורל (בצפון)"],
          bestMethod: "ספינרים (כפיות) או סיליקונים קטנים",
-         reasoning: "ז'רז'ור במים מתוקים דורש התאמה לדגים טורפים/תוקפניים בזרם.",
+         reasoning: "ז'רז'ור במים מתוקים מושלם לטורפים של הנחלים והאגמים." + cloudAdvice,
          iconType: 'lure',
-         recommendedGear: "כפית (Spinner) קטנה זהב/כסף 2-5 גרם, או סיליקון תולעת קטן."
+         recommendedGear: "כפית (Spinner) קטנה זהב/כסף 2-5 גרם, או סיליקון תולעת."
        };
     } else if (fishingStyle === 'float') {
        return {
          species: ["מושט (אמנון)", "קרפיון קטן", "בינית"],
          bestMethod: "בוס / בולונז עם מצוף קל",
-         reasoning: "דיג קלאסי למים מתוקים! פיזור ריסוס סביב המצוף יביא להקות של מושטים.",
+         reasoning: "פיזור ריסוס סביב המצוף יביא להקות של מושטים." + cloudAdvice,
          iconType: 'bait',
          recommendedGear: "בצק מסריח, תירס, או תולעים. מצוף רגיש מאוד."
        };
@@ -334,9 +343,9 @@ export function getSmartTargetSpecies(
        return {
          species: ["קרפיון", "בורי (בנחלים מסוימים)"],
          bestMethod: "קפיץ / משקולת עם תירס או פיתיון צף",
-         reasoning: "טמפרטורת מים מתוקים של " + Math.round(t) + "° אידיאלית לקרפיונים. רצוי לעבוד עם ציוד חזק (Carp Fishing).",
+         reasoning: "טמפ' מים של " + Math.round(t) + "° מתאימה לקרפיונים." + cloudAdvice,
          iconType: 'bait',
-         recommendedGear: "שיטת קפיץ (Feeder) עם תירס, או בוילים אם מחפשים את הגדולים."
+         recommendedGear: "שיטת קפיץ (Feeder) עם תירס, או בוילים לדגים גדולים."
        };
     }
   }
