@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useWaterType } from '@/hooks/useWaterType';
+import { useWaterType } from '@/hooks/useWaterType';
 import { AlertCircle } from 'lucide-react';
 import { useDailyLogin } from '@/hooks/useDailyLogin';
 import { DailyLoginModal } from '@/components/home/DailyLoginModal';
@@ -23,6 +25,7 @@ import { BellRing } from 'lucide-react';
 export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { waterType } = useWaterType();
   const [searchQuery, setSearchQuery] = useState('');
   const { data: marineData, loading: marineLoading, refreshData, lastUpdated } = useMarineWeather();
   const { catches, isLoading: catchesLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCatches();

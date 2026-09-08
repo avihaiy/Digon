@@ -11,6 +11,7 @@ import { CalendarDays } from "lucide-react";
 import { getSolunarData, getSmartTargetSpecies, getDynamicGoldWindows, GoldWindow, FishingStyle, getSunlightTimes, WaterType } from '@/lib/solunar';
 import { getMediterraneanTides } from '@/lib/tides';
 import { useMemo, useState, useRef } from 'react';
+import { useWaterType } from '@/hooks/useWaterType';
 
 
 const CustomChartTooltip = ({ active, payload, label }: any) => {
@@ -57,7 +58,7 @@ export default function Forecast() {
   };
 
   const [fishingStyle, setFishingStyle] = useState<FishingStyle>('lure');
-  const [waterType, setWaterType] = useState<WaterType>('saltwater');
+  const { waterType, setWaterType } = useWaterType();
 
   // Compute solunar based on selected day
   const targetDate = useMemo(() => {
@@ -489,7 +490,7 @@ export default function Forecast() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-slate-100">
             <Waves className="w-5 h-5 text-blue-500" />
-            מצב הים המעודכן
+            {waterType === 'saltwater' ? 'מצב הים המעודכן' : 'מזג אוויר מעודכן בנחל'}
           </h3>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50 px-2 py-1 rounded-full backdrop-blur-sm">
             {lastUpdated.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
@@ -765,10 +766,23 @@ export default function Forecast() {
                     
                     <div className="flex flex-col items-center justify-center w-1/4">
                       <div className="flex items-center gap-1">
-                        <Waves className={`w-4 h-4 ${waveColor}`} />
-                        <span className={`font-black ${waveColor}`}>{day.waveHeightMax.toFixed(1)}m</span>
+                        {waterType === 'saltwater' ? (
+                          <>
+                            <Waves className={`w-4 h-4 ${waveColor}`} />
+                            <span className={`font-black ${waveColor}`}>{day.waveHeightMax.toFixed(1)}m</span>
+                          </>
+                        ) : (
+                          <>
+                            <CloudRain className="w-4 h-4 text-emerald-500" />
+                            <span className="font-black text-emerald-500">{day.rainProbMax}%</span>
+                          </>
+                        )}
                       </div>
-                      <span className="text-[10px] text-muted-foreground mt-0.5">גובה מקסימלי</span>
+                      {waterType === 'saltwater' ? (
+                        <span className="text-[10px] text-muted-foreground mt-0.5">גובה מקסימלי</span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground mt-0.5">סיכוי גשם</span>
+                      )}
                     </div>
                     
                     <div className="flex flex-col items-center justify-center w-1/4 border-r border-l border-border/50 px-2">

@@ -140,7 +140,7 @@ export function getSolunarData(
   }
 
   // Waves (m)
-  if (waveHeight !== null) {
+  if (waveHeight !== null && waterType === 'saltwater') {
     if (waveHeight > 1.5) {
       if (fishingStyle === 'kayak') {
         seaPenalty += 100;
