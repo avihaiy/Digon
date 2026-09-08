@@ -9,6 +9,7 @@ const LON = 34.7818;
  * @returns { score: number, rating: string, message: string, phaseName: string }
  */
 export type FishingStyle = 'lure' | 'bait' | 'kayak' | 'ultralight' | 'float';
+export type WaterType = 'saltwater' | 'freshwater';
 
 
 export interface SunlightTimes {
@@ -293,13 +294,52 @@ export function getSmartTargetSpecies(
   temp: number | null, 
   cloudCover: number | null,
   fishingStyle: FishingStyle = 'lure',
-  isTurbid: boolean = false
+  isTurbid: boolean = false,
+  waterType: WaterType = 'saltwater'
 ): FishRecommendation {
   const w = waveHeight ?? 0.5;
   const t = temp ?? 22;
   const c = cloudCover ?? 10;
-  
   const isWinter = t < 20;
+
+  if (waterType === 'freshwater') {
+    if (isTurbid) {
+       return {
+         species: ["שפמנון", "קרפיון גדול"],
+         bestMethod: "פיתיונות ריחניים על הקרקעית",
+         reasoning: "במים מתוקים עכורים (אחרי גשם או זרימה חזקה), דגי קרקעית כמו שפמנון חוגגים כי הם מסתמכים על חוש הריח.",
+         iconType: 'bait',
+         recommendedGear: "כבד עוף, בצק ריחני, משקולת כבדה שיושבת על הקרקעית."
+       };
+    }
+    
+    if (fishingStyle === 'lure' || fishingStyle === 'ultralight') {
+       return {
+         species: ["בינית", "מושט (אמנון גדול)", "פורל (בצפון)"],
+         bestMethod: "ספינרים (כפיות) או סיליקונים קטנים",
+         reasoning: "ז'רז'ור במים מתוקים דורש התאמה לדגים טורפים/תוקפניים בזרם.",
+         iconType: 'lure',
+         recommendedGear: "כפית (Spinner) קטנה זהב/כסף 2-5 גרם, או סיליקון תולעת קטן."
+       };
+    } else if (fishingStyle === 'float') {
+       return {
+         species: ["מושט (אמנון)", "קרפיון קטן", "בינית"],
+         bestMethod: "בוס / בולונז עם מצוף קל",
+         reasoning: "דיג קלאסי למים מתוקים! פיזור ריסוס סביב המצוף יביא להקות של מושטים.",
+         iconType: 'bait',
+         recommendedGear: "בצק מסריח, תירס, או תולעים. מצוף רגיש מאוד."
+       };
+    } else {
+       // Carp fishing / Bait
+       return {
+         species: ["קרפיון", "בורי (בנחלים מסוימים)"],
+         bestMethod: "קפיץ / משקולת עם תירס או פיתיון צף",
+         reasoning: "טמפרטורת מים מתוקים של " + Math.round(t) + "° אידיאלית לקרפיונים. רצוי לעבוד עם ציוד חזק (Carp Fishing).",
+         iconType: 'bait',
+         recommendedGear: "שיטת קפיץ (Feeder) עם תירס, או בוילים אם מחפשים את הגדולים."
+       };
+    }
+  }
 
   if (isTurbid) {
     if (fishingStyle === 'lure' || fishingStyle === 'ultralight') {

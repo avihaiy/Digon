@@ -8,7 +8,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 
 import { CalendarDays } from "lucide-react";
 
-import { getSolunarData, getSmartTargetSpecies, getDynamicGoldWindows, GoldWindow, FishingStyle, getSunlightTimes } from '@/lib/solunar';
+import { getSolunarData, getSmartTargetSpecies, getDynamicGoldWindows, GoldWindow, FishingStyle, getSunlightTimes, WaterType } from '@/lib/solunar';
 import { getMediterraneanTides } from '@/lib/tides';
 import { useMemo, useState, useRef } from 'react';
 
@@ -57,6 +57,7 @@ export default function Forecast() {
   };
 
   const [fishingStyle, setFishingStyle] = useState<FishingStyle>('lure');
+  const [waterType, setWaterType] = useState<WaterType>('saltwater');
 
   // Compute solunar based on selected day
   const targetDate = useMemo(() => {
@@ -104,14 +105,14 @@ export default function Forecast() {
   
   const aiRecommendation = useMemo(() => {
     if (selectedDayIndex === 0) {
-      return getSmartTargetSpecies(marineData.waveHeight, marineData.temperature, marineData.cloudCover, fishingStyle, marineData.isTurbid);
+      return getSmartTargetSpecies(marineData.waveHeight, marineData.temperature, marineData.cloudCover, fishingStyle, marineData.isTurbid, waterType);
     }
     if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
       const dayData = marineData.dailyForecast[selectedDayIndex];
-      return getSmartTargetSpecies(dayData.waveHeightMax, dayData.tempMax, null, fishingStyle, false); 
+      return getSmartTargetSpecies(dayData.waveHeightMax, dayData.tempMax, null, fishingStyle, false, waterType); 
     }
-    return getSmartTargetSpecies(null, null, null, fishingStyle, false);
-  }, [marineData, selectedDayIndex, fishingStyle]);
+    return getSmartTargetSpecies(null, null, null, fishingStyle, false, waterType);
+  }, [marineData, selectedDayIndex, fishingStyle, waterType]);
 
   // Safety Warning Logic (only relevant if looking at today)
   const isUnsafe = selectedDayIndex === 0 && (
@@ -149,6 +150,24 @@ export default function Forecast() {
       </div>
 
       
+      {/* Water Type Toggle */}
+      <div className="mx-4 mt-2">
+        <div className="bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl flex items-center">
+          <button 
+            onClick={() => setWaterType('saltwater')} 
+            className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${waterType === 'saltwater' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}
+          >
+            <Waves className="w-4 h-4" /> ים מלוח
+          </button>
+          <button 
+            onClick={() => setWaterType('freshwater')} 
+            className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${waterType === 'freshwater' ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}
+          >
+            <Droplets className="w-4 h-4" /> מים מתוקים
+          </button>
+        </div>
+      </div>
+
       {/* Fishing Style Selector */}
       <div className="relative mx-4">
         <button onClick={() => scrollStyles('right')} className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 bg-white/80 dark:bg-slate-800/80 p-1 rounded-full shadow-md backdrop-blur-sm border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 opacity-90">
@@ -169,7 +188,7 @@ export default function Forecast() {
       {/* Pro Metrics (Turbidity, Pressure Trend) */}
       {selectedDayIndex === 0 && (
         <div className="mx-4 flex flex-wrap gap-3">
-          {marineData.jellyfishAlert && (
+          {marineData.jellyfishAlert && waterType === 'saltwater' && (
              <div className="flex-1 min-w-[140px] w-full bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3 flex items-center gap-2">
                <AlertTriangle className="w-5 h-5 text-red-500" />
                <span className="text-sm font-bold text-red-700 dark:text-red-400">אזהרת מדוזות 🪼</span>
@@ -182,7 +201,7 @@ export default function Forecast() {
                <span className="text-sm font-bold text-teal-800 dark:text-teal-300">{marineData.waterClarity || 'לא ידוע'}</span>
              </div>
           </div>
-          {marineData.isTurbid && (
+          {marineData.isTurbid && waterType === 'saltwater' && (
              <div className="flex-1 min-w-[140px] bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-3 flex items-center gap-2">
                <Droplets className="w-5 h-5 text-orange-500" />
                <span className="text-sm font-bold text-orange-700 dark:text-orange-400">מים עכורים!</span>
