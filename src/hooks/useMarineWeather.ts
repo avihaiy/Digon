@@ -78,11 +78,18 @@ const fetchWeatherData = async (lat: number, lon: number, locationName: string):
   }
 
   let pressureTrend = 0;
-  if (weatherJson.hourly?.surface_pressure) {
+  if (weatherJson.hourly?.surface_pressure && weatherJson.hourly?.time) {
     const currentPressure = weatherJson.current.surface_pressure;
-    const pastPressure = weatherJson.hourly.surface_pressure[0];
-    if (currentPressure && pastPressure) {
-      pressureTrend = Number((currentPressure - pastPressure).toFixed(1));
+    // Find index of current hour
+    const now = new Date();
+    const currentHourStr = now.toISOString().substring(0, 13) + ':00';
+    const currentIndex = weatherJson.hourly.time.findIndex((t: string) => t.startsWith(currentHourStr));
+    
+    if (currentIndex >= 3) {
+      const pastPressure = weatherJson.hourly.surface_pressure[currentIndex - 3];
+      if (currentPressure && pastPressure) {
+        pressureTrend = Number((currentPressure - pastPressure).toFixed(1));
+      }
     }
   }
 
@@ -186,7 +193,18 @@ const fetchWeatherData = async (lat: number, lon: number, locationName: string):
     });
   }
 
+  let waterClarity = 'רגיל';
+  if (isTurbid && currentM.wave_height > 0.8) waterClarity = 'עכור (קפה)';
+  else if (!isTurbid && currentM.wave_height < 0.4) waterClarity = 'קריסטל (צלול)';
+
+  let jellyfishAlert = false;
+  if (currentW.temperature_2m && currentW.temperature_2m > 28.5) {
+     jellyfishAlert = true;
+  }
+
   return {
+    waterClarity,
+    jellyfishAlert,
     waveHeight: currentM.wave_height,
     windSpeed: currentW.wind_speed_10m,
     windDirection: currentW.wind_direction_10m,
@@ -246,6 +264,8 @@ export function useMarineWeather() {
       cloudCover: null,
       pressureTrend: null,
       isTurbid: false,
+      waterClarity: 'לא ידוע',
+      jellyfishAlert: false,
       waveDirection: null,
       locationName: 'טוען נתוני ים...',
       fishingScore: 100,

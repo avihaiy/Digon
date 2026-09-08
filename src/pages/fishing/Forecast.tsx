@@ -12,28 +12,29 @@ import { getSolunarData, getSmartTargetSpecies, getDynamicGoldWindows, GoldWindo
 import { getMediterraneanTides } from '@/lib/tides';
 import { useMemo, useState, useRef } from 'react';
 
-// Generate realistic mock tide data for Mediterranean (semi-diurnal, 2 highs 2 lows per 24h)
-const generateTideData = () => {
-  const data = [];
-  const now = new Date();
-  now.setMinutes(0, 0, 0); // Start at top of current hour
-  
-  // Phase shift to make it look realistic based on current time
-  const phaseShift = now.getHours() % 6; 
-  
-  for (let i = 0; i <= 24; i++) {
-    const time = new Date(now.getTime() + i * 60 * 60 * 1000);
-    // Sine wave with period ~12.4 hours (typical tide). Amplitude ~0.4m (Med is low tide)
-    const rawLevel = Math.sin((i + phaseShift) * (Math.PI / 6.2)) * 0.4; 
-    
-    data.push({
-      time: time.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
-      level: Number(rawLevel.toFixed(2)),
-      isHigh: rawLevel > 0.35,
-      isLow: rawLevel < -0.35
-    });
+
+const CustomChartTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background/95 border border-primary/20 p-3 rounded-lg shadow-xl backdrop-blur-sm">
+        <p className="text-sm font-bold mb-2 text-primary">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-2 text-xs mb-1">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+            <span className="text-muted-foreground">{entry.name}:</span>
+            <span className="font-semibold text-foreground">
+              {entry.value}
+              {entry.name.includes('גלים') ? 'm' : ''}
+              {entry.name.includes('רוח') ? ' קמ"ש' : ''}
+              {entry.name.includes('דיג') ? '%' : ''}
+              {entry.name.includes('גאות') ? 'm' : ''}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
   }
-  return data;
+  return null;
 };
 
 export default function Forecast() {
@@ -168,6 +169,19 @@ export default function Forecast() {
       {/* Pro Metrics (Turbidity, Pressure Trend) */}
       {selectedDayIndex === 0 && (
         <div className="mx-4 flex flex-wrap gap-3">
+          {marineData.jellyfishAlert && (
+             <div className="flex-1 min-w-[140px] w-full bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3 flex items-center gap-2">
+               <AlertTriangle className="w-5 h-5 text-red-500" />
+               <span className="text-sm font-bold text-red-700 dark:text-red-400">אזהרת מדוזות 🪼</span>
+             </div>
+          )}
+          <div className="flex-1 min-w-[140px] bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800 rounded-xl p-3 flex items-center gap-2">
+             <Droplets className="w-5 h-5 text-teal-500" />
+             <div className="flex flex-col">
+               <span className="text-xs text-teal-600 dark:text-teal-400">צבע המים</span>
+               <span className="text-sm font-bold text-teal-800 dark:text-teal-300">{marineData.waterClarity || 'לא ידוע'}</span>
+             </div>
+          </div>
           {marineData.isTurbid && (
              <div className="flex-1 min-w-[140px] bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl p-3 flex items-center gap-2">
                <Droplets className="w-5 h-5 text-orange-500" />
@@ -373,7 +387,20 @@ export default function Forecast() {
                   )}
                   
                   {/* Sun & Environment Grid */}
-                  <div className="grid grid-cols-2 gap-3">
+                  
+        {marineData.jellyfishAlert && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center text-amber-600 dark:text-amber-400">
+            <div className="bg-amber-500/20 p-2 rounded-full shrink-0">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">אזהרת מדוזות</h3>
+              <p className="text-xs mt-0.5 opacity-90">טמפרטורת המים אידיאלית לנחילי מדוזות באזור החוף.</p>
+            </div>
+          </div>
+        )}
+
+<div className="grid grid-cols-2 gap-3">
                     <div className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl p-3 border border-white/30 dark:border-slate-700/50 flex flex-col gap-2">
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-500 flex items-center gap-1"><Sun className="w-4 h-4 text-yellow-500" /> זריחה</span>
