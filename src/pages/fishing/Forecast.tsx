@@ -229,7 +229,7 @@ export default function Forecast() {
              </div>
           )}
           
-          {marineData.oceanCurrentVelocity !== null && (
+          {waterType === 'saltwater' && marineData.oceanCurrentVelocity !== null && (
              <div className="flex-1 min-w-[140px] bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-800 rounded-xl p-3 flex items-center gap-2 shadow-sm hover:scale-105 transition-transform">
                <Navigation className="w-5 h-5 text-cyan-500" style={{ transform: `rotate(${marineData.oceanCurrentDirection || 0}deg)` }} />
                <div className="flex flex-col">
