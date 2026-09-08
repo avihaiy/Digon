@@ -192,12 +192,12 @@ export default function Home() {
                 ) : (
                   <>
                     <div className="text-emerald-500 dark:text-emerald-400">
-                      <CloudRain className="w-6 h-6 animate-float opacity-80" />
+                      <Droplets className="w-6 h-6 animate-float opacity-80" />
                     </div>
                     <div className="text-center">
-                      <p className="text-xs font-semibold opacity-70 mb-0.5">גשם</p>
+                      <p className="text-xs font-semibold opacity-70 mb-0.5">ספיקה</p>
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-100" dir="ltr">
-                        {marineData.dailyForecast?.[0]?.rainProbMax || 0}%
+                        {marineData.riverDischarge !== null && marineData.riverDischarge !== undefined ? `${marineData.riverDischarge} m³/s` : '---'}
                       </p>
                     </div>
                   </>

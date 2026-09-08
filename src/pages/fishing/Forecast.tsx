@@ -520,14 +520,14 @@ export default function Forecast() {
               ) : (
                 <>
                   <div className="p-3 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl text-white shadow-inner mb-3">
-                    <CloudRain className="w-6 h-6" />
+                    <Droplets className="w-6 h-6" />
                   </div>
                   <p className="text-2xl font-black">
-                    {marineData.dailyForecast?.[0]?.rainProbMax || 0}
-                    <span className="text-sm font-normal text-muted-foreground ms-1">%</span>
+                    {marineData.riverDischarge !== null && marineData.riverDischarge !== undefined ? marineData.riverDischarge : '---'}
+                    <span className="text-sm font-normal text-muted-foreground ms-1">m³/s</span>
                   </p>
                   <p className="text-xs text-muted-foreground mt-1 font-medium">
-                    הסתברות לגשם
+                    ספיקה וזרימה
                   </p>
                 </>
               )}
