@@ -83,15 +83,19 @@ export default function Forecast() {
         marineData.cloudCover,
         marineData.pressureTrend,
         marineData.isTurbid,
-        marineData.waveDirection
+        marineData.waveDirection,
+        null,
+        null,
+        null,
+        waterType
       );
     }
     if (marineData.dailyForecast && marineData.dailyForecast.length > selectedDayIndex) {
       const dayData = marineData.dailyForecast[selectedDayIndex];
-      return getSolunarData(targetDate, fishingStyle, dayData.waveHeightMax, dayData.windSpeedMax, dayData.tempMax, null, null, null, null, null, false, null, dayData.windGustsMax, dayData.capeMax, null);
+      return getSolunarData(targetDate, fishingStyle, dayData.waveHeightMax, dayData.windSpeedMax, dayData.tempMax, null, null, null, null, null, false, null, dayData.windGustsMax, dayData.capeMax, null, waterType);
     }
-    return getSolunarData(targetDate, fishingStyle);
-  }, [targetDate, marineData, selectedDayIndex, fishingStyle]);
+    return getSolunarData(targetDate, fishingStyle, null, null, null, null, null, null, null, null, false, null, null, null, null, waterType);
+  }, [targetDate, marineData, selectedDayIndex, fishingStyle, waterType]);
   
   const goldWindows = useMemo(() => getDynamicGoldWindows(targetDate), [targetDate]);
   
@@ -500,16 +504,33 @@ export default function Forecast() {
         <div className="grid grid-cols-2 gap-3">
           <Card className="border-white/20 dark:border-slate-700/50 shadow-md bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl hover:scale-[1.03] transition-transform">
             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-              <div className="p-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl text-white shadow-inner mb-3">
-                <Waves className="w-6 h-6" />
-              </div>
-              <p className="text-2xl font-black">
-                {marineLoading ? "..." : marineData.waveHeight !== null ? marineData.waveHeight.toFixed(1) : "---"}
-                <span className="text-sm font-normal text-muted-foreground ms-1">מ'</span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-1 font-medium">
-                גובה (כל {marineLoading ? "..." : marineData.wavePeriod !== null ? Math.round(marineData.wavePeriod) : "---"} ש')
-              </p>
+              {waterType === 'saltwater' ? (
+                <>
+                  <div className="p-3 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl text-white shadow-inner mb-3">
+                    <Waves className="w-6 h-6" />
+                  </div>
+                  <p className="text-2xl font-black">
+                    {marineLoading ? "..." : marineData.waveHeight !== null ? marineData.waveHeight.toFixed(1) : "---"}
+                    <span className="text-sm font-normal text-muted-foreground ms-1">מ'</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">
+                    גובה (כל {marineLoading ? "..." : marineData.wavePeriod !== null ? Math.round(marineData.wavePeriod) : "---"} ש')
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="p-3 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl text-white shadow-inner mb-3">
+                    <CloudRain className="w-6 h-6" />
+                  </div>
+                  <p className="text-2xl font-black">
+                    {marineData.dailyForecast?.[0]?.rainProbMax || 0}
+                    <span className="text-sm font-normal text-muted-foreground ms-1">%</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">
+                    הסתברות לגשם
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
           

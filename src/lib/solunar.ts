@@ -44,7 +44,8 @@ export function getSolunarData(
   waveDirection: number | null = null,
   windGusts: number | null = null,
   cape: number | null = null,
-  oceanCurrentVelocity: number | null = null
+  oceanCurrentVelocity: number | null = null,
+  waterType: WaterType = 'saltwater'
 ) {
   const moonIllumination = SunCalc.getMoonIllumination(date);
   const phase = moonIllumination.phase; // 0 to 1
