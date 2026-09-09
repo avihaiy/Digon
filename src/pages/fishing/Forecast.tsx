@@ -256,7 +256,7 @@ export default function Forecast() {
       )}
 
       {/* CAPE Warning Banner */}
-      {marineData.cape !== null && marineData.cape > 1000 && selectedDayIndex === 0 && (
+      {marineData.cape !== null && marineData.cape > 1000 && marineData.cloudCover !== null && marineData.cloudCover > 40 && selectedDayIndex === 0 && (
         <div className="mx-4 bg-yellow-400 dark:bg-yellow-500/90 border-2 border-yellow-600 rounded-2xl p-4 flex items-start gap-3 shadow-lg animate-pulse text-yellow-950 dark:text-yellow-950 mb-4 mt-2">
           <Zap className="w-6 h-6 shrink-0 mt-0.5 fill-current" />
           <div>
