@@ -140,7 +140,7 @@ export default function Forecast() {
             </p>
             {marineData.kinneretLevel !== null && marineData.kinneretLevel !== undefined && waterType === 'freshwater' && (
               <span className="text-sm font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Waves className="w-3 h-3" /> מפלס: <span dir="ltr">{marineData.kinneretLevel}</span> מ'
+                <Waves className="w-3 h-3" /> מפלס הכנרת: <span dir="ltr">{marineData.kinneretLevel}</span> מ'
               </span>
             )}
             {marineData.dailyForecast?.[0] && (
