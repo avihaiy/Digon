@@ -107,6 +107,21 @@ export default function Forecast() {
   }, [marineData, selectedDayIndex]);
 
   const tideData = useMemo(() => getMediterraneanTides(targetDate), [targetDate]);
+
+  const isBreedingSeason = useMemo(() => {
+    if (!marineData.dailyForecast?.[selectedDayIndex]) return false;
+    const current = marineData.dailyForecast[selectedDayIndex].date;
+    const month = current.getMonth();
+    const day = current.getDate();
+    if (waterType === 'freshwater') {
+      if (month === 3 && day >= 15) return true; // April 15+
+      if (month === 4) return true;              // May
+      if (month === 5 && day <= 15) return true; // June 1-15
+    } else {
+      if (month === 4 || month === 5) return true; // May 1 - June 30
+    }
+    return false;
+  }, [marineData.dailyForecast, selectedDayIndex, waterType]);
   
   const aiRecommendation = useMemo(() => {
     if (selectedDayIndex === 0) {
