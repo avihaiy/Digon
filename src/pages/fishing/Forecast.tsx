@@ -662,7 +662,8 @@ export default function Forecast() {
           </section>
           
           {/* TIDE CHART */}
-          <Card className="border-white/20 dark:border-slate-700/50 shadow-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl mt-6 overflow-hidden relative">
+          {waterType === 'saltwater' && (
+            <Card className="border-white/20 dark:border-slate-700/50 shadow-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl mt-6 overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500" />
             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-[50px] -z-10" />
             <CardContent className="p-4 pt-5">
@@ -724,12 +725,13 @@ export default function Forecast() {
               </div>
             </CardContent>
           </Card>
+          )}
         </section>
       )}
 
       {/* Safety Alert (Example) */}
       <section className="px-4">
-        {marineData.waveHeight && marineData.waveHeight > 1.2 && (
+        {marineData.waveHeight !== null && marineData.waveHeight > 1.2 && (
           <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex gap-3 items-start">
             <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
             <div>
@@ -740,7 +742,7 @@ export default function Forecast() {
             </div>
           </div>
         )}
-        {marineData.waveHeight && marineData.waveHeight <= 1.2 && (
+        {marineData.waveHeight !== null && marineData.waveHeight <= 1.2 && (
           <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex gap-3 items-start">
             <Info className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
             <div>
