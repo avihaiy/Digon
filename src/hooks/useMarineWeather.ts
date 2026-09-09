@@ -20,6 +20,7 @@ export interface MarineWeatherData {
   pressureTrend: number | null; // delta hPa over last 12h
   isTurbid: boolean; // if max wave in past 48h > 1.5m
   riverDischarge?: number | null; // m3/s
+  kinneretLevel?: number | null; // meters below sea level
   waveDirection: number | null; // in degrees
   locationName: string;
   fishingScore: number;
@@ -61,7 +62,7 @@ const fetchWeatherData = async (lat: number, lon: number, locationName: string, 
   }
 
   const weatherRes = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${waterType === 'freshwater' ? 'soil_temperature_6cm,' : ''}temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&hourly=${waterType === 'freshwater' ? 'soil_temperature_6cm,' : ''}temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape${waterType === 'freshwater' ? ',precipitation' : ''}&daily=sunrise,sunset,uv_index_max,precipitation_probability_max,temperature_2m_max,temperature_2m_min&past_hours=48&timezone=auto&models=best_match`
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${waterType === 'freshwater' ? 'soil_temperature_6cm,' : ''}temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape&hourly=${waterType === 'freshwater' ? 'soil_temperature_6cm,' : ''}temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,cape${waterType === 'freshwater' ? ',precipitation,runoff' : ''}&daily=sunrise,sunset,uv_index_max,precipitation_probability_max,temperature_2m_max,temperature_2m_min&past_hours=48&timezone=auto&models=best_match`
   );
   const weatherJson = await weatherRes.json();
   
@@ -83,6 +84,19 @@ const fetchWeatherData = async (lat: number, lon: number, locationName: string, 
       console.warn('Flood API failed', e);
     }
   }
+  
+  let kinneretLevel = null;
+  if (waterType === 'freshwater') {
+    try {
+      const kinneretRes = await fetch('https://data.gov.il/api/3/action/datastore_search?resource_id=2de7b543-e13d-4e7e-b4c8-56071bc4d3c8&limit=1&sort=Survey_Date%20desc');
+      const kinneretJson = await kinneretRes.json();
+      if (kinneretJson?.result?.records?.[0]?.Kinneret_Level) {
+        kinneretLevel = kinneretJson.result.records[0].Kinneret_Level;
+      }
+    } catch (e) {
+      console.warn('Kinneret API failed', e);
+    }
+  }
 
   let isTurbid = false;
   if (waterType === 'saltwater') {
@@ -94,10 +108,14 @@ const fetchWeatherData = async (lat: number, lon: number, locationName: string, 
       }
     }
   } else {
-    if (weatherJson.hourly?.precipitation) {
-      const past48hRain = weatherJson.hourly.precipitation.slice(0, 48);
+    if (weatherJson.hourly?.precipitation || weatherJson.hourly?.runoff) {
+      const past48hRain = (weatherJson.hourly?.precipitation || []).slice(0, 48);
+      const past48hRunoff = (weatherJson.hourly?.runoff || []).slice(0, 48);
+      
       const totalRain = past48hRain.reduce((a, b) => a + (b || 0), 0);
-      if (totalRain > 5) {
+      const totalRunoff = past48hRunoff.reduce((a, b) => a + (b || 0), 0);
+      
+      if (totalRunoff > 2 || totalRain > 10) {
         isTurbid = true;
       }
     }
@@ -247,6 +265,7 @@ const fetchWeatherData = async (lat: number, lon: number, locationName: string, 
     isTurbid,
     waveDirection: currentM.wave_direction,
     locationName: finalLocationName,
+      kinneretLevel,
     fishingScore: score,
     hourlyForecast,
     dailyForecast
@@ -293,6 +312,7 @@ export function useMarineWeather() {
       cloudCover: null,
       pressureTrend: null,
       isTurbid: false,
+        kinneretLevel: null,
       waterClarity: 'לא ידוע',
       jellyfishAlert: false,
       waveDirection: null,

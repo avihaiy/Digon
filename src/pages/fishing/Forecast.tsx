@@ -138,6 +138,11 @@ export default function Forecast() {
             <p className="text-sm text-slate-500 flex items-center gap-1">
               <MapPin className="w-3 h-3" /> {marineData.locationName}
             </p>
+            {marineData.kinneretLevel !== null && marineData.kinneretLevel !== undefined && waterType === 'freshwater' && (
+              <span className="text-sm font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Waves className="w-3 h-3" /> מפלס: {marineData.kinneretLevel} מ'
+              </span>
+            )}
             {marineData.dailyForecast?.[0] && (
               <span className="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full flex items-center gap-1">
                 <Droplets className="w-3 h-3" /> {waterType === 'saltwater' ? 'ים' : 'מים'} {marineData.dailyForecast[0].tempMax}°
