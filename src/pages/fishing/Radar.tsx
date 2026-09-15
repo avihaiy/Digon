@@ -264,7 +264,7 @@ export default function Radar() {
           <iframe 
             width="100%" 
             height="100%" 
-            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=7&overlay=wind&product=ecmwf&level=surface&lat=31.8&lon=34.6" 
+            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=8&overlay=wind&product=ecmwf&level=surface&lat=32.2&lon=34.8" 
             frameBorder="0"
             className="w-full h-full"
             style={{ pointerEvents: 'auto' }}
@@ -273,7 +273,7 @@ export default function Radar() {
           <iframe 
             width="100%" 
             height="100%" 
-            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=7&overlay=currents&product=ecmwf&level=surface&lat=31.8&lon=34.6" 
+            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=8&overlay=currents&product=ecmwf&level=surface&lat=32.2&lon=34.8" 
             frameBorder="0"
             className="w-full h-full"
             style={{ pointerEvents: 'auto' }}
