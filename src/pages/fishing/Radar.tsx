@@ -263,17 +263,12 @@ export default function Radar() {
           viewMode === "wind" ? (
           <iframe 
             width="100%" 
-            height="100%" 
-            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=8&overlay=wind&product=ecmwf&level=surface&lat=32.2&lon=34.8" 
-            frameBorder="0"
-            className="w-full h-full"
-            style={{ pointerEvents: 'auto' }}
-          ></iframe>
-        ) : viewMode === "currents" ? (
+          viewMode === "wind" || viewMode === "currents" ? (
           <iframe 
+            key={`${viewMode}-${filter}`}
             width="100%" 
             height="100%" 
-            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=8&overlay=currents&product=ecmwf&level=surface&lat=32.2&lon=34.8" 
+            src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=${filter === 'fresh' ? 10 : 8}&overlay=${viewMode}&product=ecmwf&level=surface&lat=${filter === 'fresh' ? 32.8 : 32.2}&lon=${filter === 'fresh' ? 35.5 : 34.8}`} 
             frameBorder="0"
             className="w-full h-full"
             style={{ pointerEvents: 'auto' }}
