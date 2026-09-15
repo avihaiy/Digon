@@ -107,7 +107,7 @@ const PopupActions = ({ coords, wazeUrl }: { coords: [number, number], wazeUrl: 
 };
 
 export default function Radar() {
-  const [viewMode, setViewMode] = useState<"markers" | "heatmap">("markers");
+  const [viewMode, setViewMode] = useState<"markers" | "heatmap" | "wind" | "currents">("markers");
   const [filter, setFilter] = useState<"all" | "sea" | "fresh">("all");
 
   const { data: allCatches = [], isLoading } = useQuery({
@@ -217,6 +217,12 @@ export default function Radar() {
             <ToggleGroupItem value="heatmap" aria-label="Heatmap mode" className="rounded-full data-[state=on]:bg-orange-500 data-[state=on]:text-white">
               <Flame className="w-4 h-4" />
             </ToggleGroupItem>
+            <ToggleGroupItem value="wind" aria-label="Wind mode" className="rounded-full data-[state=on]:bg-blue-500 data-[state=on]:text-white relative group" title="רוחות">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="currents" aria-label="Currents mode" className="rounded-full data-[state=on]:bg-indigo-500 data-[state=on]:text-white relative group" title="סחף (זרמים)">
+              <Navigation2 className="w-4 h-4 rotate-90" />
+            </ToggleGroupItem>
           </ToggleGroup>
         </div>
 
@@ -254,11 +260,30 @@ export default function Radar() {
             <p className="text-slate-400 font-bold tracking-wide">טוען ראדאר סודי...</p>
           </div>
         ) : (
-          <MapContainer 
-            center={DEFAULT_CENTER} 
-            zoom={8} 
+          {viewMode === "wind" ? (
+          <iframe 
+            width="100%" 
+            height="100%" 
+            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=7&overlay=wind&product=ecmwf&level=surface&lat=31.8&lon=34.6" 
+            frameBorder="0"
             className="w-full h-full"
-            zoomControl={false} // Hide default controls to keep it native looking
+            style={{ pointerEvents: 'auto' }}
+          ></iframe>
+        ) : viewMode === "currents" ? (
+          <iframe 
+            width="100%" 
+            height="100%" 
+            src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=7&overlay=currents&product=ecmwf&level=surface&lat=31.8&lon=34.6" 
+            frameBorder="0"
+            className="w-full h-full"
+            style={{ pointerEvents: 'auto' }}
+          ></iframe>
+        ) : (
+        <MapContainer 
+          center={DEFAULT_CENTER} 
+          zoom={8} 
+          className="w-full h-full"
+          zoomControl={false} // Hide default controls to keep it native looking
           >
             <TileLayer
               url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://mt1.google.com/vt/lyrs=m&hl=he&x={x}&y={y}&z={z}"}
@@ -331,9 +356,10 @@ export default function Radar() {
                 </CircleMarker>
               ))
             )}
-          </MapContainer>
+                  </MapContainer>
         )}
       </div>
     </div>
   );
+;
 }
