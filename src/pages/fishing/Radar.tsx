@@ -239,6 +239,18 @@ export default function Radar() {
             <ToggleGroupItem value="currents" aria-label="Currents mode" className="text-slate-300 rounded-full data-[state=on]:bg-indigo-500 data-[state=on]:text-white relative group" title="סחף (זרמים)">
               <Navigation2 className="w-4 h-4 rotate-90" />
             </ToggleGroupItem>
+            <ToggleGroupItem value="waves" aria-label="Waves mode" className="text-slate-300 rounded-full data-[state=on]:bg-teal-500 data-[state=on]:text-white relative group" title="גלים">
+              <Waves className="w-4 h-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="rain" aria-label="Rain mode" className="text-slate-300 rounded-full data-[state=on]:bg-gray-500 data-[state=on]:text-white relative group" title="גשם וסופות">
+              <CloudRain className="w-4 h-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="sst" aria-label="SST mode" className="text-slate-300 rounded-full data-[state=on]:bg-red-500 data-[state=on]:text-white relative group" title="טמפרטורת פני הים">
+              <Thermometer className="w-4 h-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="pressure" aria-label="Pressure mode" className="text-slate-300 rounded-full data-[state=on]:bg-fuchsia-500 data-[state=on]:text-white relative group" title="לחץ ברומטרי">
+              <Gauge className="w-4 h-4" />
+            </ToggleGroupItem>
           </ToggleGroup>
         </div>
 
