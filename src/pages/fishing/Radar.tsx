@@ -125,6 +125,23 @@ const PopupActions = ({ coords, wazeUrl }: { coords: [number, number], wazeUrl: 
 export default function Radar() {
   const [viewMode, setViewMode] = useState<"markers" | "heatmap" | "wind" | "currents" | "waves" | "sst" | "rain" | "pressure">("markers");
   const [filter, setFilter] = useState<"all" | "sea" | "fresh">("all");
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const locateMe = () => {
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+        setIsLocating(false);
+      },
+      (err) => {
+        console.error("Locate error:", err);
+        setIsLocating(false);
+      }
+    );
+  };
+
 
   const { data: allCatches = [], isLoading } = useQuery({
     queryKey: ["map-catches"],
@@ -301,7 +318,7 @@ export default function Radar() {
             key={`${viewMode}-${filter}`}
             width="100%" 
             height="100%" 
-            src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=${filter === 'fresh' ? 10 : 8}&overlay=${viewMode}&product=ecmwf&level=surface&lat=${filter === 'fresh' ? 32.8 : 32.2}&lon=${filter === 'fresh' ? 35.5 : 34.8}`} 
+            src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=${userLocation ? 11 : filter === 'fresh' ? 10 : 8}&overlay=${viewMode}&product=ecmwf&level=surface&lat=${userLocation ? userLocation[0] : filter === 'fresh' ? 32.8 : 32.2}&lon=${userLocation ? userLocation[1] : filter === 'fresh' ? 35.5 : 34.8}`} 
             frameBorder="0"
             className="w-full h-full"
             style={{ pointerEvents: 'auto' }}
@@ -313,7 +330,12 @@ export default function Radar() {
           className="w-full h-full"
           zoomControl={false} // Hide default controls to keep it native looking
           >
-          <MapUpdater filter={filter} />
+          <MapUpdater filter={filter} userLocation={userLocation} />
+            {userLocation && (
+              <CircleMarker center={userLocation} radius={6} pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 1, weight: 2 }}>
+                <Popup>המיקום שלך</Popup>
+              </CircleMarker>
+            )}
             <TileLayer
               url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://mt1.google.com/vt/lyrs=m&hl=he&x={x}&y={y}&z={z}"}
               attribution={viewMode === 'heatmap' ? '&copy; CartoDB' : 'Map data © Google'}
