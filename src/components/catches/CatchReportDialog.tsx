@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCatches } from "@/hooks/useCatches";
 import { useTackleBox } from "@/hooks/useTackleBox";
-import { Camera, Image as ImageIcon, X } from "lucide-react";
+import { Camera, Image as ImageIcon, X, Sparkles, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarineWeather } from "@/hooks/useMarineWeather";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +40,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
   const [mapUrl, setMapUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState<string>("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [useFlare, setUseFlare] = useState(false);
@@ -74,6 +75,54 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
       setSelectedLureId("");
     }
   };
+
+  
+  const identifyFish = async () => {
+    if (!imageFile || !imagePreview) return;
+    setIsAiLoading(true);
+    
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Missing Gemini API Key");
+
+      const base64Data = imagePreview.split(",")[1];
+      const payload = {
+        contents: [{
+          parts: [
+            { text: "Identify the exact species of this fish in Hebrew. Return ONLY the name in Hebrew (e.g. 'אנטיאס', 'לברק', 'טונה שחורה', 'קרפיון', 'מושט'). If it's not a fish, return 'לא זוהה דג'." },
+            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 20,
+        }
+      };
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "API Error");
+      
+      const fishName = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      if (fishName && fishName !== "לא זוהה דג") {
+        setFishType(fishName.replace(/['"`]/g, ''));
+        toast({ title: "הדג זוהה בהצלחה!", description: `הבינה המלאכותית זיהתה: ${fishName}` });
+      } else {
+        toast({ title: "לא הצלחנו לזהות", description: "לא זוהה דג בתמונה, אנא הזן ידנית.", variant: "destructive" });
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "שגיאת זיהוי", description: "אירעה שגיאה בזיהוי התמונה.", variant: "destructive" });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
