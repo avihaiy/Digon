@@ -232,9 +232,19 @@ export default function Radar() {
         <Link to="/" className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center pointer-events-auto hover:bg-white/20 shadow-lg transition-colors text-white">
           <ChevronRight className="w-6 h-6" />
         </Link>
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl shadow-xl pointer-events-auto flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-rose-500 animate-pulse" />
-          <h1 className="text-lg font-black tracking-tight text-white m-0">ראדאר תפיסות</h1>
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <button 
+            onClick={locateMe}
+            disabled={isLocating}
+            className="w-10 h-10 rounded-full bg-slate-900/80 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-slate-800 shadow-xl transition-colors text-white disabled:opacity-50"
+            title="המיקום שלי"
+          >
+            <Crosshair className={`w-5 h-5 ${isLocating ? 'animate-spin' : ''}`} />
+          </button>
+          <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl shadow-xl flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-rose-500 animate-pulse" />
+            <h1 className="text-lg font-black tracking-tight text-white m-0">ראדאר תפיסות</h1>
+          </div>
         </div>
         <div className="w-10"></div> {/* Spacer for centering */}
       </div>
