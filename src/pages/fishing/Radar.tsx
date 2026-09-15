@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_CATCHES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { Button } from "@/components/ui/button";
-import { MapPin, Navigation2, Flame, Map, Droplet, Waves, Filter, Crosshair, ChevronRight } from "lucide-react";
+import { MapPin, Navigation2, Flame, Map, Droplet, Waves, Filter, Crosshair, ChevronRight, Thermometer, CloudRain, Gauge } from "lucide-react";
 import { getImageUrl } from "@/hooks/useCatches";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
@@ -123,7 +123,7 @@ const PopupActions = ({ coords, wazeUrl }: { coords: [number, number], wazeUrl: 
 };
 
 export default function Radar() {
-  const [viewMode, setViewMode] = useState<"markers" | "heatmap" | "wind" | "currents">("markers");
+  const [viewMode, setViewMode] = useState<"markers" | "heatmap" | "wind" | "currents" | "waves" | "sst" | "rain" | "pressure">("markers");
   const [filter, setFilter] = useState<"all" | "sea" | "fresh">("all");
 
   const { data: allCatches = [], isLoading } = useQuery({
@@ -226,7 +226,7 @@ export default function Radar() {
       <div className="absolute left-4 right-4 md:right-80 z-[1000] flex flex-col gap-3 pointer-events-none" style={{ bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 0px) + 5rem)' }}>
         {/* Toggle Mode */}
         <div className="flex justify-end pointer-events-auto">
-          <ToggleGroup type="single" value={viewMode} onValueChange={(val) => val && setViewMode(val as any)} dir="ltr" className="bg-slate-900/90 backdrop-blur-xl p-1 rounded-full border border-white/10 shadow-lg">
+          <ToggleGroup type="single" value={viewMode} onValueChange={(val) => val && setViewMode(val as any)} dir="ltr" className="bg-slate-900/90 backdrop-blur-xl p-1 rounded-3xl border border-white/10 shadow-lg flex-wrap justify-center">
             <ToggleGroupItem value="markers" aria-label="Markers mode" className="text-slate-300 rounded-full data-[state=on]:bg-cyan-500 data-[state=on]:text-white">
               <Map className="w-4 h-4" />
             </ToggleGroupItem>
@@ -276,7 +276,7 @@ export default function Radar() {
             <p className="text-slate-400 font-bold tracking-wide">טוען ראדאר סודי...</p>
           </div>
         ) : (
-          viewMode === "wind" || viewMode === "currents" ? (
+          ["wind", "currents", "waves", "sst", "rain", "pressure"].includes(viewMode) ? (
           <iframe 
             key={`${viewMode}-${filter}`}
             width="100%" 
