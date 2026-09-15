@@ -225,31 +225,39 @@ export default function Radar() {
       {/* Floating Filters & Controls */}
       <div className="absolute left-4 right-4 md:right-80 z-[1000] flex flex-col gap-3 pointer-events-none" style={{ bottom: 'calc(max(env(safe-area-inset-bottom, 0px), 0px) + 5rem)' }}>
         {/* Toggle Mode */}
-        <div className="flex justify-end pointer-events-auto">
-          <ToggleGroup type="single" value={viewMode} onValueChange={(val) => val && setViewMode(val as any)} dir="ltr" className="bg-slate-900/90 backdrop-blur-xl p-1 rounded-3xl border border-white/10 shadow-lg flex-wrap justify-center">
-            <ToggleGroupItem value="markers" aria-label="Markers mode" className="text-slate-300 rounded-full data-[state=on]:bg-cyan-500 data-[state=on]:text-white">
-              <Map className="w-4 h-4" />
+        <div className="flex justify-end pointer-events-auto overflow-hidden">
+          <ToggleGroup type="single" value={viewMode} onValueChange={(val) => val && setViewMode(val as any)} dir="rtl" className="bg-slate-900/90 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 shadow-lg overflow-x-auto scrollbar-hide max-w-full justify-start w-full">
+            <ToggleGroupItem value="markers" className="flex flex-col h-auto py-1.5 px-3 text-slate-300 rounded-xl data-[state=on]:bg-cyan-500 data-[state=on]:text-white min-w-[56px]">
+              <Map className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium leading-none">תפיסות</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="heatmap" aria-label="Heatmap mode" className="text-slate-300 rounded-full data-[state=on]:bg-orange-500 data-[state=on]:text-white">
-              <Flame className="w-4 h-4" />
+            <ToggleGroupItem value="heatmap" className="flex flex-col h-auto py-1.5 px-3 text-slate-300 rounded-xl data-[state=on]:bg-orange-500 data-[state=on]:text-white min-w-[56px]">
+              <Flame className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium leading-none">עומס</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="wind" aria-label="Wind mode" className="text-slate-300 rounded-full data-[state=on]:bg-blue-500 data-[state=on]:text-white relative group" title="רוחות">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+            <ToggleGroupItem value="wind" className="flex flex-col h-auto py-1.5 px-3 text-slate-300 rounded-xl data-[state=on]:bg-blue-500 data-[state=on]:text-white min-w-[56px]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-1"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+              <span className="text-[10px] font-medium leading-none">רוחות</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="currents" aria-label="Currents mode" className="text-slate-300 rounded-full data-[state=on]:bg-indigo-500 data-[state=on]:text-white relative group" title="סחף (זרמים)">
-              <Navigation2 className="w-4 h-4 rotate-90" />
+            <ToggleGroupItem value="waves" className="flex flex-col h-auto py-1.5 px-3 text-slate-300 rounded-xl data-[state=on]:bg-teal-500 data-[state=on]:text-white min-w-[56px]">
+              <Waves className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium leading-none">גלים</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="waves" aria-label="Waves mode" className="text-slate-300 rounded-full data-[state=on]:bg-teal-500 data-[state=on]:text-white relative group" title="גלים">
-              <Waves className="w-4 h-4" />
+            <ToggleGroupItem value="sst" className="flex flex-col h-auto py-1.5 px-3 text-slate-300 rounded-xl data-[state=on]:bg-red-500 data-[state=on]:text-white min-w-[56px]">
+              <Thermometer className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium leading-none">טמפ' מים</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="rain" aria-label="Rain mode" className="text-slate-300 rounded-full data-[state=on]:bg-gray-500 data-[state=on]:text-white relative group" title="גשם וסופות">
-              <CloudRain className="w-4 h-4" />
+            <ToggleGroupItem value="currents" className="flex flex-col h-auto py-1.5 px-3 text-slate-300 rounded-xl data-[state=on]:bg-indigo-500 data-[state=on]:text-white min-w-[56px]">
+              <Navigation2 className="w-4 h-4 rotate-90 mb-1" />
+              <span className="text-[10px] font-medium leading-none">סחף</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="sst" aria-label="SST mode" className="text-slate-300 rounded-full data-[state=on]:bg-red-500 data-[state=on]:text-white relative group" title="טמפרטורת פני הים">
-              <Thermometer className="w-4 h-4" />
+            <ToggleGroupItem value="rain" className="flex flex-col h-auto py-1.5 px-3 text-slate-300 rounded-xl data-[state=on]:bg-gray-500 data-[state=on]:text-white min-w-[56px]">
+              <CloudRain className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium leading-none">גשם</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="pressure" aria-label="Pressure mode" className="text-slate-300 rounded-full data-[state=on]:bg-fuchsia-500 data-[state=on]:text-white relative group" title="לחץ ברומטרי">
-              <Gauge className="w-4 h-4" />
+            <ToggleGroupItem value="pressure" className="flex flex-col h-auto py-1.5 px-3 text-slate-300 rounded-xl data-[state=on]:bg-fuchsia-500 data-[state=on]:text-white min-w-[56px]">
+              <Gauge className="w-4 h-4 mb-1" />
+              <span className="text-[10px] font-medium leading-none">לחץ</span>
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
