@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { databases, APPWRITE_DB_ID, APPWRITE_CATCHES_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
@@ -36,6 +36,22 @@ const LOCATIONS_MAP: Record<string, [number, number]> = {
 };
 
 const DEFAULT_CENTER: [number, number] = [31.9, 34.8]; // Central Israel
+
+// MapUpdater component to dynamically change map view based on filter
+function MapUpdater({ filter }: { filter: "all" | "sea" | "fresh" }) {
+  const map = useMap();
+  React.useEffect(() => {
+    if (filter === "fresh") {
+      map.flyTo([32.8, 35.5], 10, { duration: 1.5 });
+    } else if (filter === "sea") {
+      map.flyTo([32.0, 34.5], 8, { duration: 1.5 });
+    } else {
+      map.flyTo(DEFAULT_CENTER, 8, { duration: 1.5 });
+    }
+  }, [filter, map]);
+  return null;
+}
+
 
 const createCustomIcon = (imageUrl: string, isFreshwater: boolean) => {
   const color = isFreshwater ? '#10b981' : '#06b6d4'; // Emerald for freshwater, Cyan for sea
