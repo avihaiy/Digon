@@ -260,7 +260,7 @@ export default function Radar() {
             <p className="text-slate-400 font-bold tracking-wide">טוען ראדאר סודי...</p>
           </div>
         ) : (
-          {viewMode === "wind" ? (
+          viewMode === "wind" ? (
           <iframe 
             width="100%" 
             height="100%" 
@@ -357,7 +357,8 @@ export default function Radar() {
               ))
             )}
                   </MapContainer>
-        )}
+        )
+      )}
       </div>
     </div>
   );
