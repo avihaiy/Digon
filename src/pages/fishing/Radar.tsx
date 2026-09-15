@@ -260,9 +260,6 @@ export default function Radar() {
             <p className="text-slate-400 font-bold tracking-wide">טוען ראדאר סודי...</p>
           </div>
         ) : (
-          viewMode === "wind" ? (
-          <iframe 
-            width="100%" 
           viewMode === "wind" || viewMode === "currents" ? (
           <iframe 
             key={`${viewMode}-${filter}`}
