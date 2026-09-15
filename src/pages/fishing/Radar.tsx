@@ -293,6 +293,7 @@ export default function Radar() {
           className="w-full h-full"
           zoomControl={false} // Hide default controls to keep it native looking
           >
+          <MapUpdater filter={filter} />
             <TileLayer
               url={viewMode === 'heatmap' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://mt1.google.com/vt/lyrs=m&hl=he&x={x}&y={y}&z={z}"}
               attribution={viewMode === 'heatmap' ? '&copy; CartoDB' : 'Map data © Google'}
