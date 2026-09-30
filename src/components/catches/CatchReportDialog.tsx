@@ -89,7 +89,7 @@ export function CatchReportDialog({ children }: CatchReportDialogProps) {
       const payload = {
         contents: [{
           parts: [
-            { text: "Identify the exact species of this fish in Hebrew. Return ONLY the name in Hebrew (e.g. 'אנטיאס', 'לברק', 'טונה שחורה', 'קרפיון', 'מושט'). If it's not a fish, return 'לא זוהה דג'." },
+            { text: "Identify all the fish species in this image. If there are multiple different species of fish, return all of their names in Hebrew separated by commas and a space (e.g. 'אנטיאס, לברק, מושט'). If there is only one species, just return its name. Return ONLY the names in Hebrew. If it's not a fish or no fish are detected, return 'לא זוהה דג'." },
             { inlineData: { mimeType: "image/jpeg", data: base64Data } }
           ]
         }],
