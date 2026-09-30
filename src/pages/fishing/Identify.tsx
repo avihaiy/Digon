@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { toast } from "sonner";
+import { useTackleBox, GearCategory } from "@/hooks/useTackleBox";
+import { PackagePlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { compressImage } from "@/lib/imageCompression";
 import { applyDigonFilter } from "@/lib/imageFilter";
@@ -60,6 +62,28 @@ export default function Identify() {
   };
 
   
+
+  const handleAddToTackleBox = () => {
+    if (!result) return;
+    
+    // Map Hebrew categories to english GearCategory
+    let gearCat: GearCategory = 'accessory';
+    const heCategory = result.category || "";
+    if (heCategory.includes('חכה')) gearCat = 'rod';
+    else if (heCategory.includes('רולר')) gearCat = 'reel';
+    else if (heCategory.includes('דימוי') || heCategory.includes('פיתיון')) gearCat = 'lure';
+    else if (heCategory.includes('חוט')) gearCat = 'line';
+    
+    addGear({
+      category: gearCat,
+      name: result.name,
+      brand: result.brand || "לא ידוע",
+      description: result.description
+    });
+    setAddedToTackleBox(true);
+    toast.success("הפריט נוסף בהצלחה לקופסת הציוד שלך!");
+  };
+
   const handleShare = async () => {
     if (!image || !result) return;
     setIsSharing(true);
