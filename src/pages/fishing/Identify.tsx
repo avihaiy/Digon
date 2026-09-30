@@ -193,7 +193,7 @@ export default function Identify() {
           "category": "one of: חכה, רולר, פיתיון/דמוי, חוט, ציוד עזר",
           "brand": "Brand name if identified, else null",
           "description": "Short description of what it does and how it works (Hebrew)",
-          "tips": "One tip on how to use it best (Hebrew)",
+          "tips": "Provide a detailed, professional tip on exactly how to best work with this gear/lure in Israel (e.g. retrieval speed, rod action, target depths, techniques). Give a rich, detailed explanation (Hebrew)",
           "targetFish": "Which fish this is usually for in Israel (Hebrew)",
           "bestConditions": "What sea conditions this is best for (e.g. ים רוגש, מים צלולים)"
         }
