@@ -88,101 +88,32 @@ export default function TackleBox() {
       Reply in Hebrew. Be enthusiastic but professional. Suggest one specific combo (rod+reel+lure/bait) from their box that fits the weather, and explain briefly WHY it fits (e.g., "The waves are high, so use this heavy jig with your powerful rod"). Keep it under 4 sentences.
       `;
       
-      const response = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model: "gemini-flash-latest" })
-      });
-      
-      if (!response.ok) throw new Error(response.statusText);
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      
-      setAiAdvice(data.text);
-    } catch (e) {
-      console.error(e);
-      setAiAdvice("התרחשה שגיאה בהתייעצות עם המומחה. נסה שוב.");
-    } finally {
-      setAiLoading(false);
-    }
-  };
-  
-  const [category, setCategory] = useState<string>("rod");
-  const [price, setPrice] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Missing Gemini API Key");
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        const MAX_SIZE = 200;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_SIZE) {
-            height *= MAX_SIZE / width;
-            width = MAX_SIZE;
-          }
-        } else {
-          if (height > MAX_SIZE) {
-            width *= MAX_SIZE / height;
-            height = MAX_SIZE;
-          }
+      const payload = {
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: mimeType, data: base64Data } }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.1,
         }
-        canvas.width = width;
-        canvas.height = height;
-        ctx?.drawImage(img, 0, 0, width, height);
-        // Compress heavily to save localStorage space (0.6 quality WebP)
-        const compressedBase64 = canvas.toDataURL("image/webp", 0.6);
-        setImagePreview(compressedBase64);
-        scanGearWithAI(compressedBase64);
       };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  };
 
-  const [isScanningGear, setIsScanningGear] = useState(false);
-
-  const scanGearWithAI = async (base64Str: string) => {
-    setIsScanningGear(true);
-    try {
-      const mimeMatch = base64Str.match(/^data:(image\/[a-zA-Z0-9]+);base64,/);
-      const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
-      const base64Data = base64Str.split(",")[1];
-
-      const prompt = `
-        You are an expert fisherman in Israel.
-        Identify the fishing gear/lure in this image.
-        Respond in pure JSON format (without markdown blocks) with the following structure:
-        {
-          "name": "Hebrew name/type of the gear",
-          "category": "one of: rod, reel, lure, line, accessory",
-          "brand": "Brand name if identified, else empty string",
-          "specs": "Estimated specs like weight, size, etc."
-        }
-      `;
-
-      const response = await fetch('/api/gemini', {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, model: "gemini-pro-latest" })
+        body: JSON.stringify(payload)
       });
-      if (!response.ok) throw new Error(response.statusText);
+      
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      let cleanedText = data.text.replace(/```json/g, '').replace(/```/g, '').trim();
+      if (!response.ok) throw new Error(data.error?.message || "API Error");
+      
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      let cleanedText = rawText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
       const firstBrace = cleanedText.indexOf('{');
       const lastBrace = cleanedText.lastIndexOf('}');
       if (firstBrace !== -1 && lastBrace !== -1) {
