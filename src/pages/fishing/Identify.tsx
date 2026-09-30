@@ -103,11 +103,12 @@ export default function Identify() {
       const file = new File([u8arr], "scanned_fish.jpg", { type: mime });
       
       // Apply Digon Pro Filter
-      const stampedFile = await applyDigonFilter(file, {
-        fishType: result.name,
-        weight: "זיהוי AI",
-        location: "אפליקציית Digon",
-      });
+              const stampedFile = await applyDigonFilter(file, {
+          fishType: result.brand ? `${result.name} | ${result.brand}` : result.name,
+          weight: "זיהוי AI",
+          location: "אפליקציית Digon",
+          aiDetails: result.tips,
+        });
 
       // Share or Download
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [stampedFile] })) {
