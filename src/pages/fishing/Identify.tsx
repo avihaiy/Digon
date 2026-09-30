@@ -36,6 +36,8 @@ export default function Identify() {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [scanType, setScanType] = useState<'fish' | 'gear'>('fish');
+    const { addGear } = useTackleBox();
+    const [addedToTackleBox, setAddedToTackleBox] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [manualName, setManualName] = useState("");
   const [isSharing, setIsSharing] = useState(false);
@@ -305,6 +307,7 @@ export default function Identify() {
   const resetScanner = () => {
     setImage(null);
     setResult(null);
+    setAddedToTackleBox(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
