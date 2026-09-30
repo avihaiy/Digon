@@ -536,6 +536,18 @@ export default function Identify() {
                 )}
               </Card>
 
+              {result && scanType === 'gear' && (
+                <Button 
+                  variant="outline" 
+                  className="w-full h-14 rounded-2xl gap-2 text-lg font-bold mt-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 border-emerald-500/30"
+                  onClick={handleAddToTackleBox}
+                  disabled={addedToTackleBox}
+                >
+                  <PackagePlus className="w-5 h-5" />
+                  {addedToTackleBox ? "נוסף לקופסת ציוד" : "הוסף לקופסת ציוד"}
+                </Button>
+              )}
+
               {result && (
                 <Button 
                   variant="default" 
