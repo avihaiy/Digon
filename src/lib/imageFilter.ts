@@ -26,58 +26,68 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         const baseFontSize = Math.max(18, Math.floor(Math.min(canvas.width, canvas.height) * 0.045));
+        const padding = baseFontSize * 1.2;
         
-        let gradientHeight = Math.max(canvas.height * 0.25, baseFontSize * 6);
+        let gradientHeight = Math.max(canvas.height * 0.3, baseFontSize * 6);
         if (options.aiDetails) {
-            gradientHeight = Math.max(canvas.height * 0.45, baseFontSize * 15);
+            gradientHeight = Math.max(canvas.height * 0.55, baseFontSize * 16);
         }
         
         const gradient = ctx.createLinearGradient(0, canvas.height - gradientHeight, 0, canvas.height);
         gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-        gradient.addColorStop(0.3, "rgba(0, 0, 0, 0.6)");
+        gradient.addColorStop(0.2, "rgba(0, 0, 0, 0.7)");
         gradient.addColorStop(1, "rgba(0, 0, 0, 0.95)");
 
         ctx.fillStyle = gradient;
         ctx.fillRect(0, canvas.height - gradientHeight, canvas.width, gradientHeight);
 
-        const padding = baseFontSize;
+        // Footer Y level
+        const footerY = canvas.height - padding;
 
-        // Draw Left Side (DIGON PRO)
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+
+        // Draw Left Side Footer (DIGON PRO)
         ctx.textAlign = "left";
         ctx.textBaseline = "bottom";
-        ctx.font = `900 ${baseFontSize * 1.5}px sans-serif`;
         
-        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-
+        ctx.font = `900 ${baseFontSize * 1.3}px sans-serif`;
         ctx.fillStyle = "#f97316"; 
-        ctx.fillText("DIGON", padding, canvas.height - padding - baseFontSize * 0.9);
+        ctx.fillText("DIGON", padding, footerY - baseFontSize * 0.8);
         
         const textWidth = ctx.measureText("DIGON ").width;
         ctx.fillStyle = "#ffffff";
-        ctx.fillText("PRO", padding + textWidth, canvas.height - padding - baseFontSize * 0.9);
+        ctx.fillText("PRO", padding + textWidth, footerY - baseFontSize * 0.8);
 
-        ctx.font = `600 ${baseFontSize * 0.65}px sans-serif`;
+        ctx.font = `600 ${baseFontSize * 0.6}px sans-serif`;
         ctx.fillStyle = "#cbd5e1"; 
-        ctx.fillText("https://digon.vercel.app", padding, canvas.height - padding + 2);
+        ctx.fillText("https://digon.vercel.app", padding, footerY);
 
-        ctx.shadowBlur = 5;
-
-        // Draw Right Side (RTL)
+        // Draw Right Side Footer (Location / Weather)
         ctx.textAlign = "right";
-        ctx.fillStyle = "#ffffff";
+        ctx.font = `normal ${baseFontSize * 0.75}px sans-serif`;
+        let weatherStr = options.location.split('|||')[0].trim() || 'ללא מיקום מוגדר';
         
-        ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
-        const fishText = `${options.fishType || 'לא זוהה מין דג'} ${options.weight ? '| ' + options.weight : ''}`;
+        if (options.marineData) {
+           const wave = options.marineData.waveHeight ? `גלים: ${options.marineData.waveHeight}m` : '';
+           const temp = options.marineData.temperature ? `טמפ': ${options.marineData.temperature}°C` : '';
+           if (wave || temp) {
+               weatherStr += ` • ${wave} ${temp}`;
+           }
+        }
         
-        let rightStartY = canvas.height - padding - baseFontSize * 2.2;
-        
-        // Wrap AI Details if they exist
+        ctx.fillStyle = "#cbd5e1";
+        ctx.fillText(weatherStr, canvas.width - padding, footerY);
+
+        // Draw Main Content (Bottom to Top)
+        let contentY = footerY - baseFontSize * 2.5;
+
+        // Draw AI Details if exist
         if (options.aiDetails) {
             ctx.font = `normal ${baseFontSize * 0.75}px sans-serif`;
-            ctx.fillStyle = "#e2e8f0";
+            ctx.fillStyle = "#f8fafc"; // Very light text
             const maxWidth = canvas.width - padding * 2;
             const words = options.aiDetails.split(' ');
             let line = '';
@@ -95,41 +105,48 @@ export async function applyDigonFilter(file: File, options: FilterOptions): Prom
             }
             lines.push(line);
             
-            // Draw lines from bottom to top so it anchors above the fishText
             const lineHeight = baseFontSize * 1.1;
+            // Draw lines from bottom to top so it perfectly stacks
             for (let i = lines.length - 1; i >= 0; i--) {
-                ctx.fillText(lines[i], canvas.width - padding, rightStartY - (lines.length - 1 - i) * lineHeight);
+                ctx.fillText(lines[i], canvas.width - padding, contentY - (lines.length - 1 - i) * lineHeight);
             }
             
-            // Adjust title Y to be above the tips
-            rightStartY = rightStartY - (lines.length * lineHeight) - baseFontSize * 0.5;
-            
-            ctx.font = `bold ${baseFontSize * 1.2}px sans-serif`;
-            ctx.fillStyle = "#ffffff";
+            // Move contentY up for the Title
+            contentY = contentY - (lines.length * lineHeight) - baseFontSize * 0.8;
         }
-        
-        ctx.fillText(fishText, canvas.width - padding, rightStartY);
 
-        ctx.font = `normal ${baseFontSize * 0.8}px sans-serif`;
-        let weatherStr = options.location.split('|||')[0].trim() || 'ללא מיקום מוגדר';
+        // Draw Title (Fish/Gear Name)
+        let titleFontSize = baseFontSize * 1.4;
+        ctx.font = `900 ${titleFontSize}px sans-serif`;
         
-        if (options.marineData) {
-           const wave = options.marineData.waveHeight ? `גלים: ${options.marineData.waveHeight}m` : '';
-           const temp = options.marineData.temperature ? `טמפ': ${options.marineData.temperature}°C` : '';
-           if (wave || temp) {
-               weatherStr += ` • ${wave} ${temp}`;
-           }
+        let fishText = `${options.fishType || 'לא זוהה מין דג'}`;
+        if (options.weight && options.weight !== "זיהוי AI") {
+            fishText += ` | ${options.weight}`;
         }
         
-        ctx.fillStyle = "#cbd5e1";
-        ctx.fillText(weatherStr, canvas.width - padding, canvas.height - padding - baseFontSize * 0.9);
+        // Scale down title if it's too wide
+        const maxTitleWidth = canvas.width - padding * 2;
+        while (ctx.measureText(fishText).width > maxTitleWidth && titleFontSize > baseFontSize * 0.8) {
+            titleFontSize -= 1;
+            ctx.font = `900 ${titleFontSize}px sans-serif`;
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(fishText, canvas.width - padding, contentY);
+        
+        // Optional Label for AI (if it was an AI scan)
+        if (options.weight === "זיהוי AI") {
+            ctx.font = `bold ${baseFontSize * 0.7}px sans-serif`;
+            ctx.fillStyle = "#facc15"; // Yellow
+            ctx.fillText("DIGON AI זיהוי אוטומטי", canvas.width - padding, contentY - titleFontSize * 1.2);
+        }
 
         canvas.toBlob(
           (blob) => {
             if (!blob) {
               return reject(new Error("Failed to create blob from canvas"));
             }
-            const filteredFile = new File([blob], file.name.replace(/\\.[^/.]+$/, "") + "_digon.jpg", {
+            const filteredFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_digon.jpg", {
               type: "image/jpeg",
               lastModified: Date.now(),
             });
