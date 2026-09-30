@@ -188,7 +188,7 @@ export default function Identify() {
         If the image DOES NOT contain fishing gear, return "לא זוהה ציוד דיג" for the name, 0 for confidence, and explain what you see in the description.
         Respond in pure JSON format (without markdown blocks) with the following structure:
         {
-          "name": "Hebrew name/type of the gear (e.g. דמוי פופר, ג'יג כבד)",
+          "name": "Hebrew name of the gear. Include specific model if visible (e.g. רולר ספינינג Shimano Nexave)",
           "confidence": number between 0-100,
           "category": "one of: חכה, רולר, פיתיון/דמוי, חוט, ציוד עזר",
           "brand": "Brand name if identified, else null",
